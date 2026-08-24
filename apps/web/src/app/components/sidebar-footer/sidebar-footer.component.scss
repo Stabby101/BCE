@@ -1,0 +1,133 @@
+.menu-section-header {
+    font-size: 0.7em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 6px 20px 2px;
+    opacity: 0.6;
+
+    &.friendly-header {
+        color: rgb(var(--friendly-color));
+    }
+
+    &.enemy-header {
+        color: rgb(var(--enemy-color));
+    }
+}
+
+.force-item {
+    gap: 6px;
+
+    .menu-faction-icon {
+        width: 1.1em;
+        height: 1.1em;
+        object-fit: contain;
+        flex-shrink: 0;
+    }
+
+    .menu-faction-placeholder {
+        width: 1.1em;
+        height: 1.1em;
+        flex-shrink: 0;
+    }
+
+    .force-item-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+    }
+
+    &.active-force {
+        background-color: var(--bt-yellow-background);
+        &:hover {
+            background-color: var(--bt-yellow-background-bright);
+        }
+    }
+}
+
+:host {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+    width: 100%;
+    min-width: 0;
+}
+
+.footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    box-sizing: border-box;
+    width: 100%;
+
+    &.vertical {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+.opfor-btn {
+    color: #900;
+
+    &.modified {
+        color: #F00;
+        background-color: #3006;
+    }
+}
+
+.follow-modified-btn {
+    opacity: 0.5;
+
+    &.active {
+        opacity: 1;
+    }
+}
+
+.alignment-filter-btn {
+    transition: color 0.2s, background-color 0.2s;
+
+    &.friendly {
+        color: rgb(var(--friendly-color));
+    }
+
+    &.enemy {
+        color: rgb(var(--enemy-color));
+    }
+
+    &.blink.friendly {
+        animation: alignment-btn-blink-friendly 0.5s ease-in-out 2;
+    }
+
+    &.blink.enemy {
+        animation: alignment-btn-blink-enemy 0.5s ease-in-out 2;
+    }
+}
+
+@keyframes alignment-btn-blink-friendly {
+    0%, 100% {
+        color: rgb(var(--friendly-color));
+        background-color: transparent;
+    }
+    50% {
+        color: color-mix(in srgb, rgb(var(--friendly-color)), white 40%);
+        background-color: rgba(var(--friendly-color), 0.5);
+    }
+}
+
+@keyframes alignment-btn-blink-enemy {
+    0%, 100% {
+        color: rgb(var(--enemy-color));
+        background-color: transparent;
+    }
+    50% {
+        color: color-mix(in srgb, rgb(var(--enemy-color)), white 40%);
+        background-color: rgba(var(--enemy-color), 0.5);
+    }
+}

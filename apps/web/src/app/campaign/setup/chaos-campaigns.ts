@@ -1,0 +1,50 @@
+/*
+ * BCE — DIRECTIVE-108/108b: the Chaos Campaign ("Hot Spots") catalog for the Campaign Setup card.
+ * Data-driven so campaigns light up as their mechanics are extracted. `available:false` = listed but not yet
+ * selectable ("coming soon").
+ *   - `eraLocked` — a published Hot Spot campaign is tied to a specific era; selecting it seeds that era and
+ *     SKIPS the Era step. `Generic Hot Spots` is era-free (eraLocked:false) → the player still picks the era.
+ *   - `era` — an era DISPLAY NAME that resolves against the SAME canonical list the Era step uses
+ *     (era/eras.ts `eraCardByName`); null when not era-locked.
+ * IP: our own names/blurbs only — `book` is the reference source TITLE (so a player knows which rulebook it
+ * draws on), null for the generic engine-driven mode; NO rulebook text is reproduced. Room to add more entries.
+ */
+export interface ChaosCampaign {
+    id: string;
+    name: string;
+    book: string | null; // source rulebook TITLE only (no book text); null = engine-generated, no book needed
+    era: string | null; // era display name → resolves via era/eras.ts eraCardByName; null when not era-locked
+    eraLocked: boolean; // true → seeds `era` + skips the Era step; false → player still picks the era
+    available: boolean; // only `true` entries are selectable in the Setup card
+    blurb: string; // OUR OWN one-line summary of the setting
+}
+
+export const CHAOS_CAMPAIGNS: ChaosCampaign[] = [
+    {
+        id: 'generic',
+        name: 'Generic Hot Spots',
+        book: null,
+        era: null,
+        eraLocked: false,
+        available: true,
+        blurb: 'Run the Chaos Campaign rules over BCE-generated contracts in any era — pick your own era next, and the engine supplies the tracks and opposition.',
+    },
+    {
+        id: 'draconis-reach',
+        name: 'Draconis Reach',
+        book: 'Hot Spots: Draconis Reach',
+        era: 'ilClan',
+        eraLocked: true,
+        available: true,
+        blurb: 'A contested run of Draconis Combine border worlds where hired commands grind through raids, reprisals, and shifting front lines for whichever paymaster holds the ground this month.',
+    },
+    {
+        id: 'hinterlands',
+        name: 'Hinterlands',
+        book: 'Hot Spots: Hinterlands',
+        era: 'ilClan',
+        eraLocked: true,
+        available: false,
+        blurb: 'Far-flung frontier systems beyond the reach of the great powers, where a command survives on whatever work the local strongmen can pay for.',
+    },
+];

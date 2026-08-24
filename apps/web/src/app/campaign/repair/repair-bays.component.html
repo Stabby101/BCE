@@ -1,0 +1,186 @@
+<div class="rb">
+    <!-- header: the shop's identity (D-037) + capacity + treasury -->
+    <header class="rb-head">
+        <div class="rb-title">Repair &amp; Salvage bays</div>
+        <div class="rb-cap">
+            <span class="cap-h">{{ perDayHours() }} tech-h / day</span>
+            <span class="cap-t">{{ tierLabel() }} tier</span>
+            <span class="cap-n">split across occupied bays by priority</span>
+        </div>
+        <div class="rb-treasury">Treasury <b>{{ money(treasury()) }}</b> C-bills</div>
+    </header>
+    @if (pool(); as tp) {
+        <div class="rb-pool">
+            <span class="tp-name">{{ tp.name.toUpperCase() }}</span>
+            <span class="tp-head">{{ tp.headcount }} techs</span>
+            <span class="tp-char">{{ tp.character }}</span>
+            @if (armorer()) { <span class="tp-chief">Chief armorer: {{ armorer() }}</span> }
+        </div>
+    }
+
+    <!-- THE QUEUE -->
+    <section class="rb-queue">
+        <div class="sec-head"><span class="sec-t">Queue</span><span class="sec-c">{{ queue().length }} awaiting a bay</span></div>
+        @if (!queue().length) {
+            <p class="rb-empty">No units awaiting repair. Recovered ('In repair') units from the walk, cold-storage prizes, and skirmish-damaged units land here.</p>
+        }
+        @for (it of queue(); track it.instanceId) {
+            <div class="q-item" [class.wo]="it.writeOff">
+                <div class="q-main">
+                    <span class="sev sev-{{ it.triage }}" [title]="'Triage ' + it.triage">{{ it.triage }}</span>
+                    <div class="q-id">
+                        <span class="q-name">{{ it.label }}</span>
+                        <span class="q-meta">{{ it.tons }}t · <span class="q-kind kind-{{ it.kind }}">{{ KIND_LABEL[it.kind] }}</span></span>
+                    </div>
+                    <div class="q-est">
+                        <span class="q-hrs">{{ it.bill.totalHours }} h</span>
+                        <span class="q-cb" [class.warn]="itemWarn(it)">{{ money(itemCost(it)) }} C-bills</span>
+                    </div>
+                    <div class="q-acts">
+                        <button type="button" class="lnk" (click)="toggleExplode(it.instanceId)">{{ isExploded(it.instanceId) ? 'Hide' : 'Estimate' }}</button>
+                        @if (it.writeOff) {
+                            <button type="button" class="wobtn" (click)="askWriteOff(it.instanceId)">Write off</button>
+                        }
+                        @if (freeBays().length) {
+                            <button type="button" class="asbtn" (click)="startAssign(it.instanceId)">Assign »</button>
+                        } @else {
+                            <span class="q-busy">bays full</span>
+                        }
+                    </div>
+                </div>
+
+                @if (itemWarn(it)) {
+                    <div class="q-warn">⚠ Estimate exceeds treasury — assignment proceeds knowingly; the debit lands at completion.</div>
+                }
+
+                @if (assigning() === it.instanceId) {
+                    <div class="q-pick">
+                        <span class="pick-l">Assign to:</span>
+                        @for (b of freeBays(); track b.id) {
+                            <button type="button" class="baybtn" (click)="doAssign(it.instanceId, b.id)">{{ b.name }} <em>{{ b.type }}</em></button>
+                        }
+                        <button type="button" class="lnk" (click)="cancelAssign()">cancel</button>
+                    </div>
+                }
+
+                @if (confirmWO() === it.instanceId) {
+                    <div class="q-confirm">
+                        <span>Write off <b>{{ it.label }}</b>? It leaves the force permanently (the wreck is stripped for scrap).</span>
+                        <button type="button" class="wobtn go" (click)="doWriteOff(it.instanceId)">Confirm write-off</button>
+                        <button type="button" class="lnk" (click)="cancelWriteOff()">cancel</button>
+                    </div>
+                }
+
+                @if (isExploded(it.instanceId)) {
+                    <div class="bill">
+                        @for (l of it.bill.lines; track $index) {
+                            <div class="bill-row">
+                                <span class="bl-comp">{{ l.component }}</span>
+                                <span class="bl-act act-{{ l.action }}">{{ l.action }}</span>
+                                <span class="bl-hrs">{{ l.hours }} h</span>
+                                <span class="bl-cite">{{ l.cite }}</span>
+                            </div>
+                        }
+                        <div class="bill-total"><span>Total labour</span><b>{{ it.bill.totalHours }} h</b><span class="bt-cb">≈ {{ money(itemCost(it)) }} C-bills</span></div>
+                        @for (n of it.bill.notes; track $index) { <div class="bill-note">▸ {{ n }}</div> }
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    <!-- THE BAYS -->
+    <section class="rb-bays">
+        <div class="sec-head"><span class="sec-t">Bays</span><span class="sec-c">one occupant each</span></div>
+        <div class="bay-grid">
+            @for (bay of bays(); track bay.id) {
+                <div class="bay" [class.occupied]="!!bay.occupantId">
+                    <div class="bay-head">
+                        <span class="bay-name">{{ bay.name }}</span>
+                        <span class="bay-type type-{{ bay.type }}">{{ bay.type }}</span>
+                        <span class="bay-pri">P{{ bay.priority }}</span>
+                    </div>
+
+                    @if (bay.occupantId) {
+                        <div class="bay-occ">
+                            <span class="sev sev-{{ bay.occTriage || 'Y' }}">{{ bay.occTriage || '—' }}</span>
+                            <span class="bo-name">{{ bay.label }}</span>
+                            @if (bay.occTons) { <span class="bo-tons">{{ bay.occTons }}t</span> }
+                            @if (bay.isPrize) { <span class="bo-prize">★ prize refit</span> }
+                        </div>
+
+                        <div class="bay-prog">
+                            <div class="bar"><div class="bar-fill" [style.width.%]="progressPct(bay)"></div></div>
+                            <div class="bar-meta">
+                                <span>{{ bay.hoursSpent }} / {{ bay.laborHours }} h</span>
+                                <span class="bm-eta">
+                                    @if (remaining(bay) <= 0) { ready } @else if (etaDays(bay) !== null) { ETA ~{{ etaDays(bay) }} d } @else { ETA — }
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="bay-cost">
+                            <span>{{ money(bay.estimateCost) }} C-bills</span>
+                            <span class="bc-sub">debits at completion</span>
+                        </div>
+
+                        <!-- D-037: the shop note — summary prose from the itemized bill + the parts line -->
+                        <div class="shop-note">
+                            <p class="sn-text">{{ summary(bay.label || '—', bay.bill, bay.laborHours, bay.estimateCost) }}</p>
+                            @if (parts(bay.bill); as pn) { <p class="sn-parts">{{ pn }}</p> }
+                            @if (armorer()) { <span class="sn-sig">— {{ armorer() }}</span> }
+                        </div>
+
+                        <div class="bay-acts">
+                            <button type="button" class="lnk" (click)="toggleExplode(bay.id)">{{ isExploded(bay.id) ? 'Hide estimate' : 'Estimate' }}</button>
+                            <button type="button" class="unbtn" (click)="unassign(bay.id)">Unassign</button>
+                        </div>
+
+                        @if (isExploded(bay.id) && bay.bill) {
+                            <div class="bill">
+                                @for (l of bay.bill; track $index) {
+                                    <div class="bill-row">
+                                        <span class="bl-comp">{{ l.component }}</span>
+                                        <span class="bl-act act-{{ l.action }}">{{ l.action }}</span>
+                                        <span class="bl-hrs">{{ l.hours }} h</span>
+                                        <span class="bl-cite">{{ l.cite }}</span>
+                                    </div>
+                                }
+                                @for (n of bay.notes; track $index) { <div class="bill-note">▸ {{ n }}</div> }
+                            </div>
+                        }
+                    } @else {
+                        <div class="bay-empty">Empty</div>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- HISTORY -->
+    <section class="rb-hist">
+        <button type="button" class="hist-toggle" (click)="showHistory.set(!showHistory())">
+            {{ showHistory() ? '▾' : '▸' }} Bay history <span class="ht-c">{{ history().length }}</span>
+        </button>
+        @if (showHistory()) {
+            @if (!history().length) {
+                <p class="rb-empty">No completed jobs yet.</p>
+            } @else {
+                @for (h of history(); track $index) {
+                    <div class="hist-row" [class.wo]="h.outcome === 'written-off'">
+                        <span class="h-date">{{ fmtDate(h.date) }}</span>
+                        <span class="h-label">{{ h.label }}</span>
+                        <span class="h-bay">Bay {{ h.bayName }}</span>
+                        @if (h.outcome === 'completed') {
+                            <span class="h-out ok">{{ h.laborHours }} h · −{{ money(h.cost) }} C-bills</span>
+                        } @else {
+                            <span class="h-out wo">written off</span>
+                        }
+                        <!-- D-037: the shop record line (honest absence on pre-D-037 entries) -->
+                        <span class="h-note">{{ histSummary(h) }}@if (histParts(h); as pn) { <em class="h-parts">{{ pn }}</em> }</span>
+                    </div>
+                }
+            }
+        }
+    </section>
+</div>

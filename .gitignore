@@ -1,0 +1,14 @@
+# build output + dependencies (the source repo ships none of these)
+node_modules
+dist
+dist-player
+.angular
+.nx
+out-tsc
+coverage
+tmp
+*.db
+*.sqlite
+*.sqlite3
+.env
+.DS_Store

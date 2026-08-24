@@ -1,0 +1,8 @@
+# HOTFIX-010 — Cloudflare Pages routing. Static assets + the /mekbay Function are matched BEFORE these
+# rules (so /player/<chunk>.js, /chunk-*.js, /assets/*, /mekbay/* are served directly); these only catch
+# unmatched CLIENT routes and provide the SPA fallback for each app.
+#
+#   /player/*  -> the PLAYER SPA's own index.html (NOT the GM cover — the whole point of this hotfix)
+#   /*         -> the GM SPA's index.html (the existing single-page-app fallback, made explicit)
+/player/*    /player/index.html    200
+/*           /index.html           200

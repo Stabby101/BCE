@@ -1,0 +1,22 @@
+@if (mode() === 'local') {
+    <div class="ncon" [attr.data-state]="llamaState()">
+        <span class="nc-dot" [class.ready]="llamaState() === 'ready'" [class.loading]="llamaState() === 'loading'" [class.off]="llamaState() === 'sidecar-off' || llamaState() === 'off'"></span>
+        @if (stats(); as s) {
+            @if (s.sidecar === 'offline') {
+                <span class="nc-seg nc-off">narrator sidecar offline</span>
+            } @else {
+                <span class="nc-seg nc-model">{{ s.llama.model }}</span>
+                <span class="nc-seg">{{ s.llama.status === 'ready' ? 'READY' : s.llama.status === 'loading' ? 'LOADING…' : 'idle' }}</span>
+                <span class="nc-seg">runs <b>{{ cumulative().refineRuns }}</b>r/<b>{{ cumulative().validateRuns }}</b>v</span>
+                <span class="nc-seg">tok <b>{{ fmtK(cumulative().promptTokens) }}</b>p/<b>{{ fmtK(cumulative().completionTokens) }}</b>c</span>
+                @if (s.llama.lastTokS) { <span class="nc-seg">{{ s.llama.lastTokS }} tok/s</span> }
+                @if (s.gpu; as g) {
+                    <span class="nc-seg nc-gpu">GPU <b>{{ g.utilPct }}%</b> · {{ (g.memUsedMB / 1024).toFixed(1) }}/{{ (g.memTotalMB / 1024).toFixed(0) }}G · {{ g.tempC }}°</span>
+                } @else { <span class="nc-seg nc-off">GPU n/a</span> }
+                @if (s.sys; as sy) { <span class="nc-seg nc-sys">CPU {{ sy.cpuPct }}% · RAM {{ (sy.memUsedMB / 1024).toFixed(0) }}/{{ (sy.memTotalMB / 1024).toFixed(0) }}G</span> }
+            }
+        } @else {
+            <span class="nc-seg nc-off">narrator: connecting…</span>
+        }
+    </div>
+}

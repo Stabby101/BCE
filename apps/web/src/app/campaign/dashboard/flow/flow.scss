@@ -1,0 +1,157 @@
+/* Inherits the .theme-dossier token set from the dashboard host (custom props cascade). MekBay untouched. */
+:host { display: block; }
+
+.fl-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ph { font-family: var(--label); font-weight: 600; letter-spacing: 2.5px; font-size: 14px; text-transform: uppercase; }
+.fl-sel { font-family: var(--mono); font-size: 11.5px; padding: 6px 9px; border: 1.4px solid var(--ink); background: var(--paper); color: var(--ink); max-width: 60%; cursor: pointer; }
+.fl-ctx { font-family: var(--mono); font-size: 11px; letter-spacing: .5px; color: var(--stamp); border: 1px solid var(--stamp); padding: 2px 8px; }
+.note { font-family: var(--type); font-size: 12px; color: var(--ink2); margin: 4px 0 12px; line-height: 1.5; }
+.note b { color: var(--ink); }
+.fl-ro { font-family: var(--mono); font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--warn); border: 1px solid var(--warn); padding: 1px 6px; margin-left: 6px; }
+
+/* ── the pan viewport (bounded → height-safe per HOTFIX-001; pans both axes on touch) ── */
+.flow-pan { overflow: auto; max-height: 66vh; border: 1.5px solid var(--line); background: var(--paper2);
+    background-image: repeating-linear-gradient(0deg, transparent 0 31px, rgba(70, 58, 28, .05) 31px 32px), repeating-linear-gradient(90deg, transparent 0 31px, rgba(70, 58, 28, .04) 31px 32px);
+    overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
+.flow-canvas { position: relative; }
+.edges { position: absolute; inset: 0; pointer-events: none; }
+.edge { fill: none; stroke: var(--ink2); stroke-width: 1.6px; }
+.edge.e-fail { stroke: var(--stamp); }
+.edge.e-any { stroke-dasharray: 4 4; }
+.elabel { font-family: var(--mono); font-size: 9px; letter-spacing: .5px; fill: var(--ink); text-anchor: middle; paint-order: stroke; stroke: var(--paper2); stroke-width: 3px; stroke-linejoin: round; text-transform: uppercase; }
+
+/* ── node cards (196×88 — fixed to match flow-layout's edge endpoints) ── */
+.fnode { position: absolute; width: 196px; height: 88px; box-sizing: border-box; border: 1.6px solid var(--ink); background: var(--paper); padding: 9px 11px; display: flex; flex-direction: column; gap: 3px; text-align: left; cursor: pointer; overflow: hidden; color: var(--ink); }
+.fnode:hover { background: var(--paper2); }
+.fnode.foc { outline: 2px solid var(--stamp); outline-offset: 2px; }
+.fnode .pulse { position: absolute; top: 7px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--stamp); animation: fpulse 1.4s ease-in-out infinite; }
+.fn-name { font-family: var(--label); font-weight: 600; letter-spacing: .4px; font-size: 12.5px; text-transform: uppercase; line-height: 1.12; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fn-meta { font-family: var(--mono); font-size: 9.5px; letter-spacing: .5px; color: var(--ink2); text-transform: uppercase; }
+.fn-tag { margin-top: auto; align-self: flex-start; font-family: var(--mono); font-size: 8.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink2); }
+.fn-badge { margin-top: auto; align-self: flex-start; font-family: var(--mono); font-size: 8.5px; letter-spacing: .5px; text-transform: uppercase; color: var(--paper); padding: 1px 6px; }
+
+.fnode.s-active { border-color: var(--stamp); border-width: 2px; box-shadow: inset 0 0 0 1px rgba(146, 48, 31, .35); }
+.fnode.s-available { box-shadow: inset 4px 0 0 var(--ok); }
+.fnode.s-locked { border-style: dashed; border-color: var(--ink2); opacity: .6; }
+.fnode.s-resolved { background: var(--panel); }
+.fnode.s-retired { opacity: .5; border-color: var(--ink2); border-style: dotted; }
+.fnode.s-retired .fn-name { text-decoration: line-through; }
+
+/* tier accents (shared) — badge = filled, drawer tier = text */
+.fn-badge.t-FULL_SUCCESS { background: var(--ok); }
+.fn-badge.t-SUCCESS { background: #3f7d4f; }
+.fn-badge.t-PARTIAL { background: var(--warn); }
+.fn-badge.t-FAILURE { background: var(--stamp); }
+.fn-badge.t-COMPROMISED { background: var(--cold); }
+.fn-badge.t-ANY { background: var(--ink2); }
+/* D-039 cues: a still-open (skippable) sibling + a reduced-spoils / continuation tag */
+.fnode.still-open { box-shadow: inset 0 0 0 1.5px var(--ok), 0 0 0 1px var(--ok); }
+.fn-open { font-family: var(--mono); font-size: 8.5px; letter-spacing: .5px; color: var(--ok); text-transform: uppercase; }
+.fn-reduced { font-family: var(--mono); font-size: 8.5px; letter-spacing: .5px; color: var(--warn); text-transform: uppercase; }
+
+@keyframes fpulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(1.5); } }
+
+/* ── empty state ── */
+.fl-empty { border: 1.6px dashed var(--ink2); background: var(--paper2); padding: 26px 22px; margin-top: 10px; max-width: 620px; }
+.fl-empty-h { font-family: var(--stencil, var(--label)); font-weight: 600; letter-spacing: 1.5px; font-size: 17px; text-transform: uppercase; color: var(--ink2); margin-bottom: 6px; }
+
+/* ── drawer (house modal pattern: fixed backdrop + click-out + Esc, panel on the right) ── */
+.fdrawer-back { position: fixed; inset: 0; background: rgba(10, 8, 4, .5); z-index: 60; display: flex; justify-content: flex-end; padding-bottom: var(--bce-footer-h, 0px); } /* IMPORT-7 A — clear the legal footer */
+.fdrawer { width: min(430px, 94vw); height: 100%; background: var(--paper); border-left: 3px solid var(--ink); overflow-y: auto; padding: 16px 20px 24px; box-shadow: -8px 0 26px rgba(0, 0, 0, .28); box-sizing: border-box; }
+.fdrawer.s-active { border-left-color: var(--stamp); }
+.fdrawer.s-available { border-left-color: var(--ok); }
+.fdrawer.s-resolved { border-left-color: var(--ink2); }
+.fdrawer.s-locked { border-left-color: var(--ink2); border-left-style: dashed; }
+.fdrawer.s-retired { border-left-color: var(--ink2); border-left-style: dotted; }
+.fd-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 12px; }
+.fd-name { font-family: var(--label); font-weight: 600; letter-spacing: .8px; font-size: 17px; text-transform: uppercase; line-height: 1.12; color: var(--ink); }
+.fd-state { font-family: var(--mono); font-size: 10.5px; letter-spacing: .5px; color: var(--ink2); text-transform: uppercase; margin-top: 3px; }
+.fd-x { flex: 0 0 auto; font-family: var(--mono); font-size: 15px; background: transparent; border: 1.4px solid var(--ink2); color: var(--ink2); width: 32px; height: 32px; cursor: pointer; }
+.fd-x:hover { background: var(--ink); color: var(--paper); }
+.fd-tier { font-family: var(--stencil, var(--label)); font-weight: 700; font-size: 22px; letter-spacing: 1.5px; margin-bottom: 10px; }
+.fd-tier.t-FULL_SUCCESS { color: var(--ok); }
+.fd-tier.t-SUCCESS { color: #3f7d4f; }
+.fd-tier.t-PARTIAL { color: var(--warn); }
+.fd-tier.t-FAILURE { color: var(--stamp); }
+.fd-tier.t-COMPROMISED { color: var(--cold); }
+.fd-tier.t-ANY { color: var(--ink2); }
+.fd-sec { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 10px; text-transform: uppercase; color: var(--ink2); border-bottom: 1px solid var(--line); padding-bottom: 3px; margin: 14px 0 6px; }
+.fd-sec b { color: var(--ink); }
+.fd-p { font-family: var(--type); font-size: 12.5px; line-height: 1.55; color: var(--ink); margin: 0; }
+.fd-ans { list-style: none; margin: 0; padding: 0; }
+.fd-ans li { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 12px; padding: 5px 0; border-bottom: 1px dotted var(--line); color: var(--ink2); }
+.fd-ans b { color: var(--ok); }
+.fd-ans .fd-vp { margin-left: auto; margin-right: 10px; color: var(--stamp); font-size: 11px; } /* IMPORT-6 FOLLOWUPS — authored objective VP */
+.fd-ans b.no { color: var(--stamp); }
+.fd-obj { margin: 0; padding-left: 18px; font-family: var(--type); font-size: 12.5px; line-height: 1.5; color: var(--ink); }
+.fd-obj li { margin-bottom: 4px; }
+.fd-date { font-family: var(--mono); font-size: 10.5px; color: var(--ink2); margin-top: 12px; }
+/* DIRECTIVE-122 — the collapsible ITERATION LEDGER pop-out (Hot Spots-only) */
+.fd-ledger { margin-top: 14px; border: 1.3px solid var(--line); background: var(--paper2); border-radius: 5px; }
+.fd-ledger > summary { font-family: var(--label); font-weight: 700; letter-spacing: 1.2px; font-size: 10.5px; text-transform: uppercase; color: var(--ink2);
+    padding: 9px 11px; cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 8px; min-height: 40px; }
+.fd-ledger > summary::-webkit-details-marker { display: none; }
+.fd-ledger > summary::before { content: '▸'; color: var(--stamp); }
+.fd-ledger[open] > summary::before { content: '▾'; }
+.fd-ledger .fdl-win { font-family: var(--mono); font-weight: 400; letter-spacing: .02em; text-transform: none; font-size: 10.5px; color: var(--stamp); }
+.fd-ledger .fdl-body { padding: 4px 11px 11px; }
+.fd-ledger .fdl-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent); font-family: var(--type); font-size: 12.5px; }
+.fd-ledger .fdl-row:first-child { border-top: none; }
+.fd-ledger .fdl-row span { color: var(--ink2); }
+.fd-ledger .fdl-row b { color: var(--ink); font-family: var(--mono); font-weight: 600; text-align: right; }
+.fd-ledger .fdl-row.buy span { font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fd-ledger .fdl-sub { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 9.5px; text-transform: uppercase; color: var(--ink2); margin: 8px 0 2px; }
+.fd-ledger .fdl-none { font-family: var(--mono); font-size: 10.5px; color: var(--ink2); margin-top: 8px; }
+.fd-veil { font-family: var(--type); font-size: 12px; line-height: 1.5; color: var(--ink2); border: 1.3px dashed var(--ink2); background: var(--paper2); padding: 10px 12px; margin-bottom: 4px; }
+.fd-note { font-family: var(--mono); font-size: 10.5px; color: var(--ink2); margin: 8px 0 0; }
+.fd-btn { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 12px; text-transform: uppercase; border: 1.6px solid var(--ink); background: var(--paper2); color: var(--ink); padding: 11px 16px; cursor: pointer; min-height: 44px; margin-top: 16px; width: 100%; }
+.fd-btn.go { border-color: var(--stamp); color: var(--stamp); }
+.fd-btn.go:hover:not(:disabled), .fd-btn.go:focus-visible:not(:disabled) { background: var(--stamp); color: var(--paper); outline: none; }
+.fd-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+@media (max-width: 600px) {
+    .flow-pan { max-height: 58vh; }
+    .fl-sel { max-width: 100%; }
+}
+
+/* DIRECTIVE-073 — the mission state/gates window (read-only diagnostic, below the campaign flow) */
+.gateflow { margin-top: 26px; padding-top: 18px; border-top: 2px solid var(--ink); }
+.gf-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink2); margin-left: 8px; }
+.gf-track { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.gf-node { display: grid; grid-template-columns: 26px 180px 1fr auto; align-items: center; gap: 12px; padding: 9px 12px;
+    border: 1.3px solid color-mix(in srgb, var(--ink2) 35%, transparent); border-left-width: 4px; background: var(--paper);
+    /* D-115 — advisory clickable rail: reset the <button> UA styles + a clickable affordance. */
+    width: 100%; text-align: left; color: inherit; font: inherit; cursor: pointer; transition: border-color .12s, background .12s; }
+.gf-node:hover { border-color: var(--stamp); }
+.gf-node:focus-visible { border-color: var(--stamp); outline: 2px solid var(--stamp); outline-offset: 2px; } /* distinct ring — visible even on .is-next */
+.gf-node.is-next { box-shadow: 0 0 0 1.6px var(--stamp); background: color-mix(in srgb, var(--stamp) 6%, var(--paper)); }
+.gf-next { font-family: var(--mono); font-weight: 700; font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--stamp); margin-left: 8px; white-space: nowrap; }
+.gf-start { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 12px; text-transform: uppercase; border: 1.6px solid var(--stamp); background: transparent; color: var(--stamp); padding: 9px 15px; margin-top: 14px; cursor: pointer; }
+.gf-start:hover, .gf-start:focus-visible { background: var(--stamp); color: var(--paper); outline: none; }
+.gf-ico { font-family: var(--mono); font-size: 15px; text-align: center; line-height: 1; }
+.gf-name { font-family: var(--label); font-weight: 600; letter-spacing: .5px; text-transform: uppercase; font-size: 12px; color: var(--ink); }
+.gf-cond { font-family: var(--type); font-size: 12.5px; color: var(--ink2); }
+.gf-st { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
+.gf-node.st-done { border-left-color: var(--ok, #3a7d44); }
+.gf-node.st-done .gf-ico, .gf-node.st-done .gf-st { color: var(--ok, #3a7d44); }
+.gf-node.st-pending { border-left-color: var(--warn, #c2622a); background: color-mix(in srgb, var(--warn, #c2622a) 5%, var(--paper)); }
+.gf-node.st-pending .gf-ico, .gf-node.st-pending .gf-st { color: var(--warn, #c2622a); }
+.gf-node.st-blocked { border-left-color: var(--ink2); opacity: .72; }
+.gf-node.st-blocked .gf-ico, .gf-node.st-blocked .gf-st { color: var(--ink2); }
+@media (max-width: 600px) { .gf-node { grid-template-columns: 24px 1fr; } .gf-cond, .gf-st { grid-column: 2; } }
+
+/* ── DIRECTIVE-119 P2 — the Hot Spots top-of-sheet PROCESS RAIL (rendered above the tab bar; HS only) ── */
+.prail { display: flex; align-items: center; flex-wrap: wrap; gap: 1px; padding: 7px 10px; margin: 0 0 4px;
+         background: var(--paper2); border: 1.4px solid var(--line); border-radius: 8px; }
+.pr-step { display: inline-flex; align-items: center; gap: 6px; font-family: var(--label); font-weight: 600; letter-spacing: .04em;
+           font-size: 11px; text-transform: uppercase; padding: 6px 10px; border: 1.3px solid transparent; border-radius: 6px;
+           background: transparent; color: var(--ink2); cursor: pointer; }
+.pr-step .pr-ico { font-size: 12px; line-height: 1; }
+.pr-step.st-done { color: var(--ink); } .pr-step.st-done .pr-ico { color: var(--ok); }
+.pr-step.st-pending { color: var(--ink); } .pr-step.st-pending .pr-ico { color: var(--ink2); }
+.pr-step.st-pending.is-next { border-color: var(--stamp); background: var(--paper); color: var(--stamp); }
+.pr-step.st-pending.is-next .pr-ico { color: var(--stamp); }
+.pr-step.st-blocked { color: var(--ink2); opacity: .5; cursor: not-allowed; }
+.pr-step:not(.st-blocked):hover { background: var(--paper); border-color: var(--line); }
+.pr-sep { color: var(--ink2); font-size: 12px; opacity: .55; padding: 0 1px; }
+@media (max-width: 760px) { .pr-step .pr-name { display: none; } .pr-step { padding: 6px 8px; } .pr-sep { display: none; } }

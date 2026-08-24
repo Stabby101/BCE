@@ -1,0 +1,70 @@
+@if (era(); as e) {
+<main class="sheet" aria-label="New campaign — start date and force archetype">
+    <span class="reg tl" aria-hidden="true"></span><span class="reg tr" aria-hidden="true"></span>
+    <span class="reg bl" aria-hidden="true"></span><span class="reg br" aria-hidden="true"></span>
+    <div class="holes" aria-hidden="true"><div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div></div>
+    <div class="stamp" aria-hidden="true">New Campaign</div>
+
+    <header>
+        <div>
+            <div class="ttl">BATTLETECH CAMPAIGN ENGINE</div>
+            <div class="crumb">Create &nbsp;&rsaquo;&nbsp; <span class="done">era &#10003;</span> &nbsp;&rsaquo;&nbsp; <b>Start date &amp; force</b> &nbsp;&rsaquo;&nbsp; forces &nbsp;&rsaquo;&nbsp; resources</div>
+        </div>
+        <div class="step"><div><b>STEP</b> 02 / 04</div><div><b>FIELD</b> DATE+FORCE</div></div>
+    </header>
+
+    <div class="erabar">
+        <span class="elabel">Era (from step 1)</span>
+        <span class="eraname">{{ e.name }}</span>
+        <span class="rng">{{ eraRange() }}</span>
+    </div>
+
+    <div class="cols">
+        <div class="panel">
+            <div class="ph">Campaign start date <small>allowed {{ eraRange() }}</small></div>
+            <div class="datestamp">{{ stampText() }}</div>
+            <div class="yrnav">
+                <button type="button" (click)="prevYear()" [disabled]="prevYearDisabled()" aria-label="Previous year">&lsaquo;</button>
+                <span>{{ viewYear() }}</span>
+                <button type="button" (click)="nextYear()" [disabled]="nextYearDisabled()" aria-label="Next year">&rsaquo;</button>
+            </div>
+            <div class="calnav">
+                <button type="button" (click)="prevMonth()" [disabled]="prevMonthDisabled()" aria-label="Previous month">&lsaquo;</button>
+                <span>{{ monthLabel() }}</span>
+                <button type="button" (click)="nextMonth()" [disabled]="nextMonthDisabled()" aria-label="Next month">&rsaquo;</button>
+            </div>
+            <div class="dow" aria-hidden="true"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+            <div class="days">
+                @for (c of dayCells(); track $index) {
+                    @if (c.blank) {
+                        <span class="day blank" aria-hidden="true"></span>
+                    } @else {
+                        <button type="button" class="day" [class.sel]="isSelectedDay(c.day)" (click)="selectDay(c.day)">{{ c.day }}</button>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="ph">Starting company — force archetype <small>per era</small></div>
+            <div class="arch">
+                @for (a of archetypes(); track a.code) {
+                    <button type="button" class="ac" [class.sel]="selectedArch() === a.code" [class.lock]="!a.ok" [disabled]="!a.ok" [attr.aria-pressed]="selectedArch() === a.code" (click)="selectArch(a.code)">
+                        <span class="code">{{ a.code }}</span>
+                        <span class="am"><span class="an">{{ a.name }}</span><span class="ad">{{ a.desc }}</span></span>
+                        @if (!a.ok) { <span class="tag">{{ a.tag }}</span> }
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="nav">
+            <button type="button" class="btn" (click)="back()">&lsaquo; Back</button>
+            <button type="button" class="btn go" [disabled]="!canProceed()" (click)="proceed()">Proceed &rsaquo;</button>
+        </div>
+        <div class="meta">BCE v0.1 &middot; campaign parameter 2 of 4<br>era &middot; <b>date+force</b> &middot; unit&#8209;size &middot; resources</div>
+    </footer>
+</main>
+}

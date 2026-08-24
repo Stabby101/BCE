@@ -1,0 +1,236 @@
+/* Mission package dossier (D-025) — the SAMPLE-BRIEF palette adapted, scoped to this component. */
+:host {
+    --pk-paper: #e7dcc3; --pk-paper2: #efe6d2; --pk-ink: #2a241a; --pk-rule: #8a7a5c;
+    --pk-crimson: #7a1d1d; --pk-crimson2: #5c1414; --pk-stamp: #9b2c2c;
+    --pk-box: #f3ecdb; --pk-warn: #6e5a1e; --pk-thead: #d9cba8; --pk-dim: #5d5340;
+}
+
+.pkg-overlay {
+    position: fixed; inset: 0; z-index: 200; background: rgba(12, 9, 4, .72);
+    overflow: auto; padding: 28px 16px calc(28px + var(--bce-footer-h, 0px)); display: flex; justify-content: center; align-items: flex-start; /* IMPORT-7 A — clear the legal footer */
+}
+.pkg-actions { position: fixed; top: 14px; right: 18px; z-index: 210; display: flex; gap: 8px; }
+.pa-btn {
+    font-family: var(--mono, monospace); font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+    background: var(--pk-paper2); color: var(--pk-ink); border: 1.6px solid var(--pk-ink); padding: 8px 14px;
+    cursor: pointer; min-height: 40px;
+}
+.pa-btn:hover { background: var(--pk-ink); color: var(--pk-paper2); }
+.pa-btn.close { border-color: var(--pk-crimson); color: var(--pk-crimson); }
+.pa-btn.close:hover { background: var(--pk-crimson); color: var(--pk-paper2); }
+.pa-btn.refine { border-color: #3c5722; color: #3c5722; }
+.pa-btn.refine:hover:not(:disabled) { background: #3c5722; color: var(--pk-paper2); }
+.pa-btn.refine:disabled { opacity: .6; cursor: wait; }
+.refine-results { position: fixed; top: 58px; right: 18px; z-index: 210; max-width: 420px; display: flex; flex-direction: column; gap: 4px; }
+.refine-results .rr { font-family: "Courier New", monospace; font-size: 10.5px; line-height: 1.4; padding: 5px 9px; border: 1.3px solid; background: rgba(231, 220, 195, .96); }
+.refine-results .rr.ok { border-color: #3c5722; color: #2a3a16; }
+.refine-results .rr.rej { border-color: var(--pk-warn); color: #5a4a18; }
+.refine-results .rr.err { border-color: var(--pk-crimson); color: var(--pk-crimson2); }
+.refined-tag { color: #3c5722; font-size: 11px; font-weight: bold; margin-left: 8px; letter-spacing: .1em; }
+
+/* D-043 — the GM-only coherence verdict panel (advisory; narrator reasons, GM decides) */
+.coherence-panel { position: fixed; top: 58px; left: 18px; z-index: 210; max-width: 380px; font-family: "Courier New", monospace; font-size: 11px; line-height: 1.5; background: rgba(231, 220, 195, .97); border: 1.6px solid var(--pk-ink, #2b2720); padding: 9px 12px; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+.coherence-panel.clean { border-color: #3c5722; }
+.coherence-panel.flagged { border-color: var(--pk-crimson, #92301f); }
+.coherence-panel .coh-h { font-weight: bold; letter-spacing: .08em; font-size: 10.5px; margin-bottom: 6px; }
+.coherence-panel .coh-model { float: right; opacity: .6; font-weight: normal; }
+.coherence-panel .coh-body.clean { color: #2a3a16; }
+.coherence-panel .coh-flags { margin: 0; padding-left: 16px; }
+.coherence-panel .coh-flags li { color: var(--pk-crimson2, #6a2417); margin-bottom: 4px; }
+.coherence-panel .coh-note { margin-top: 7px; font-size: 9.5px; opacity: .6; font-style: italic; }
+
+/* D-045 — dismissable panel chrome + the GM change-log + the REFINED stamp + per-box marks */
+.coherence-panel { max-height: calc(100vh - 96px); overflow-y: auto; max-width: 420px; }
+.coherence-panel .coh-h { display: flex; align-items: center; gap: 8px; }
+.coherence-panel .coh-model { margin-left: auto; opacity: .6; font-weight: normal; float: none; }
+.coherence-panel .coh-x { border: 1px solid currentColor; background: transparent; color: inherit; cursor: pointer; font-size: 11px; line-height: 1; padding: 2px 6px; opacity: .75; }
+.coherence-panel .coh-x:hover { opacity: 1; background: var(--pk-crimson, #92301f); color: #fff; }
+.coh-changelog { margin-top: 9px; border-top: 1px dashed var(--pk-rule, #8a7a5c); padding-top: 7px; }
+.coh-changelog .cl-h { font-size: 9.5px; letter-spacing: .04em; opacity: .7; margin-bottom: 6px; }
+.cl-entry { margin-bottom: 5px; border-left: 2px solid #3c5722; padding-left: 7px; }
+.cl-entry.rej { border-left-color: var(--pk-warn, #6e5a1e); }
+.cl-entry summary { cursor: pointer; font-size: 10.5px; }
+.cl-entry summary b { color: #2a3a16; }
+.cl-entry.rej summary b { color: var(--pk-warn, #6e5a1e); }
+.cl-why { color: var(--pk-crimson2, #6a2417); margin-left: 5px; font-style: italic; }
+.cl-before, .cl-after { font-size: 11px; line-height: 1.5; margin-top: 5px; padding: 4px 6px; background: rgba(255, 255, 255, .4); }
+.cl-before { opacity: .65; }
+.cl-tag { font-size: 8.5px; letter-spacing: .1em; opacity: .55; margin-right: 5px; vertical-align: 1px; }
+.cl-after .ins { background: #cfe3b8; border-radius: 2px; }
+.cl-kept { font-size: 10.5px; font-style: italic; opacity: .7; margin-top: 4px; }
+/* the REFINED provenance stamp — PRINTS (a provenance mark, unlike the GM-only panel) */
+.refined-stamp { font-family: "Courier New", monospace; font-size: 11px; letter-spacing: .08em; color: #3c5722; border: 1.4px solid #3c5722; background: rgba(207, 227, 184, .4); padding: 3px 9px; display: inline-block; margin: 2px 0 6px; }
+.pa-btn.coh.on { background: var(--pk-ink, #2b2720); color: var(--pk-paper, #e7dcc3); }
+.pa-btn.fmt.on { background: var(--pk-ink); color: var(--pk-paper); }
+
+/* ── DIRECTIVE-101 — FRAGORD: the condensed order (objectives + OpFor front-and-center) ── */
+.frag { margin-bottom: 22px; }
+.frag .frag-tag { text-align: center; letter-spacing: .26em; font-weight: bold; font-size: 12px; color: var(--pk-crimson2); margin-bottom: 14px; }
+.frag .frag-head { text-align: center; border-bottom: 2px solid var(--pk-ink); padding-bottom: 11px; margin-bottom: 16px; }
+.frag .fh-op { font-weight: bold; font-size: 21px; letter-spacing: .03em; }
+.frag .fh-meta { font-size: 13px; color: var(--pk-dim); margin-top: 5px; letter-spacing: .03em; }
+.frag .fh-threat { display: inline-block; margin-top: 8px; background: var(--pk-crimson); color: var(--pk-paper2); padding: 3px 13px; letter-spacing: .14em; font-size: 12px; font-weight: bold; }
+.frag .frag-sec { margin-bottom: 15px; break-inside: avoid; }
+.frag .frag-sec h3 { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; border-bottom: 1px solid var(--pk-rule); padding-bottom: 3px; margin: 0 0 8px; color: var(--pk-crimson2); }
+.frag .frag-brief { margin: 0; }
+.frag .frag-obj .fo-row { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 3px 0; }
+.frag .frag-obj .fo-p { font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: .08em; }
+.frag .frag-opfor { background: var(--pk-box); border-left: 3px solid var(--pk-crimson); padding: 10px 13px; }
+.frag .frag-opfor p { margin: 0 0 4px; }
+.frag .frag-opfor p:last-child { margin-bottom: 0; }
+.frag .frag-opfor .fo-bv { font-weight: bold; }
+.frag .fd-dp { margin-bottom: 8px; }
+.frag .fd-dp .fd-name { font-weight: bold; }
+.frag .fd-opt { padding-left: 15px; position: relative; }
+.frag .fd-opt::before { content: "▸"; position: absolute; left: 0; color: var(--pk-crimson); }
+.frag .frag-clock .fc-row { display: grid; grid-template-columns: 168px 1fr; gap: 10px; padding: 2px 0; }
+.frag .frag-clock .fc-row.total { border-top: 1px solid var(--pk-rule); margin-top: 3px; padding-top: 5px; font-weight: bold; }
+
+/* D-099 — the WARNORD travel/insertion + operation strip (masthead, outside the brief; FRAGORD §6 reads the same data) */
+.transit-strip { font-family: var(--mono, "Courier New", monospace); font-size: 12px; letter-spacing: .03em; text-align: center;
+    background: var(--pk-box); border: 1.4px solid var(--pk-rule); border-left: 3px solid var(--pk-crimson);
+    padding: 6px 12px; margin: 10px 0 14px; color: var(--pk-ink); }
+.transit-strip b { letter-spacing: .1em; }
+.frag .endmark { text-align: center; letter-spacing: .1em; color: var(--pk-dim); font-size: 11px; margin: 18px 0 12px; }
+.npcbox.staff.refined { box-shadow: inset 3px 0 0 #3c5722; }
+@media print { .refined-stamp { color: #000; border-color: #000; background: none; } }
+
+/* ── DIRECTIVE-117 — Hot Spots TRACK: the condensed order in the rulebook's five-part layout (HS-only) ── */
+.track { margin-bottom: 22px; }
+.track .trk-tag { text-align: center; letter-spacing: .3em; font-weight: bold; font-size: 12px; color: var(--pk-crimson2); margin-bottom: 14px; }
+.track .trk-head { text-align: center; border-bottom: 2px solid var(--pk-ink); padding-bottom: 11px; margin-bottom: 12px; }
+.track .th-name { font-weight: bold; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; }
+.track .th-meta { font-size: 13px; color: var(--pk-dim); margin-top: 5px; letter-spacing: .03em; }
+.track .trk-blurb { font-style: italic; text-align: center; margin: 0 0 16px; padding: 0 6px; }
+.track .trk-sec { margin-bottom: 16px; break-inside: avoid; }
+.track .trk-sec h3 { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; border-bottom: 1px solid var(--pk-rule); padding-bottom: 3px; margin: 0 0 9px; color: var(--pk-crimson2); }
+.track .trk-terrain { margin: 4px 0 10px; color: var(--pk-dim); }
+.track .trk-side { border-left: 3px solid var(--pk-rule); padding: 6px 12px; margin-bottom: 9px; background: var(--pk-box); }
+.track .trk-side.mine { border-left-color: var(--pk-crimson); }
+.track .trk-side .ts-role { font-weight: bold; letter-spacing: .1em; font-size: 12px; text-transform: uppercase; margin-bottom: 3px; }
+.track .trk-side .ts-you { color: var(--pk-crimson2); letter-spacing: .04em; }
+.track .trk-side p { margin: 0 0 4px; }
+.track .trk-side .ts-extra { color: var(--pk-dim); font-size: 13px; margin-bottom: 0; }
+.track .trk-obj .to-row { display: grid; grid-template-columns: 92px 1fr auto; gap: 10px; padding: 4px 0; align-items: baseline; }
+.track .trk-obj .to-name { font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: .08em; }
+.track .trk-obj .to-vp { font-weight: bold; color: var(--pk-crimson2); }
+.track .trk-rules .tr-lead { margin: 0 0 8px; font-style: italic; color: var(--pk-dim); }
+.track .trk-rules .tr-rule { margin-bottom: 6px; }
+
+/* DIRECTIVE-124 — the authored premade-hotspot brief (the single brief; GM overlay) */
+.hotspot .trk-op { font-weight: bold; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; }
+.hotspot .trk-meta { font-size: 12.5px; color: var(--pk-dim); margin-top: 4px; letter-spacing: .02em; }
+.hs-sec { margin-bottom: 15px; break-inside: avoid; }
+.hs-h { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; border-bottom: 1px solid var(--pk-rule); padding-bottom: 3px; margin: 0 0 8px; color: var(--pk-crimson2); }
+.hs-h2 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--pk-crimson2); margin: 12px 0 5px; }
+.hs-p { margin: 0 0 8px; line-height: 1.5; white-space: pre-line; } /* HOTSPOT-BRIEF v1 Amendment A — authored/forged paragraphs render */
+.hs-p.hs-em { font-style: italic; color: var(--pk-dim); }
+.hs-req-signed { color: var(--pk-crimson2); } /* IMPORT-7 Part D — the live signed-scale provenance line */
+.hs-p.hs-gm { border-left: 3px solid var(--pk-crimson); padding-left: 10px; color: var(--pk-dim); }
+.hs-sys { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 3px 14px; }
+.hs-kv { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted var(--pk-rule); padding: 2px 0; font-size: 12.5px; min-width: 0; } /* min-width — HOTSPOT-BRIEF v1 rider: long values wrap instead of crowding the neighbor cell */
+.hs-kv span { color: var(--pk-dim); text-transform: uppercase; letter-spacing: .04em; font-size: 10.5px; }
+.hs-kv b { font-weight: bold; overflow-wrap: anywhere; text-align: right; }
+.hs-obj .hs-orow { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; padding: 4px 0; align-items: baseline; border-bottom: 1px solid var(--pk-rule); }
+.hs-ovp { font-weight: bold; color: var(--pk-crimson2); }
+.hs-oside { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--pk-dim); border: 1px solid var(--pk-rule); padding: 0 5px; white-space: nowrap; }
+.hs-comp .hs-crow { display: grid; grid-template-columns: 70px 1fr; gap: 10px; padding: 3px 0; align-items: baseline; }
+.hs-croll { font-weight: bold; color: var(--pk-crimson2); }
+.track .trk-rules .tr-name { font-weight: bold; }
+/* DIRECTIVE-IMPORT-6 Part E — the sections the TRACK sheet gained when the Traditional dossier was dropped for HS */
+.track .trk-sit p { margin: 0 0 8px; line-height: 1.5; }
+.track .trk-deploy { margin-top: 8px; border-top: 1px dotted var(--pk-rule); padding-top: 6px; }
+.track .trk-deploy p { margin: 0 0 4px; font-size: 13px; }
+.track .trk-rules .tr-standing { margin-top: 10px; border-top: 1px solid var(--pk-rule); padding-top: 7px; }
+.track .trk-rules .tr-standing-h { font-weight: bold; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--pk-dim); margin-bottom: 5px; }
+.track .trk-addendum .ta-block { margin-bottom: 12px; }
+.track .trk-addendum .ta-h { font-weight: bold; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--pk-dim); margin-bottom: 5px; }
+.track .trk-addendum .fd-dp { margin-bottom: 8px; }
+.track .trk-addendum .fd-name { font-weight: bold; }
+.track .trk-addendum .fd-opt { padding-left: 15px; position: relative; }
+.track .trk-addendum .fd-opt::before { content: "▸"; position: absolute; left: 0; color: var(--pk-crimson); }
+.track .trk-clock .fc-row { display: grid; grid-template-columns: 168px 1fr; gap: 10px; padding: 2px 0; }
+.track .trk-clock .fc-row.total { border-top: 1px solid var(--pk-rule); margin-top: 3px; padding-top: 5px; font-weight: bold; }
+.track .endmark { text-align: center; letter-spacing: .1em; color: var(--pk-dim); font-size: 11px; margin: 18px 0 12px; }
+
+.pkg {
+    background: var(--pk-paper); color: var(--pk-ink); font-family: "Courier New", Courier, monospace;
+    line-height: 1.45; font-size: 14px; max-width: 980px; width: 100%; padding: 30px 34px;
+    border: 1px solid var(--pk-crimson2); box-shadow: 0 10px 40px rgba(0, 0, 0, .5);
+}
+.pkg * { box-sizing: border-box; }
+.classbar { background: var(--pk-crimson); color: var(--pk-paper2); text-align: center; letter-spacing: .22em;
+    font-weight: bold; padding: 7px 10px; border: 2px solid var(--pk-crimson2); margin: 0 0 18px; }
+.masthead { text-align: center; margin-bottom: 10px; position: relative; }
+.masthead .unit { font-weight: bold; letter-spacing: .16em; font-size: 15px; }
+.masthead .subm { letter-spacing: .3em; font-size: 12px; color: var(--pk-dim); margin-top: 4px; }
+.masthead.stamp::after { content: attr(data-stamp); position: absolute; top: 0; right: 0; transform: rotate(6deg);
+    border: 2px solid var(--pk-stamp); color: var(--pk-stamp); padding: 2px 8px; font-size: 10px; letter-spacing: .14em; opacity: .72; }
+.opname { font-size: 40px; letter-spacing: .1em; font-weight: bold; text-align: center; margin: 14px 0 2px; text-transform: uppercase; }
+.oploc { text-align: center; letter-spacing: .2em; color: var(--pk-dim); font-size: 13px; }
+.threat { display: block; width: max-content; margin: 14px auto; border: 2px solid var(--pk-ink); padding: 5px 26px; letter-spacing: .2em; font-weight: bold; }
+.cycle { text-align: center; letter-spacing: .16em; font-size: 12px; margin-bottom: 4px; }
+.srcline { text-align: center; font-style: italic; font-size: 12px; color: var(--pk-dim); }
+.txbox, .npcbox, .intentbox { border: 2px solid var(--pk-ink); background: var(--pk-box); padding: 12px 16px; margin: 16px 0; }
+.txbox .hd, .npcbox .hd, .intentbox .hd { font-weight: bold; letter-spacing: .12em; margin-bottom: 8px; }
+.npcbox { border-left: 7px solid var(--pk-crimson); }
+.npcbox.staff { border-left: 7px solid var(--pk-warn); }
+.intentbox { border-left: 7px solid var(--pk-ink); }
+.vline { margin: 4px 0; }
+h2 { border-bottom: 3px double var(--pk-ink); padding-bottom: 4px; margin-top: 32px; letter-spacing: .06em; font-size: 19px; }
+h3 { letter-spacing: .05em; font-size: 15px; margin-top: 22px; color: var(--pk-crimson2); }
+.pkg table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+.pkg th { background: var(--pk-thead); border: 1px solid var(--pk-rule); padding: 6px 8px; text-align: left; letter-spacing: .06em; }
+.pkg td { border: 1px solid var(--pk-rule); padding: 6px 8px; vertical-align: top; }
+.pkg tr:nth-child(even) td { background: var(--pk-paper2); }
+.of-mech { display: flex; align-items: center; gap: 7px; } /* HOTFIX-003: OpFor 'Mech cell — sprite via the ONE path */
+.of-ic { flex: 0 0 auto; }
+.kv td:first-child { font-weight: bold; width: 50%; }
+.trig { color: var(--pk-dim); font-style: italic; font-size: 12px; }
+.opt { border: 1.5px solid var(--pk-ink); margin: 14px 0; background: var(--pk-box); }
+.opt .opthd { background: var(--pk-ink); color: var(--pk-paper); padding: 5px 12px; font-weight: bold; letter-spacing: .08em; display: flex; justify-content: space-between; gap: 10px; }
+.opt .gate { color: #f2c0c0; font-size: 11px; letter-spacing: .1em; }
+.opt ul { margin: 8px 0 8px 4px; padding-left: 22px; }
+.opt .adv::marker { content: "▲ "; } .opt .dis::marker { content: "▼ "; }
+.opt .conseq { border-top: 1px dashed var(--pk-rule); margin: 0 12px 10px; padding-top: 8px; font-style: italic; }
+.opt .cost { margin: 8px 12px 0; padding: 6px 10px; background: var(--pk-thead); border: 1px dashed var(--pk-ink); font-size: 12.5px; letter-spacing: .03em; }
+.opt .cost.reprice { background: #ead9c9; border-color: var(--pk-crimson); }
+.opt.locked { opacity: .55; }
+.opt.locked .opthd { background: var(--pk-dim); }
+.deadline { border: 2px solid var(--pk-crimson); background: #ead9c9; color: var(--pk-crimson2); font-weight: bold; padding: 10px 14px; margin: 14px 0; letter-spacing: .03em; }
+/* ── D-035 depth blocks ── */
+.npcbox.cmdr { border-left: 7px solid var(--pk-crimson2); }
+.protocol { border: 2px dashed var(--pk-ink); background: var(--pk-box); padding: 12px 16px; margin: 14px 0; }
+.protocol .hd { font-weight: bold; letter-spacing: .12em; margin-bottom: 8px; }
+.ksub { font-style: italic; color: var(--pk-dim); }
+.opt.asset .adetail { margin: 8px 12px 10px; }
+.dim { color: var(--pk-dim); font-style: italic; }
+h2.appx { margin-top: 40px; }
+.story { margin: 18px 8px; padding: 14px 18px; border-left: 4px solid var(--pk-rule); font-style: italic; color: #3d3527; }
+.closing { text-align: center; font-weight: bold; letter-spacing: .3em; margin: 30px 0 8px; }
+.endmark { text-align: center; color: var(--pk-dim); font-size: 12px; letter-spacing: .2em; margin-bottom: 20px; }
+.resline { font-size: 12.5px; color: var(--pk-dim); letter-spacing: .03em; margin-top: 8px; }
+
+@media (max-width: 600px) {
+    .pkg { padding: 16px 12px; font-size: 13px; }
+    .opname { font-size: 28px; }
+    .masthead.stamp::after { display: none; }
+}
+@media print {
+    .pkg-overlay { position: static; background: #fff; padding: 0; overflow: visible; }
+    .pkg { box-shadow: none; border: none; max-width: none; }
+    .classbar, .opt .opthd { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-print { display: none; }
+    /* D-035 — paper discipline for the depth sections: boxes never split; appendices open fresh pages */
+    .npcbox, .opt, .txbox, .intentbox, .protocol, .deadline { break-inside: avoid; }
+    .pkg table tr { break-inside: avoid; }
+    h2.appx { break-before: page; }
+    /* DIRECTIVE-101 — FRAGORD prints as its own ~3-page section; when both are shown the WARNORD starts on a fresh page. */
+    .frag { break-after: page; }
+    .frag .frag-sec, .frag .frag-head, .frag .frag-opfor { break-inside: avoid; }
+    /* DIRECTIVE-117 — the HS TRACK prints as its own section too (same discipline as the FRAGORD it replaces). */
+    .track { break-after: page; }
+    /* IMPORT-6 Part E — under Hot Spots the TRACK sheet is now the ONLY article: no trailing blank page (HS-only selector). */
+    .track:last-of-type { break-after: auto; }
+    .track .trk-sec, .track .trk-head, .track .trk-side { break-inside: avoid; }
+}

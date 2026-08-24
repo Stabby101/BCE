@@ -1,0 +1,56 @@
+/* Settings tab (D-038) — rides the dashboard's .theme-dossier tokens. */
+:host { display: block; }
+
+.ph { font-family: var(--label); font-weight: 600; letter-spacing: 2.5px; font-size: 13px; text-transform: uppercase; border-bottom: 1.5px solid var(--ink); padding-bottom: 6px; margin: 0 0 12px; }
+.ph.flat { border: none; margin: 0 0 8px; }
+.scaf { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--stamp); border: 1px solid var(--stamp); padding: 1px 6px; float: right; }
+.note { font-family: var(--type); font-size: 13px; color: var(--ink2); line-height: 1.6; }
+.note b { color: var(--ink); }
+code { font-family: var(--mono); font-size: 11px; background: var(--paper2); border: 1px solid var(--line); padding: 1px 5px; }
+
+.set-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 12px; }
+.set-card { border: 1.5px solid var(--ink); background: var(--paper2); padding: 12px 14px; }
+.sc-h { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 11.5px; text-transform: uppercase; color: var(--ink); margin-bottom: 9px; }
+.sc-h .mig { font-family: var(--mono); font-size: 9px; letter-spacing: .3px; text-transform: none; color: var(--ink2); margin-left: 6px; }
+.sc-note { font-family: var(--mono); font-size: 10px; line-height: 1.5; color: var(--ink2); margin: 9px 0 0; }
+.sc-note.warn { color: var(--warn); }
+.sc-note code, .sc-note.warn code { background: var(--paper); border: 1px solid var(--warn); padding: 1px 5px; }
+
+/* DEPLOY-009: the guest recovery-code card — AMBER, distinct from the blue player-join QR. */
+.rec-card { border-color: #c79a3a; border-left-width: 4px; }
+.rec-card .sc-h .mig { color: #8a6410; }
+.rec-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rec-val { font-family: var(--mono); font-weight: 700; font-size: 20px; letter-spacing: 3px; color: #8a6410; background: var(--paper); border: 1.4px solid #c79a3a; padding: 6px 12px; }
+.rec-card .testbtn { margin-top: 0; border-color: #c79a3a; color: #8a6410; }
+.rec-card .testbtn:hover:not(:disabled) { background: #c79a3a; color: #1a1407; }
+.rec-qr { margin-top: 10px; width: 132px; height: 132px; background: #fff; padding: 6px; border: 1px solid var(--line); }
+.rec-qr :is(svg) { width: 100%; height: 100%; display: block; }
+
+.modebtns { display: flex; gap: 6px; }
+.mbtn { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 12px; text-transform: uppercase; border: 1.4px solid var(--ink2); background: transparent; color: var(--ink2); padding: 9px 16px; cursor: pointer; min-height: 42px; flex: 1 1 auto; }
+.mbtn.on { border-color: var(--ok); background: var(--ok); color: var(--paper); }
+.mbtn.dis { opacity: .4; cursor: not-allowed; }
+
+.sc-in, .sc-sel { width: 100%; font-family: var(--mono); font-size: 12px; padding: 9px 10px; border: 1.3px solid var(--ink2); background: var(--paper); color: var(--ink); box-sizing: border-box; }
+.testbtn { margin-top: 9px; font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 11px; text-transform: uppercase; border: 1.4px solid var(--stamp); background: transparent; color: var(--stamp); padding: 8px 14px; cursor: pointer; min-height: 40px; }
+.testbtn:hover:not(:disabled) { background: var(--stamp); color: var(--paper); }
+.testbtn:disabled { opacity: .6; cursor: wait; }
+.testres { font-family: var(--mono); font-size: 11px; line-height: 1.5; margin-top: 9px; padding: 8px 10px; border: 1.2px solid var(--line); background: var(--paper); }
+.testres.ok { border-color: var(--ok); }
+.testres.bad { border-color: var(--stamp); }
+.testres b { color: var(--ink); }
+.tr-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+.tr-dot.ok { background: var(--ok); } .tr-dot.bad { background: var(--stamp); }
+.tr-model { color: var(--ink2); margin-top: 3px; }
+
+.tog { display: flex; align-items: center; gap: 8px; font-family: var(--type); font-size: 12.5px; color: var(--ink); margin: 6px 0; cursor: pointer; }
+.tog input { width: 16px; height: 16px; accent-color: var(--stamp); }
+
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.stat { border: 1.5px solid var(--ink); background: var(--paper2); padding: 10px 12px; }
+.stat.warn { box-shadow: inset 3px 0 0 var(--ok); }
+.stat .l { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 10px; text-transform: uppercase; color: var(--ink2); }
+.stat .v { font-family: var(--stencil); font-size: 22px; margin-top: 4px; line-height: 1; }
+.stat .v.sm { font-size: 14px; font-family: var(--mono); }
+.stat .v small { font-family: var(--mono); font-size: 10px; color: var(--ink2); }
+.stat .s { font-family: var(--mono); font-size: 10px; color: var(--ink2); margin-top: 3px; }

@@ -1,0 +1,233 @@
+/*
+ * BCE retool — interim client-side campaign persistence. DIRECTIVE-011 (T-019).
+ * Snapshots the NewCampaignState SETUP (era … resources) to a single most-recent,
+ * versioned localStorage slot at Begin, and rehydrates it on app load so a dashboard
+ * refresh stays on the dashboard (rehydrate-before-guard). This is a STAND-IN for the
+ * engine/host record (DATA-002) — versioned, serializable, DOM-free — so it migrates
+ * cleanly to the server-authoritative store later. Single slot; Begin overwrites.
+ * No per-unit / damage / pilot state here (that is T-017 / the engine).
+ */
+import { Injectable, inject } from '@angular/core';
+import {
+    NewCampaignState,
+    type CampaignEra,
+    type CampaignStartDate,
+    type CampaignUnitSize,
+    type CampaignCapital,
+    type CampaignLogEntry,
+    type IntelState,
+    type PayrollShortfall,
+    type WarchestEntry,
+} from './new-campaign-state';
+import type { ChaosContract } from './chaos/chaos-contract'; // D-110
+import type { PresetTrack } from './chaos/chaos-track-preset'; // D-116
+import type { GameSystem } from '../models/common.model';
+import type { ContractMarket, ContractOffer } from './contract/contract-market';
+import type { ProtoInstance } from './force/force-generator';
+import type { ForceStructure } from './force/force-structure';
+import type { Pilot } from './barracks/pilot-generator';
+import type { MissionSpec } from './mission/mission-spec';
+import type { MissionBranch, TreeArchiveEntry, OutcomeRecord } from './mission/mission-tree';
+import type { Bay, BayHistoryEntry, TechPool } from './repair/repair-bays';
+import type { InventoryState } from './inventory/starting-inventory';
+import type { ShopOrder } from './inventory/inventory-shop';
+import type { PersonnelState, HiringMarket } from './personnel/starting-personnel';
+
+const STORAGE_KEY = 'bce.campaign.v1';
+const SCHEMA_VERSION = 1;
+
+export interface CampaignSnapshot {
+    version: number;
+    savedAt: number;
+    era: CampaignEra | null;
+    startDate: CampaignStartDate | null;
+    force: string | null;
+    faction: string | null;
+    unit: string | null;
+    unitSize: CampaignUnitSize | null;
+    capital: CampaignCapital | null;
+    resources: string | null;
+    // Merc command identity (D-016) — optional so older snapshots stay valid (no version bump).
+    commandName?: string | null;
+    rating?: string | null;
+    logisticsProfile?: string | null;
+    // Merc contract market (D-017) — optional, migration-safe.
+    contractMarket?: ContractMarket | null;
+    acceptedContract?: ContractOffer | null;
+    houseOrder?: ContractOffer | null;
+    // RNG starting force (D-018) — optional; pre-D-018 saves lack it -> generate-on-first-load.
+    startingForce?: ProtoInstance[] | null;
+    // Force structure (D-019) — optional; pre-D-019 saves lack it -> structure-on-first-load.
+    forceStructure?: ForceStructure | null;
+    // Pilots (D-020) — optional; pre-D-020 saves lack it -> pilots-on-first-load.
+    pilots?: Pilot[] | null;
+    // Formation (D-021) — chosen canon OOB command name (non-merc); optional, migration-safe.
+    formation?: string | null;
+    // Campaign clock + treasury + contract log (D-022) — optional; pre-D-022 saves default the
+    // date to the start date and the treasury to the capital value on load.
+    currentDate?: CampaignStartDate | null;
+    treasury?: number | null;
+    completedContracts?: ContractOffer[] | null;
+    // Mission spec (D-023) — the active contract's generated mission record; optional, migration-safe.
+    missionSpec?: MissionSpec | null;
+    // Forge assignments (D-025) — persistent campaign-level NPC + staff-voice casting; optional.
+    npcAssignments?: Record<string, string> | null;
+    staffVoices?: Record<string, string> | null;
+    outcomeLedger?: OutcomeRecord[] | null;            // D-077 — outcome-feedback ledger
+    escalationByThread?: Record<string, number> | null; // D-077 — per-thread escalation level
+    escalationCampaign?: number | null;                 // D-077 — campaign-wide tempo fallback
+    // Mission tree (D-026) — the branching spine for the active contract; optional, migration-safe.
+    missionTree?: MissionBranch[] | null;
+    // Tree archive (D-028) — closed trees of completed contracts for FLOW recall; optional.
+    treeArchive?: TreeArchiveEntry[] | null;
+    // Campaign log (D-029) — dated purchase/sale/admin entries; optional.
+    campaignLog?: CampaignLogEntry[] | null;
+    // Repair & salvage bays (D-033) — the 4 bays + dated bay history; optional, migration-safe (no version bump).
+    bays?: Bay[] | null;
+    bayHistory?: BayHistoryEntry[] | null;
+    // Intel (D-034) — contact statuses + introduced contacts + the GM notebook; optional, migration-safe.
+    intel?: IntelState | null;
+    // Tech pool (D-037) — the bays' stored identity; optional, migration-safe.
+    techPool?: TechPool | null;
+    // Starting inventory (D-056) — the rolled stockpile (ammo/armor/components); optional, migration-safe
+    // (no version bump). Forward-only ensureStartingInventory() back-fills saves that lack it. DATA-002.
+    inventory?: InventoryState | null;
+    // Shop orders (D-065) — pending out-of-system orders in transit; optional, migration-safe (no version bump).
+    shopOrders?: ShopOrder[] | null;
+    // Support personnel (D-058) — the rolled support roster + staffing + payroll; optional, migration-safe
+    // (no version bump). Forward-only ensureStartingPersonnel() back-fills saves that lack it. DATA-002.
+    personnel?: PersonnelState | null;
+    // Hiring hall (D-059) — the refreshing candidate market {periodKey, pool}; optional, migration-safe
+    // (no version bump). Rebuilt per campaign month by ensureHiringMarket(). DATA-002.
+    hiringMarket?: HiringMarket | null;
+    // Payroll shortfalls (D-075) — recorded unpaid-payroll months for the future T-040 turnover system;
+    // optional, migration-safe (no version bump). DATA-002.
+    payrollShortfalls?: PayrollShortfall[] | null;
+    // Star Map (D-079) — the campaign's current location (a systemId in star/systems.json); optional,
+    // migration-safe (no version bump). Old saves lack it → hydrate defaults null. DATA-002.
+    currentLocation?: string | null;
+    // Game system (D-083) — Alpha Strike vs Classic BattleTech; optional, migration-safe (no version bump).
+    // Old saves lack it → hydrate defaults Classic BattleTech ('cbt'). DATA-002.
+    gameSystem?: GameSystem | null;
+    // Campaign system (D-108) — Traditional (Campaign Operations) vs Hot Spots (Chaos Campaign), + the chosen Hot
+    // Spot campaign id; optional, migration-safe. Old saves lack them → hydrate defaults null (Traditional). DATA-002.
+    campaignSystem?: 'traditional' | 'hotspots' | null;
+    packId?: string | null; // ODM-1 — additive campaign-pack discriminator
+    odmOutcomes?: Record<string, { tier: 'FULL_SUCCESS' | 'SUCCESS' | 'MISSION_FAILURE' | 'CRITICAL_FAILURE'; flags: string[] }> | null; // ODM-3
+    odmActiveNodeId?: string | null; // ODM-3
+    odmSeeds?: Record<string, string> | null; // ODM-7
+    hotSpotCampaign?: string | null;
+    // Warchest (D-109) — the Chaos Campaign SP economy (Hot Spots only): balance, Reputation, Contract Scale, and
+    // the Contract Record Sheet ledger. Optional, migration-safe. Old/Traditional saves lack them → null/1/[]
+    // (no Warchest tab). DATA-002. (Runtime economy state → persisted via the host-store snapshot.)
+    warchestSP?: number | null;
+    reputation?: number | null;
+    contractScale?: number | null;
+    gmDifficulty?: number | null; // D-124
+    warchestLedger?: WarchestEntry[] | null;
+    // Chaos contract (D-110) — the active clean-room contract (Hot Spots); optional, migration-safe. Old saves → null.
+    activeChaosContract?: ChaosContract | null;
+    // D-116 — user-authored Hot Spots track presets; optional, migration-safe. Old saves → [].
+    chaosTrackPresets?: PresetTrack[] | null;
+    customHotSpots?: import('./chaos/hotspots-catalog').HotSpot[] | null; // D-124
+    // HSFORGE-1 — forged (Forge-generated) hotspots; a SIBLING slice to customHotSpots (ruling D1: engine
+    // content, never custom-stamped, not read by the api guest gate). Optional, migration-safe (no version
+    // bump — the additive pattern every optional field since D-059 uses). Old saves lack it → [].
+    forgedHotSpots?: import('./chaos/hotspots-catalog').HotSpot[] | null;
+    // HSFORGE-1 P2 — the merc command's theater (region id); optional, migration-safe. Old saves → null (era-only).
+    hsRegion?: string | null;
+    hiredMercs?: import('./chaos/hire-personnel').HiredMerc[] | null; // IMPORT-3 P2
+    contractHiredKeys?: string[] | null; // IMPORT-3 P2
+    hotSpotOffer?: string[] | null; // D-124b
+    hotSpotShowAll?: boolean | null; // D-129
+    reckoningBegun?: boolean | null; // D-135
+}
+
+@Injectable({ providedIn: 'root' })
+export class CampaignPersistenceService {
+    private readonly state = inject(NewCampaignState);
+
+    /** Snapshot the assembled campaign setup to the single most-recent slot (overwrites). */
+    save(): void {
+        const s = this.state;
+        const snap: CampaignSnapshot = {
+            version: SCHEMA_VERSION,
+            savedAt: Date.now(),
+            era: s.era(),
+            startDate: s.startDate(),
+            force: s.force(),
+            faction: s.faction(),
+            unit: s.unit(),
+            unitSize: s.unitSize(),
+            capital: s.capital(),
+            resources: s.resources(),
+            gameSystem: s.gameSystem(), // D-083
+            campaignSystem: s.campaignSystem(), // D-108
+            packId: s.packId(), // ODM-1
+            odmOutcomes: s.odmOutcomes(), odmActiveNodeId: s.odmActiveNodeId(), // ODM-3 — additive
+            odmSeeds: s.odmSeeds(), // ODM-7 — the seed is the only OpFor artifact in the fanned snapshot
+            hotSpotCampaign: s.hotSpotCampaign(),
+            warchestSP: s.warchestSP(), // D-109 (runtime economy; the authoritative round-trip is the host store)
+            reputation: s.reputation(),
+            contractScale: s.contractScale(),
+            gmDifficulty: s.gmDifficulty(), // D-124
+            warchestLedger: s.warchestLedger(),
+            activeChaosContract: s.activeChaosContract(), // D-110
+            chaosTrackPresets: s.chaosTrackPresets(), // D-116
+            customHotSpots: s.customHotSpots(), // D-124
+            forgedHotSpots: s.forgedHotSpots(), // HSFORGE-1
+            hsRegion: s.hsRegion(), // HSFORGE-1 P2
+            hiredMercs: s.hiredMercs(), contractHiredKeys: s.contractHiredKeys(), // IMPORT-3 P2
+            hotSpotOffer: s.hotSpotOffer(), // D-124b
+            hotSpotShowAll: s.hotSpotShowAll(), // D-129
+            reckoningBegun: s.reckoningBegun(), // D-135
+        };
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(snap));
+        } catch {
+            /* storage full / unavailable — non-fatal for a scaffold snapshot */
+        }
+    }
+
+    /** Load + validate the snapshot, or null if absent / corrupt / unknown version. */
+    load(): CampaignSnapshot | null {
+        let raw: string | null = null;
+        try {
+            raw = localStorage.getItem(STORAGE_KEY);
+        } catch {
+            return null;
+        }
+        if (!raw) return null;
+        try {
+            const snap = JSON.parse(raw) as CampaignSnapshot;
+            // Migration hook: when SCHEMA_VERSION bumps, upgrade older snapshots here.
+            if (!snap || snap.version !== SCHEMA_VERSION) return null;
+            return snap;
+        } catch {
+            return null;
+        }
+    }
+
+    /** A usable saved campaign exists (enough to render the dashboard). */
+    exists(): boolean {
+        const snap = this.load();
+        return !!snap && !!snap.era && !!snap.resources;
+    }
+
+    /** Restore the saved snapshot into NewCampaignState. Returns true if rehydrated. */
+    rehydrate(): boolean {
+        const snap = this.load();
+        if (!snap) return false;
+        this.state.hydrate(snap);
+        return true;
+    }
+
+    /** Clear the single slot. */
+    clear(): void {
+        try {
+            localStorage.removeItem(STORAGE_KEY);
+        } catch {
+            /* ignore */
+        }
+    }
+}

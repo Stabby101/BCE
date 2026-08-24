@@ -1,0 +1,530 @@
+@if (vm(); as v) {
+<div class="pkg-overlay" (click)="onClose()">
+  <div class="pkg-actions no-print">
+    @if (canRefine()) {
+      <button type="button" class="pa-btn refine" [disabled]="refining()" (click)="refine(); $event.stopPropagation()">{{ refining() ? '✦ Refining…' : '✦ Refine mission' }}</button>
+    }
+    @if (coherence()) {
+      <button type="button" class="pa-btn coh" [class.on]="cohOpen()" (click)="toggleCoh(); $event.stopPropagation()" title="Show / hide the GM coherence read (Esc dismisses)">⚖ Coherence</button>
+    }
+    <!-- DIRECTIVE-101: WARNORD / FRAGORD are INDEPENDENT (either, or both) — the print path prints whatever is shown.
+         DIRECTIVE-124: a premade hotspot renders the ONE authored brief, so the Forge format toggles are hidden.
+         DIRECTIVE-IMPORT-6 Part E: ANY Hot Spots track renders the TRACK sheet only — the toggles are Traditional-only. -->
+    @if (!hotspotBrief() && !trackOnly()) {
+      <button type="button" class="pa-btn fmt" [class.on]="showWarnord()" (click)="toggleWarnord(); $event.stopPropagation()" title="Full dossier — WARNORD">▤ WARNORD</button>
+      <button type="button" class="pa-btn fmt" [class.on]="showFragord()" (click)="toggleFragord(); $event.stopPropagation()" [title]="isHotspots() ? 'Track sheet — the rulebook five-part layout' : 'Condensed ~3-page order — FRAGORD'">{{ isHotspots() ? '▦ TRACKS' : '▦ FRAGORD' }}</button>
+    }
+    <button type="button" class="pa-btn" (click)="onPrint(); $event.stopPropagation()">⎙ Print</button>
+    <button type="button" class="pa-btn close" (click)="onClose(); $event.stopPropagation()">✕ Close</button>
+  </div>
+  @if (canRefine() && results().length) {
+    <div class="refine-results no-print" (click)="$event.stopPropagation()">
+      @for (r of results(); track r.id) {
+        <span class="rr" [class.ok]="r.status === 'accepted'" [class.rej]="r.status === 'rejected'" [class.err]="r.status === 'error'">
+          {{ r.label }}: <b>{{ r.status }}</b>@if (r.gate) { — {{ r.gate }} }@if (r.status === 'accepted') { ({{ r.ms }}ms@if (r.validate) { · {{ r.validate.verdict }} }) }
+        </span>
+      }
+    </div>
+  }
+  <!-- D-043 — the GM-only COHERENCE verdict (advisory; the narrator reasons, the GM decides) -->
+  @if (coherence(); as cv) { @if (cohOpen()) {
+    <div class="coherence-panel no-print" [class.clean]="cv.reads === 'clean'" [class.flagged]="cv.reads === 'flags'" (click)="$event.stopPropagation()">
+      <div class="coh-h">⚖ COHERENCE READ — GM ONLY <span class="coh-model">{{ cv.model }}</span>
+        <button type="button" class="coh-x" title="Dismiss (Esc) — recall via ⚖ Coherence" (click)="closeCoh()">✕</button>
+      </div>
+      @if (cv.reads === 'clean') {
+        <div class="coh-body clean">Reads clean — timeline, OpFor, forks, and assets are internally consistent.</div>
+      } @else {
+        <ul class="coh-flags">
+          @for (f of cv.flags; track $index) { <li><b>{{ f.where }}</b> — {{ f.issue }}</li> }
+        </ul>
+      }
+      @if (refineLog().length) {
+        <div class="coh-changelog">
+          <div class="cl-h">WHAT THE REFINE CHANGED — prose only · no number, name, objective, or fork was altered OR invented (the machine diff guards every refined section — drift and fabricated figures both auto-reject to template)</div>
+          @for (e of refineLog(); track $index) {
+            <details class="cl-entry" [class.rej]="e.status !== 'accepted'">
+              <summary>{{ e.label }} — <b>{{ e.status === 'accepted' ? '✦ rewritten' : 'kept template' }}</b>@if (e.status !== 'accepted' && e.gate) { <span class="cl-why">rejected: {{ e.gate }}</span> }</summary>
+              @if (e.status === 'accepted' && e.after) {
+                <div class="cl-before"><span class="cl-tag">BEFORE</span> {{ e.before }}</div>
+                <div class="cl-after"><span class="cl-tag">AFTER</span> @for (t of proseDiff(e.before, e.after); track $index) { <span [class.ins]="t.add">{{ t.t }}</span> }</div>
+              } @else {
+                <div class="cl-kept">Template stands — the model's rewrite failed the machine diff, so nothing changed here.</div>
+              }
+            </details>
+          }
+        </div>
+      }
+      <div class="coh-note">Advisory only — the narrator reasons over the whole package; it never edits structure. The GM acts.</div>
+    </div>
+  } }
+
+  <!-- DIRECTIVE-124 — the AUTHORED premade-hotspot brief. The ONE brief (same source drives the player tablet);
+       renders instead of the Forge FRAGORD/WARNORD, which are suppressed below when a hotspot is bound. -->
+  @if (hotspotBrief(); as hb) {
+  <article class="pkg track hotspot" (click)="$event.stopPropagation()">
+    <div class="classbar">{{ v.classbar }}</div>
+    <div class="trk-tag">HOT SPOT</div>
+    <header class="trk-head">
+      <div class="trk-op">{{ hb.trackName }}</div>
+      <div class="trk-meta">{{ hb.world }} &middot; {{ hb.employer }} &middot; {{ hb.type }}</div>
+      <div class="trk-meta">Track template: {{ hb.trackTemplate }}</div>
+    </header>
+    @if (sysProfileRows().length || hb.systemProfile?.description) {
+      <section class="hs-sec"><div class="hs-h">System Profile — {{ hb.world }}</div>
+        @if (sysProfileRows().length) { <div class="hs-sys">@for (r of sysProfileRows(); track r.label) { <div class="hs-kv"><span>{{ r.label }}</span><b>{{ r.value }}</b></div> }</div> }
+        <!-- IMPORT-5 Part F — the free-text planet description (prose, not a key/value row). -->
+        @if (hb.systemProfile?.description) { <p class="hs-p">{{ hb.systemProfile.description }}</p> }
+      </section>
+    }
+    <section class="hs-sec"><div class="hs-h">Situation</div>
+      <p class="hs-p">{{ hb.situation }}</p>
+      <p class="hs-p hs-em">{{ hb.trackSituation }}</p>
+    </section>
+    <section class="hs-sec"><div class="hs-h">Deployment</div><p class="hs-p">{{ hb.deployment }}</p></section>
+    <section class="hs-sec"><div class="hs-h">Objectives</div>
+      <div class="hs-obj">@for (o of hb.objectives; track $index) {
+        <div class="hs-orow"><span class="hs-ovp">[{{ o.vp }}]</span><span class="hs-otext">{{ o.text }}</span>@if (o.side) { <span class="hs-oside">{{ o.side }}</span> }</div>
+      }</div>
+    </section>
+    <section class="hs-sec"><div class="hs-h">Rules &amp; Resolution</div>
+      @if (hb.specialRules) { <p class="hs-p"><b>Special rules.</b> {{ hb.specialRules }}</p> }
+      <!-- IMPORT-6 Part E — a custom track may leave these blank: standard track end / a dash instead of a bare label. -->
+      <p class="hs-p"><b>Track end.</b> {{ hsTrackEnd() }}</p>
+      <p class="hs-p"><b>Salvage.</b> {{ hsSalvage() }}</p>
+    </section>
+    <section class="hs-sec"><div class="hs-h">Briefing</div>
+      <p class="hs-p"><b>Contract victory.</b> {{ hb.contractVictory }}</p>
+      @if (hb.tally) { <p class="hs-p"><b>Tally.</b> {{ hb.tally }}</p> }
+      @if (hb.constraints) { <p class="hs-p"><b>Constraints.</b> {{ hb.constraints }}</p> }
+      <!-- IMPORT-7 Part D — display honesty: authored scale-dependent requirements render as PROVENANCE (the Scale the content was
+           written at) plus the LIVE signed Scale; never a bare assertion that contradicts the contract. Scale freedom unchanged. -->
+      @if (hb.additionalRequirements) {
+        <p class="hs-p" data-testid="hs-req"><b>Requirements@if (hb.authoredScale) { (authored at Track Scale {{ hb.authoredScale }})}.</b> {{ hb.additionalRequirements }}
+          @if (hb.authoredScale && hb.signedScale && hb.signedScale !== hb.authoredScale) { <span class="hs-req-signed" data-testid="hs-req-signed">&middot; <b>Signed at Scale {{ hb.signedScale }}</b> — the scale-dependent figures above are the author's for Scale {{ hb.authoredScale }}; your contract runs at Scale {{ hb.signedScale }}.</span> }
+        </p>
+      }
+      @if (hb.bonus) { <p class="hs-p"><b>Bonus.</b> {{ hb.bonus }}</p> }
+      @if (hb.purchaseOptions) { <p class="hs-p"><b>Purchases.</b> {{ hb.purchaseOptions }}</p> }
+      @if (hb.complications.length) {
+        <div class="hs-h2">Complications</div>
+        <div class="hs-comp">@for (c of hb.complications; track $index) { <div class="hs-crow"><span class="hs-croll">{{ c.roll }}</span><span>{{ c.effect }}</span></div> }</div>
+      }
+      @if (hb.namedCharacters?.length) {
+        <div class="hs-h2">Named characters</div>
+        @for (n of hb.namedCharacters; track $index) { <p class="hs-p"><b>{{ n.name }}</b> — {{ n.role }}@if (n.chassis) {  &middot; {{ n.chassis }} }@if (n.skill) {  &middot; {{ n.skill }} }@if (n.rule) {. {{ n.rule }} }</p> }
+      }
+      @if (hb.behindScenes) { <div class="hs-h2">GM — behind the scenes</div><p class="hs-p hs-gm">{{ hb.behindScenes }}</p> }
+    </section>
+    <section class="hs-sec"><div class="hs-h">Opposing Force — RNG-sized to scale</div><p class="hs-p">{{ v.opforLead }}</p></section>
+  </article>
+  }
+
+  <!-- DIRECTIVE-101 — FRAGORD: the condensed ~3-page order, a RENDER over the same vm (no prose/content change).
+       When both are on it prints first as the quick-reference card, then the full WARNORD on a fresh page.
+       DIRECTIVE-124 — suppressed for a premade hotspot (the authored article above is the ONE brief). -->
+  <!-- DIRECTIVE-IMPORT-6 Part E — under Hot Spots the TRACK sheet ALWAYS renders (trackOnly), whatever the FRAGORD toggle
+       says; Traditional (trackOnly false) reduces to today's `showFragord() && !hotspotBrief()` exactly. -->
+  @if ((showFragord() || trackOnly()) && !hotspotBrief()) { @if (frag(); as f) {
+  <!-- DIRECTIVE-117 — Hot Spots TRACK: the SAME condensed order reshaped into the rulebook's five-part track sheet.
+       Traditional keeps the untouched FRAGORD article (the @else branch below, byte-identical to HEAD). -->
+  @if (isHotspots()) { @if (track(); as t) {
+  <article class="pkg track" (click)="$event.stopPropagation()">
+    <div class="classbar">{{ v.classbar }}</div>
+    <div class="trk-tag">TRACK</div>
+    <!-- (1) track name + meta -->
+    <div class="trk-head">
+      <div class="th-name">{{ t.name }}</div>
+      <div class="th-meta">{{ t.meta }}</div>
+    </div>
+    <!-- (2) italic situation blurb — no section header -->
+    @if (t.blurb) { <p class="trk-blurb">{{ t.blurb }}</p> }
+    <!-- IMPORT-6 Part E — SITUATION: the full situation paragraphs (the dropped dossier's §2 lead) beyond the blurb. -->
+    @if (t.situation.length) {
+      <section class="trk-sec trk-sit"><h3>Situation</h3>
+        @for (para of t.situation; track $index) { <p>{{ para }}</p> }
+      </section>
+    }
+    <!-- (3) GAME SETUP — home edges + DEFENDER/ATTACKER role paragraphs + terrain -->
+    <section class="trk-sec"><h3>Game Setup</h3>
+      <p>{{ t.setupText }}</p>
+      @if (t.terrain) { <p class="trk-terrain">Terrain — {{ t.terrain }}</p> }
+      @for (sd of t.sides; track sd.role) {
+        <div class="trk-side" [class.mine]="sd.isPlayer">
+          <div class="ts-role">{{ sd.role }}@if (sd.isPlayer) { <span class="ts-you">— you</span> }</div>
+          <p>{{ sd.text }}</p>
+          @if (sd.extra) { <p class="ts-extra">{{ sd.extra }}</p> }
+        </div>
+      }
+      <!-- IMPORT-6 Part E — DEPLOYMENT lines (mirrors the player brief) -->
+      @if (t.deployment.player || t.deployment.opfor) {
+        <div class="trk-deploy" data-testid="trk-deploy">
+          @if (t.deployment.player) { <p><b>Deployment — you.</b> {{ t.deployment.player }}</p> }
+          @if (t.deployment.opfor) { <p><b>Deployment — enemy.</b> {{ t.deployment.opfor }}</p> }
+        </div>
+      }
+    </section>
+    <!-- (4) OBJECTIVES — each with its VP value in brackets (IMPORT-6: every authored preset objective, else the three slots) -->
+    <section class="trk-sec trk-obj"><h3>Objectives</h3>
+      @for (o of t.objectives; track $index) {
+        <div class="to-row"><span class="to-name">{{ o.label }}</span><span class="to-text">{{ o.text }}</span><span class="to-vp">[{{ o.vp }}]</span></div>
+      }
+    </section>
+    <!-- (5) SPECIAL RULES — complications as named rules, always ending Track End + Salvage -->
+    <section class="trk-sec trk-rules"><h3>Special Rules</h3>
+      @if (t.complications.length) { <p class="tr-lead">The following rules are in effect for this track:</p> }
+      @for (cx of t.complications; track cx.name) {
+        <div class="tr-rule"><span class="tr-name">{{ cx.name }}.</span> <span class="tr-text">{{ cx.effect || cx.text }}</span></div>
+      }
+      <!-- IMPORT-6 Part C/E — a preset's authored special rules line -->
+      @if (t.specialRules) { <div class="tr-rule"><span class="tr-name">Special Rules.</span> <span class="tr-text">{{ t.specialRules }}</span></div> }
+      <div class="tr-rule"><span class="tr-name">Track End.</span> <span class="tr-text">{{ t.trackEnd }}</span></div>
+      <div class="tr-rule"><span class="tr-name">Salvage.</span> <span class="tr-text">{{ t.salvage }}</span></div>
+      <!-- IMPORT-6 Part E — the universal Chaos track rules used to live in §2.5 of the dossier this sheet replaces. -->
+      @if (t.standingRules.length) {
+        <div class="tr-standing" data-testid="trk-standing"><div class="tr-standing-h">Standing Track Rules</div>
+          @for (r of t.standingRules; track r.name) { <div class="tr-rule"><span class="tr-name">{{ r.name }}.</span> <span class="tr-text">{{ r.text }}</span></div> }
+        </div>
+      }
+    </section>
+    <!-- BCE addendum (approved fork extra): decision-point titles, the full OpFor table, the clock -->
+    <section class="trk-sec trk-addendum"><h3>BCE Addendum</h3>
+      @if (t.decisions.length) {
+        <div class="ta-block"><div class="ta-h">Decision Points</div>
+          @for (d of t.decisions; track d.name) {
+            <div class="fd-dp"><div class="fd-name">{{ d.name }}</div>
+              @for (opt of d.options; track opt) { <div class="fd-opt">{{ opt }}</div> }
+            </div>
+          }
+        </div>
+      }
+      <div class="ta-block"><div class="ta-h">Opposing Force</div>
+        <table>
+          <tr><th>Unit</th><th>Type</th><th>Tonnage</th><th>Battle Value</th></tr>
+          @for (u of v.opforRows; track $index) {
+            <tr><td class="of-mech"><bce-unit-sprite class="of-ic" [unit]="u" [size]="24"></bce-unit-sprite>{{ u.chassis }} {{ u.model }}</td><td>{{ u.unitType === 'vehicle' ? 'Vehicle' : 'BattleMech' }}</td><td>{{ u.tons }}t</td><td>{{ u.bvText }}</td></tr>
+          }
+          <tr><td><b>Total</b></td><td><b>{{ v.opforTotal.mechs }} ’Mechs@if (v.opforTotal.vehicles) { · {{ v.opforTotal.vehicles }} vehicles }</b></td><td></td><td><b>{{ v.opforTotal.bvText }} BV</b></td></tr>
+        </table>
+      </div>
+      <div class="ta-block trk-clock"><div class="ta-h">The Clock</div>
+        <div class="fc-row"><span>Hard deadline</span><b>{{ f.deadline || '—' }}</b></div>
+        <div class="fc-row"><span>Operation</span><b>≈ {{ f.operationDays }} days planetside</b></div>
+        @if (f.travel; as tr) {
+          @if (tr.hasTravel) {
+            <div class="fc-row"><span>Transit</span><b>{{ tr.jumps }} jump{{ tr.jumps === 1 ? '' : 's' }} ≈ {{ tr.jumpTransitDays }} days + {{ tr.insertionDays }}-day insertion</b></div>
+            <div class="fc-row total"><span>Total to wheels-down</span><b>≈ {{ tr.totalDays }} days</b></div>
+          } @else {
+            <div class="fc-row"><span>Window</span><b>{{ f.window }}</b></div>
+          }
+        } @else {
+          <div class="fc-row"><span>Window</span><b>{{ f.window }}</b></div>
+        }
+      </div>
+    </section>
+    <div class="endmark">— TRACK ENDS —</div>
+    <div class="classbar">{{ v.classbar }}</div>
+  </article>
+  } } @else {
+  <article class="pkg frag" (click)="$event.stopPropagation()">
+    <div class="classbar">{{ v.classbar }}</div>
+    <div class="frag-tag">FRAGORD · FRAGMENTARY ORDER</div>
+    <!-- (1) heading line -->
+    <div class="frag-head">
+      <div class="fh-op">{{ f.opname }}</div>
+      <div class="fh-meta">{{ f.matchup }} · {{ f.cycle }} · {{ f.loc }}</div>
+      <div class="fh-threat">THREAT — {{ f.threat }}</div>
+    </div>
+    <!-- (2) situation brief -->
+    <section class="frag-sec"><h3>1 · Situation</h3><p class="frag-brief">{{ f.brief }}</p></section>
+    <!-- (3) objectives — front-and-center -->
+    <section class="frag-sec frag-obj"><h3>2 · Objectives</h3>
+      @for (o of f.objectives; track o.p) { @if (o.text) { <div class="fo-row"><span class="fo-p">{{ o.p }}</span><span class="fo-t">{{ o.text }}</span></div> } }
+    </section>
+    <!-- (4) OpFor one-line — front-and-center -->
+    <section class="frag-sec frag-opfor"><h3>3 · Opposing Force</h3>
+      <p>{{ f.opforLine }}</p>
+      <p class="fo-bv">OpFor <b>{{ f.opforBv }}</b> BV vs your <b>{{ f.playerBv }}</b> BV@if (f.bvPct !== null) { · {{ f.bvPct }}% of your force } · arms mix {{ f.mechs }} 'Mech{{ f.mechs === 1 ? '' : 's' }}@if (f.vehicles) { / {{ f.vehicles }} vehicle{{ f.vehicles === 1 ? '' : 's' }} }</p>
+    </section>
+    <!-- (5) decision-point option TITLES only -->
+    @if (f.decisions.length) {
+    <section class="frag-sec"><h3>4 · Decision Points</h3>
+      @for (d of f.decisions; track d.name) {
+        <div class="fd-dp"><div class="fd-name">{{ d.name }}</div>
+          @for (t of d.options; track t) { <div class="fd-opt">{{ t }}</div> }
+        </div>
+      }
+    </section>
+    }
+    <!-- (6) the clock — operation length + the appended travel/insertion timer (D-099) -->
+    <section class="frag-sec frag-clock"><h3>5 · The Clock</h3>
+      <div class="fc-row"><span>Hard deadline</span><b>{{ f.deadline || '—' }}</b></div>
+      <div class="fc-row"><span>Operation</span><b>≈ {{ f.operationDays }} days planetside</b></div>
+      @if (f.travel; as tr) {
+        @if (tr.hasTravel) {
+          <div class="fc-row"><span>Transit</span><b>{{ tr.jumps }} jump{{ tr.jumps === 1 ? '' : 's' }} ≈ {{ tr.jumpTransitDays }} days + {{ tr.insertionDays }}-day insertion</b></div>
+          <div class="fc-row total"><span>Total to wheels-down</span><b>≈ {{ tr.totalDays }} days</b></div>
+        } @else {
+          <div class="fc-row"><span>Window</span><b>{{ f.window }}</b></div>
+        }
+      } @else {
+        <div class="fc-row"><span>Window</span><b>{{ f.window }}</b></div>
+      }
+    </section>
+    <!-- (7) force -->
+    <section class="frag-sec frag-force"><h3>6 · Force</h3><p>Assigned force — <b>{{ f.force }}</b></p></section>
+    <div class="endmark">— FRAGORD ENDS · full dossier in the WARNORD —</div>
+    <div class="classbar">{{ v.classbar }}</div>
+  </article>
+  }
+  } }
+  <!-- DIRECTIVE-IMPORT-6 Part E — the Traditional WARNORD dossier never renders under Hot Spots (trackOnly); Traditional unchanged. -->
+  @if (showWarnord() && !hotspotBrief() && !trackOnly()) {
+  <article class="pkg" (click)="$event.stopPropagation()">
+    <div class="classbar">{{ v.classbar }}</div>
+
+    <div class="masthead stamp" [attr.data-stamp]="v.stamp">
+      <div class="unit">{{ v.unit }}</div>
+      <div class="subm">OPERATIONAL MISSION BRIEFING</div>
+    </div>
+    @if (refinedStamp(); as rs) {
+      <div class="refined-stamp" title="This package was narrator-refined (prose + coherence read only)">✦ REFINED · narrator {{ rs.model }}@if (rs.at) { · {{ stampTime(rs.at) }} }</div>
+    }
+    <div class="opname">{{ v.opname }}</div>
+    <div class="oploc">{{ v.oploc }}</div>
+    <span class="threat">{{ v.threat }}</span>
+    <div class="cycle">{{ v.cycle }}</div>
+    <div class="srcline">{{ v.source }}</div>
+
+    <!-- D-099 — the appended travel/insertion + operation timer, OUTSIDE the brief (the FRAGORD §6 reads the same source). -->
+    @if (v.travel; as tr) {
+      <div class="transit-strip">
+        @if (tr.hasTravel) {
+          <b>TRANSIT</b> {{ tr.jumps }} jump{{ tr.jumps === 1 ? '' : 's' }} ≈ {{ tr.jumpTransitDays }}d + {{ tr.insertionDays }}d insertion · <b>OPERATION</b> ≈ {{ tr.operationDays }}d · <b>TOTAL</b> ≈ {{ tr.totalDays }}d to wheels-down
+        } @else {
+          <b>OPERATION</b> ≈ {{ tr.operationDays }}d planetside · no transit leg (on-station or no star map)
+        }
+      </div>
+    }
+
+    <div class="txbox">
+      <div class="hd">TRANSMISSION HEADER</div>
+      FROM: {{ v.transmission.from }}<br>
+      TO: {{ v.transmission.to }}<br>
+      RE: {{ v.transmission.re }}
+    </div>
+
+    <h2>Section 1 — Warning Order (WARNORD)</h2>
+    <table class="kv">
+      @for (row of v.warnord; track $index) { <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td></tr> }
+    </table>
+    <div class="intentbox"><div class="hd">COMMANDER'S INTENT</div>{{ v.intent }}</div>
+    @for (sv of v.sidebars.s1; track $index) {
+      <div class="npcbox staff" [class.refined]="sv.refined">
+        <div class="hd">{{ sv.header }}@if (sv.refined) { <span class="refined-tag no-print">✦ refined</span> }</div>
+        @for (l of sv.lines; track $index) { <p class="vline">“{{ l }}”</p> }
+        <div class="resline">— standing rules: {{ sv.rules }}</div>
+      </div>
+    }
+
+    <h2>Section 2 — Intelligence Picture@if (v.situationRefined) { <span class="refined-tag no-print">✦ refined</span> }</h2>
+    @for (para of v.situation; track $index) { <p>{{ para }}</p> }
+    @if (v.worldSheet; as w) {
+      <h3>2.1 Theater Data Sheet — {{ v.oploc }}</h3>
+      <table class="kv">
+        @for (row of w.rows; track $index) { <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td></tr> }
+      </table>
+      <p>{{ w.occupation }}</p>
+    }
+    <h3>2.2 Sources In Place</h3>
+    @for (n of v.npcVoices; track $index) {
+      <div class="npcbox">
+        <div class="hd">{{ n.header }}</div>
+        {{ n.body }}
+        <div class="resline">— voice: {{ n.tags }}</div>
+      </div>
+    }
+    @if (!v.npcVoices.length) { <p class="dim">No registry sources are tied into this operation.</p> }
+    @for (sv of v.sidebars.s2; track $index) {
+      <div class="npcbox staff" [class.refined]="sv.refined">
+        <div class="hd">{{ sv.header }}@if (sv.refined) { <span class="refined-tag no-print">✦ refined</span> }</div>
+        @for (l of sv.lines; track $index) { <p class="vline">“{{ l }}”</p> }
+        <div class="resline">— standing rules: {{ sv.rules }}</div>
+      </div>
+    }
+    @if (v.commander; as c) {
+      <h3>2.3 Enemy Commander — Dossier</h3>
+      <div class="npcbox cmdr">
+        <div class="hd">{{ c.name }}@if (c.callsign) { “{{ c.callsign }}” } — {{ c.archetype.toUpperCase() }} ({{ c.factions }})</div>
+        <p>{{ c.history }}</p>
+        <p><b>Temperament:</b> {{ c.temperament }}</p>
+        <p><b>Voice read:</b> {{ c.read }}</p>
+        <div class="resline">{{ c.assessment }}</div>
+      </div>
+    }
+    @if (v.complications.length) {
+      <h3>2.4 Complications</h3>
+      @for (cp of v.complications; track $index) {
+        <p><b>{{ cp.name }}.</b> {{ cp.text }} <i>({{ cp.effect }})</i></p>
+      }
+    }
+    @if (v.standingRules?.length) {
+      <!-- D-110e — universal Chaos track rules (HS-only; our own summaries). Absent for Traditional (standingRules=null). -->
+      <h3>2.5 Standing Track Rules</h3>
+      @for (r of v.standingRules; track $index) {
+        <p><b>{{ r.name }}.</b> {{ r.text }}</p>
+      }
+    }
+
+    <h2>Section 3 — Enemy Order of Battle (OPFOR)</h2>
+    @if (v.opforLead) { <p>{{ v.opforLead }}</p> }
+    <table>
+      <tr><th>Unit</th><th>Type</th><th>Tonnage</th><th>Battle Value</th></tr>
+      @for (u of v.opforRows; track $index) {
+        <tr><td class="of-mech"><bce-unit-sprite class="of-ic" [unit]="u" [size]="24"></bce-unit-sprite>{{ u.chassis }} {{ u.model }}</td><td>{{ u.unitType === 'vehicle' ? 'Vehicle' : 'BattleMech' }}</td><td>{{ u.tons }}t</td><td>{{ u.bvText }}</td></tr>
+      }
+      <tr><td><b>Total</b></td><td><b>{{ v.opforTotal.mechs }} ’Mechs@if (v.opforTotal.vehicles) { · {{ v.opforTotal.vehicles }} vehicles }</b></td><td></td><td><b>{{ v.opforTotal.bvText }} BV</b></td></tr>
+    </table>
+    <!-- D-046 → T-032 SEAM: battlefield support (artillery · mines/area-denial · aero/orbital strikes,
+         both-sides, under authorization + stockpile floors) attaches to the OpFor here as a separate
+         support package. Armor-only this slice; T-032 owns all support + aerospace. -->
+    @if (v.opforSupport) {
+      <p class="of-support"><b>Attached support:</b> {{ v.opforSupport }}</p>
+    }
+    @if (v.opforBehavior) { <p><b>Doctrine / posture:</b> {{ v.opforBehavior }}</p> }
+
+    <h3>3.2 Reaction Timeline (From Alarm)</h3>
+    <table>
+      <tr><th>T+</th><th>Event</th></tr>
+      @for (e of v.timeline; track $index) { <tr><td><b>{{ e.t }}</b></td><td>{{ e.event }}</td></tr> }
+    </table>
+    @if (v.deadline) { <div class="deadline">HARD DEADLINE — {{ v.deadline }}</div> }
+
+    <h2>Section 4 — Mission Execution</h2>
+    @for (ph of v.phases; track $index) {
+      <h3>PHASE {{ $index + 1 }} — {{ ph.name }}</h3>
+      <p>{{ ph.lead }}</p>
+      @if (ph.data.length) {
+        <table class="kv">
+          @for (row of ph.data; track $index) { <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td></tr> }
+        </table>
+      }
+      @if (ph.routes.length) {
+        <table>
+          <tr><th>Route</th><th>Approach</th><th>Tradeoff</th></tr>
+          @for (r of ph.routes; track $index) { <tr><td><b>{{ r.name }}</b></td><td>{{ r.desc }}</td><td>{{ r.tradeoff }}</td></tr> }
+        </table>
+      }
+      @if (ph.protocol) {
+        <div class="protocol">
+          <div class="hd">PROTOCOL</div>
+          @for (line of ph.protocol; track $index) { <p class="vline">{{ line }}</p> }
+        </div>
+      }
+      @if (ph.kernel; as k) {
+        <div class="npcbox staff">
+          <div class="hd">{{ k.header }}</div>
+          <p class="vline ksub">RE: {{ k.subject }}</p>
+          @if (k.line) { <p class="vline">“{{ k.line }}”</p> }
+          <div class="resline">— standing rules: {{ k.rules }}</div>
+        </div>
+      }
+    }
+    @if (v.assets.length) {
+      <h3>4.A Assets In Play</h3>
+      @for (a of v.assets; track $index) {
+        <div class="opt asset">
+          <div class="opthd">{{ a.ref }}<span class="gate">{{ a.priority }}</span></div>
+          <p class="adetail">{{ a.detail }}</p>
+        </div>
+      }
+    }
+    @for (dp of v.decisionPoints; track $index) {
+      <h3>{{ dp.name }}</h3>
+      @if (dp.context) { <p>{{ dp.context }}</p> }
+      @for (o of dp.options; track $index) {
+        <div class="opt" [class.locked]="o.locked">
+          <div class="opthd">{{ o.title }}@if (o.gateNote) { <span class="gate">{{ o.gateNote }}</span> }</div>
+          <ul>
+            @for (a of o.advantages; track $index) { <li class="adv">{{ a }}</li> }
+            @for (d of o.disadvantages; track $index) { <li class="dis">{{ d }}</li> }
+          </ul>
+          @if (o.repriceText) { <div class="cost reprice">RESOURCE GATE — {{ o.repriceText }}</div> }
+          @if (o.costLine) {
+            <div class="cost">{{ o.costLine }}@if (o.treasuryAfter !== null) { · <b>treasury after: {{ o.treasuryAfter }}</b> }</div>
+          }
+          <div class="conseq">Consequence: {{ o.consequence }}</div>
+        </div>
+      }
+    }
+
+    <h2>Section 5 — Logistics &amp; Support</h2>
+    <table class="kv">
+      @for (row of v.logistics; track $index) { <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td></tr> }
+    </table>
+    @for (sv of v.sidebars.s5; track $index) {
+      <div class="npcbox staff" [class.refined]="sv.refined">
+        <div class="hd">{{ sv.header }}@if (sv.refined) { <span class="refined-tag no-print">✦ refined</span> }</div>
+        @for (l of sv.lines; track $index) { <p class="vline">“{{ l }}”</p> }
+        <div class="resline">— standing rules: {{ sv.rules }}</div>
+      </div>
+    }
+
+    <h2>Section 6 — Operational Assessment</h2>
+    <h3>6.1 Mission Priority Hierarchy</h3>
+    <table>
+      <tr><th>Priority</th><th>Objective</th></tr>
+      @for (pr of v.priorities; track $index) { <tr><td><b>{{ pr.p }}</b></td><td>{{ pr.text }}</td></tr> }
+    </table>
+
+    <h3>6.2 Success Tiers &amp; Downstream Operations</h3>
+    <table>
+      <tr><th>Outcome gate</th><th>Next operation</th><th>Threat</th></tr>
+      @for (f of v.forks; track $index) {
+        <tr><td><b>{{ f.gate }}</b><br><span class="trig">{{ f.trigger }}</span></td><td><b>{{ f.name }}</b><br>{{ f.consequence }}</td><td>{{ f.threat }}</td></tr>
+      }
+    </table>
+
+    @if (v.story) { <div class="story">{{ v.story }}</div> }
+
+    <h2 class="appx">Appendix A — Support &amp; Naval Contact Status</h2>
+    <table class="kv">
+      @for (row of v.appendixA.rows; track $index) { <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td></tr> }
+      @if (v.appendixA.naval; as nv) { <tr><td>{{ nv[0] }}</td><td>{{ nv[1] }}</td></tr> }
+    </table>
+    @for (sv of v.sidebars.appA; track $index) {
+      <div class="npcbox staff" [class.refined]="sv.refined">
+        <div class="hd">{{ sv.header }}@if (sv.refined) { <span class="refined-tag no-print">✦ refined</span> }</div>
+        @for (l of sv.lines; track $index) { <p class="vline">“{{ l }}”</p> }
+        <div class="resline">— standing rules: {{ sv.rules }}</div>
+      </div>
+    }
+
+    @if (v.appendixB; as b) {
+      <h2 class="appx">Appendix B — Communications Protocol</h2>
+      @for (line of b.schedule; track $index) { <p>{{ line }}</p> }
+      <table>
+        <tr><th>Codeword</th><th>Meaning</th></tr>
+        @for (cw of b.codewords; track $index) { <tr><td><b>{{ cw.word }}</b></td><td>{{ cw.meaning }}</td></tr> }
+      </table>
+      <div class="protocol">
+        <div class="hd">EMERGENCY PROCEDURES</div>
+        @for (e of b.emergency; track $index) { <p class="vline">{{ e }}</p> }
+      </div>
+      @for (sv of v.sidebars.s2; track $index) {
+        <div class="npcbox staff">
+          <div class="hd">{{ sv.header }}</div>
+          <p class="vline ksub">RE: net discipline for this operation</p>
+          @if (sv.lines.length) { <p class="vline">“{{ sv.lines[0] }}”</p> }
+          <div class="resline">— standing rules: {{ sv.rules }}</div>
+        </div>
+      }
+    }
+
+    <div class="closing">{{ v.closing }}</div>
+    <div class="endmark">— END OF PLAYER PACKAGE —</div>
+    <div class="classbar">{{ v.classbar }}</div>
+  </article>
+  }
+</div>
+}

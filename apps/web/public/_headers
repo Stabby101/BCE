@@ -1,0 +1,50 @@
+# HOTFIX-009 (E) — Cloudflare Pages cache policy. Locks in always-fresh HTML + data and fast-forever hashed
+# assets so the stale-bundle class (faction data not loading / guest button missing until a manual cache
+# clear) cannot recur, even with the service worker gone.
+#
+# Cloudflare _headers: rules apply in order; for a duplicate header the LAST matching rule wins. So the broad
+# `/*` no-cache is the default, and the hashed /*.js,/*.css rules below OVERRIDE it to immutable.
+#
+#   HTML (every navigation/SPA-fallback) + data JSON (/mekbay/slim/*, /mekbay/*.json catalog, campaign data)
+#     → no-cache = STORE BUT REVALIDATE via ETag. The browser always re-checks the current build's index +
+#     chunk refs; the 24MB catalog 304s (it is NOT re-downloaded) — no-cache, never no-store.
+#   Content-hashed build assets (/*.js, /*.css) → immutable for a year: a new build = new filenames, so this
+#     is always safe and the chunks load instantly from cache.
+
+/*
+  Cache-Control: no-cache
+
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+# HOTFIX-031 — the PLAYER app is NEVER cached. It is the session-join surface a player scans into cold, session
+# after session, on a phone that may hold weeks of stale visits — so freshness beats bandwidth here. `no-store`
+# means the browser keeps NO copy at all (not even a revalidated one): every /player/ load fetches the current
+# index + the current hashed bundle from the origin, so a stale player bundle is impossible by construction, not
+# just by policy. These rules come AFTER the /*.js,/*.css immutable rules so they WIN for player assets
+# (Cloudflare _headers: last matching rule wins per header). The GM app keeps the efficient no-cache+immutable
+# policy above (a desktop console, not the cold-scan join surface).
+/player/*
+  Cache-Control: no-store
+
+# Cloudflare gave /*.js precedence over the /player/* prefix, so the player bundle stayed immutable. These
+# path+extension rules are MORE SPECIFIC than /*.js — they force no-store on the player's own hashed assets too,
+# so literally nothing under /player/ is cached. (The no-store index above already guarantees freshness on its
+# own; these make it belt-and-suspenders.)
+/player/*.js
+  Cache-Control: no-store
+
+/player/*.css
+  Cache-Control: no-store
+
+# HOTFIX-032 — the self-destructing service worker must always be fetched fresh (never a cached copy) so a
+# stuck browser's update check picks it up and unregisters. no-store, both roots.
+/ngsw-worker.js
+  Cache-Control: no-store
+
+/player/ngsw-worker.js
+  Cache-Control: no-store
+

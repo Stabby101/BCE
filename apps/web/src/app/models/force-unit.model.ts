@@ -1,0 +1,176 @@
+/*
+ * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
+ *
+ * This file is part of MekBay.
+ *
+ * MekBay is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License (GPL),
+ * version 3 or (at your option) any later version,
+ * as published by the Free Software Foundation.
+ *
+ * MekBay is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * A copy of the GPL should have been included with this project;
+ * if not, see <https://www.gnu.org/licenses/>.
+ *
+ * NOTICE: The MegaMek organization is a non-profit group of volunteers
+ * creating free software for the BattleTech community.
+ *
+ * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
+ * of The Topps Company, Inc. All Rights Reserved.
+ *
+ * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
+ * InMediaRes Productions, LLC.
+ *
+ * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
+ * Microsoft's "Game Content Usage Rules"
+ * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
+ * affiliated with Microsoft.
+ */
+
+import { signal, computed, type Injector, type Signal, type WritableSignal } from '@angular/core';
+import type { DataService } from '../services/data.service';
+import type { Unit } from "./units.model";
+import type { UnitInitializerService } from '../services/unit-initializer.service';
+import { generateUUID } from '../services/ws.service';
+import type { SerializedUnit } from './force-serialization';
+import type { Force, UnitGroup } from './force.model';
+import type { ForceUnitState } from './force-unit-state.model';
+import type { CrewMember } from './crew-member.model';
+
+/*
+ * Author: Drake
+ */
+export abstract class ForceUnit {
+    protected unit: Unit; // Original unit data
+    private _forceRef = signal<Force>(null!);
+    id: string;
+    updatedTs: number = 0;
+    initialized = false;
+
+    /**
+     * The force this unit belongs to.
+     * Backed by a signal so that computed properties (e.g. readOnly)
+     * automatically react when the unit is moved to a different force.
+     */
+    get force(): Force { return this._forceRef(); }
+    set force(value: Force) { this._forceRef.set(value); }
+
+    // Dependencies for deferred loading
+    protected dataService: DataService;
+    protected unitInitializer: UnitInitializerService;
+    protected injector: Injector;
+    isLoaded: WritableSignal<boolean> = signal(false);
+    public disabledSaving: boolean = false;
+    phaseTrigger = signal(0); // Used to trigger change detection on phase changes
+
+    protected abstract state: ForceUnitState;
+
+    readOnly = computed(() => this.force.owned() === false);
+
+    abstract readonly alias: Signal<string | undefined>;
+
+    constructor(unit: Unit,
+        force: Force,
+        dataService: DataService,
+        unitInitializer: UnitInitializerService,
+        injector: Injector
+    ) {
+        this.id = generateUUID();
+        this.force = force;
+        this.unit = unit;
+
+        this.dataService = dataService;
+        this.unitInitializer = unitInitializer;
+        this.injector = injector;
+    }
+
+    destroy() {
+    }
+
+    public abstract load(): Promise<void>;
+
+    getDisplayName() {
+        return (this.unit.chassis + ' ' + this.unit.model).trim();
+    }
+
+    get modified(): boolean {
+        return this.state.modified();
+    }
+
+    setModified() {
+        if (this.disabledSaving) return;
+        this.state.modified.set(true);
+        this.updatedTs = Date.now();
+        this.force.emitChanged();
+    }
+
+    get destroyed(): boolean {
+        return this.state.destroyed();
+    }
+
+    setDestroyed(destroyed: boolean) {
+        this.state.destroyed.set(destroyed);
+    }
+
+    get shutdown(): boolean {
+        return this.state.shutdown();
+    }
+
+    setShutdown(shutdown: boolean) {
+        this.state.shutdown.set(shutdown);
+    }
+
+    /** Get/set the C3 visual editor position for this unit */
+    get c3Position() {
+        return this.state.c3Position;
+    }
+
+    setC3Position(pos: { x: number; y: number } | null) {
+        this.state.c3Position.set(pos);
+    }
+
+    getUnit(): Unit {
+        return this.unit;
+    }
+
+    getGroup(): UnitGroup<ForceUnit> | null {
+        return this.force.groups().find(group => 
+            group.units().some(u => u === this)
+        ) ?? null;
+    }
+
+    abstract getBaseBv: Signal<number>;
+
+    abstract getBv: Signal<number>;
+
+    abstract getPilotStats: Signal<any>;
+
+    /** Get crew members - abstract, must be implemented by subclasses */
+    abstract getCrewMembers: Signal<CrewMember[]>;
+
+    abstract repairAll(): void;
+
+    abstract update(data: SerializedUnit): void;
+
+    abstract serialize(): SerializedUnit;
+
+    /** Deserialize a plain object to a ForceUnit instance - must be implemented by subclasses */
+    public static deserialize(
+        data: SerializedUnit,
+        force: Force,
+        dataService: DataService,
+        unitInitializer: UnitInitializerService,
+        injector: Injector
+    ): ForceUnit {
+        throw new Error('ForceUnit.deserialize must be implemented by subclass');
+    }
+
+    public getAvailableEquipment() {
+        return this.dataService.getEquipments();
+    }
+
+}

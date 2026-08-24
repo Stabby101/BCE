@@ -1,0 +1,96 @@
+:host ::ng-deep .modal-body {
+    padding: 0px !important;
+}
+
+:host ::ng-deep div[dialog-body] {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.title {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.variant-name {
+    font-weight: normal;
+    font-size: 0.85em;
+    color: var(--text-color-secondary);
+    font-style: italic;
+    margin-left: 8px;
+}
+
+.footer {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    flex-direction: row;
+    gap: 8px;
+}
+
+.pack-info {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pack-value {
+    font-weight: bold;
+    color: var(--bt-yellow);
+}
+
+/* Container for units list and docked panel */
+.units-container {
+    display: flex;
+    flex-direction: row;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Unit list */
+.unit-list {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 200px;
+    padding: 8px;
+    gap: 4px;
+    overflow-y: auto;
+}
+
+/* When panel is open, constrain unit list width */
+.units-container.has-panel .unit-list {
+    flex: 0 1 50%;
+    max-width: 400px;
+}
+
+/* Docked panel container */
+.docked-panel-container {
+    flex: 1 1 50%;
+    min-width: 250px;
+    border-left: 1px solid var(--border-color);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.docked-panel-container variant-dropdown-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* Style the unit-card-compact within the list */
+.unit-list unit-card-compact {
+    background: #0003;
+}
+
+.modal-btn[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

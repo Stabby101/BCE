@@ -1,0 +1,60 @@
+<base-dialog modalClass="wide">
+    <div dialog-header>
+        <div class="title">{{ pack.name }}
+            @if (pack.variantName) {
+                <span class="variant-name">({{ pack.variantName }})</span>
+            }
+        </div>
+    </div>
+
+    <div dialog-body>
+        <div class="pack-info">
+            @if (gameSystem() === ALPHA_STRIKE) {
+                <span class="pack-value">PV: {{ totalPV() | number }}</span>
+            } @else {
+                <span class="pack-value">BV: {{ totalBV() | number }}</span>
+            }
+        </div>
+
+        <div class="units-container" [class.has-panel]="openDropdownIndex() !== null && !layoutService.isPhone()">
+            <!-- Force pack units list -->
+            <div class="unit-list">
+                @for (cu of customizableUnits(); let i = $index; track i) {
+                    @let isOpen = openDropdownIndex() === i;
+                    @let isModified = cu.unit?.name !== cu.originalUnit?.name;
+                    <unit-card-compact
+                        [unit]="cu.unit"
+                        [gameSystem]="gameSystem()"
+                        [isSelected]="isOpen"
+                        [isModified]="isModified"
+                        [showInfoButton]="true"
+                        [showTags]="true"
+                        (cardClick)="onUnitClick(i)"
+                        (infoClick)="onForcePackUnitInfo(i)"
+                        (tagClick)="onAddTag($event)"></unit-card-compact>
+                }
+            </div>
+
+            <!-- Docked variant picker (non-phone layouts) -->
+            @if (openDropdownIndex() !== null && !layoutService.isPhone()) {
+                @let selectedUnit = customizableUnits()[openDropdownIndex()!];
+                <div class="docked-panel-container">
+                    <variant-dropdown-panel
+                        [variants]="variantsForSelected()"
+                        [gameSystem]="gameSystem()"
+                        [originalUnitName]="selectedUnit?.originalUnit?.name ?? null"
+                        [currentUnitName]="selectedUnit?.unit?.name ?? null"
+                        (selected)="onDockedVariantSelect($event)"
+                        (infoRequested)="onDockedVariantInfo($event)">
+                    </variant-dropdown-panel>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div dialog-footer class="footer">
+        <button class="modal-btn bt-button" (click)="onAdd()">ADD</button>
+        <button class="modal-btn bt-button" (click)="onReset()" [disabled]="!hasChanges()">RESET</button>
+        <button class="modal-btn bt-button" (click)="onDismiss()">DISMISS</button>
+    </div>
+</base-dialog>

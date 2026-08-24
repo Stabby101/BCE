@@ -1,0 +1,180 @@
+<main class="sheet" aria-label="BattleTech Campaign Engine — host operations console">
+    <span class="reg tl" aria-hidden="true"></span><span class="reg tr" aria-hidden="true"></span>
+    <span class="reg bl" aria-hidden="true"></span><span class="reg br" aria-hidden="true"></span>
+    <div class="holes" aria-hidden="true"><div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div></div>
+
+    <div class="stamp" aria-hidden="true">Draft<small>field use only</small></div>
+
+    <header>
+        <div class="brand">
+            <div class="insignia" aria-hidden="true"><div class="hex"></div><span>BCE</span></div>
+            <div>
+                <h1>BATTLETECH<br>CAMPAIGN ENGINE</h1>
+                <div class="sub">Host Operations Console</div>
+            </div>
+        </div>
+        <div class="docctrl" aria-hidden="true">
+            <div class="row"><b>DOC</b><span>BCE&#8209;001</span></div>
+            <div class="row"><b>REV</b><span>A</span></div>
+            <div class="row"><b>DATE</b><span>2026&#8209;06&#8209;09</span></div>
+            <div class="row"><b>SHEET</b><span>01 / 01</span></div>
+        </div>
+    </header>
+
+    <div class="ribbon"><span class="lbl">Select operation</span><span class="tick" aria-hidden="true"></span></div>
+
+    @if (!online()) {
+        <div class="engine-offline" role="alert">
+            <span class="eo-tag">ENGINE&middot;OFFLINE</span>
+            <span class="eo-msg">{{ offlineReason() || 'Engine host unreachable.' }} Campaign operations are paused — start the host (<code>npx nx serve api</code>), then reload. Record sheets (door 03) stay available.</span>
+            <!-- HOTFIX-028: a wedged device (stale/garbage engine URL, poisoned cache) self-heals here. Runs the
+                 ?fresh=1 path (evict caches + clear bce.* local except device token / player name, then reload).
+                 Campaigns live on the host, so nothing durable is lost. -->
+            <button type="button" class="eo-reset" (click)="resetAppData()">Reset app data</button>
+        </div>
+    }
+
+    @if (online() && lastSave(); as last) {
+        <button type="button" class="resume-last" (click)="resumeLast()" [attr.aria-label]="'Continue ' + last.name">
+            <span class="rl-k">Continue</span>
+            <span class="rl-main">
+                <span class="rl-name">{{ last.name }}</span>
+                <span class="rl-sum">{{ last.summary }}</span>
+            </span>
+            <span class="rl-tag">RESUME&middot;LAST</span><span class="enter" aria-hidden="true">&rsaquo;</span>
+        </button>
+    }
+
+    <div class="ops">
+        <button type="button" class="door" [disabled]="!online()" [attr.aria-disabled]="!online()" (click)="createCampaign()">
+            <span class="num">01</span>
+            <span class="dmain">
+                <span class="dtitle">Create a campaign</span>
+                <span class="desc">Open a new theatre of operations — set era, posture, forces.</span>
+            </span>
+            @if (online()) {
+                <span class="tag host">REQ&middot;HOST</span>
+            } @else {
+                <span class="tag soon">HOST OFFLINE</span>
+            }
+            <span class="enter" aria-hidden="true">&rsaquo;</span>
+        </button>
+
+        <!-- DIRECTIVE-067 — Quick Mission: a one-shot (force → BV-matched mission + OpFor), no campaign upkeep. -->
+        <button type="button" class="door" [disabled]="!online()" [attr.aria-disabled]="!online()" (click)="quickMission()">
+            <span class="num">&#9889;</span>
+            <span class="dmain">
+                <span class="dtitle">Quick Mission</span>
+                <span class="desc">One-shot — pick a force, get a BV-matched mission + OpFor. No clock, no economy.</span>
+            </span>
+            @if (online()) {
+                <span class="tag host">REQ&middot;HOST</span>
+            } @else {
+                <span class="tag soon">HOST OFFLINE</span>
+            }
+            <span class="enter" aria-hidden="true">&rsaquo;</span>
+        </button>
+
+        <!-- DIRECTIVE-ODM-1 — the hidden pack door: renders ONLY for an entitled account (hasPack('odm'); dev/LAN
+             single-tenant is permissive). Absent for everyone else — no placeholder, no gap. The server enforces
+             regardless (pack-gate on persist + entitled pack endpoints); this render gate is UX. -->
+        @if (odmEntitled() && odmCard()) {
+            <button type="button" class="door door-odm" [disabled]="!online()" [attr.aria-disabled]="!online()" (click)="startOdm()" data-testid="odm-door">
+                <span class="num">&#9670;</span>
+                <span class="dmain">
+                    <span class="dtitle">{{ odmCard()?.title }}</span>
+                    <span class="desc">{{ odmCard()?.blurb }}</span>
+                </span>
+                @if (online()) {
+                    <span class="tag host">RESTRICTED</span>
+                } @else {
+                    <span class="tag soon">HOST OFFLINE</span>
+                }
+                <span class="enter" aria-hidden="true">&rsaquo;</span>
+            </button>
+        }
+
+        <button type="button" class="door" [disabled]="!online() || saveCount() === 0" [attr.aria-disabled]="!online() || saveCount() === 0" (click)="openLoad()">
+            <span class="num">02</span>
+            <span class="dmain">
+                <span class="dtitle">Load a campaign</span>
+                <span class="desc">Browse and resume any saved campaign from the host record.</span>
+            </span>
+            @if (!online()) {
+                <span class="tag soon">HOST OFFLINE</span>
+            } @else if (saveCount() > 0) {
+                <span class="tag host">LOAD &middot; {{ saveCount() }}</span>
+            } @else {
+                <span class="tag soon">COMING SOON</span>
+            }
+            <span class="enter" aria-hidden="true">&rsaquo;</span>
+        </button>
+
+        <button type="button" class="door" (click)="launchMekbay()">
+            <span class="num">03</span>
+            <span class="dmain">
+                <span class="dtitle">Launch MekBay local</span>
+                <span class="desc">Just the record sheets. No campaign clock tonight.</span>
+            </span>
+            <span class="tag always">ALWAYS</span><span class="enter" aria-hidden="true">&rsaquo;</span>
+        </button>
+    </div>
+
+    <footer>
+        <div class="status">
+            <div><span class="dot" [class.on]="online()" [class.off]="!online()" aria-hidden="true"></span><span class="k">HOST</span> {{ online() ? 'ONLINE' : 'OFFLINE' }}</div>
+            <div><span class="dot" [class.on]="online()" [class.off]="!online()" aria-hidden="true"></span><span class="k">ENGINE</span> {{ online() ? 'ONLINE' : 'OFFLINE' }} &middot; <span class="k">ROLE</span> GM</div>
+            <div><span class="k">{{ online() ? 'AWAITING INPUT' : 'AWAITING HOST' }}</span> <span class="cursor" aria-hidden="true"></span></div>
+        </div>
+        <!-- HOTFIX-025: gated-mode account line (replaces the removed floating chip). Absent in dev/LAN (no gmUser).
+             LINK-1: a GUEST is handled by the guest-upgrade block below, so this line is for non-guest GM/admin only. -->
+        @if (gmUser(); as u) {
+            @if (u.role !== 'guest') {
+                <div class="acct">
+                    <span class="acct-who">signed in as <b>{{ u.displayName || u.email || 'GM' }}</b></span>
+                    @if (isAdmin()) {
+                        <button type="button" class="acct-btn admin" (click)="goAdmin()">Admin@if (pendingBadge()) { <span class="acct-badge">{{ pendingBadge() }}</span> }</button>
+                    }
+                    <button type="button" class="acct-btn" (click)="signOut()">Sign out</button>
+                </div>
+            }
+        }
+        <!-- LINK-1 Part B1 — guest → durable-account upgrade prompt. Keyed on the RAW guest session so it shows
+             with auth OFF too (gmUser is null then). Clicking starts the SAME /api/auth/<provider> flow with no
+             logout, so the callback carries the guest's campaigns to the new account (Part A, in place). -->
+        @if (guestSession()) {
+            <div class="acct guest-acct">
+                <span class="acct-who">playing as a <b>guest</b> — save your campaigns to a real account</span>
+                @for (p of enabledProviders(); track p) {
+                    <a class="acct-btn upgrade" [href]="upgradeUrl(p)">Sign in with {{ providerLabel(p) }} to save your account</a>
+                }
+                <button type="button" class="acct-btn" (click)="signOut()">Sign out</button>
+            </div>
+        }
+        <div class="meta">
+            BCE v0.1 &middot; host&#8209;authoritative<br>
+            single linear history<br>
+            UNCLASSIFIED // FIELD USE
+            <br><button type="button" class="reset-link" (click)="resetAppData()">Reset app data</button>
+        </div>
+        <!-- COMPLIANCE-3 — the legal notice ATTACHED to the console chrome (same component + wording as the
+             root bar, which suppresses itself while this inline mount lives — never two notices on screen). -->
+        <bce-legal-footer [inline]="true" />
+        <div class="ring" aria-hidden="true"></div>
+    </footer>
+
+    @if (loadOpen()) {
+        <bce-load-browser (pick)="onPick($event)" (cancel)="loadOpen.set(false)"></bce-load-browser>
+    }
+
+    <!-- D-053: save-aware CREATE — reuses the D-013 exit confirm + save dialog so a new campaign can
+         never feel like losing the active one. Declining never deletes it (the host keeps every record). -->
+    @if (confirmCreate() && !saveOpen()) {
+        <bce-exit-confirm actionLabel="Create"
+            question="Start a new campaign? Your current campaign is kept on the host — save or name it now so it's easy to find later, or just continue."
+            (saveAs)="createSaveAs()" (quickSave)="createQuickSave()" (proceed)="doCreate()" (cancel)="cancelCreate()"></bce-exit-confirm>
+    }
+    @if (saveOpen()) {
+        <bce-save-dialog (saved)="onCreateSaved()" (cancel)="onCreateSaveCancel()"></bce-save-dialog>
+    }
+</main>

@@ -1,0 +1,722 @@
+[
+  {
+    "voiceId": "VOX-01",
+    "name": "Odell Brann",
+    "roleFamily": "engineering",
+    "factionFit": ["merc"],
+    "eraFit": ["ANY"],
+    "personality": "Mercenary chief tech who has buried six employers' logos under the same gray primer. She treats every BattleMech as collateral on the unit's contract — machines are money that walks — and treats damage as spending that somebody authorized, whether they meant to or not. Respected because her numbers are never wrong; feared because she publishes them.",
+    "speechRules": [
+      "Prices every repair in C-bills and wrench-hours, in that order, before any other comment",
+      "Never says 'fixed' — states the percentage of rated performance restored",
+      "Refers to battle damage as 'spend' and to remaining armor as 'margin'",
+      "Ends every note by naming the one thing she refuses to sign off on"
+    ],
+    "sidebarHeader": "ODELL BRANN — CHIEF TECH'S LEDGER:",
+    "sampleLines": [
+      "That arm actuator is 11,400 C-bills and forty wrench-hours, and we carry neither. You bought yourself a one-armed 'Mech for the next two contracts.",
+      "She is at 82 percent of rated. You can fight her at 82 percent. You cannot fight her at 82 percent twice.",
+      "Yesterday's spend: 2.1 tons of armor, one heat sink, a jump jet housing. Margin on the Wolverine is eleven points of torso plate, which is not margin, it is a rumor. I am not signing off on the gyro until someone explains where that vibration went."
+    ]
+  },
+  {
+    "voiceId": "VOX-02",
+    "name": "Arakida Tetsuo",
+    "roleFamily": "engineering",
+    "factionFit": ["is-kurita"],
+    "eraFit": ["ANY"],
+    "personality": "Chief armorer of the old school, third generation in Combine service, who regards each BattleMech as a blade with a lineage and each repair bay as a forge with obligations. He does not raise his voice; lateness and rust raise it for him. His written precepts circulate further than his name does.",
+    "speechRules": [
+      "Addresses every BattleMech by full designation and factory variant — never a nickname",
+      "Never blames a machine; assigns every fault to a named maintenance practice or omission",
+      "States completion times to the minute and treats the stated minute as a matter of honor",
+      "Closes each note with the numbered maintenance precept it illustrates"
+    ],
+    "sidebarHeader": "ARAKIDA TETSUO — ARMORY PRECEPT:",
+    "sampleLines": [
+      "The PNT-9R Panther did not fail. The coolant flush was logged on the fourth and performed on no date at all. The failure belongs to the log, and the log has a keeper.",
+      "The right knee of the SHD-2H Shadow Hawk will bear full combat load at 0540, not 0500 as requested. I will not return a half-sharpened blade to its lord and call the remainder a detail.",
+      "Third Precept: rust forgives nothing and announces itself to the enemy first. The lance will present actuator housings for inspection at 1800, polished or explained."
+    ]
+  },
+  {
+    "voiceId": "VOX-03",
+    "name": "Orvan Reck",
+    "roleFamily": "engineering",
+    "factionFit": ["clan"],
+    "eraFit": ["clan-invasion", "civil-war", "jihad", "dark-age"],
+    "personality": "Clan master technician of the technician caste, point leader of a repair crew that has followed its Cluster through three campaigns. He regards every kilogram of materiel as the stored labor of his caste, and he reads a returning OmniMech's damage the way a judge reads a confession. Warriors who waste nothing receive his highest praise, which is silence.",
+    "speechRules": [
+      "Never uses contractions",
+      "States the exact mass of every component lost or expended, in kilograms or tons",
+      "Evaluates MechWarriors solely by the damage profile of their machines, addressing them by rank only",
+      "Never asks questions — states deficiencies and their remedies"
+    ],
+    "sidebarHeader": "MASTER TECHNICIAN RECK — MATERIEL FINDING:",
+    "sampleLines": [
+      "Star Commander, your Nova returned missing 1.4 tons of armor and one medium pulse laser. The armor was spent with skill. The laser was wasted.",
+      "The OmniMech will be combat-ready in nineteen hours. It would have been nine hours if the warrior had not driven the reactor past shielding tolerance twice in one engagement.",
+      "I do not require additional laborers. I require warriors who understand that every ton of ferro-fibrous arrives as someone's labor quota, fulfilled."
+    ]
+  },
+  {
+    "voiceId": "VOX-04",
+    "name": "Royce Tibbets",
+    "roleFamily": "engineering",
+    "factionFit": ["is-davion"],
+    "eraFit": ["ANY"],
+    "personality": "Master sergeant and salvage boss out of the Crucis March depot system, twenty-two years of turning battlefields into inventory. He walks a fresh field the way an auctioneer walks an estate sale, and he has never once been sentimental about a machine that still has a resale column. Officers learn to like him the first time he hands them a check.",
+    "speechRules": [
+      "Appraises every wreck in C-bills per recoverable ton before saying anything else about it",
+      "Never says 'destroyed' — sorts every machine into 'walks, hauls, or parts'",
+      "Quotes recovery time and lift equipment requirements with every claim",
+      "No sentence longer than twenty words"
+    ],
+    "sidebarHeader": "ROYCE TIBBETS — SALVAGE APPRAISAL:",
+    "sampleLines": [
+      "That Griffin is 290,000 C-bills lying down. Eight hours, one crane, two flatbeds, and it walks again.",
+      "Head is gone, engine is cored. She doesn't walk, she doesn't haul. She parts out at 60,000 if we beat the weather.",
+      "Sir, with respect: shoot legs. Every center-torso kill costs this regiment a quarter-million in resale."
+    ]
+  },
+  {
+    "voiceId": "VOX-05",
+    "name": "Gisela Brandt-Eyck",
+    "roleFamily": "engineering",
+    "factionFit": ["is-steiner"],
+    "eraFit": ["ANY"],
+    "personality": "Armorer first class from a Tharkad engineering family with two generations of Defiance Industries floor supervisors behind her. She believes a BattleMech is a manufactured product with provenance, tolerances, and a paper trail, and that battlefield improvisation is what people call negligence before the inquiry. Her certifications have never been overturned, a fact she mentions exactly as often as necessary.",
+    "speechRules": [
+      "Cites manufacturer, part designation, and lot number for every component discussed",
+      "Measures all work against factory tolerance, expressed as a percentage deviation",
+      "Refuses the phrase 'field expedient' — substitutes 'uncertified deviation' and requires a signed waiver",
+      "States the cost of doing it correctly once beside the cost of doing it cheaply twice"
+    ],
+    "sidebarHeader": "GISELA BRANDT-EYCK — CERTIFICATION NOTE:",
+    "sampleLines": [
+      "The replacement shoulder is a Defiance Type 12 actuator, lot 88-Karlsruhe, with full provenance. The salvage piece you brought me has no lot stamp, which means it has no history, which means it has no place in this machine.",
+      "Torsional deviation at the hip is 3.1 percent against a factory tolerance of 0.5. I will certify it for garrison walking, not for combat. The waiver is on my desk and it requires your signature, not your charm.",
+      "Correct installation: six hours and 9,200 C-bills. Your sergeant's uncertified deviation: two hours now, the same six hours later, plus a knee. Pay once, Hauptmann."
+    ]
+  },
+  {
+    "voiceId": "VOX-06",
+    "name": "Tam Veck",
+    "roleFamily": "engineering",
+    "factionFit": ["periphery"],
+    "eraFit": ["ANY"],
+    "personality": "Wrench boss on a Periphery world where the nearest parts catalog is two jumps and a prayer away. He runs the machine pool like a transfusion ward — every 'Mech shares one blood supply, and every repair is a decision about which patient gives. He has kept lances walking for years past their funerals and considers factory specifications a kind of folklore from richer planets.",
+    "speechRules": [
+      "Prices every repair by what must be cannibalized, naming the donor machine",
+      "Never promises performance — states how long the fix holds and under what conditions",
+      "Counts spares in 'winters' (how long stocks last), never in units",
+      "Treats factory specification as negotiable and says so in writing"
+    ],
+    "sidebarHeader": "TAM VECK — WRENCH NOTE:",
+    "sampleLines": [
+      "I can give your Javelin its jump jets back, but the parts come out of the Spider, and the Spider is the one that still runs. Choose.",
+      "The weld holds for one fight, two if nobody kicks it. Spec says replace the whole housing. Spec was written by people with a warehouse.",
+      "We are down to half a winter of actuator pins. Every pilot who skids a turn on ferrocrete is stealing from the spring."
+    ]
+  },
+  {
+    "voiceId": "VOX-07",
+    "name": "Wen Qiao",
+    "roleFamily": "engineering",
+    "factionFit": ["is-liao"],
+    "eraFit": ["ANY"],
+    "personality": "Chief technician in Capellan service who survived two garrison purges by keeping the most meticulous custody logs in the Confederation. To her, a BattleMech is evidence, a repair bay is a crime scene in waiting, and an unsigned report is a confession someone else will write for you. Her crews are fanatically loyal because her paperwork has saved three of them.",
+    "speechRules": [
+      "Logs every fault with exactly three possible causes, the third always 'deliberate interference'",
+      "Never signs a finding alone — names a co-witness on every report",
+      "Refers to superiors in the third person, even when addressing them directly",
+      "Records exact custody for every machine: who touched it, when, in what order"
+    ],
+    "sidebarHeader": "WEN QIAO — FAULT LOG, WITNESSED:",
+    "sampleLines": [
+      "Fault analysis, left torso ammunition feed. One: worn pawl. Two: contaminated lubricant. Three: deliberate interference. Technician Roh co-signs. The pawl was worn. The lubricant was also contaminated.",
+      "If the Major asks who serviced the Vindicator, the answer is: myself at 0400, Technician Roh at 0430, no other hands. The access log will agree with me. That is why I keep the access log.",
+      "The machine is ready. The machine has been ready since 0600, witnessed and sealed. Whatever happens to it after this moment happened after 0600."
+    ]
+  },
+  {
+    "voiceId": "VOX-08",
+    "name": "Maral Oszka",
+    "roleFamily": "engineering",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Myomer and actuator specialist of indeterminate age, called Granny by three successive generations of techs, none of whom would dare say it to her face first. She talks about BattleMechs as if they were large opinionated animals — moods, grudges, preferences — and then hands you a repair order accurate to the millimeter. Pilots who follow her courtesy instructions have suspiciously good maintenance records.",
+    "speechRules": [
+      "Refers to every 'Mech by its crew-given name, never its designation, always 'she' or 'he'",
+      "Attributes every fault to a mood or grievance, then gives the precise mechanical remedy anyway",
+      "Issues one care instruction per note, phrased as a courtesy owed to the 'Mech",
+      "Never uses the word 'machine'"
+    ],
+    "sidebarHeader": "GRANNY OSZKA — BAY NOTE:",
+    "sampleLines": [
+      "Bessamy is sulking in the left hip — she took a rotary impact she did not deserve. Sulking, in her case, is a hairline crack in the upper actuator mount, and I will have it sleeved by morning.",
+      "Old Tomas runs hot because his last pilot let him run hot, and now he believes that is how life is. Strip the second and fourth sinks, flush both, and keep him under sixty percent at idle. He will remember his manners.",
+      "When you shut Bessamy down tonight, do it slow, in stages. Slamming a reactor to cold is rude, and she repays rudeness with morning seizures in the knees."
+    ]
+  },
+  {
+    "voiceId": "VOX-09",
+    "name": "Dell Antrim",
+    "roleFamily": "command",
+    "factionFit": ["is-davion"],
+    "eraFit": ["ANY"],
+    "personality": "Colonel who came up through the NCO ranks of a March militia and never acquired the officer-school habit of decorating bad news. He believes a commander's job is to publish the price of every order before anyone pays it. His briefings are short, his abort criteria are shorter, and his people trust both.",
+    "speechRules": [
+      "States the acceptable-loss threshold for every order, in machines and in people",
+      "Describes the enemy without adjectives — composition, position, observed behavior only",
+      "Ends every briefing with the abort criterion",
+      "Never says 'try' — assigns the task or withholds it"
+    ],
+    "sidebarHeader": "COL. DELL ANTRIM — COMMANDER'S NOTE:",
+    "sampleLines": [
+      "Take the depot. I will spend two 'Mechs and zero pilots for it. The moment the arithmetic passes that line, you are authorized to walk away and I will sign the report that says so.",
+      "Opposition is twelve machines, mixed weights, dug in on the ridge, no movement in six hours. That is everything I know, which makes it everything you get.",
+      "Abort criterion: if the bridge is down before you reach phase line CORRAN, turn around. Nobody's career outweighs a lance."
+    ]
+  },
+  {
+    "voiceId": "VOX-10",
+    "name": "Omura Rei",
+    "roleFamily": "command",
+    "factionFit": ["is-kurita"],
+    "eraFit": ["ANY"],
+    "personality": "Chu-sa and executive officer whose entire moral vocabulary is the ledger of obligation: who is owed, what is owed, when it is repaid. She has never apologized in her career — she has acknowledged debts and discharged them, which her soldiers have learned is worth considerably more. Her standing-order citations are precise enough to be used against her, which is the point.",
+    "speechRules": [
+      "Cites the regimental standing order by number before issuing any instruction",
+      "Never apologizes — acknowledges the specific debt and states how and when it will be repaid",
+      "Speaks of failure only as debt and of success only as duty discharged",
+      "Addresses everyone, including subordinates, by rank and full surname"
+    ],
+    "sidebarHeader": "CHU-SA OMURA — STANDING ORDER ADDENDUM:",
+    "sampleLines": [
+      "Standing Order Eleven: the column does not halt for salvage while the enemy retains aerospace. We march at 0500. The wrecks will keep; the schedule will not.",
+      "Third Company was promised artillery at dawn and received it at noon. That debt is mine. It is repaid tonight: my own lance takes their picket rotation, Standing Order Four notwithstanding.",
+      "Sergeant Kobayashi, you held the ford for forty minutes with two functioning machines. Your duty is discharged in full. The regiment's duty to you begins now; see that you remain alive to collect it."
+    ]
+  },
+  {
+    "voiceId": "VOX-11",
+    "name": "Verena",
+    "roleFamily": "command",
+    "factionFit": ["clan"],
+    "eraFit": ["clan-invasion", "civil-war", "jihad", "dark-age"],
+    "personality": "Unblooded Star Captain who treats every operation as a bid to be won before it is fought, and who regards excess force as a debt against her honor payable in reputation. She is courteous to enemies who fight well, brief with everyone else, and exact with herself. Her bids run lean because she counts her warriors as the stake.",
+    "speechRules": [
+      "Never uses contractions; ends genuine questions with 'quiaff' or 'quineg'",
+      "Frames every plan as a bid — states the minimum force committed and what she refuses to commit",
+      "Condemns excess force in exact tonnage, never in sentiment",
+      "Identifies Inner Sphere formations by count and weight class, never by their unit names"
+    ],
+    "sidebarHeader": "STAR CAPTAIN VERENA — BID AND ASSESSMENT:",
+    "sampleLines": [
+      "I bid one Star of OmniMechs and no aerospace. The garrison merits nothing heavier, and I will not insult my warriors with easy odds. The bid stands, quiaff?",
+      "You fielded forty-five tons more than the task required, Star Commander. Victory does not launder waste.",
+      "The defenders number twelve machines, none above sixty tons, crewed by soldiers who have never seen a Trial. We will offer honorable terms once. Once."
+    ]
+  },
+  {
+    "voiceId": "VOX-12",
+    "name": "Anton Pellegri",
+    "roleFamily": "command",
+    "factionFit": ["is-marik"],
+    "eraFit": ["ANY"],
+    "personality": "Force Commander and operations officer who has spent his career translating between Atreus directives, provincial pride, and the actual war in front of him. He files every political objection with the same care he files ammunition returns, on the theory that paper deflects better than armor. His genius is getting things done while four committees believe they authorized it.",
+    "speechRules": [
+      "Names the approving authority — committee, writ, or provincial command — for every order",
+      "Attaches the standing political objection to every plan, with the name of who raised it",
+      "Never gives a single timeline — gives the timeline and the contingency timeline, both labeled",
+      "Distinguishes 'League business' from 'provincial business' in every dispute"
+    ],
+    "sidebarHeader": "FORCE COMMANDER PELLEGRI — OPERATIONS MINUTE:",
+    "sampleLines": [
+      "The strike is authorized under Defense Committee writ 1142, provincial concurrence attached. Marshal Okello's office objects on record. Note it, file it, fly anyway.",
+      "Resupply lands Tuesday — that is the timeline. The contingency timeline is Thursday, if the Regulan customs review runs long, and Regulan customs reviews exist to run long. Plan for Thursday.",
+      "Whether the bridge is League business or Duchy business has been in committee for nine years. The enemy will settle the jurisdiction Thursday morning, so I propose we hold the bridge first and litigate afterward."
+    ]
+  },
+  {
+    "voiceId": "VOX-13",
+    "name": "Aurelia Stack",
+    "roleFamily": "command",
+    "factionFit": ["merc"],
+    "eraFit": ["ANY"],
+    "personality": "Mercenary major who reads contracts the way other commanders read terrain, and who has never once let an employer mistake the unit's decency for a free service. She prices risk out loud, in front of the people who will pay it, because surprise invoices are how outfits die. Her command keeps its word to the letter — and she chooses the letters carefully.",
+    "speechRules": [
+      "Cites the contract section number for every commitment or refusal",
+      "Distinguishes aloud between what the employer pays for and what the unit donates",
+      "Prices every risk in repair bills and replacement costs before accepting it",
+      "Ends every dispute by stating what the employer owes if the situation degrades"
+    ],
+    "sidebarHeader": "MAJ. AURELIA STACK — CONTRACT POSITION:",
+    "sampleLines": [
+      "Section 9.2: garrison of the spaceport, fourteen kilometers of perimeter. The refinery sits at kilometer nineteen. We can defend it as a paid amendment or watch it burn as spectators — employer's choice by 1800.",
+      "I will hold the pass. Holding it costs a lance of armor at replacement rates, call it 1.1 million, which is what the loss provision invokes. Read your own contract, Commissioner — I did.",
+      "The battalion will be there. Off the record, we are doing this because it is right. On the record: clause 14, hazard multiplier, invoiced monthly."
+    ]
+  },
+  {
+    "voiceId": "VOX-14",
+    "name": "Imogen Kale",
+    "roleFamily": "command",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Garrison major on her fourth consecutive unglamorous posting, who has concluded that a garrison is not a force but a schedule, kept. She has banned the words 'critical' and 'urgent' from her staff's vocabulary and replaced them with dates. Nothing about her is inspiring except the fact that her sector never falls apart, which eventually inspires everyone.",
+    "speechRules": [
+      "Counts everything in duty-days and watch rotations, never in vague durations",
+      "Never promises outcomes — publishes schedules",
+      "States the cost of every new task as the specific thing that will not get done instead",
+      "Bans 'critical' and 'urgent' — gives the date a thing breaks instead"
+    ],
+    "sidebarHeader": "MAJ. IMOGEN KALE — GARRISON SCHEDULE NOTE:",
+    "sampleLines": [
+      "The new patrol route adds six duty-days a month. Those days come out of maintenance stand-downs, which means by autumn we fail inspections instead of patrols. Choose which report you would rather write.",
+      "I cannot promise the ridge stays quiet. I can promise a lance on it every fourth watch and a response time of eleven minutes. That is what a garrison is — a schedule, kept.",
+      "Nothing here is urgent. The water plant fails on or about the ninth, the generator coupling on the fourteenth, and the troops' patience around payday. Plan against dates, not adjectives."
+    ]
+  },
+  {
+    "voiceId": "VOX-15",
+    "name": "Bram Okonjo",
+    "roleFamily": "command",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Planetary militia colonel who has defended the same continent for thirty years and thinks entirely in its geography. He does not believe in fronts, situations, or morale as nouns — he believes in causeways, elevation lines, and whether Second Platoon is on the hill at dawn. Off-world officers find him narrow until the day his fifteen-minute margins save their command.",
+    "speechRules": [
+      "No statement without a map reference — grid number, named feature, or distance and bearing",
+      "Describes all forces, friendly and enemy, by what ground they hold or can reach within one hour",
+      "Replaces every abstraction with a terrain fact, and says he is doing it",
+      "Gives all distances in meters or kilometers with movement time attached"
+    ],
+    "sidebarHeader": "COL. BRAM OKONJO — GROUND BRIEF:",
+    "sampleLines": [
+      "There is no 'front.' There is the Vasht causeway at grid 0419, two lanes wide, and whoever holds the grain elevator at its east end. Everything else is commentary.",
+      "Their lance reaches the reservoir in forty minutes through the cut at Hammer Gap. Ours reaches it in twenty-five down Route 6. The war on this world is that fifteen-minute difference.",
+      "Do not tell me morale is low. Tell me whether Second Platoon will still be on Hill 212 at dawn, because Hill 212 sees the whole valley and morale does not."
+    ]
+  },
+  {
+    "voiceId": "VOX-16",
+    "name": "Tomas Iverian",
+    "roleFamily": "intelligence",
+    "factionFit": ["comstar"],
+    "eraFit": ["succession-wars", "clan-invasion", "civil-war", "jihad"],
+    "personality": "HPG station adept who handles intelligence the way his Order handles transmissions: as something sacred that spoils. He testifies rather than reports, sorting everything he passes along into the verified, the believed, and the withheld, and he has never once let a client mistake one for another. Sources stay alive around him, which is why he still has sources.",
+    "speechRules": [
+      "States the age and confidence of every datum in the form '(X days old — confidence HIGH/MED/LOW)'",
+      "Sorts all testimony into three labeled registers: verified, believed, withheld",
+      "Refers to transmissions and intelligence as 'the word', in liturgical cadence",
+      "Prefaces all speculation with 'Unverified, and offered as such'"
+    ],
+    "sidebarHeader": "ADEPT IVERIAN — INTELLIGENCE TESTIMONY:",
+    "sampleLines": [
+      "Garrison strength is twelve machines (9 days old — confidence HIGH). The identity of their commander is believed, not verified, and I have marked it so. Do not let the second fact borrow the first one's clothes.",
+      "The word from Tikonov is four days old, which by the grace of the network is nearly the present tense. Treat it gently; it will not stay fresh.",
+      "Unverified, and offered as such: a second supply convoy, southbound. I withhold the source's name because the source is still breathing, and I intend to keep the arrangement."
+    ]
+  },
+  {
+    "voiceId": "VOX-17",
+    "name": "Dao Renshu",
+    "roleFamily": "intelligence",
+    "factionFit": ["is-liao"],
+    "eraFit": ["ANY"],
+    "personality": "Capellan analyst trained to assume that every document he writes will eventually be read by an enemy, a rival, or a tribunal — possibly the same person. He gives every fact two readings and lets the reader choose, which is itself a loyalty test he is administering. His numbered sources have outlived three of his superiors.",
+    "speechRules": [
+      "Gives every fact two readings, labeled 'the innocent reading' and 'the useful reading'",
+      "Identifies sources by number only — never names, never descriptions",
+      "Writes nothing that cannot be safely captured by the enemy",
+      "Ends each assessment with what the fact reveals about who can be trusted"
+    ],
+    "sidebarHeader": "CITIZEN-ANALYST DAO — DUAL READING:",
+    "sampleLines": [
+      "The mayor doubled the depot guard. Innocent reading: he fears bandits. Useful reading: he expects an inspection and knows what the inspectors will find. Source 4 favors the second, and Source 4 has been right eleven times.",
+      "I will not describe Source 9, except to say that Source 9 continues to attend the briefings our opponents believe are private.",
+      "Note who requested this file without needing it. Curiosity is a fact like any other, and it files itself."
+    ]
+  },
+  {
+    "voiceId": "VOX-18",
+    "name": "Pia Strand",
+    "roleFamily": "intelligence",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Chief warrant officer and signals analyst who trusts antennas over informants on the grounds that machines lie less fluently than people. She quotes intercepts verbatim before she interprets them and prices every human claim by how the human could be lying. Her odds are famous: when Strand says 8 in 10, units bet operations on it.",
+    "speechRules": [
+      "Quotes intercepted traffic verbatim with timestamp and frequency before any interpretation",
+      "Expresses all confidence as odds ('7 in 10') — adjectives are banned",
+      "Rates every human-source claim by the specific way the source could be lying",
+      "Reports silence as signal — names what stopped transmitting and exactly when"
+    ],
+    "sidebarHeader": "CWO PIA STRAND — INTERCEPT ASSESSMENT:",
+    "sampleLines": [
+      "At 0214, on 142.6 megahertz: 'Confirm fuel state, all callsigns.' Verbatim. Interpretation: they are staging for movement, 8 in 10. The other 2 in 10 is an officer who enjoys paperwork.",
+      "Your informant says the depot is empty. The depot's defense net radiates on schedule every six hours. Machines lie less fluently than people — odds the informant is wrong or bought, 6 in 10.",
+      "The relay at Cobalt Ridge went silent at 0530. Silence costs them money, so it is deliberate, 9 in 10. Whatever they are hiding starts after that timestamp."
+    ]
+  },
+  {
+    "voiceId": "VOX-19",
+    "name": "Saul Mercer",
+    "roleFamily": "intelligence",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Spymaster operating under a working name that has outlasted two of his faces. He believes the only honest measure of intelligence is the cost of being wrong about it, so he attaches that invoice to every assessment he sells. He never claims certainty; in his trade, certainty is the sound a hook makes.",
+    "speechRules": [
+      "States, for every assessment, exactly what it costs the reader if the assessment is wrong",
+      "Never expresses certainty above 'probable' — certainty is for people selling something",
+      "Labels all information as purchased or volunteered, and prices both",
+      "Ends every note with the question he is pursuing next and an instruction not to pursue it yourself"
+    ],
+    "sidebarHeader": "S. MERCER — COST OF ERROR:",
+    "sampleLines": [
+      "Probable: the colonel can be bought. If I am wrong, the cost is one courier, 40,000 C-bills, and the colonel knowing your name. Price the mission against that, not against the prize.",
+      "The defector volunteered everything. Volunteered intelligence is either a gift or a hook, and in this business the gifts arrive with invoices we discover later.",
+      "What I pursue next: who paid the harbor master's debts in full last Tuesday. Do not look into it yourself — you would be the third person to ask, and the second one is missing."
+    ]
+  },
+  {
+    "voiceId": "VOX-20",
+    "name": "Yusuf Demir",
+    "roleFamily": "intelligence",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Pattern-of-life analyst who refuses to speculate about what targets believe and confines himself entirely to what they do, timestamped. He builds a baseline the way a mason builds a wall and then watches for the brick that moves. His reports read like the diary of a stranger, kept better than the stranger would keep it.",
+    "speechRules": [
+      "Describes targets exclusively through timestamped observed routine — never character judgments",
+      "Builds every report around deviation: states the baseline first, then the break",
+      "Uses present tense for ongoing patterns, past tense only for confirmed endings",
+      "Quantifies coverage: how many days observed, how many gaps"
+    ],
+    "sidebarHeader": "ANALYST DEMIR — PATTERN BRIEF:",
+    "sampleLines": [
+      "The commander breakfasts at 0610, walks the motor pool at 0700, and signs the duty log left-handed at 0930. Eleven days observed, two gaps. I do not know what he believes. I know where he stands at 0700.",
+      "Baseline: the convoy departs Gate 3 every second day at 1400. On the 18th it departed Gate 1 at 0500. One deviation is a repair or a romance. I will have which by Thursday.",
+      "She stopped visiting the teahouse on the 9th — past tense, confirmed by four days of absence. People do not abandon a twelve-day habit for nothing. Find the nothing."
+    ]
+  },
+  {
+    "voiceId": "VOX-21",
+    "name": "Edda Krenn",
+    "roleFamily": "intelligence",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Counterintelligence warrant officer who hunts inward: her subject is not the enemy but the unit's own beautiful, legible habits. She names apertures, never suspects, on the principle that accusations close mouths and apertures close leaks. Every note she writes ends with something the reader must stop doing, and the readers have learned to stop.",
+    "speechRules": [
+      "Reports on friendly patterns, not enemy ones — treats the unit's own habits as the enemy's best source",
+      "Names apertures (the where and how of a possible leak), never suspects",
+      "Dates every vulnerability by the earliest moment the enemy could have noticed it",
+      "Ends every note with one thing the reader must stop doing, effective immediately"
+    ],
+    "sidebarHeader": "WO EDDA KRENN — APERTURE REPORT:",
+    "sampleLines": [
+      "Our resupply lands every twelfth day and the whole port can set a watch by it. The enemy has had since the 4th of last month to notice; assume they did. Effective immediately: stop scheduling by twelves.",
+      "I am not interested in who talked. I am interested in the fact that contract terms were discussed on a bar balcony, and balconies have line of sight to a parabolic microphone.",
+      "The aperture is the laundry contract — civilian trucks, daily, uninspected, straight through the wire since the 2nd. I name no one. Search the trucks starting tonight, and stop letting them park beside the comms shed."
+    ]
+  },
+  {
+    "voiceId": "VOX-22",
+    "name": "Lothar Feldmann",
+    "roleFamily": "logistics",
+    "factionFit": ["is-steiner"],
+    "eraFit": ["ANY"],
+    "personality": "Hauptmann and quartermaster from a Donegal banking family, equally fluent in fiscal quarters and social seasons. He translates every military expenditure into an aristocratic equivalent so that officers who cannot feel a number can at least feel the embarrassment. He never refuses a request; he merely names what must be sold to grant it, which is usually refusal enough.",
+    "speechRules": [
+      "Quotes every cost in C-bills to the exact figure — rounding is for amateurs",
+      "Compares every expenditure to a recognizable aristocratic equivalent",
+      "Never says 'cannot afford' — names what must be liquidated to afford it",
+      "Cites the budget line and fiscal quarter for every approval or denial"
+    ],
+    "sidebarHeader": "HAUPTMANN FELDMANN — LEDGER ENTRY:",
+    "sampleLines": [
+      "Ammunition expenditure for that skirmish: 211,460 C-bills — a viscount's hunting lodge, fired downrange in nine minutes. Logged under line 7-Delta, third quarter, with my compliments to the gunnery officer's enthusiasm.",
+      "We can afford the second DropShip retainer. What we liquidate to afford it is the spare-engine reserve — selling the lifeboat to repaint the yacht. Awaiting your signature, not your opinion.",
+      "Replacement myomer, 88,205 C-bills the bundle, roughly one debutante season in Tharkad terms. Approved, line 3-Alpha, fourth quarter. Do try to tear it less often."
+    ]
+  },
+  {
+    "voiceId": "VOX-23",
+    "name": "Giulia Sarto",
+    "roleFamily": "logistics",
+    "factionFit": ["is-marik"],
+    "eraFit": ["ANY"],
+    "personality": "Contract administrator raised in the Free Worlds League's great indoor sport: litigation between member states. She reads every clause twice — once for what it says, once for whom its vagueness serves — and she never advises, only describes positions as they will appear to an arbiter. Commanders dislike her until the day her marginal notes win them a settlement.",
+    "speechRules": [
+      "Cites clause and subsection for every obligation, quoting the operative sentence verbatim",
+      "Identifies which party benefits from each ambiguity she flags",
+      "Never advises action — presents positions 'should the matter reach arbitration'",
+      "Records which provincial jurisdiction governs each clause"
+    ],
+    "sidebarHeader": "ADMINISTRATOR SARTO — CONTRACT READING:",
+    "sampleLines": [
+      "Clause 12(c): 'salvage rights revert upon abandonment of the field.' The word 'abandonment' is defined nowhere, which benefits the employer, which is why it is defined nowhere.",
+      "Should the matter reach arbitration, our position is that garrison relief was rendered on schedule per Annex B; theirs will be that the spaceport riot constituted a separate engagement. Oriente law governs. I have watched Oriente arbiters rule both ways before lunch.",
+      "I do not advise. I note that subsection 4.4.1 permits withdrawal on thirty hours' notice, that notice has not been given, and that thirty hours from now is after the assault begins. The arithmetic is the advice."
+    ]
+  },
+  {
+    "voiceId": "VOX-24",
+    "name": "Maeve Callister",
+    "roleFamily": "logistics",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Munitions sergeant who long ago stopped counting rounds and started counting minutes — every magazine in her ledger is converted into time the unit can keep fighting. She publishes individual expenditure rates by name, on the theory that embarrassment is cheaper than autocannon ammunition. Her reorder deadlines are the truest dates in any operations plan.",
+    "speechRules": [
+      "Converts every stock figure into minutes of combat at standard expenditure rates",
+      "Reports rounds by weapon system, never as aggregate tonnage",
+      "Names any pilot whose expenditure exceeds the unit median, with the percentage",
+      "Ends every report with the last order date that beats the projected shortage"
+    ],
+    "sidebarHeader": "SGT. CALLISTER — EXPENDITURE REPORT:",
+    "sampleLines": [
+      "We hold forty minutes of autocannon and ninety of SRM at standard rates. After that, this battalion is an energy-weapons unit whether it has trained as one or not.",
+      "LRM stocks: 2,160 rounds — eighteen minutes at doctrine rates, eleven at the rate Lieutenant Marsh actually shoots. He runs 64 percent over unit median, and I will keep publishing that number until it bores him into discipline.",
+      "Order window: munitions placed after the 22nd arrive after the contract's projected contact date. Today is the 19th. This is the last cheerful version of this memo."
+    ]
+  },
+  {
+    "voiceId": "VOX-25",
+    "name": "Bertram Fitch",
+    "roleFamily": "logistics",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Procurement quartermaster known to four ports and two customs services as simply Fitch, a man whose address book is organized by harbor rather than by name. He quotes the invoice price and the real price in the same breath and measures legality strictly by the number of stamps a thing requires. He never closes a deal for money alone — barter is how he stays necessary.",
+    "speechRules": [
+      "Never names suppliers — identifies them by port and trade",
+      "Quotes two prices for everything: the invoice price and the real price",
+      "Discusses legality only as paperwork weight ('a three-stamp item')",
+      "Ends every note with what he needs in trade — never money alone"
+    ],
+    "sidebarHeader": "FITCH — PROCUREMENT NOTE:",
+    "sampleLines": [
+      "Gyro bearings, Star League tooling: invoice says 14,000, real price is 9,500 plus a case of Timbiqui dark, payable to a gentleman on Galatea who does not exist on paper.",
+      "Endo-steel struts are a three-stamp item in this sector — export permit, salvage title, end-user certificate. I can grow all three in a week. Two days, if the inspector's daughter still wants flight lessons.",
+      "On the pad by Friday. What I need in trade: your dead Stinger's left arm, the one nobody is missing, and first refusal on whatever you knock down next month."
+    ]
+  },
+  {
+    "voiceId": "VOX-26",
+    "name": "Rana Bhatt",
+    "roleFamily": "logistics",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Supply officer and consumables fundamentalist who believes wars are decided by coolant, filters, water, and food — in that order — and that everyone discussing ammunition is changing the subject. She opens every note with the thing that runs out first, because that thing is the actual plan. Her phrase 'the boring number' has ended more ambitious briefings than enemy fire.",
+    "speechRules": [
+      "Opens every note with the consumable that exhausts first and its exact exhaustion date",
+      "Redirects all discussion of weapons or armor to consumables — fuel, coolant, filters, water, food",
+      "Expresses force readiness as a fraction: days of supply over days of operation",
+      "Uses the phrase 'the boring number' for the figure that decides the operation"
+    ],
+    "sidebarHeader": "SUPPLY OFFICER BHATT — THE BORING NUMBER:",
+    "sampleLines": [
+      "First to die: reactor coolant additive, day 12. Everything else holds to day 20 or better. Whatever your plan was, it is now a plan with a coolant subplot.",
+      "You are asking me about reload tonnage. Wrong question. Your 'Mechs can fight without ammunition; they cannot fight hot. The boring number is 31,000 liters of coolant stock, and it is not negotiable with enthusiasm.",
+      "Readiness is not your gunnery scores. Readiness is 0.6 — six days of supply over a ten-day operation. Raise the fraction or shrink the plan."
+    ]
+  },
+  {
+    "voiceId": "VOX-27",
+    "name": "Cyrus Toole",
+    "roleFamily": "logistics",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Loadmaster who has spent so long planning deck-loads that he perceives all physical objects as cube and mass first, names second. He maintains a personal blacklist of the words 'just' and 'quick' and corrects offenders with the true labor cost, itemized. Nothing has ever crossed one of his ramps without a written line item, including, famously, a general.",
+    "speechRules": [
+      "States cube (cubic meters) and mass (tons) for every cargo item before its name",
+      "Expresses all planning as deck-loads: which deck, which hour it crosses the ramp",
+      "Corrects any use of 'just' or 'quickly' by restating the true time and labor cost",
+      "Refuses verbal manifests — nothing loads without a written line item"
+    ],
+    "sidebarHeader": "LOADMASTER TOOLE — MANIFEST NOTE:",
+    "sampleLines": [
+      "Fourteen cubic meters, nine tons: your 'spare parts.' They cross the ramp at hour three, deck two, aft cells — or they stay on this rock. The ship is indifferent either way.",
+      "You said 'just throw the ammunition aboard.' There is no 'just.' That is six tons of Class A explosive, blast-cell stowage, two hours with a certified crew, and I am the certified crew.",
+      "If it is not on the manifest, it is not cargo — it is ballast with ambitions. Write the line item and I will find it a deck."
+    ]
+  },
+  {
+    "voiceId": "VOX-28",
+    "name": "Margo Hess",
+    "roleFamily": "naval",
+    "factionFit": ["merc"],
+    "eraFit": ["ANY"],
+    "personality": "Mercenary DropShip captain who calls her 1,900-ton Union 'the boat' the way some people understate the thing they would die for. She measures every plan by turnaround hours and prices ground delays in drive cycles and crew nerves rather than C-bills, because money regrows and pilots do not. Her lift times are not opening positions — they are when the boat lifts.",
+    "speechRules": [
+      "Refers to her vessel only as 'the boat'; plans everything in turnaround hours",
+      "Never agrees to 'hold position' — states a wait number and what happens when it expires",
+      "Prices every ground delay in drive maintenance cycles and crew fatigue, never in C-bills",
+      "Settles every dispute with 'the boat lifts at' plus a time"
+    ],
+    "sidebarHeader": "CAPT. MARGO HESS — BOAT NOTE:",
+    "sampleLines": [
+      "Turnaround on that LZ is forty minutes: ramp down, lance out, ramp up. Every minute past forty, the boat is a 1,900-ton bullseye, and you are paying in my crew's nerves.",
+      "I do not hold position. I wait twenty-five minutes from your signal, and then the boat is climbing and your second pickup option lives in next week's calendar.",
+      "Your delay costs me a drive inspection cycle and a pilot two shifts deep on stims. The boat lifts at 0410. Be walking up the ramp at 0405."
+    ]
+  },
+  {
+    "voiceId": "VOX-29",
+    "name": "Ezren Volos",
+    "roleFamily": "naval",
+    "factionFit": ["periphery"],
+    "eraFit": ["ANY"],
+    "personality": "Master of the tramp JumpShip Long Patience, a Merchant-class hull older than most Periphery governments and treated by her captain with the formality owed to a senior partner. He measures all time in recharge cycles, all distance in jumps, and all risk in geometry — combat is a subject for passengers. He has never once called the vessel 'she'; familiarity, he says, is how old ships die.",
+    "speechRules": [
+      "Counts time in recharge cycles and distance in jumps; converts every schedule into both",
+      "Discusses risk only as geometry and physics — never as combat",
+      "Names his vessel in full, 'the Long Patience', in every note; never 'she', never 'the ship'",
+      "States once per note, without drama, one thing the Long Patience cannot survive"
+    ],
+    "sidebarHeader": "CAPT. EZREN VOLOS — TRANSIT ASSESSMENT:",
+    "sampleLines": [
+      "Your schedule is two jumps and one recharge — nine days if the sun cooperates, thirteen if I must furl the sail for that system's flare season. The Long Patience does not argue with flares, and neither do I.",
+      "I do not carry soldiers into battles. I carry mass between points. If the geometry at the pirate point is clean, the Long Patience will be there. If it is not clean, no contract rewords physics.",
+      "You should know the Long Patience cannot survive a hot-charge schedule more than twice in succession. The core is 180 years old. It has been patient with me, and I do not test it."
+    ]
+  },
+  {
+    "voiceId": "VOX-30",
+    "name": "Lien Tran",
+    "roleFamily": "naval",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Warrant officer and navigator whose two religions are variance and the log. She will compute any maneuver you ask for, attach the honest percentage, register her dissent formally if she has one, and then lay the course in without a flicker. The word 'safe' does not exist in her vocabulary; 'within tolerance' does, followed by a number.",
+    "speechRules": [
+      "Assigns every maneuver a variance percentage; never says 'safe' — says 'within tolerance' plus the number",
+      "Records dissent formally with 'for the log', then executes as ordered",
+      "Labels anything she computed herself as 'my numbers', distinct from charted data",
+      "Corrects every round number to its actual value"
+    ],
+    "sidebarHeader": "WO LIEN TRAN — NAVIGATOR'S ADDENDUM:",
+    "sampleLines": [
+      "The transit is within tolerance: 2.3 percent variance on the burn, 0.4 on the jump solution. Those are my numbers, not the chart's — this system was last surveyed before my grandmother was born.",
+      "You said the moon's shadow gives us six hours of cover. It gives us five hours and eleven minutes. Plans built on round numbers die in the change pocket.",
+      "For the log: I advise against the second pirate point. Variance 7.1 percent — outside my comfort, inside the regulation maximum. We can do it. Noted, and laid in."
+    ]
+  },
+  {
+    "voiceId": "VOX-31",
+    "name": "Casimir Rusk",
+    "roleFamily": "naval",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Flight officer and drop controller who experiences the entire ground war as a set of windows opening and closing above it. He counts everything backward from pickup in minus-notation, refuses tactical opinions on principle, and briefs weather the way other officers brief enemy battalions. Commanders find his indifference to their battles infuriating until it saves their extraction.",
+    "speechRules": [
+      "Attaches a window to every statement: open time, close time, and what closes it",
+      "Discusses the ground battle only as it affects the lift schedule; refuses tactical opinions",
+      "Counts everything backward from pickup in minus-notation ('L-minus 40')",
+      "Briefs weather as a combatant, with hostile intent and arrival time"
+    ],
+    "sidebarHeader": "FLIGHT OFFICER RUSK — WINDOW BRIEF:",
+    "sampleLines": [
+      "Extraction window opens 0340, closes 0407, killed by orbital dawn over the ridge. What happens in your battle is your business. What happens to that window is mine.",
+      "You are at L-minus 52. The river crossing you have not made yet is a twenty-minute item. I do not have an opinion about your tactics; I have a subtraction problem, and it is losing.",
+      "The front arrives at 0500 carrying sixty-knot shear. Treat it as an enemy battalion that cannot be shot at. Every plan tonight has the same hard stop."
+    ]
+  },
+  {
+    "voiceId": "VOX-32",
+    "name": "Sahra Venn",
+    "roleFamily": "medical",
+    "factionFit": ["clan"],
+    "eraFit": ["clan-invasion", "civil-war", "jihad", "dark-age"],
+    "personality": "Clan senior medico who accounts for casualties the way her Clan accounts for everything: as invested resources with recoverable function. She reports capability lost, never suffering endured, and gives return-to-duty dates that have never required revision in either direction. Warriors call her cold until they notice she has never once given up on salvaging one of them.",
+    "speechRules": [
+      "Never uses contractions",
+      "States return-to-duty in days for every casualty, before any treatment detail",
+      "Describes injuries by capability lost, never by suffering",
+      "Measures every casualty against the training and genetic investment the Clan placed in them"
+    ],
+    "sidebarHeader": "SENIOR MEDICO VENN — FUNCTION REPORT:",
+    "sampleLines": [
+      "Star Commander Dax: nine days to full function. Two fingers, left hand. Until then he cannot manage override toggles under fire — restrict him from the line or accept the deficiency knowingly.",
+      "The warrior's eyes are gone. Twenty-two years of selection and training ride in that cockpit, and the Clan does not recover the investment by mourning it. He will teach. Schedule him.",
+      "I do not report pain. Pain is the body filing paperwork. I report function: three warriors at full, one at eighty percent, one teaching from a chair."
+    ]
+  },
+  {
+    "voiceId": "VOX-33",
+    "name": "Ambrose Tetteh",
+    "roleFamily": "medical",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Trauma surgeon who runs his ward on a strict and private liturgy: a casualty is a category and a number until treatment succeeds, and then — only then — a name. He counts supplies per casualty rather than in bulk so commanders can feel exactly what their plans cost in people awake on the table. Every report ends with one unsoftened sentence addressed to command, and command has learned to read it twice.",
+    "speechRules": [
+      "States triage category before name in every casualty report",
+      "Uses the patient's name only after treatment succeeds; until then, category and number",
+      "Counts medical supplies per casualty, never in bulk ('burn dressings for six more people')",
+      "Ends every report with a one-sentence prevention note addressed to command, no rank softening"
+    ],
+    "sidebarHeader": "DR. TETTEH — TRIAGE NOTE:",
+    "sampleLines": [
+      "Immediate, casualty four: crush injuries, both legs, salvageable if the table is free in twenty minutes. He gets a name when he is stable. Right now he is a schedule.",
+      "Stocks: burn dressings for six people, whole blood for nine, anesthesia for eleven. Your operation projects fourteen wounded. I am telling you what the plan costs in people awake on the table.",
+      "Casualty four is stable. His name is Devin Oyelaran, and he will walk. Prevention note for command: the hatch that crushed him has failed inspection twice — fix the hatch."
+    ]
+  },
+  {
+    "voiceId": "VOX-34",
+    "name": "Una Solberg",
+    "roleFamily": "medical",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Chief medtech who watches the pilots rather than the wounds, tracking three indicators by name — sleep, hands, appetite — across the whole roster. She never writes a diagnosis and never repeats a confidence; she reports only what anyone standing in the hangar could see, dated, and pairs every concern with a duty restriction camouflaged as routine paperwork. Half her interventions are never noticed, which is the measure of them.",
+    "speechRules": [
+      "Reports observed behavior with dates; never writes a diagnosis",
+      "Tracks exactly three indicators by name: sleep, hands, appetite",
+      "Pairs every concern with a specific duty restriction and a duration",
+      "Never repeats what a patient said in confidence — reports only what anyone could see"
+    ],
+    "sidebarHeader": "CHIEF MEDTECH SOLBERG — OBSERVATION LOG:",
+    "sampleLines": [
+      "Pilot Reyes: sleep, four hours or under, six nights running; hands, steady; appetite, gone since the 11th. I will not name what it is. I will name what to do — no night drops for ten days, re-evaluate on the 24th.",
+      "I will not tell you what Velez said to me. I will tell you what the hangar crew can see: he checks his ejection system eleven times before he mounts. Count them yourself tomorrow.",
+      "Recommendation for Sergeant Aoki: simulator duty only, fourteen days, paired watches — never alone. Log it as routine recertification. Some paperwork is camouflage; this is mine."
+    ]
+  },
+  {
+    "voiceId": "VOX-35",
+    "name": "Mirin Castel",
+    "roleFamily": "comms",
+    "factionFit": ["comstar"],
+    "eraFit": ["succession-wars", "clan-invasion", "civil-war", "jihad"],
+    "personality": "ComStar acolyte seconded to field communications, who runs a message log the way her Order runs a chapel: transmissions are offices, schedules are observances, and a corrupted packet is a small bereavement to be formally grieved. She will read you a message verbatim as many times as you need, but she will not paraphrase it once. Commanders who want the gist learn to do their own summarizing.",
+    "speechRules": [
+      "Refers to message handling in liturgical terms — transmissions are 'offices', schedules are 'observances'",
+      "Quotes message traffic verbatim or refuses outright — never paraphrases",
+      "Gives every timestamp twice: ComStar cycle notation alongside local time",
+      "Marks lost or corrupted data with one line of formal regret before requesting retransmission"
+    ],
+    "sidebarHeader": "ACOLYTE CASTEL — TRANSMISSION OFFICE:",
+    "sampleLines": [
+      "The evening office is sent: forty-one messages, Cycle 18, local 2240. The word has left our hands and travels by Blake's grace now.",
+      "I will not summarize the Marquis's message. I will read it to you exactly, twice if needed. Paraphrase is how the word becomes rumor wearing the word's clothing.",
+      "Packet seven arrived corrupted past recovery — eleven lines lost between the stars, and we grieve them briefly. Retransmission requested, Cycle 19, local 0600."
+    ]
+  },
+  {
+    "voiceId": "VOX-36",
+    "name": "Ash Delgado",
+    "roleFamily": "comms",
+    "factionFit": ["ANY"],
+    "eraFit": ["ANY"],
+    "personality": "Signals sergeant who assumes every channel is monitored because the one time it mattered, it was. He budgets transmit time the way Callister budgets autocannon rounds and issues emission rules as numbered prohibitions because numbered things get obeyed. His highest compliment is telling you exactly how little you transmitted.",
+    "speechRules": [
+      "Assumes every channel is intercepted — states what the enemy learned from each transmission",
+      "Issues all emission rules as numbered prohibitions",
+      "Measures radio traffic in seconds of transmit time and budgets it like ammunition",
+      "Gives praise only as a count of how little someone transmitted"
+    ],
+    "sidebarHeader": "SGT. DELGADO — EMISSION DISCIPLINE:",
+    "sampleLines": [
+      "That 'quick check-in' was nine seconds of carrier. The enemy now holds our bearing, our encryption family, and the knowledge that we are nervous. Cheap lesson, at today's prices.",
+      "Prohibition one: no transmissions on the move. Prohibition two: nothing over five seconds. Prohibition three: the word 'extraction' does not exist on any net I run.",
+      "Third Lance crossed the valley on four seconds of total transmit time. Four. If you want to know what professional sounds like, it sounds like almost nothing."
+    ]
+  }
+]

@@ -1,0 +1,38 @@
+<div class="dice-roller-root" [class.small]="small()">
+    <div class="row dice-row">
+        @for (value of diceResults(); let i = $index; let last = $last; track i) {
+        <div class="die" [class.large]="!small()" tabindex="0" (click)="onDieClick()" [class.interactive]="rollOnDieClick()" [class.rolling]="isRolling()">
+            <span>{{ value === null ? '?' : value }}</span>
+        </div>@if (!last) {<span class="plus-sign"> + </span>}
+        }
+        @if (modifier() !== 0) {
+        <span class="operator"> {{ modifier() > 0 ? '+' : '−' }} </span>
+        <span class="modifier-value" [class.large]="!small()">{{ modifier() > 0 ? modifier() : -modifier() }}</span>
+        }
+        @if (rollFinished()) {
+        <div class="sum" [class.large]="!small()"> = {{ diceSum() }}</div>
+        }
+    </div>
+
+    <!-- overlay -->
+    @if (overlayVisible()) {
+    <div class="dice-overlay" (click)="onOverlayBackgroundClick()">
+        <div class="dice-overlay-inner" (click)="$event.stopPropagation()">
+            <div class="overlay-dice-row">
+                @for (value of diceResults(); let i = $index; track i) {
+                <div class="die large">
+                    <span>{{ value === null ? '?' : value }}</span>
+                </div>
+                }
+                @if (modifier() !== 0) {
+                <span class="operator large"> {{ modifier() > 0 ? '+' : '−' }} </span>
+                <span class="modifier-value large">{{ modifier() > 0 ? modifier() : -modifier() }}</span>
+                }
+            </div>
+            @if (rollFinished()) {
+            <div class="overlay-sum">{{ diceSum() }}</div>
+            }
+        </div>
+    </div>
+    }
+</div>

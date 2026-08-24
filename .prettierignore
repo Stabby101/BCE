@@ -1,0 +1,12 @@
+# Add files here to ignore them from prettier formatting
+/dist
+/coverage
+/.nx/cache
+/.nx/workspace-data
+
+# governance + drift-gate config — never reformat (drift-rules.json is frozen)
+/.claude
+/directives
+/AGENTS.md
+/DESIGN-INVARIANTS.md
+/TASK-STATE.md

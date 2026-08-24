@@ -1,0 +1,137 @@
+<div class="acq-overlay" (click)="onClose()">
+    <div class="acq" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Unit acquisition">
+        <div class="acq-head">
+            <div class="acq-htext">
+                <div class="acq-title">Unit acquisition <span class="acq-flag">market · interim pricing</span></div>
+                <div class="acq-sub">Treasury <b>{{ fmt(acq.treasury()) }}</b> C-bills · buy at catalog price, sell at {{ acq.resaleRatio * 100 }}% resale</div>
+            </div>
+            <button type="button" class="acq-x" (click)="onClose()" aria-label="Close">✕</button>
+        </div>
+
+        <div class="acq-tabs" role="tablist">
+            <button type="button" class="acq-tab" role="tab" [class.on]="tab() === 'buy'" [attr.aria-selected]="tab() === 'buy'" (click)="setTab('buy')">Buy</button>
+            <button type="button" class="acq-tab" role="tab" [class.on]="tab() === 'sell'" [attr.aria-selected]="tab() === 'sell'" (click)="setTab('sell')">Sell / Strike</button>
+        </div>
+
+        @if (tab() === 'buy') {
+            <div class="acq-filters">
+                <input type="search" class="acq-search" [value]="search()" (input)="setSearch($any($event.target).value)" placeholder="Search chassis / model…" aria-label="Search the market">
+                <button type="button" class="acq-filterbtn" [class.on]="filterOpen() || !!activeFilters()" (click)="toggleFilter()" [attr.aria-expanded]="filterOpen()" aria-label="Filters" title="Filters">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+                    @if (activeFilters()) { <span class="acq-fbadge">{{ activeFilters() }}</span> }
+                </button>
+                <div class="acq-sort" role="group" aria-label="Sort">
+                    <span class="acq-sortlbl">Sort</span>
+                    @for (sf of sortFields; track sf.key) {
+                        <button type="button" class="sortb" [class.on]="sortKey() === sf.key" (click)="setSort(sf.key)" [attr.aria-pressed]="sortKey() === sf.key">{{ sf.label }}@if (sortKey() === sf.key) { <span class="dir">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span> }</button>
+                    }
+                </div>
+                <label class="acq-gm"><input type="checkbox" [checked]="gmOverride()" (change)="toggleGm()"> GM: ignore all gates (faction · era · circulation · rules · hero)</label>
+
+                @if (filterOpen()) {
+                    <div class="acq-pop" role="dialog" aria-label="Market filters" (click)="$event.stopPropagation()">
+                        <div class="pop-head"><span>Filters</span><span class="pop-count">@if (activeFilters()) { {{ activeFilters() }} active } @else { none }</span></div>
+                        <div class="pop-row">
+                            <span class="pop-lbl">Weight class</span>
+                            <div class="acq-wc">
+                                @for (wc of weightClasses; track wc) { <button type="button" class="wcb" [class.on]="weightClass() === wc" (click)="setWc(wc)">{{ wc }}</button> }
+                            </div>
+                        </div>
+                        <div class="pop-row">
+                            <span class="pop-lbl">Tech base</span>
+                            <div class="acq-seg">
+                                @for (t of techBases; track t.key) { <button type="button" class="segb" [class.on]="techBase() === t.key" (click)="setTech(t.key)">{{ t.label }}</button> }
+                            </div>
+                        </div>
+                        <div class="pop-row">
+                            <span class="pop-lbl">{{ tonsLabel }}</span>
+                            <div class="rng">
+                                <input type="number" inputmode="numeric" class="rngi" [value]="tonsMin() ?? ''" (input)="setBound('tonsMin', $any($event.target).value)" [attr.placeholder]="bounds().tons[0]" aria-label="Min tonnage">
+                                <span class="rngd">–</span>
+                                <input type="number" inputmode="numeric" class="rngi" [value]="tonsMax() ?? ''" (input)="setBound('tonsMax', $any($event.target).value)" [attr.placeholder]="bounds().tons[1]" aria-label="Max tonnage">
+                            </div>
+                        </div>
+                        <div class="pop-row">
+                            <span class="pop-lbl">{{ yearLabel }} (intro)</span>
+                            <div class="rng">
+                                <input type="number" inputmode="numeric" class="rngi" [value]="yearMin() ?? ''" (input)="setBound('yearMin', $any($event.target).value)" [attr.placeholder]="bounds().year[0]" aria-label="Min year">
+                                <span class="rngd">–</span>
+                                <input type="number" inputmode="numeric" class="rngi" [value]="yearMax() ?? ''" (input)="setBound('yearMax', $any($event.target).value)" [attr.placeholder]="bounds().year[1]" aria-label="Max year">
+                            </div>
+                        </div>
+                        <div class="pop-row">
+                            <span class="pop-lbl">{{ bvLabel }}</span>
+                            <div class="rng">
+                                <input type="number" inputmode="numeric" class="rngi" [value]="bvMin() ?? ''" (input)="setBound('bvMin', $any($event.target).value)" [attr.placeholder]="bounds().bv[0]" aria-label="Min BV">
+                                <span class="rngd">–</span>
+                                <input type="number" inputmode="numeric" class="rngi" [value]="bvMax() ?? ''" (input)="setBound('bvMax', $any($event.target).value)" [attr.placeholder]="bounds().bv[1]" aria-label="Max BV">
+                            </div>
+                        </div>
+                        <div class="pop-foot">
+                            <button type="button" class="pop-clear" (click)="clearAll()" [disabled]="!activeFilters()">Clear all</button>
+                            <button type="button" class="pop-done" (click)="filterOpen.set(false)">Done</button>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="acq-list">
+                @for (r of shown(); track r.unit.id) {
+                    <div class="mrow" [class.over]="!r.passes">
+                        <div class="mr-sprite"><bce-unit-sprite [unit]="r.unit" [size]="38"></bce-unit-sprite></div>
+                        <div class="mr-name">{{ r.unit.chassis }} <span class="mr-var">{{ r.unit.model }}</span>
+                            @if (!r.passes && gmOverride()) { @for (o of r.overrides; track o) { <span class="ovr">{{ o }}</span> } }
+                        </div>
+                        <div class="mr-stat"><span>{{ r.unit.tons }}t</span><span>BV {{ r.unit.bv }}</span>@if (r.year > 0) { <span class="mr-yr" title="introduction year">{{ r.year }}</span> }<span class="mr-price">{{ fmt(r.price) }}@if (r.fallback) { <span class="est" title="estimated from BV — no catalog cost">est</span> }</span></div>
+                        <div class="mr-act">
+                            <button type="button" class="mbtn buy" [disabled]="!buyable(r)" (click)="buy(r)" [attr.aria-label]="'Buy ' + r.unit.chassis">Buy &raquo;</button>
+                            <button type="button" class="mbtn gm" (click)="gmAdd(r)" title="GM add — no cost" aria-label="GM add">GM+</button>
+                        </div>
+                    </div>
+                }
+                @if (!shown().length) {
+                    @if (!catalogReady()) {
+                        <div class="acq-empty">
+                            @if (catalogError()) { ⚠ The unit catalog couldn’t be loaded. <button type="button" class="mbtn" (click)="retryCatalog()">Retry</button> }
+                            @else if (catalogLoading()) { Loading the unit catalog… }
+                            @else { ⚠ The unit catalog couldn’t be loaded. <button type="button" class="mbtn" (click)="retryCatalog()">Retry</button> }
+                        </div>
+                    } @else {
+                        <div class="acq-empty">No 'Mechs match.@if (!gmOverride()) { <span> Enable GM override to browse beyond your faction/era.</span> }</div>
+                    }
+                }
+                @if (overflowCount()) { <div class="acq-more">+ {{ overflowCount() }} more — refine the search or filters.</div> }
+            </div>
+        } @else {
+            <div class="acq-list">
+                @for (o of owned(); track o.instance.instanceId) {
+                    <div class="mrow" [class.dep]="o.deployed">
+                        <div class="mr-name">{{ o.name }} <span class="mr-var">{{ o.variant }}</span>@if (o.commander) { <span class="cmd">★ CMD</span> }
+                            <div class="mr-pilot">@if (o.pilotName) { {{ o.pilotName }} } @else { — pilotless — }</div>
+                        </div>
+                        <div class="mr-stat"><span>{{ o.tons }}t</span><span class="mr-price">resale {{ fmt(o.resale) }}</span></div>
+                        <div class="mr-act">
+                            @if (o.deployed) { <span class="mr-block" title="Clear the DEPLOYED condition on the roster first">deployed</span> }
+                            @else {
+                                <button type="button" class="mbtn sell" (click)="askSell(o)">Sell &raquo;</button>
+                                <button type="button" class="mbtn del" (click)="askDelete(o)" title="Write off — no money">Delete</button>
+                            }
+                        </div>
+                    </div>
+                }
+                @if (!owned().length) { <div class="acq-empty">No units to sell — your roster is empty. Buy your command on the Buy tab.</div> }
+            </div>
+        }
+
+        @if (confirm(); as c) {
+            <div class="acq-confirm-back" (click)="cancelConfirm()">
+                <div class="acq-confirm" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+                    <div class="acq-cmsg">@if (c.kind === 'sell') { Sell <b>{{ c.name }}</b> for <b>{{ fmt(c.amount) }}</b> C-bills? Its pilot returns to your spares. } @else { Strike <b>{{ c.name }}</b> from the rolls? No money changes hands; its pilot returns to spares. }</div>
+                    <div class="acq-cbtns">
+                        <button type="button" class="cbtn" (click)="cancelConfirm()">Cancel</button>
+                        <button type="button" class="cbtn go" (click)="doConfirm()">@if (c.kind === 'sell') { Sell } @else { Delete } &raquo;</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

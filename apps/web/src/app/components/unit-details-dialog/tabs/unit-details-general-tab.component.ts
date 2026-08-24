@@ -1,0 +1,747 @@
+/*
+ * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
+ *
+ * This file is part of MekBay.
+ *
+ * MekBay is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License (GPL),
+ * version 3 or (at your option) any later version,
+ * as published by the Free Software Foundation.
+ *
+ * MekBay is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * A copy of the GPL should have been included with this project;
+ * if not, see <https://www.gnu.org/licenses/>.
+ *
+ * NOTICE: The MegaMek organization is a non-profit group of volunteers
+ * creating free software for the BattleTech community.
+ *
+ * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
+ * of The Topps Company, Inc. All Rights Reserved.
+ *
+ * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
+ * InMediaRes Productions, LLC.
+ *
+ * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
+ * Microsoft's "Game Content Usage Rules"
+ * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
+ * affiliated with Microsoft.
+ */
+
+import { Component, ChangeDetectionStrategy, input, inject, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import type { Unit, UnitComponent } from '../../../models/units.model';
+import { weaponTypes } from '../../../utils/equipment.util';
+import { DataService } from '../../../services/data.service';
+import { DialogsService } from '../../../services/dialogs.service';
+import { LayoutService } from '../../../services/layout.service';
+import { StatBarSpecsPipe } from '../../../pipes/stat-bar-specs.pipe';
+import { FilterAmmoPipe } from '../../../pipes/filter-ammo.pipe';
+import { UnitComponentItemComponent } from '../../unit-component-item/unit-component-item.component';
+import { TooltipDirective } from '../../../directives/tooltip.directive';
+import { BVCalculatorUtil } from '../../../utils/bv-calculator.util';
+import { SourcebookInfoDialogComponent, type SourcebookInfoDialogData } from '../../sourcebook-info-dialog/sourcebook-info-dialog.component';
+import type { Sourcebook } from '../../../models/sourcebook.model';
+
+// Matrix layout types
+type SlotSpec = string | string[];
+type MatrixSpec = SlotSpec[][];
+
+// Matrix layouts by unit type
+// '~' = if no content, expand the area from above
+// '^' = if no content, borrow content from above (cannot move past anchor)
+// '!' prefix = anchor (content cannot move upward, area cannot expand downward)
+const MATRIX_ALIGNMENT: Record<string, MatrixSpec> = {
+    Mek: [
+        [['LA', 'FLL'], 'HD', ['RA', 'FRL']],
+        ['LT', 'CT', 'RT'],
+        [['LL', 'RLL'], ['CL', '~'], ['RL', 'RRL']],
+    ],
+    Aero: [
+        ['FLS', 'NOS', 'FRS'],
+        [['LBS', 'LWG', 'LS'], ['HULL', 'FSLG', '~'], ['RBS', 'RWG', 'RS']],
+        ['~', 'WNG', '~'],
+        [['ALS', '~'], 'AFT', ['ARS', '~']],
+    ],
+    Tank: [
+        [['!FRLS', '^'], ['FR', '^'], ['!FRRS', 'FT', '^']],
+        ['RS', ['BD', 'GUN'], ['LS', '^']],
+        [['!RRLS', '~'], ['RR', '~'], ['!RRRS', '^', '~']],
+        ['~', '~', ['TU', '~']]
+    ],
+    Naval: [
+        [['!FRLS', '^'], ['FR', '^'], ['!FRRS', 'FT', '^']],
+        ['RS', ['BD', 'GUN'], ['LS', '^']],
+        [['!RRLS', '~'], ['RR', '~'], ['!RRRS', '^', '~']],
+        ['~', '~', ['TU', '~']]
+    ],
+    VTOL: [
+        ['RS', ['FR', '^'], ['RO', '^']],
+        ['~', 'BD', ['LS', '^']],
+        ['~', ['RR', '~'], ['TU', '~']],
+    ],
+};
+
+@Component({
+    selector: 'unit-details-general-tab',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [CommonModule, UnitComponentItemComponent, StatBarSpecsPipe, FilterAmmoPipe, TooltipDirective],
+    templateUrl: './unit-details-general-tab.component.html',
+    styleUrls: ['./unit-details-general-tab.component.css']
+})
+export class UnitDetailsGeneralTabComponent {
+    private dataService = inject(DataService);
+    private dialogsService = inject(DialogsService);
+    private layoutService = inject(LayoutService);
+
+    // Inputs
+    unit = input.required<Unit>();
+    gunnerySkill = input<number | undefined>(undefined);
+    pilotingSkill = input<number | undefined>(undefined);
+
+    // Computed state - derived from unit
+    groupedBays = computed(() => this.getGroupedBaysByLocation());
+    components = computed(() => this.getComponents(false));
+    componentsForMatrix = computed(() => this.getComponents(true));
+
+    // Matrix layout state
+    useMatrixLayout = computed(() => {
+        const matrix = MATRIX_ALIGNMENT[this.unit()?.type];
+        return Array.isArray(matrix) && this.layoutService.windowWidth() >= 780;
+    });
+
+    /** 
+     * Computed matrix layout data - derives all matrix-related state from unit.
+     * Returns an object with gridAreas, areaCodes, and lookup Maps.
+     */
+    private matrixData = computed(() => {
+        const unit = this.unit();
+        const groupedBays = this.groupedBays();
+        const componentsForMatrix = this.componentsForMatrix();
+        return this.buildMatrixLayout(unit, groupedBays, componentsForMatrix);
+    });
+
+    gridAreas = computed(() => this.matrixData().gridAreas);
+    matrixAreaCodes = computed(() => this.matrixData().matrixAreaCodes);
+    private areaNameToCodes = computed(() => this.matrixData().areaNameToCodes);
+    private baysForArea = computed(() => this.matrixData().baysForArea);
+    private compsForArea = computed(() => this.matrixData().compsForArea);
+
+    /** Map of normalized location code -> '[CASE]' or '[CASE II]' for locations that have CASE equipment */
+    caseByLocation = computed<Map<string, string>>(() => {
+        const u = this.unit();
+        const result = new Map<string, string>();
+        if (!u?.comp) return result;
+        for (const comp of u.comp) {
+            if (!comp.eq || !comp.l) continue;
+            let label: string | undefined;
+            if (comp.eq.hasFlag('F_CASE_II')) label = '[CASE II]';
+            else if (comp.eq.hasFlag('F_CASE') || comp.eq.hasFlag('F_CASE_P')) label = '[CASE]';
+            if (label) result.set(this.normalizeLoc(comp.l), label);
+        }
+        return result;
+    });
+
+    /** Force packs that contain the current unit's chassis|type */
+    forcePacks = computed<string[]>(() => {
+        const u = this.unit();
+        if (!u) return [];
+        return this.dataService.getForcePacksForUnit(u);
+    });
+
+    typeSummary = computed(() => {
+        const u = this.unit();
+        const EXCLUDE_FLAGS = ['F_HEAT_SINK', 'F_DOUBLE_HEAT_SINK', 'F_CASE', 'F_CASE_II', 'F_JUMP_JET'];
+        const counts: Record<string, number> = {};
+        if (u?.comp) {
+            for (const comp of u.comp) {
+                let code = comp.t;
+                if (code === 'C' && !comp.eq?.hasAnyFlag(EXCLUDE_FLAGS)) {
+                    code = 'O';
+                }
+                counts[code] = (counts[code] || 0) + (comp.q || 1);
+            }
+        }
+        return weaponTypes.map(wt => ({ ...wt, count: counts[wt.code] ?? 0 }));
+    });
+
+    adjustedBV = computed(() => {
+        const gunnery = this.gunnerySkill();
+        const piloting = this.pilotingSkill();
+        const unit = this.unit();
+        if (gunnery === undefined || piloting === undefined) {
+            return null;
+        }
+        return BVCalculatorUtil.calculateAdjustedBV(unit, unit.bv, gunnery, piloting);
+    });
+
+    formatThousands(value: number): string {
+        if (value === undefined || value === null) return '';
+        return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+
+
+    hasBays(): boolean {
+        return this.unit()?.comp.some(c => c.bay && c.bay.length > 0) ?? false;
+    }
+
+    getQuirkClass(quirk: string): string {
+        const q = this.dataService.getQuirkByName(quirk);
+        if (!q) return '';
+        return q.type == 'positive' ? 'positive' : 'negative';
+    }
+
+    getQuirkDesc(quirk: string): string {
+        const q = this.dataService.getQuirkByName(quirk);
+        return q?.description || '';
+    }
+
+    getSourcebookTitle(abbrev: string): string {
+        return this.dataService.getSourcebookTitle(abbrev);
+    }
+
+
+    openSourcebooksDialog(index: number): void {
+        const sources = this.unit().source;
+        if (!sources || sources.length === 0) return;
+        
+        const sourcebooks: Sourcebook[] = [];
+        const unknownSources: string[] = [];
+        
+        for (const abbrev of sources) {
+            const sourcebook = this.dataService.getSourcebookByAbbrev(abbrev);
+            if (sourcebook) {
+                sourcebooks.push(sourcebook);
+            } else {
+                unknownSources.push(abbrev);
+            }
+        }
+        
+        this.dialogsService.createDialog<void, SourcebookInfoDialogComponent, SourcebookInfoDialogData>(
+            SourcebookInfoDialogComponent,
+            { data: { sourcebooks, unknownSources, selectedIndex: index } }
+        );
+    }
+
+    hasSourcebook(abbrev: string): boolean {
+        return !!this.dataService.getSourcebookByAbbrev(abbrev);
+    }
+
+    getAreaLabel(areaName: string): string {
+        const areaNameToCodes = this.areaNameToCodes();
+        const baysForArea = this.baysForArea();
+        const compsForArea = this.compsForArea();
+        const codes = areaNameToCodes.get(areaName) ?? [areaName];
+        const present = new Set<string>();
+        for (const code of codes) {
+            if ((baysForArea.get(code)?.length ?? 0) > 0) present.add(code);
+            if ((compsForArea.get(code)?.length ?? 0) > 0) present.add(code);
+        }
+        if (present.size === 0) return '';
+        const display = Array.from(present).map(c => c === 'ALL' ? '*' : c);
+        return display.join('/');
+    }
+
+    getComponentsForArea(areaName: string): UnitComponent[] {
+        return this.compsForArea().get(areaName) ?? [];
+    }
+
+    getBaysForArea(areaName: string): UnitComponent[] {
+        return this.baysForArea().get(areaName) ?? [];
+    }
+
+    areaHasBays(areaName: string): boolean {
+        return (this.baysForArea().get(areaName)?.length || 0) > 0;
+    }
+
+    getCaseLabelForArea(areaName: string): string {
+        const caseMap = this.caseByLocation();
+        const codes = this.areaNameToCodes().get(areaName) ?? [areaName];
+        const code = codes.find(c => caseMap.has(c));
+        return code ? caseMap.get(code)! : '';
+    }
+
+    /** Returns the CASE label for a raw location string */
+    getCaseLabel(loc: string): string {
+        return this.caseByLocation().get(this.normalizeLoc(loc)) ?? '';
+    }
+
+    features = computed<string[]>(() => {
+        const u = this.unit();
+        if (!u) return [];
+        if (!u.features || u.features.length === 0) return [];
+        // We skip Bays, we have dedicated visualization for them
+        return u.features.filter(f => f && !f.startsWith("Bay:")).map((value) => value.replaceAll("Chassis Mod:", "")).sort();
+    });
+
+    // Matrix layout methods
+    private normalizeLoc(loc: string): string {
+        if (!loc) return 'UNK';
+        let norm = (loc === '*') ? 'ALL' : loc.trim();
+        norm = norm.replace(/[^A-Za-z0-9_-]/g, '');
+        if (/^[0-9]/.test(norm)) norm = 'L' + norm;
+        if (!norm) norm = 'UNK';
+        return norm;
+    }
+
+    /** Result type for buildMatrixLayout */
+    private static readonly EMPTY_MATRIX_DATA = {
+        gridAreas: '',
+        matrixAreaCodes: [] as string[],
+        areaNameToCodes: new Map<string, string[]>(),
+        baysForArea: new Map<string, UnitComponent[]>(),
+        compsForArea: new Map<string, UnitComponent[]>()
+    };
+
+    /**
+     * Pure function that builds all matrix layout data.
+     * Returns an object containing gridAreas, areaCodes, and lookup Maps.
+     */
+    private buildMatrixLayout(
+        unit: Unit,
+        groupedBays: Array<{ l: string, p: number, bays: UnitComponent[] }>,
+        componentsForMatrix: UnitComponent[]
+    ): typeof UnitDetailsGeneralTabComponent.EMPTY_MATRIX_DATA {
+        const matrix = MATRIX_ALIGNMENT[unit?.type];
+        if (!Array.isArray(matrix)) {
+            return UnitDetailsGeneralTabComponent.EMPTY_MATRIX_DATA;
+        }
+
+        // Helper to get bays by location (pure, no caching needed in computed context)
+        const getBaysByLoc = (loc: string): UnitComponent[] => {
+            const target = loc;
+            const matched = groupedBays.filter(g => this.normalizeLoc(g.l) === target);
+            if (!matched.length) return [];
+            const byName = new Map<string, UnitComponent>();
+            for (const g of matched) {
+                for (const bay of g.bays) {
+                    const key = bay.n ?? '';
+                    if (!byName.has(key)) byName.set(key, { ...bay });
+                    else {
+                        const agg = byName.get(key)!;
+                        agg.q = (agg.q || 1) + (bay.q || 1);
+                    }
+                }
+            }
+            return Array.from(byName.values()).sort((a, b) => {
+                if (a.n === b.n) return 0;
+                if (a.n === undefined) return 1;
+                if (b.n === undefined) return -1;
+                return a.n!.localeCompare(b.n!);
+            });
+        };
+
+        // Helper to get components by location
+        const getCompsForLoc = (loc: string): UnitComponent[] => {
+            return componentsForMatrix.filter(c => this.normalizeLoc(c.l) === loc);
+        };
+
+        const { names, areaCodes } = this.normalizeMatrixPure(matrix, getBaysByLoc, getCompsForLoc);
+        const filteredNames = names.filter(row => row.some(name => name !== '.'));
+
+        const matrixDeclaredCodes = new Set<string>();
+        for (const codes of areaCodes.values()) {
+            for (const c of codes) matrixDeclaredCodes.add(c);
+        }
+
+        const allUnitLocs = new Set<string>();
+        for (const comp of componentsForMatrix) {
+            if (comp.l) allUnitLocs.add(this.normalizeLoc(comp.l));
+        }
+        for (const g of groupedBays) {
+            if (g.l) allUnitLocs.add(this.normalizeLoc(g.l));
+        }
+
+        const extraCodes: string[] = [];
+        for (const loc of allUnitLocs) {
+            if (!matrixDeclaredCodes.has(loc)) {
+                extraCodes.push(loc);
+            }
+        }
+
+        if (extraCodes.length) {
+            const cols = matrix[0].length;
+            let i = 0;
+            while (i < extraCodes.length) {
+                const row: string[] = Array(cols).fill('.');
+                for (let c = 0; c < cols && i < extraCodes.length; c++, i++) {
+                    const code = extraCodes[i];
+                    row[c] = code;
+                    if (!areaCodes.has(code)) {
+                        areaCodes.set(code, [code]);
+                    }
+                }
+                filteredNames.push(row);
+            }
+        }
+
+        if (!filteredNames.length) {
+            return UnitDetailsGeneralTabComponent.EMPTY_MATRIX_DATA;
+        }
+
+        const gridAreas = this.computeGridAreas(filteredNames);
+
+        const seen = new Set<string>();
+        const matrixAreaCodes: string[] = [];
+        for (const row of filteredNames) {
+            for (const name of row) {
+                if (name === '.') continue;
+                if (!seen.has(name)) {
+                    seen.add(name);
+                    matrixAreaCodes.push(name);
+                }
+            }
+        }
+
+        // Build area caches
+        const baysForArea = new Map<string, UnitComponent[]>();
+        const compsForArea = new Map<string, UnitComponent[]>();
+
+        for (const area of matrixAreaCodes) {
+            const codes = areaCodes.get(area) ?? [area];
+            const merged = new Map<string, UnitComponent>();
+            for (const code of codes) {
+                for (const bay of getBaysByLoc(code)) {
+                    const key = bay.n ?? '';
+                    if (!merged.has(key)) merged.set(key, { ...bay });
+                    else {
+                        const agg = merged.get(key)!;
+                        agg.q = (agg.q || 1) + (bay.q || 1);
+                    }
+                }
+            }
+            const bays = Array.from(merged.values()).sort((a, b) => {
+                if (a.n === b.n) return 0;
+                if (a.n === undefined) return 1;
+                if (b.n === undefined) return -1;
+                return a.n!.localeCompare(b.n!);
+            });
+            baysForArea.set(area, bays);
+
+            const comps = codes
+                .flatMap(code => getCompsForLoc(code))
+                .sort((a, b) => {
+                    if (a.l === b.l) {
+                        if (a.n === b.n) return 0;
+                        if (a.n === undefined) return 1;
+                        if (b.n === undefined) return -1;
+                        return a.n!.localeCompare(b.n!);
+                    }
+                    return a.l.localeCompare(b.l);
+                });
+            compsForArea.set(area, comps);
+        }
+
+        return {
+            gridAreas,
+            matrixAreaCodes,
+            areaNameToCodes: areaCodes,
+            baysForArea,
+            compsForArea
+        };
+    }
+
+    private parseSlotSpec(slot: SlotSpec): {
+        codes: string[];
+        hasFallback: boolean;
+        hasBorrowUp: boolean;
+        anchorCodes: string[];
+    } {
+        const arr = Array.isArray(slot) ? slot : [slot];
+        const codes: string[] = [];
+        const anchorCodes: string[] = [];
+        let hasFallback = false;
+        let hasBorrowUp = false;
+        for (let raw of arr) {
+            if (raw === '~') {
+                hasFallback = true;
+                continue;
+            }
+            if (raw === '^') {
+                hasBorrowUp = true;
+                continue;
+            }
+            if (raw.startsWith('!')) {
+                raw = raw.substring(1);
+                anchorCodes.push(raw);
+            }
+            codes.push(raw);
+        }
+        return { codes, hasFallback, hasBorrowUp, anchorCodes };
+    }
+
+    private normalizeMatrixPure(
+        matrix: MatrixSpec,
+        getBaysByLoc: (loc: string) => UnitComponent[],
+        getCompsForLoc: (loc: string) => UnitComponent[]
+    ): { names: string[][]; areaCodes: Map<string, string[]> } {
+        interface CellMeta {
+            codes: string[];
+            anchorCodes: string[];
+            hasFallback: boolean;
+            hasBorrowUp: boolean;
+            hasContent: boolean;
+            borrowUpActive: boolean;
+            contentCodes: string[];
+            anchorActive: boolean;
+        }
+
+        const expectedCols = matrix[0]?.length || 0;
+        if (!expectedCols) return { names: [], areaCodes: new Map() };
+
+        const codeHasContent = (code: string): boolean =>
+            getBaysByLoc(code).length > 0 ||
+            getCompsForLoc(code).length > 0;
+
+        const meta: CellMeta[][] = [];
+        for (let r = 0; r < matrix.length; r++) {
+            const row = matrix[r];
+            const metaRow: CellMeta[] = [];
+            for (let c = 0; c < expectedCols; c++) {
+                const spec = row[c];
+                const { codes, hasFallback, hasBorrowUp, anchorCodes } = this.parseSlotSpec(spec);
+                const contentCodes = codes.filter(codeHasContent);
+                const anchorActive = contentCodes.some(cc => anchorCodes.includes(cc));
+                metaRow.push({
+                    codes,
+                    anchorCodes,
+                    hasFallback,
+                    hasBorrowUp,
+                    hasContent: contentCodes.length > 0,
+                    borrowUpActive: false,
+                    contentCodes,
+                    anchorActive
+                });
+            }
+            meta.push(metaRow);
+        }
+
+        for (let r = 0; r < meta.length; r++) {
+            for (let c = 0; c < expectedCols; c++) {
+                const cell = meta[r][c];
+                if (cell.hasBorrowUp && !cell.hasContent) {
+                    cell.borrowUpActive = true;
+                }
+            }
+        }
+
+        for (let c = 0; c < expectedCols; c++) {
+            let changed = true;
+            while (changed) {
+                changed = false;
+                for (let r = meta.length - 1; r >= 0; r--) {
+                    const src = meta[r][c];
+                    if (!src.hasContent) continue;
+                    if (src.anchorActive) continue;
+                    let top = r - 1;
+                    if (top < 0) continue;
+                    if (!meta[top][c].borrowUpActive) continue;
+                    while (top - 1 >= 0 && meta[top - 1][c].borrowUpActive) top--;
+                    const dest = meta[top][c];
+                    if (dest.anchorActive) continue;
+                    dest.codes = [...src.codes];
+                    dest.contentCodes = [...src.contentCodes];
+                    dest.hasContent = true;
+                    src.hasContent = false;
+                    src.hasFallback = true;
+                    src.contentCodes = [];
+                    src.anchorActive = false;
+                    for (let rr = top + 1; rr < r; rr++) {
+                        meta[rr][c].hasContent = false;
+                        meta[rr][c].contentCodes = [];
+                        meta[rr][c].hasFallback = true;
+                        meta[rr][c].anchorActive = false;
+                    }
+                    changed = true;
+                    break;
+                }
+            }
+        }
+
+        const metaForNaming = meta.filter(row => row.some(c => c.hasContent));
+        if (!metaForNaming.length) {
+            return { names: [], areaCodes: new Map() };
+        }
+
+        const names: string[][] = [];
+        const areaCodes = new Map<string, string[]>();
+        const usedAreaNames = new Set<string>();
+
+        const makeUnique = (base: string): string => {
+            if (!base) base = 'A';
+            if (!usedAreaNames.has(base)) {
+                usedAreaNames.add(base);
+                return base;
+            }
+            let i = 2;
+            while (usedAreaNames.has(`${base}_${i}`)) i++;
+            const u = `${base}_${i}`;
+            usedAreaNames.add(u);
+            return u;
+        };
+
+        for (let r = 0; r < metaForNaming.length; r++) {
+            const row = metaForNaming[r];
+            const rowNames: string[] = [];
+            for (let c = 0; c < expectedCols; c++) {
+                const cell = row[c];
+                if (!cell) {
+                    rowNames.push('.');
+                    continue;
+                }
+                const aboveName = r > 0 ? names[r - 1][c] : undefined;
+                const aboveMeta = r > 0 ? metaForNaming[r - 1][c] : undefined;
+                let areaName = '.';
+
+                if (cell.hasContent) {
+                    const base = (cell.contentCodes[0] || cell.codes[0] || '').trim();
+                    if (aboveName && aboveName === base && !(aboveMeta?.anchorActive)) {
+                        areaName = aboveName;
+                    } else {
+                        areaName = makeUnique(base);
+                        if (!areaCodes.has(areaName)) areaCodes.set(areaName, []);
+                        const list = areaCodes.get(areaName)!;
+                        for (const cc of cell.contentCodes) {
+                            if (!list.includes(cc)) list.push(cc);
+                        }
+                    }
+                } else if (
+                    cell.hasFallback &&
+                    aboveName &&
+                    aboveName !== '.' &&
+                    !(aboveMeta?.anchorActive)
+                ) {
+                    areaName = aboveName;
+                } else {
+                    areaName = '.';
+                }
+
+                rowNames.push(areaName);
+            }
+            names.push(rowNames);
+        }
+
+        return { names, areaCodes };
+    }
+
+    private computeGridAreas(names: string[][]): string {
+        if (!names.length) return '';
+        const cols = names[0].length;
+        const sanitized = names.map(row => {
+            if (row.length < cols) return [...row, ...Array(cols - row.length).fill('.')];
+            if (row.length > cols) return row.slice(0, cols);
+            return row;
+        });
+        return sanitized.map(row => `"${row.join(' ')}"`).join(' ');
+    }
+
+    getComponents(isForMatrix: boolean): UnitComponent[] {
+        const u = this.unit();
+        if (!u?.comp) return [];
+        const expanded: UnitComponent[] = [];
+        const equipmentList = this.dataService.getEquipments();
+        for (const original of u.comp) {
+            if (!isForMatrix && original.t === 'X') continue;
+            if (original.t === 'HIDDEN') continue;
+            if (original.t === 'S') continue;
+            if (original.t === 'C') {
+                if (original.p < 0) continue; // Hide non-weapon components that are not in valid location (like HS in engine)
+                if (original.eq?.hasAnyFlag(['F_HEAT_SINK','F_DOUBLE_HEAT_SINK'])) continue; // Hide heatsinks
+                if (original.eq?.hasAnyFlag(['F_CASE','F_CASE_II'])) continue; // Hide CASE components
+                if (original.eq?.hasAnyFlag(['F_JUMP_JET'])) continue; // Hide Jump Jets
+            };
+
+            if (original.eq === undefined) {
+                original.eq = equipmentList[original.id] ?? null;
+            }
+            if (isForMatrix && original.l && original.l.includes('/')) {
+                const locs = original.l.split('/').map(s => s.trim()).filter(Boolean);
+                for (const loc of locs) {
+                    expanded.push({
+                        ...original,
+                        l: loc,
+                        n: original.n ? `${original.n} (split)` : original.n
+                    });
+                }
+            } else {
+                expanded.push({ ...original });
+            }
+        }
+        return expanded.sort((a, b) => {
+            if (a.l === b.l) {
+                if (a.n === b.n) return 0;
+                if (a.n === undefined) return 1;
+                if (b.n === undefined) return -1;
+                return a.n.localeCompare(b.n);
+            }
+            if (a.p === undefined) return 1;
+            if (b.p === undefined) return -1;
+            if (a.p === b.p) {
+                if (a.l && b.l) {
+                    return a.l.localeCompare(b.l);
+                }
+            }
+            return a.p - b.p;
+        });
+    }
+
+    getGroupedBaysByLocation(): Array<{ l: string, p: number, bays: UnitComponent[] }> {
+        const u = this.unit();
+        if (!u?.comp) return [];
+        const groupMap = new Map<string, { l: string, p: number, comps: UnitComponent[] }>();
+        u.comp.forEach(comp => {
+            const loc = comp.l;
+            const pos = comp.p ?? 0;
+            const key = `${loc}|${pos}`;
+            if (!groupMap.has(key)) {
+                groupMap.set(key, { l: loc, p: pos, comps: [] });
+            }
+            groupMap.get(key)!.comps.push(comp);
+        });
+
+        const result: Array<{ l: string, p: number, bays: UnitComponent[] }> = [];
+        groupMap.forEach(({ l, p, comps }) => {
+            const bayMap: { [name: string]: UnitComponent } = {};
+            comps.forEach(comp => {
+                if (comp.bay && comp.bay.length) {
+                    comp.bay.forEach(bayComp => {
+                        const key = bayComp.n;
+                        if (!bayMap[key]) {
+                            bayMap[key] = { ...bayComp };
+                        } else {
+                            bayMap[key].q = (bayMap[key].q || 1) + (bayComp.q || 1);
+                        }
+                    });
+                }
+            });
+            if (Object.keys(bayMap).length > 0) {
+                const sortedBays = Object.values(bayMap).sort((a, b) => {
+                    if (a.n === b.n) return 0;
+                    if (a.n === undefined) return 1;
+                    if (b.n === undefined) return -1;
+                    return a.n.localeCompare(b.n);
+                });
+                result.push({ l, p, bays: sortedBays });
+            }
+        });
+
+        result.sort((a, b) => a.p - b.p);
+        return result;
+    }
+
+    /** Format armor type - removes " Armor" suffix if present */
+    formatArmorType(armorType: string | undefined): string {
+        if (!armorType) return '';
+        return armorType.endsWith(' Armor') ? armorType.slice(0, -6) : armorType;
+    }
+
+    /** Format structure type - removes " Structure" suffix if present */
+    formatStructureType(structureType: string | undefined): string {
+        if (!structureType) return '';
+        return structureType.endsWith(' Structure') ? structureType.slice(0, -10) : structureType;
+    }
+}

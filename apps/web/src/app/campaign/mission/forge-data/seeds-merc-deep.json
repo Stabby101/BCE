@@ -1,0 +1,1505 @@
+[
+  {
+    "seedId": "MRC-01",
+    "family": "GARRISON_DUTY",
+    "title": "OPERATION CIVIL TWILIGHT",
+    "eraFit": ["late-succession-wars"],
+    "factionFit": ["ANY"],
+    "register": "merc",
+    "threatRange": ["LOW", "MEDIUM", "HIGH"],
+    "situation": "{EMPLOYER} hired your unit for a 14-month garrison job on {WORLD}. The base pay is 180,000 C-bills a month — the low garrison rate. Your contract has one clause that could change that: Annex C. If {EMPLOYER}'s civil administrator officially declares a 'state of armed conflict,' your pay triples, you and the employer split salvage 50/50, and the employer starts buying your ammunition and armor at cost. That declaration has not happened, and the administrator will not make it. In 90 days on the ground you have fought 11 armed contacts. They started as small-arms harassment and grew into two real battles against insurgents driving salvaged BattleMechs supplied by {TARGET_FACTION}. That report is 6 days old and solid. But the administrator's office files every one of these fights as 'civil disturbance, category D' — the paperwork label that keeps you on the cheap garrison rate. So you buy your own ammunition at high port prices, patch your own armor out of the unit's money, and pay for a MechWarrior in a hospital bed the contract does not cover. The ground makes it worse. The only 'Mech-rated road between the upper city and the lower port is the Carseval Stair: six switchback terraces, 7.4 km long, climbing at about 9 percent. Anything over 40 tons has to climb it in single file. Your contract requires you to escort 9 more cargo convoys up the Stair, and the insurgents know that schedule. Twice this quarter they have buried remote-detonated charges in the Stair's retaining walls — that report is 4 days old, so assume the current mines have moved. To count as evidence with the MRBC (the mercenary review board that settles pay disputes), your gun-camera footage needs the employer's countersignature within 48 hours. {NPC:employer-contact} signs those reports for the administrator and has started taking 6 to 9 days on purpose — past the deadline. {NPC:intel-source}, a dock cargo broker, sells reliable 12-to-24-hour ambush warnings for 2,000 C-bills each, and the price keeps rising. The math is simple: every month this stays a 'disturbance,' {EMPLOYER} saves 360,000 C-bills, and the insurgents — who have no budget limit — get stronger. Best estimate of enemy strength across the theater is 8 to 12 salvaged light and medium 'Mechs, plus rocket and SRM infantry working out of the lower city; that count is 6 days old, so treat it as a floor. You are being paid to police a war that officially is not a war, and winning the paperwork fight decides whether the unit ends this contract in the black.",
+    "objectives": {
+      "primary": "Keep the Carseval Stair open: all 9 scheduled convoys delivered to the upper city with cargo loss under 15 percent.",
+      "secondary": "Document every armed contact so it holds up with the MRBC: gun-camera footage plus the employer's countersignature within 48 hours.",
+      "bonus": "Capture intact one insurgent-operated BattleMech bearing verifiable {TARGET_FACTION} supply markings, forcing Annex C certification onto the table."
+    },
+    "complications": [
+      {
+        "name": "Category D",
+        "text": "The administrator labels every fight a 'civil disturbance,' no matter how heavy the enemy is. At the garrison rate, the employer owes you nothing for ammunition, armor, or medical care. Only the employer can change the label, and keeping it wrong saves the employer money.",
+        "mechanicalEffect": "After every battle in this contract, you pay for ammunition and armor repair from the unit's own money, at high port prices (ammunition costs 1.4x the book rate). This only stops if a fight is later reclassified under Annex C."
+      },
+      {
+        "name": "The Stair Mines",
+        "text": "Remote-detonated charges are buried in the retaining walls on terraces 2 through 5. Your sweep teams keep finding last week's mines, not this week's. The insurgents set off the charges when a convoy rolls past, and the walls force everything into single file.",
+        "mechanicalEffect": "Every convoy-escort battle on the Stair starts with one escort 'Mech or one cargo vehicle knocked out by a wall charge; the escort player picks which lead vehicle it hit. All 'Mech movement on the Stair is single-file, with no room to dodge sideways."
+      },
+      {
+        "name": "Witness Economy",
+        "text": "Your gun-camera footage only counts with the MRBC if the employer countersigns it within 48 hours. {NPC:employer-contact} has figured out that signing slowly costs you the case. Without the signature, it is just your word against the administrator's files.",
+        "mechanicalEffect": "The reclassification attempt (DP 'The Classification Fight,' option 1) only succeeds if at least 2 documented fights carry countersignatures, or if you lined up a neutral witness ahead of time (an MRBC field auditor or a ComStar observer)."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Classification Fight",
+        "context": "Contact 11 was a full lance-on-lance fight against salvaged 'Mechs carrying {TARGET_FACTION} autocannon ammunition. The administrator filed it as category D before your crews had even cooled the wrecks. At the garrison rate, the unit is now losing about 40,000 C-bills a month against what it actually spends. Annex C could fix that. The only question is what it costs to force the issue.",
+        "options": [
+          {
+            "title": "File for Annex C reclassification through MRBC arbitration",
+            "advantages": ["If you win, the triple rate applies back to your first documented 'Mech fight — a payout in the hundreds of thousands", "You gain salvage rights, turning 11 fights' worth of wreckage into money instead of scrap you need permission to take", "The MRBC ruling sets the pattern for every mercenary unit {EMPLOYER} hires after you"],
+            "disadvantages": ["The employer turns cold the moment you file: expect slow resupply and the 48-hour countersignature deadline enforced to the minute", "The ruling takes 30 to 45 days, and the fighting does not stop while you wait", "If you lose for lack of evidence (see Witness Economy), you pay the costs and get a reputation as a price-gouger"],
+            "consequence": "The administrator stops pretending to cooperate and starts building a case against you. The ruling lands mid-contract and decides which follow-on mission you get.",
+            "costs": { "cbills": 25000, "days": 30, "resource": null, "risk": "Employer relations drop by 2 while the case runs; lose it, and you can forget any contract renewal on this world" }
+          },
+          {
+            "title": "Absorb the costs and bank the goodwill",
+            "advantages": ["Employer relations climb: the administrator knows what you are eating and quietly owes you", "No legal risk, no arbitration record, a clean MRBC file", "Renewal talks start from 'the outfit that did not gouge us'"],
+            "disadvantages": ["You bleed about 40,000 C-bills a month at the garrison rate, and it grows the more you fight", "The insurgents read your patience as a fixed budget and push harder to test it", "Goodwill is not a contract; the administrator can simply refuse to honor it at renewal"],
+            "consequence": "The fighting gets one step harder over the next 60 days. You finish the contract owed a favor that appears nowhere on paper.",
+            "costs": { "cbills": 0, "days": null, "resource": "ammunition reserve drops 20 percent per extra battle at current prices", "risk": "The money bleed has no floor; a second hospitalized MechWarrior makes it unrecoverable" }
+          },
+          {
+            "title": "Invoke the cantonment clause — stop escorting convoys until the label is fixed",
+            "advantages": ["Forces the issue in days, not the months arbitration takes, and costs no filing fees", "You take zero combat losses while the escort is stopped", "It holds up under the contract: clause 9 lets you suspend work when the employer breaks the resupply terms"],
+            "disadvantages": ["Convoys get hit without your escort, and the lower city blames you, not the administrator", "{EMPLOYER} may call your suspension a breach and freeze your pay account while it argues", "An empty escort slot is an open invitation, and the administrator starts taking bids from other units that same week"],
+            "consequence": "Within 14 days the administrator either declares Annex C or hires a second unit onto the world, which triggers the SECOND PEN follow-on mission.",
+            "costs": { "cbills": 0, "days": 14, "resource": "2 convoys go undelivered during the stoppage, counting against your primary objective", "risk": "Breach countersuit: up to 90,000 C-bills held back until it is resolved" }
+          }
+        ]
+      },
+      {
+        "name": "The Intact Prize",
+        "context": "Mid-fight on terrace 4, an insurgent 35-ton 'Mech loses gyro control and drops against the retaining wall. It is shut down, the pilot is alive, and {TARGET_FACTION} factory seals are clearly visible on its replacement armor. Capturing it intact is your bonus objective and your best proof for the Annex C case. But the fight is not over, and the convoy is stuck behind you on a mined stair.",
+        "options": [
+          {
+            "title": "Take it intact — send a lance to recover it under fire",
+            "advantages": ["Physical proof that {TARGET_FACTION} is arming the insurgents — the strongest evidence you will ever get for the Annex C case", "The 'Mech itself is worth salvaging even if a court later condemns it", "The captured pilot is a second source of evidence who can talk"],
+            "disadvantages": ["Recovering it under fire keeps the convoy on the Stair past the 40-minute mark, when the swarm attack hits", "A lance tied up in recovery is not guarding the back of the column", "If the recovery fails, you took the risk for nothing"],
+            "consequence": "Your risk of losing convoy cargo this battle jumps sharply. But if the recovery works, the Classification Fight becomes almost impossible to lose, whichever option you chose there.",
+            "costs": { "cbills": null, "days": null, "resource": "1 lance tied up in recovery for 20+ minutes, leaving the rear of the column unguarded", "risk": "Convoy cargo losses may pass the 15 percent primary-objective limit in this one battle" }
+          },
+          {
+            "title": "Destroy it and clear the route",
+            "advantages": ["Fast: the convoy keeps moving and beats the 40-minute swarm attack", "No recovery risk, no lance tied up", "Either way, the insurgents don't get the 'Mech back"],
+            "disadvantages": ["The {TARGET_FACTION} factory seals burn with it, leaving you only a photo to argue against the administrator's files", "No salvage, no captured pilot", "The category D label survives another fight"],
+            "consequence": "The convoy gets through clean, but the paperwork fight drags on and the administrator keeps winning it.",
+            "costs": { "cbills": 0, "days": null, "resource": null, "risk": "The Annex C case loses its best physical proof, so your odds in arbitration drop" }
+          },
+          {
+            "title": "Let the city militia take the capture and the credit",
+            "advantages": ["The administrator gets a public win it has to explain, with {TARGET_FACTION} seals in every news photo", "Costs you no risk: the militia handles the slow recovery after the fight", "The administrator's deputy now owes you a favor you can call in at renewal or when you need a countersignature"],
+            "disadvantages": ["You give up your salvage claim on the 'Mech entirely", "The militia may botch the recovery or strip the seals before any neutral party sees them", "A favor is not a contract; it is worth only as much as the deputy remembers it"],
+            "consequence": "You trade the capture for goodwill: countersignatures arrive on time for the rest of the contract, but you spent a whole 'Mech to buy it.",
+            "costs": { "cbills": 0, "days": null, "resource": "you give up salvage on 1 light 'Mech (worth about 1,800,000 C-bills as-is)", "risk": "Once the militia takes it, you lose control of the evidence, and the capture may not hold up as proof for the MRBC" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "A wall charge fires on the convoy on the Stair; the lead vehicle is knocked out. The contact is reported to your command post and the administrator's watch office at the same time." },
+        { "t": "T+4:00", "event": "Your ready lance leaves the lower-city base: 5.1 km to terrace 1 at city speed." },
+        { "t": "T+11:00", "event": "Your ready lance reaches terrace 3. Insurgent fire teams start pulling back downhill through the wall gaps." },
+        { "t": "T+18:00", "event": "The insurgent 'Mech element (2 to 4 machines) either commits or withdraws, based on whether the convoy is still stopped." },
+        { "t": "T+25:00", "event": "Insurgent elements slip away into the lower-city backstreets. The militia checkpoints report nothing, as always." },
+        { "t": "T+40:00", "event": "Swarm point: if a convoy is still stopped on the Stair, backup insurgent cells converge on it." }
+      ],
+      "hardDeadline": "Any convoy stopped on the Carseval Stair for more than 40 minutes is lost. Clear the route inside 40 minutes, or abandon the cargo and save your escort."
+    },
+    "opforSketch": {
+      "composition": "Insurgent cells fielding 8-12 recovered light and medium 'Mechs theater-wide (20-45 tons, mixed condition, 2-4 per engagement), supported by SRM and rocket-launcher infantry in prepared retaining-wall positions. Quality green-to-regular with veteran cell leaders; {TARGET_FACTION} supply improving their availability month over month.",
+      "behavior": "Ambush from wall cuts on mine initiation; fight for 10-12 minutes maximum; break contact downslope into the lower city. They never defend ground and never engage a formed lance head-on. Their operational target is the convoy schedule and the unit's treasury, not the unit."
+    },
+    "forks": [
+      {
+        "name": "OPERATION TIER THREE",
+        "outcomeGate": "FULL_SUCCESS",
+        "family": "GARRISON_DUTY",
+        "trigger": "Annex C certified — by arbitration verdict, by intact-capture evidence, or by the administrator folding",
+        "consequence": "The contract re-papers at triple rate with salvage rights. The insurgency, its political cover gone, escalates to open company-strength attacks on the upper city. The unit is now paid for a war and gets one.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION PAPER SIEGE",
+        "outcomeGate": "FAILURE",
+        "family": "RIOT_DUTY",
+        "trigger": "Stair closed 72+ hours or convoy quota missed",
+        "consequence": "Lower-city food and fuel prices triple inside two weeks. The unit is ordered onto riot lines to police the shortage its own paymaster's bookkeeping created, at garrison rate, against crowds that know the unit's name.",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION SECOND PEN",
+        "outcomeGate": "ANY",
+        "family": "SECURITY_DUTY",
+        "trigger": "The administrator signs a second mercenary outfit onto {WORLD} (near-certain after escort suspension)",
+        "consequence": "A rival outfit takes the cantonment-and-depot guard slot at a rate quoted just under yours. Two contracts, overlapping mandates, one renewal. They are competitors, not enemies — that distinction is now load-bearing.",
+        "threat": "MEDIUM"
+      }
+    ],
+    "storyElementSeed": "A pay clerk staples the month's ammunition invoices behind the engagement report, squares the corners twice, and files the folder under 'civil disturbance' because that is the only box the form has.",
+    "voiceSlots": ["command", "logistics", "intelligence"],
+    "registerVariants": {},
+    "specifics": {
+      "armed_contacts_90_days": { "min": 9, "max": 14, "unit": "engagements" },
+      "garrison_monthly_rate": { "min": 160000, "max": 200000, "unit": "C-bills" },
+      "scheduled_convoys": { "min": 7, "max": 11, "unit": "escorted convoys" },
+      "insurgent_mech_strength": { "min": 8, "max": 12, "unit": "recovered 'Mechs theater-wide" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "File for Annex C reclassification through MRBC arbitration",
+        "requires": "treasury-min:25000",
+        "whenLacking": "reprice",
+        "lackingText": "A lawyer takes the case on contingency: you file for 0 C-bills up front, but the lawyer keeps 15 percent of any back-pay you win."
+      }
+    ],
+    "skeleton": "garrison force must keep one escalating route open while the employer's sole power to classify each engagement decides whether combat pay, salvage, and resupply clauses ever switch on — every cheap month for the employer is a funded month for the enemy",
+    "inspiration": "aid-to-civil-power garrison sliding into an undeclared war — Belfast, 1969, the opening year of Operation Banner"
+  },
+  {
+    "seedId": "MRC-02",
+    "family": "OBJECTIVE_RAID",
+    "title": "OPERATION FAIR PRIZE",
+    "eraFit": ["late-succession-wars"],
+    "factionFit": ["ANY"],
+    "register": "merc",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "situation": "The cash on this contract is only 120,000 C-bills, set insultingly low on purpose. The real pay is clause 10: it gives your unit the salvage rights to everything in {TARGET_FACTION}'s scrapyard outside {DISTRICT} on {WORLD}. The yard's inventory lists 7 mothballed BattleMechs waiting to be shipped out for rebuild, including 1 assault-class chassis. That list is 19 days old, so treat it as rough — inventories change, but the yard itself will not move. Clause 10 is why you signed. Clause 11 is the trap {EMPLOYER}'s lawyers slipped in: salvage is yours, 'except any item the employer's verification officer marks as war-critical.' That officer is {NPC:employer-contact}, who rides in your command vehicle for the whole job. They can stamp any item war-critical on sight, with no limit on how many. The ground makes it harder. Between the yard and the only landing zone that can take your DropShip lie the Brennac Pans: 11 km of salt flat that floods with 30 to 50 cm of brine on a 13-hour tide cycle. 'Mechs can only walk across the flooded flats at a crawl, and the salt corrodes their leg joints. The wheeled flatbed trucks that must haul out the mothballed 'Mechs — cold 'Mechs cannot walk on their own — cannot cross the flats at all while flooded. The yard has 3 working flatbeds and a lifting crane. Each 'Mech you extract needs one flatbed, 40 minutes to load, and a 70-minute round trip to the landing zone. The tide gives you one dry window of about 7.5 hours from first light. Yard security is 2 light 'Mechs, 4 combustion-engine armor vehicles, and an infantry platoon. The garrison's quick-reaction force — 4 medium 'Mechs, regular quality — sits 31 km away in the {DISTRICT} barracks and will not enter the flooded flats, which helps you as much as it helps them. That report is 11 days old but solid. {NPC:intel-source} confirms the reaction force's standing plan: hold the edge of the flats and shoot anything trying to exit. The employer's cargo DropShip lands at the zone next to yours. Anything the officer marks war-critical loads onto the employer's ship; everything else is yours, but only if it is across the flats before the second tide comes in. In short: 7 'Mechs, 3 flatbeds, one tide, one officer with a stamp, and a clause that lets the employer pay you in the property you just captured.",
+    "objectives": {
+      "primary": "Break into the scrapyard and haul at least 4 of the 7 mothballed 'Mechs across the Brennac Pans to the landing zone before the second flood tide.",
+      "secondary": "Capture the yard's lifting crane and all 3 flatbed trucks in working order. Without them, no shut-down 'Mech leaves the yard.",
+      "bonus": "Get the assault-class 'Mech out specifically, with its factory rebuild markings still on the hull. Proof of its history doubles the resale price."
+    },
+    "complications": [
+      {
+        "name": "The Stamp",
+        "text": "Clause 11 lets {NPC:employer-contact} mark any item 'war-critical' on sight. That turns your salvage into the employer's property, and you get only a 10 percent handling fee for it. The officer is rewarded for what they bring home, not for what you keep, so they have every reason to stamp your best prizes.",
+        "mechanicalEffect": "The officer can condemn any extracted 'Mech they inspect before it loads onto your DropShip (resolve this at DP 'The Officer on the Prize'). A condemned 'Mech pays you only 10 percent of its book value instead of full salvage."
+      },
+      {
+        "name": "Cold Iron",
+        "text": "The mothballed 'Mechs have dead reactors and sealed-up joints. They are cargo, not fighters, and they only move as fast as the flatbeds and crane can move them. Any fighting near the loading area risks wrecking the very machines that are your pay.",
+        "mechanicalEffect": "You can move only 1 'Mech per flatbed per 70-minute round trip, and 40 minutes of that is loading under the crane. Any weapons fire within 200 m of the crane or a loaded flatbed risks destroying your ability to keep hauling — the flatbeds have no armor."
+      },
+      {
+        "name": "Brine Clock",
+        "text": "The second flood tide shuts the flats to flatbeds completely and cuts 'Mech speed in half. The enemy reaction force plans to let the tide trap you, then meet whatever crawls out at the edge.",
+        "mechanicalEffect": "You have a hard 7.5-hour dry window. Once the flood comes in: flatbeds are stuck wherever they are; 'Mech movement is halved, with a salt-corrosion check every hour in the water; and the reaction force deploys to the edge exits as shown in the reaction timeline."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Reading Clause 11",
+        "context": "Before lift-off. The contract is signed, but the operational details are not locked yet. Clause 11 sits in it like a hole in a hull. You can challenge it now, protect yourself against it, or set up the operation so it matters less.",
+        "options": [
+          {
+            "title": "Renegotiate clause 11 before lift-off",
+            "advantages": ["A cap of one condemnation turns the worst case from a disaster into just a tax", "Done openly, it looks like professionalism, not paranoia", "It settles the dispute in writing now, instead of in an argument at the crane under fire"],
+            "disadvantages": ["A 6-day delay while the change goes up {EMPLOYER}'s chain of command, and the inventory list is already 19 days old", "The request tells them exactly which prize you value most", "{EMPLOYER} may just refuse and offer the contract to someone else"],
+            "consequence": "If they agree, the officer can only condemn one item. But the yard's inventory is now 6 days older, and more 'Mechs may have been shipped out.",
+            "costs": { "cbills": 0, "days": 6, "resource": "6 more days of aging against an already 19-day-old inventory", "risk": "1-in-5 chance the employer refuses and gives the contract to a cheaper outfit that did not read clause 11" }
+          },
+          {
+            "title": "Fly as written, but build a legal case",
+            "advantages": ["No delay: the inventory is aging and the tides are good this week", "Recording every capture on gun-camera with timestamps gives you an MRBC case if the officer abuses the stamp", "Keeping a lawyer on retainer costs less than one condemned medium 'Mech"],
+            "disadvantages": ["Arbitration wins you C-bills after the fact, never the 'Mech itself", "The officer acts freely during the mission; your case only helps months later", "Win or lose, {EMPLOYER}'s hiring notes now mark you as 'the outfit that sues'"],
+            "consequence": "The raid runs on schedule. The real fight over the pay happens later, in arbitration.",
+            "costs": { "cbills": 8000, "days": null, "resource": null, "risk": "The officer can condemn as many 'Mechs as they want during the mission itself" }
+          },
+          {
+            "title": "Sequence the extraction so the best prize reaches the contractor hull first",
+            "advantages": ["Once a 'Mech is in your own bay before the officer inspects it, it is yours in fact, not just in claim", "Costs nothing in cash or time", "The officer cannot stand on every flatbed at once"],
+            "disadvantages": ["Your DropShip lands 3 km farther from the yard than the employer's ship, so every hidden round trip costs 25 extra minutes against the tide", "If the officer reports that you did this on purpose, expect an obstruction claim and an MRBC conduct mark", "It spends your relationship with the employer to protect the payday"],
+            "consequence": "You probably save the assault 'Mech and probably burn the {EMPLOYER} relationship. Future contracts will price your reputation accordingly.",
+            "costs": { "cbills": 0, "days": null, "resource": "you lose 25 minutes of the tide window per hidden round trip", "risk": "Employer relations drop by 2 if caught; an obstruction claim holds back the 120,000 cash payment" }
+          }
+        ]
+      },
+      {
+        "name": "The Officer on the Prize",
+        "context": "The yard is taken. The crane is turning. And {NPC:employer-contact} is standing on the assault 'Mech's foot ramp, stamp already inked, marking it war-critical before it can be loaded. Both clocks are running: the contract deadline and the tide. What you do in the next ten minutes sets the pattern for every prize after this one.",
+        "options": [
+          {
+            "title": "Comply — load it onto the employer's ship",
+            "advantages": ["Clean hands: you honor clause 11 to the letter and keep the cash payment", "Employer relations climb, and {EMPLOYER}'s buyers remember cooperative outfits", "No time lost against the tide"],
+            "disadvantages": ["The single most valuable prize leaves at 10 percent of its value", "You set the pattern: the officer's stamp now hangs over the other 6 machines", "Your own crew watched the pay walk away, and that costs you in ways no ledger shows"],
+            "consequence": "The officer will likely condemn 1 or 2 more machines. The contract ends profitable on paper and bitter in the mess hall.",
+            "costs": { "cbills": 0, "days": null, "resource": "you lose 1 assault 'Mech (worth about 9,400,000 C-bills; you get 940,000 as the handling fee)", "risk": "Crew morale drops, and the precedent invites more condemnations this mission" }
+          },
+          {
+            "title": "Dispute it on the spot — quote the contract's own wording",
+            "advantages": ["The contract defines war-critical as 'operable or quickly made operable'; this 'Mech has no gyro and a dead reactor, so the wording is on your side", "You keep the 'Mech moving toward your own ship while the argument happens", "It shows you read your own contract, and the officer's stamp slows down for the rest of the mission"],
+            "disadvantages": ["The officer files an obstruction claim the moment the ramp lifts", "{EMPLOYER} holds back the 120,000 cash payment until the claim is settled", "Future {EMPLOYER} contracts come with tighter terms and an oversight officer (a liaison) with more power"],
+            "consequence": "You keep the 'Mech while arbitration runs, and you will probably win. But the employer relationship starts a slow decline.",
+            "costs": { "cbills": null, "days": null, "resource": "the 120,000 C-bill cash payment is frozen until the claim is settled", "risk": "Employer relations drop by 2; an MRBC conduct inquiry opens (probably dismissed, but never free)" }
+          },
+          {
+            "title": "Trade — give up the crane and 2 mediums for a signed release on the assault 'Mech",
+            "advantages": ["The officer goes home with bulk tonnage to show off, and you keep the one prize that matters", "A signed release holds up in arbitration in a way an argument never does", "It turns an enemy into a working partner for the rest of the contract"],
+            "disadvantages": ["You give up real value: 2 mediums plus the crane is most of what the trade protects", "The officer may take the trade and stamp the assault 'Mech anyway, so get the signature BEFORE the machines load or it means nothing", "The crane was a secondary objective, so trading it away hurts your mission score"],
+            "consequence": "You reach a split both sides can live with, and the clause 11 pattern at renewal is set by handshake instead of by arbitration.",
+            "costs": { "cbills": 0, "days": null, "resource": "you give up 2 medium 'Mechs and the lifting crane (worth about 3,800,000 C-bills together)", "risk": "The trade only holds if the officer signs the release BEFORE the machines load; a spoken deal is worthless and the officer can still stamp the assault 'Mech" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Yard alarm: the break-in is reported to yard security and the {DISTRICT} garrison at the same time." },
+        { "t": "T+6:00", "event": "Yard security (2 light 'Mechs, 4 armor vehicles, an infantry platoon) forms up at the fence. Their orders are to knock out the flatbeds first, not fight the raiders." },
+        { "t": "T+19:00", "event": "The garrison reaction force (4 medium 'Mechs) leaves the {DISTRICT} barracks, 31 km away by the rim road." },
+        { "t": "T+55:00", "event": "The reaction force reaches the edge of the Brennac Pans. It holds at the exits if the flats are flooded, or crosses if they are dry." },
+        { "t": "T+90:00", "event": "If the flats are dry: the reaction force is mid-crossing, committed, and cannot pull back — the one window where the hunter is exposed too." }
+      ],
+      "hardDeadline": "The second flood tide arrives at T+7:30 from first light and closes the flats to flatbeds. Any 'Mech not across yet has to walk out at half speed through corroding brine, straight into the reaction force waiting at the edge. Anything still on a flatbed when the water comes stays where it stands."
+    },
+    "opforSketch": {
+      "composition": "Yard security: 2 light 'Mechs (20-35 tons), 4 combustion-engine armor vehicles, 1 infantry platoon, regular quality, defensive supplies only. Garrison reaction force: 4 medium 'Mechs (40-55 tons), regular, cohesive, with a commander who has fought on the Pans before. No air support within reach. This report is 11 days old and solid.",
+      "behavior": "Yard security trades ground for time and shoots flatbeds, not 'Mechs — they know what the raid is for. The QRF will not enter flooded Pans under any circumstance; on dry flats they advance in line abreast with overlapping fields, and at the rim they sit at the exits and let the tide cordon for them."
+    },
+    "forks": [
+      {
+        "name": "OPERATION BOUGHT BACK",
+        "outcomeGate": "FULL_SUCCESS",
+        "family": "SECURITY_DUTY",
+        "trigger": "4+ chassis extracted under contractor title",
+        "consequence": "{TARGET_FACTION} wants its machines back before refit makes them someone's lance. Within 60 days, a deniable strike force raids the unit's cantonment to burn what it could not keep — and the unit's new property is the target the unit must now garrison.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION SECOND TIDE",
+        "outcomeGate": "FAILURE",
+        "family": "OBJECTIVE_RAID",
+        "trigger": "Tide closes with 3 or fewer chassis extracted",
+        "consequence": "The brine is eating the pay where it stands. {EMPLOYER} offers a return engagement — cash-only this time, at a rate that prices the unit's desperation — against a yard now garrisoned by the QRF that watched you leave.",
+        "threat": "HIGH"
+      }
+    ],
+    "storyElementSeed": "A tech wipes brine from a mothballed foot actuator, tastes salt on the wind, and re-reads the towing checklist before touching a machine that is not yet anyone's property.",
+    "voiceSlots": ["logistics", "engineering", "command"],
+    "registerVariants": {
+      "is-kurita": { "decisionPoints[1].context": "The yard is taken. The crane is turning. And {NPC:employer-contact} stands on the assault chassis' foot ramp, stamp inked: 'This machine served the Dragon and returns to the Dragon. The clause is clear. Honor it.' The tide clock runs while honor is defined." },
+      "is-davion": { "decisionPoints[1].context": "The yard is taken. The crane is turning. And {NPC:employer-contact} stands on the assault chassis' foot ramp, stamp inked: 'Reads as war-critical to me, Captain. Take it up with procurement — after it's on my Mule.' The tide clock runs while the paperwork argues." },
+      "is-liao": { "decisionPoints[1].context": "The yard is taken. The crane is turning. And {NPC:employer-contact} stands on the assault chassis' foot ramp, stamp inked: 'The Chancellor's property was never yours to count, Captain. The clause merely reminds you.' The tide clock runs while loyalty is measured." }
+    },
+    "specifics": {
+      "mothballed_chassis": { "min": 5, "max": 8, "unit": "BattleMechs on yard manifest" },
+      "flood_depth": { "min": 30, "max": 50, "unit": "cm standing brine" },
+      "flatbed_round_trip": { "min": 60, "max": 80, "unit": "minutes" },
+      "dry_window": { "min": 7, "max": 8, "unit": "hours" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Sequence the extraction so the best prize reaches the contractor hull first",
+        "requires": "dropship",
+        "whenLacking": "lock",
+        "lackingText": "You have no DropShip of your own at the landing zone, so every prize must pass through the employer's ship, and you cannot avoid the clause 11 inspection. This option is crossed out, with the employer's cargo line shown where your own bay number would be."
+      }
+    ],
+    "skeleton": "raiders paid in named salvage rather than cash must haul cold machines across a tide-gated flat while the employer's embarked officer holds authority to condemn each prize at the moment it is won",
+    "inspiration": "Age of Sail prize law — privateer captures condemned or reclassified by admiralty courts before payout"
+  },
+  {
+    "seedId": "MRC-03",
+    "family": "RECON_RAID",
+    "title": "OPERATION STRUCK MATCH",
+    "eraFit": ["clan-invasion"],
+    "factionFit": ["fedcom", "draconis-combine", "free-rasalhague"],
+    "register": "merc",
+    "threatRange": ["HIGH", "EXTREME"],
+    "situation": "Read Annex B before you sign anything, because Annex B is the whole contract. {EMPLOYER}'s intelligence branch wants to buy the {TARGET_FACTION} garrison's reaction plan on {WORLD} — not a written copy, but the plan itself, performed live and recorded on sensors. They pay per confirmed piece of data. Each tier-1 recording is worth 90,000 C-bills: how fast their small units scramble and what responds first. Each tier-2 recording is worth 240,000: how they deploy a full trinary (about 15 'Mechs), how long their fighters take to get overhead, and when the command network goes live. One tier-3 recording is worth 600,000: the full command net active, a second trinary committed, and their warships handing off sensor data. The employer's analysts need this to time a counter-strike they will not describe to you. Here is the catch: for a garrison to run its reaction plan, it has to have something to react to. That something is your unit. You are the bait. The employer flies you in — one drop, one window. But under clause 7, getting home is 'the contractor's own arrangement.' Nobody planned your ride out, because nobody who wrote the annex expected to be on it. The recording gear is physical: you place 5 sensor pods along the reaction route before you start. To earn the full fee, you have to physically recover each pod; if you only transmit its data by radio burst, you get half fee, because the record is weaker as evidence. The ground is the Anvil Braid: a braided river plain 9 km wide between your drop zone and the garrison's reaction route. You can only cross it at 3 gravel fords, with no cover anywhere and full view from the air. The Braid funnels you in and funnels the enemy reaction onto you — which, the planners note, is exactly where pods 2 through 4 should sit. Garrison strength is 1 'Mech cluster at about two-thirds full, 1 fighter pair ready to launch, and a second pair 40 minutes from launch. That report is 16 days old, so treat it as rough. {NPC:intel-source}, a dockworkers' steward the employer runs, says the garrison commander {NPC:opfor-commander} answers any provocation strictly by the book — and the book is what you are paid to film. One last clause: deniability. The contract demands that nothing left behind can tie this raid to {EMPLOYER}. Your unit markings stay on the ship. The garrison will ask who you are, formally, on an open channel — and how you answer is part of the job.",
+    "objectives": {
+      "primary": "Place 5 sensor pods along the reaction route, provoke at least a tier-2 garrison reaction, and deliver confirmed recordings per the Annex B pay schedule.",
+      "secondary": "Physically recover all 5 pods for the full fee, instead of settling for the half fee you get from radio-burst transmission.",
+      "bonus": "Capture the tier-3 recording worth 600,000 C-bills: the full command net active, a second trinary committed, and their warships handing off sensor data."
+    },
+    "complications": [
+      {
+        "name": "Paid by the Recording",
+        "text": "You get paid for confirmed recordings, not for effort, damage taken, or machines lost. A pod overrun before you recover it earns nothing. A reaction the garrison chooses not to perform earns nothing. Your pay comes from the violence aimed at you.",
+        "mechanicalEffect": "Each of the 5 pods is an objective you can recover. A pod you physically recover pays full fee for everything it recorded. A pod you only transmit by radio burst pays half. A lost pod pays nothing. A reaction tier only pays if you provoke it AND a surviving pod records it."
+      },
+      {
+        "name": "No Ride Home",
+        "text": "Clause 7 makes your escape your own problem. The DropShip that drops you in does not come back. Whatever lifts you out is your own ship, a ship you hire, or nothing.",
+        "mechanicalEffect": "Your escape window and pickup point depend on your own transport (see resourceGates). Hiring a pickup into a hostile zone costs 350,000 C-bills and locks the pickup time before the mission starts — the hired pilot will not change it once the shooting begins."
+      },
+      {
+        "name": "The Braid",
+        "text": "Three fords, no cover, and water everywhere else deep enough to swamp a 'Mech. Crossing while chased means going single file under open sky, and the enemy fighters know the fords better than you do.",
+        "mechanicalEffect": "All movement across the Braid is limited to the 3 ford lanes, single file, with no woods or cover for 9 km. Enemy fighters get attack bonuses when strafing units in a ford lane. Crossing while a fighter is overhead means taking near-guaranteed losses."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "How Loud to Burn",
+        "context": "The pods are placed. The garrison knows something crossed the Braid heading east — their scouts are stirring. The next hour decides how big a reaction your pods record. Provoke a small tier-1 reaction and you stay safe but earn little. Provoke a full tier-3 reaction and you pay for the whole contract, but it may cost you a lance.",
+        "options": [
+          {
+            "title": "Shallow probe — brush the scouts and pull back",
+            "advantages": ["A tier-1 reaction is almost certain: 2 to 4 recordings, 180,000 to 360,000 C-bills, with little risk", "You cross back over the Braid before any fighter is overhead", "Every machine goes home, and your pickup is unhurried"],
+            "disadvantages": ["You earn no tier-2 or tier-3 recordings, so the contract pays less than it cost to run", "The employer's analysts only get timing on a response they mostly already knew", "{EMPLOYER} marks you as 'cautious,' and that reputation spreads"],
+            "consequence": "The mission ends safe and barely breaks even. The employer's counter-strike planners buy their tier-3 data from a different outfit on a different world.",
+            "costs": { "cbills": 0, "days": null, "resource": "total pay capped near 360,000 against roughly 300,000 in operating costs", "risk": "A reputation for being 'cautious' costs you contracts on the hiring boards" }
+          },
+          {
+            "title": "Escalate step by step — hold at the route's edge and draw the trinary out",
+            "advantages": ["Tier-2 recordings are the profitable middle of the contract: 720,000 to 960,000 C-bills is realistic", "The fight stays at the time and place you chose, with the Braid behind you", "You can break off at the first fighter flyover"],
+            "disadvantages": ["Holding means trading fire with a trinary that outweighs you", "The recall decision comes while pods 2 through 4 are still recording, so leaving early loses your best data", "A fighter overhead before you recross is likely, and the odds keep rising"],
+            "consequence": "You fight a withdrawal you planned against a force you provoked. Your pay grows the longer your nerve holds against the clock.",
+            "costs": { "cbills": null, "days": null, "resource": "ammunition and armor for a long fighting withdrawal, about 120,000 to 200,000 C-bills in supplies", "risk": "Every 10 minutes past first trinary contact raises the chance of a fighter catching you at the crossing" }
+          },
+          {
+            "title": "Strike the dropport beacon — force a tier-3 reaction",
+            "advantages": ["Hitting the garrison's own infrastructure forces the full response: a second trinary, the full command net, and warship sensor handoff — the 600,000 recording plus everything under it", "Tier-3 data is what the employer really wants; deliver it and you name your price on the next contract", "The garrison's full commitment, recorded, is also the best map of what will someday hunt you"],
+            "disadvantages": ["You have to push deep past the reaction route, with the Braid behind you and fighters certain", "It forces the fight the contract does not pay you to survive", "Pods only pay if you recover them, and a maximum reaction turns recovery into its own battle"],
+            "consequence": "The garrison runs its full reaction plan onto your recorders, and you are standing inside it when the second trinary commits.",
+            "costs": { "cbills": null, "days": null, "resource": "expected losses of 1 to 2 'Mechs disabled or destroyed, with no reimbursement — clause 7 covers no equipment at all", "risk": "The hard deadline shrinks by 20 minutes, because a tier-3 reaction speeds up every timeline event below it" }
+          }
+        ]
+      },
+      {
+        "name": "The Batchall",
+        "context": "Mid-raid, the garrison commander opens an unencrypted channel, formal as a court summons. This is a batchall — the Clan ritual challenge: name your force, say what you fight for, and bid what you will commit. {NPC:opfor-commander} is offering an honorable, bounded fight: limited forces on both sides, a set prize, no ambush. But your deniability clause says you cannot reveal who you are — and it still binds you, even though it sits in a safe aboard a DropShip that is not coming back.",
+        "options": [
+          {
+            "title": "Answer honestly and bid — name your unit, fight a bounded duel",
+            "advantages": ["Honoring the batchall buys a limited fight: the garrison commits only what it bid, keeps its fighters out unless bid in, and does not chase you past the agreed terms", "This improves your survival odds more than any tactical move you have today", "Your name enters Clan records as honorable, which is worth something for decades"],
+            "disadvantages": ["It breaks the deniability clause out loud, on the record, so {EMPLOYER} can dock your deniability deposit: 25 percent of your total fees", "A limited fight is a SMALLER fight, so the tier-3 recording becomes impossible — the garrison shows you its honor, not its full plan", "The employer wanted the reaction plan, not a duel"],
+            "consequence": "You likely walk out whole and paid at tier-2 rates, minus the deposit. But {TARGET_FACTION} now knows your name, with everything that means later.",
+            "costs": { "cbills": null, "days": null, "resource": "you forfeit the deniability deposit: 25 percent of all Annex B fees", "risk": "The tier-3 bonus becomes impossible; your total pay is capped at what the limited fight reveals" }
+          },
+          {
+            "title": "Refuse and jam the channel",
+            "advantages": ["No deniability breach: staying silent tells them nothing", "An insulted garrison overcommits — refusing the challenge usually pulls the biggest, angriest, most recordable reaction", "Best data yield: refusing, plus the beacon strike, is your surest path to the tier-3 recording"],
+            "disadvantages": ["The garrison declares you dezgra (dishonored): no limits, no mercy, and open pursuit including free-hunting fighters", "That pursuit does not stop at the Braid, or the landing zone, or even the jump point", "Every casualty this causes was in nobody's plan"],
+            "consequence": "The garrison runs its full plan at full violence for your recorders, and you experience it from the inside.",
+            "costs": { "cbills": 0, "days": null, "resource": null, "risk": "Open pursuit: your escape losses rise two steps, and the hired pilot's hostile-zone surcharge kicks in (+350,000 C-bills)" }
+          },
+          {
+            "title": "Answer falsely — claim to be a pirate band",
+            "advantages": ["It satisfies the deniability clause to the letter, so your deposit stays whole", "A garrison facing pirates sends its second-line units, not its best, so the fight is more survivable", "{EMPLOYER}'s fingerprints stay off the world, which is what the bonus quietly rewards"],
+            "disadvantages": ["Pirates get the anti-pirate response: tier-2 at best, so the full plan the employer is buying stays mostly hidden", "A false batchall, if discovered, is the deepest dishonor the Clans recognize — and salvage left behind is how they discover it", "If any machine, pod, or body traceable to you falls into garrison hands, your name is cursed in Clan space for a generation"],
+            "consequence": "The lie holds only as long as nothing of yours stays on {WORLD}. The contract pays clean, but the risk rides home in your cargo bay.",
+            "costs": { "cbills": 0, "days": null, "resource": "your data is capped at tier-2 while the pirate story holds", "risk": "If discovered (any traceable item left on-world): the COMPROMISED fork triggers and you become hunted prey in Clan space" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Garrison scouts spot the raid for the first time; the contact report enters the cluster network. Pod 1 records it — tier-1 data." },
+        { "t": "T+2:00", "event": "The ready pair (2 OmniMechs) launches from the garrison line — more tier-1 timing data." },
+        { "t": "T+9:00", "event": "The first star deploys to the reaction route and the fighters start taxiing. Tier-1 is complete; tier-2 begins." },
+        { "t": "T+15:00", "event": "A fighter passes overhead and the Braid fords come under watch — the tier-2 fighter-timing data is captured." },
+        { "t": "T+25:00", "event": "The trinary deploys with the command net active — the core of tier-2, with pods 2 through 4 ideally placed." },
+        { "t": "T+40:00", "event": "If you provoked tier-3: the cluster commits a second trinary and warship sensors hand off. This is the 600,000 C-bill window, open for about 15 minutes." },
+        { "t": "T+55:00", "event": "A second fighter pair launches, free to hunt over the Braid if you did not agree to limited terms." }
+      ],
+      "hardDeadline": "At T+75:00 the second fighter pair is overhead with fuel to loiter. After that, nothing slower than a fast 'Mech (8/12 movement) can cross any ford of the Anvil Braid without taking a strafing run. Be west of the water by T+75:00, or the fighters catch you at the crossing."
+    },
+    "opforSketch": {
+      "composition": "One {TARGET_FACTION} garrison cluster at roughly two-thirds strength: second-line OmniMechs, with a few front-line machines in the command trinary; 1 fighter pair ready to launch, 1 more at 40-minute readiness; an Elemental point attached to the command trinary. Quality: regular-to-veteran by Inner Sphere standards, even for a garrison. This report is 16 days old and rough.",
+      "behavior": "By-the-book escalation ladder — point, star, trinary, cluster — each step formally authorized, which is precisely what makes the timing recordable. Will offer batchall on first sustained contact; conduct afterward is governed entirely by the answer received. Against declared pirates: efficient contempt. Against the dishonored: pursuit without boundary."
+    },
+    "forks": [
+      {
+        "name": "OPERATION TINDERLINE",
+        "outcomeGate": "FULL_SUCCESS",
+        "family": "PLANETARY_ASSAULT",
+        "trigger": "Tier-3 recordings delivered and verified",
+        "consequence": "The directorate's counter-strike gets its timing from your recordings — and the planners want the outfit that has seen the reaction plan performed live riding in the first wave, at a rate that finally prices the risk honestly.",
+        "threat": "EXTREME"
+      },
+      {
+        "name": "OPERATION ASH RIDE",
+        "outcomeGate": "FAILURE",
+        "family": "EXTRACTION_RAID",
+        "trigger": "Personnel or recoverable machines left on {WORLD} when the exfil window closed",
+        "consequence": "Clause 7 says the ride home was the contractor's own arrangement, and the arrangement broke. Going back for your own — past a garrison that is now expecting you — is nobody's contract but yours.",
+        "threat": "EXTREME"
+      },
+      {
+        "name": "OPERATION NAMED PREY",
+        "outcomeGate": "COMPROMISED",
+        "family": "GARRISON_DUTY",
+        "trigger": "The pirate fiction discovered — traceable equipment, pods, or prisoners in garrison hands",
+        "consequence": "{TARGET_FACTION} enters the unit's name in its grievance rolls. Within the year, a punitive star arrives at the unit's next garrison posting, uninvited by anyone's contract, to correct the record.",
+        "threat": "HIGH"
+      }
+    ],
+    "storyElementSeed": "A sensor tech labels five pods with grease pencil, numbers them like livestock, and does not write the unit's name on anything that might be left behind.",
+    "voiceSlots": ["intelligence", "command", "naval"],
+    "registerVariants": {},
+    "specifics": {
+      "pod_count": { "min": 4, "max": 6, "unit": "sensor pods emplaced" },
+      "tier1_fee": { "min": 80000, "max": 100000, "unit": "C-bills per verified datum" },
+      "tier3_fee": { "min": 500000, "max": 700000, "unit": "C-bills single line item" },
+      "garrison_readiness_second_point": { "min": 35, "max": 50, "unit": "minutes to launch" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "No Ride Home",
+        "requires": "dropship",
+        "whenLacking": "reprice",
+        "lackingText": "You own no DropShip, so you must hire a hostile-zone pickup: 350,000 C-bills, pickup time locked at signing, and no changing the pickup point after lift-off. The brief prints these hire terms next to the clause 7 text, so nobody can claim they read one without the other."
+      },
+      {
+        "appliesTo": "Strike the dropport beacon — force a tier-3 reaction",
+        "requires": "treasury-min:200000",
+        "whenLacking": "reprice",
+        "lackingText": "Expendables reserve below the projected burn for a tier-3 provocation: option renders with a deficit warning and the line 'units that cannot afford the ammunition should not pick this fight' in the logistics annex."
+      }
+    ],
+    "skeleton": "probe force must be worth reacting to — generating its pay from the violence directed at itself — under a contract that prices each tier of the enemy's revealed reaction plan and prices the force's own survival at nothing",
+    "inspiration": "Dieppe, 1942 — the reconnaissance in force that bought the defender's reaction plan with the raiding force"
+  },
+  {
+    "seedId": "MRC-04",
+    "family": "EXTRACTION_RAID",
+    "title": "OPERATION ORPHAN COLUMN",
+    "eraFit": ["late-succession-wars"],
+    "factionFit": ["ANY"],
+    "register": "merc",
+    "threatRange": ["MEDIUM", "HIGH", "EXTREME"],
+    "situation": "At 0410 local time, {EMPLOYER}'s capital broadcast its surrender to {TARGET_FACTION}, and one minute later your contract stopped existing. Clause 22 (dissolution of your employer) voids everything at once: all duties, all protections, the transport deposit, and the escrow account — which, you now learn, was never actually funded. Your unit is 1,100 km inland on the {WORLD} plateau, mid-operation, with your combat battalion, your repair and recovery vehicles, and 212 dependents and technical staff in one long column you never planned to move under fire. Your ride out is a hired carrier — 3 DropShips under captain {NPC:smuggler-captain} — sitting at the coastal port. The captain has already done the math: the dead government owed a lift fee of 2,100,000 C-bills, the enemy's fighters will close the port in about 9 to 10 days, and the ships are worth more than any sympathy. Pay before lift-off, or accept a lien (the carrier keeps some of your 'Mechs as security), or the ships leave without you. Between the plateau and the coast stands the Cordillera Verais mountains, with only one route your recovery vehicles can survive: the Tessering Gap, 280 km of switchbacks with 3 fortified chokepoints. Those forts are held as of this morning by planetary militia who lowered {EMPLOYER}'s flag before the surrender broadcast even finished. They are now, in effect, toll collectors with heavy weapons. That report is 14 hours old and solid. The enemy's regular forces are closing in: scouts at the plateau edge within 2 days, and a full regiment at the Gap's east mouth in about 6 days (that regimental estimate is 14 hours old and rough). And the enemy is offering terms. An envoy under a truce flag carries a written offer from {NPC:opfor-commander}: hand over all your BattleMechs and armor at the Gap's east mouth, and your people — dependents included — walk to the port under safe passage, keeping only sidearms and pay records. The offer's third paragraph notes that under the surrender terms, any armed force with no recognized employer counts as bandits, and captured bandits are not treated as prisoners of war. Your senior officers are invited to the enemy's field headquarters to finalize the deal. Your column makes 120 km per day with the recovery vehicles, and the port is 9 to 11 days away through the Gap. Your war chest holds 730,000 C-bills. One last thing {NPC:intel-source} flagged before the network went down: the dead government's regional pay convoy — including a gold wagon worth about 1,400,000 C-bills, a share of which is rightfully yours — sits abandoned and unguarded for now at the Vellis way-station, 60 km off your line of march.",
+    "objectives": {
+      "primary": "Get the whole column — people, dependents, and combat units — through the Tessering Gap to the port and off-world before the carrier lifts.",
+      "secondary": "Arrive with at least 75 percent of your heavy equipment intact. The 'Mechs are the unit's entire wealth and the difference between relocating and disbanding.",
+      "bonus": "Grab the abandoned gold wagon at the Vellis way-station (worth about 1,400,000 C-bills) before the nearby militia realize what they are sitting on."
+    },
+    "complications": [
+      {
+        "name": "No Employer, No Protection",
+        "text": "With no employer, you lose all the protections the MRBC would normally broker. Anyone captured while armed is treated as a bandit, not a prisoner. From this hour on, no one funds your repairs, resupply, or medical care. Your war chest is all the money you have.",
+        "mechanicalEffect": "For the rest of the operation, all repair, ammunition, fuel, and medical costs come out of your treasury (war chest: 730,000 C-bills). Anyone captured is removed from the campaign entirely, with no prisoner exchange."
+      },
+      {
+        "name": "The Carrier's Price",
+        "text": "{NPC:smuggler-captain} is not your enemy, just a businessman. The fee is 2,100,000 C-bills before lift-off. There are other options, and the captain will lay them out politely — he holds every card except time.",
+        "mechanicalEffect": "Getting off-world means resolving DP 'Who Pays the Lift.' The carrier lifts at the hard deadline no matter who is aboard. If you take the lien: the carrier holds 2 BattleMechs as security, which you can buy back within 12 months at the fee plus 15 percent."
+      },
+      {
+        "name": "Toll Forts",
+        "text": "Three chokepoints in the Gap, each held by 30 to 60 opportunist militia with heavy weapons, plus a dug-in pair of armored vehicles at fort two. They want to be paid, not to die for it — but if you fight your way through fort one, forts two and three will barricade against you.",
+        "mechanicalEffect": "At each chokepoint you choose: pay (20,000 to 60,000 C-bills, rising at each fort), fight (a battle one threat step below the seed rating, plus 0.5 days and repair costs), or detour (no battle, but +1.5 days per fort on rough tracks that risk your recovery vehicles)."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Parley",
+        "context": "The envoy waits at the plateau edge with a truce flag and written terms. The offer is real, with a real seal, but the third paragraph — the one calling you bandits if you refuse — is the quiet threat under all the courtesy. The invitation for your senior officers to visit enemy headquarters could be simple protocol or a trap. And your column can spare neither those officers nor the two days the envoy says the deal will take to finalize.",
+        "options": [
+          {
+            "title": "Accept the terms — hand over the 'Mechs, march your people out",
+            "advantages": ["All 212 dependents and every MechWarrior walk to the port under a written safe-passage guarantee, with almost no chance of a fight", "The carrier's people-only fee drops to 900,000 C-bills, which the war chest plus the gold can nearly cover", "No bandit label, no pursuit, no battles in the Gap"],
+            "disadvantages": ["You hand every BattleMech and armor vehicle — about 38,000,000 C-bills to replace, and three decades of building up — to {TARGET_FACTION} at a roadside", "Safe passage is only as good as the enemy commander's control over the militia at three toll forts, which is untested", "The unit survives as people but dies as a fighting force, and the hiring boards do not list outfits with no 'Mechs"],
+            "consequence": "You reach the port intact but with no machines. What walks off {WORLD} is a name, a roster, and whatever the boards will pay for either.",
+            "costs": { "cbills": 0, "days": 2, "resource": "you give up all heavy equipment (about 38,000,000 C-bills to replace)", "risk": "The officers attending the meeting walk into the enemy's camp under guarantees no one can enforce" }
+          },
+          {
+            "title": "Stall the talks while the column keeps moving",
+            "advantages": ["Every day you spend 'negotiating' is a day the enemy regiment waits at the plateau edge for your answer", "2 to 3 days gained can get the column past fort one before the pursuit hardens", "You commit to nothing; the offer stays open right up until they revoke it"],
+            "disadvantages": ["The envoy has eyes, and a column that keeps moving while it negotiates raises too much dust to hide", "When the enemy sees through it, they revoke safe passage angrily, and the bandit label now comes with a real grievance behind it", "Your officers are running these talks from a moving headquarters, and doing it badly"],
+            "consequence": "You buy 2 to 3 days at the cost of the enemy's good faith. From the moment they catch on, the pursuit runs one step hotter than it would have.",
+            "costs": { "cbills": 0, "days": null, "resource": "the envoy's goodwill, gone for good once they catch on", "risk": "Pursuit threat rises 1 step after they see through it, and no future talks will be offered" }
+          },
+          {
+            "title": "Refuse outright and race for the Gap",
+            "advantages": ["No risk of losing your leadership, no officers in anyone's camp, no pretense to manage", "The column moves at full speed from hour one — the only option that clearly beats the enemy regiment to the east mouth", "On the boards, 'they refused and brought their 'Mechs home' is the sentence that builds a unit's next decade"],
+            "disadvantages": ["All three toll forts now know a declared bandit column is coming and set their prices to match", "Every fight from here on has no prisoner protections and no repair money beyond the war chest", "The enemy reads your refusal as contempt, and {NPC:opfor-commander} takes personal charge of the pursuit"],
+            "consequence": "Now it is a straight race: 120 km per day against a closing regiment, three forts, and a carrier deadline that does not care who wins.",
+            "costs": { "cbills": null, "days": 0, "resource": "the war chest covers all Gap costs, whether tolls or repairs", "risk": "You risk a fight at every chokepoint, and the bandit label is active for the whole march" }
+          }
+        ]
+      },
+      {
+        "name": "Who Pays the Lift",
+        "context": "The column is at the port, or close enough to bargain as if it is. {NPC:smuggler-captain} receives your command staff aboard with coffee and a printed fee schedule. The number has not changed: 2,100,000. But the timeline has — the enemy fighters will close the port in single-digit hours now. The captain is friendly, but he will not lower the price a single C-bill.",
+        "options": [
+          {
+            "title": "Pay in full from the treasury",
+            "advantages": ["You own your own future free and clear: no liens, no held 'Mechs, no debt riding home in the cargo bay", "The captain remembers units that pay, and word travels among carriers for years", "Negotiations end and loading starts within the hour"],
+            "disadvantages": ["It takes 2,100,000, which the war chest cannot cover without the gold bonus — and maybe not even with it", "You lift solvent and land broke: no repair money, no deposit for the next contract, no margin", "Every C-bill spent here was your rebuild fund"],
+            "consequence": "You arrive at your next port whole, debt-free, and nearly broke — a hard quarter, but your own.",
+            "costs": { "cbills": 2100000, "days": 0, "resource": null, "risk": "Your treasury drops below its operating minimum; you sign the next contract hungry, and hungry outfits sign bad deals" }
+          },
+          {
+            "title": "Accept the lien — let the carrier hold 2 'Mechs as security",
+            "advantages": ["Lifts the whole column today for 600,000 down", "The held 'Mechs are not sold; you can buy them back within 12 months at the fee plus 15 percent", "Keeps your treasury for the rebuild and the next contract deposit"],
+            "disadvantages": ["The carrier picks which 2 'Mechs to hold, and carriers pick well", "Buying them back costs 2,415,000 total — a bet that next year goes better than this one", "A lien on a mercenary unit's 'Mechs is public record, and the boards read it as a sign of trouble"],
+            "consequence": "Two 'Mechs ride in a sealed, locked bay. You have a year to earn them back, or watch them sold at auction with your crest still on them.",
+            "costs": { "cbills": 600000, "days": 0, "resource": "2 BattleMechs held by the carrier for up to 12 months", "risk": "Buying them back costs 2,415,000 C-bills total; miss the deadline and the carrier sells them" }
+          },
+          {
+            "title": "Offer a share of future earnings and first call on your transport",
+            "advantages": ["No real cash down beyond 200,000 in good faith, so the war chest stays intact", "Carriers live on steady freight, and a mercenary unit's regular business is genuinely valuable to the right captain", "Builds a relationship that outlasts the crisis — reliable transport without owning any"],
+            "disadvantages": ["8 percent of your next two contracts is real money, paid from earnings you have not made yet", "The captain may just refuse: a promise from a unit that just lost its employer is worth less", "Working out this unusual deal takes 1 to 2 days the fighter timeline may not give you"],
+            "consequence": "If he agrees, you lift owing your next two paydays a cut and the carrier a debt of honor. If he refuses, you have burned the clock and the lien is your only door left.",
+            "costs": { "cbills": 200000, "days": 1, "resource": "8 percent of your next 2 contracts, plus the carrier gets first call on all your transport for 24 months", "risk": "If he refuses after a day of talks, only the lien is left — now on his stronger terms" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Surrender broadcast; your contract voids; militia begin seizing infrastructure, including the Gap toll forts." },
+        { "t": "T+0:06:00", "event": "All three Gap chokepoints confirmed under militia control; flags changed, tolls not yet set." },
+        { "t": "T+2 days", "event": "{TARGET_FACTION} scouts reach the plateau edge; the envoy's truce offer formally opens and the clock on it starts." },
+        { "t": "T+4 days", "event": "Enemy fighters begin scouting the port approaches; the carrier captain starts holding your delay against you." },
+        { "t": "T+6 days", "event": "The enemy regiment is expected at the Gap's east mouth; the route starts closing." },
+        { "t": "T+9 days", "event": "Enemy fighters expected to seal the port; the carrier begins final loading no matter who has arrived." }
+      ],
+      "hardDeadline": "The carrier lifts at T+10 days, midnight port time, with whoever and whatever is aboard and paid for. After that, the only way off {WORLD} is the enemy's mercy — which the surrender terms do not extend to bandits."
+    },
+    "opforSketch": {
+      "composition": "Pursuit: {TARGET_FACTION} regimental combat group — 2 'Mech battalions (regular, one veteran company), armor and mechanized infantry support, limited aerospace tasked primarily to the port. Chokepoints: militia garrisons of 30-60 with crew-served weapons; fort two adds 2 dug-in armored vehicles. Quality: pursuit regulars are disciplined; militia are opportunists with mortgages.",
+      "behavior": "The pursuit commander wants the iron intact and the precedent set — expect maneuver to block the Gap's east mouth rather than destruction for its own sake, with escalating patience once the column is classified bandit. Militia at the forts fight only when cornered or when the column looks beatable; money moves them faster than threats."
+    },
+    "forks": [
+      {
+        "name": "OPERATION SOLVENT GHOST",
+        "outcomeGate": "FULL_SUCCESS",
+        "family": "OBJECTIVE_RAID",
+        "trigger": "Column off-world with 75+ percent of equipment; the dead government's off-world escrow located",
+        "consequence": "The unit's final 4,200,000 in unpaid fees sits in a {TARGET_FACTION} prize-court vault on a border world, listed as enemy state assets. Recovering your own pay from a vault that does not know it owes you: there is paper for this, and there is also the other way.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION REMNANT ROAD",
+        "outcomeGate": "FAILURE",
+        "family": "GUERRILLA_WARFARE",
+        "trigger": "The carrier lifts with the column — or part of it — still on {WORLD}",
+        "consequence": "Whoever remains is a bandit force by law and a guerrilla force by necessity: stay alive, stay armed, and stay findable by the retrieval that command swears it will arrange, against an occupier consolidating by the week.",
+        "threat": "EXTREME"
+      },
+      {
+        "name": "OPERATION BORROWED IRON",
+        "outcomeGate": "PARTIAL",
+        "family": "CADRE_DUTY",
+        "trigger": "Personnel extracted but heavy equipment below 50 percent",
+        "consequence": "A unit of skills without machines takes the only paper on offer: a cadre contract training a minor House's greens, with an option clause to earn salvage title on the training battalion's worn iron. Pride is not a line item; the roster eats.",
+        "threat": "LOW"
+      }
+    ],
+    "storyElementSeed": "A quartermaster chalks the column order on a barracks door at dawn — recovery vehicles center, water trailers forward — then rubs out the unit crest above it and writes nothing in its place.",
+    "voiceSlots": ["command", "logistics", "medical", "naval"],
+    "registerVariants": {},
+    "specifics": {
+      "dependents_count": { "min": 180, "max": 240, "unit": "dependents and technical staff" },
+      "war_chest": { "min": 650000, "max": 800000, "unit": "C-bills" },
+      "column_speed": { "min": 100, "max": 140, "unit": "km per day" },
+      "lift_fee": { "min": 1900000, "max": 2300000, "unit": "C-bills" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Pay in full from the treasury",
+        "requires": "treasury-min:2100000",
+        "whenLacking": "reprice",
+        "lackingText": "Treasury short of the fee: option renders with the deficit in red and the carrier's bridge note appended — 'the difference can ride as a lien on cargo of my choosing, Captain, or it can stay on the ground; the tide chart is yours to read.'"
+      },
+      {
+        "appliesTo": "Who Pays the Lift",
+        "requires": "dropship",
+        "whenLacking": "reprice",
+        "lackingText": "If the unit owns DropShip capacity, the carrier's leverage halves: fee reprices to 1,100,000 for the jump-charter legs only, and the lien option is struck from the master's printed schedule."
+      }
+    ],
+    "skeleton": "an army deep inland must march itself, its dependents, and its capital to the port after its employer ceases to exist mid-contract, weighing a victor's parley that may be cheaper than the chokepoints or may be the knife, while the chartered lift home demands the fee the dead employer was supposed to pay",
+    "inspiration": "the Ten Thousand's march to the sea after Cunaxa — Xenophon's Anabasis, including the parley that killed the generals"
+  },
+  {
+    "seedId": "MRC-05",
+    "family": "PIRATE_HUNTING",
+    "title": "OPERATION LATE GAZETTE",
+    "eraFit": ["late-succession-wars"],
+    "factionFit": ["ANY"],
+    "register": "merc",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "situation": "The bounty deal was the cleanest contract your unit had signed in years: 75,000 C-bills for each raider 'Mech confirmed destroyed, 120,000 for one captured in working condition, and 400,000 for {NPC:opfor-commander}, the band's leader, alive or clearly identified. {EMPLOYER}'s district government wanted this band — which has hit 9 settlements in 14 months — hunted to destruction. After 11 weeks of tracking, you have them: grounded in the Ashvein Barrens, a 600-square-km field of collapsed lava tubes on {WORLD}'s northern highlands. The rock hides their reactor heat, and a cave mouth on the north face hides something the size of a DropShip. That report is 3 days old and solid, backed by a heat survey and a bribed water hauler. The band has 9 to 14 'Mechs, light and medium, barely kept running, plus crewed support vehicles (that count is 3 days old and rough). You have already earned 3 bounties on the way in — 225,000 C-bills, payable when you deliver the evidence to the district seat. Your costs so far: 210,000. Then, two nights before the strike, {NPC:intel-source} passes you a page from a merchant newssheet, 6 days out of the capital: {EMPLOYER}'s court has signed a full pardon that turns the band into a district militia if they stop raiding. The problem is the date it takes effect. The newssheet says 'upon signature,' and the signing date itself is only secondhand rumor. So your hunting license may have expired 6 days ago, may expire tomorrow, or may not be signed yet. Any fight after that moment is not war — it is murder, the salvage is theft, and your own contract charges you 1.5 times the bounty value for each machine you wrongly engage. No official courier has reached you yet. Under contract law the bounties stay valid until you are formally notified — but a court will later judge what you knew and when. One more twist in the last paragraph: the pardon only covers band members who comply. Any part of the band that keeps raiding loses that protection. The band may not know about the pardon either. They may know and not care. They may split over it — and the splinter that keeps fighting is still worth 75,000 a head, if you can tell the two halves apart through a gun camera at 600 meters.",
+    "objectives": {
+      "primary": "End the band as a raiding threat — by destroying them, capturing them, or confirming they have accepted the pardon — without triggering the penalty for a wrongful attack.",
+      "secondary": "Deliver your earned bounty evidence (3 confirmed kills, 225,000 C-bills) to the district seat and collect before the legal situation shifts again.",
+      "bonus": "Take {NPC:opfor-commander}, the 400,000 C-bill target, in a way that holds up under legal review no matter which rules turn out to have been in force."
+    },
+    "complications": [
+      {
+        "name": "When the Pardon Took Effect",
+        "text": "Nobody has confirmed the exact hour the pardon took effect, and all you have is a 6-day-old newssheet. No one has formally notified you, which probably keeps your bounties valid. But a court will later rebuild the timeline using documents you have never seen.",
+        "mechanicalEffect": "Every fight is time-stamped in the campaign log. When the pardon's effective hour is later fixed (the generator rolls it within a 3-to-7-day window around the newssheet date), any fight after that hour loses its bounty and costs you 1.5x the bounty value for each machine you engaged."
+      },
+      {
+        "name": "Compliance Cuts Both Ways",
+        "text": "The pardon only protects band members who stop raiding. A group that keeps raiding is lawful prey. But fire on a group that has complied, and you have a lawsuit on your hands. Through a gun camera, the two look like identical machines with identical paint.",
+        "mechanicalEffect": "Each band element has a hidden status: complied or not. Attacking a complied element triggers the wrongful-attack penalty. Ignoring a non-complied element lets it keep raiding (failing your primary objective). You can only learn a group's status through contact, watching its behavior, or talking to it."
+      },
+      {
+        "name": "Sunk Costs",
+        "text": "You are 210,000 C-bills into this operation, against 225,000 you have earned. Quit now and you roughly break even. But every extra day in the Barrens is spent chasing bounties that may already be worthless.",
+        "mechanicalEffect": "The brief shows a running break-even total. Each extra day of operations costs 6,000 to 9,000 C-bills (fuel, rations, vehicle wear). Your projected treasury is recalculated live for every decision-point option."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Gazette Problem",
+        "context": "The strike is staged. The band is grouped together, located, and unaware. The newssheet page is pinned to the ops board with the date circled. A lawyer is 4 days' ride away, and your chance to strike lasts only hours. Whatever you do next, you do without knowing the law for certain.",
+        "options": [
+          {
+            "title": "Strike now, before anyone can formally notify you",
+            "advantages": ["The band is grouped and surprised — the best tactical position you will ever have against them", "The contract keeps your bounties valid until you are formally notified", "Maximum payout: the full schedule, including the 400,000 for the leader, is on the table tonight"],
+            "disadvantages": ["If the pardon took effect before your strike, you have gunned down pardoned militia in their beds — legally and in public", "The penalty could run past 600,000 C-bills, plus murder charges against named MechWarriors", "Even a legally clean strike, a week after a public pardon, looks like bounty-hunting against the peace, and the boards remember how it looked, not the fine print"],
+            "consequence": "You fight with maximum advantage and maximum legal risk. Once the pardon's effective hour is fixed, it judges your whole operation in hindsight.",
+            "costs": { "cbills": 0, "days": 0, "resource": null, "risk": "A penalty up to 600,000 C-bills plus criminal charges, if the pardon took effect first" }
+          },
+          {
+            "title": "Stand down and check the facts at the district seat",
+            "advantages": ["Legal certainty: ride back with your earned evidence, collect 225,000, and read the actual decree", "No penalty risk, and your conduct is clean in any later case", "Your earned bounties turn into cash before any clause can change again"],
+            "disadvantages": ["8-day round trip, and the band will scatter long before you return — the camp empties the first time a sentry sees dust", "The hunt restarts against a scattered band at 6,000 to 9,000 C-bills per day, with the bounties possibly dead", "If the pardon is real, the contract is over and 11 weeks of tracking becomes a paid invoice and nothing more"],
+            "consequence": "You trade your tactical advantage for legal safety. The campaign either ends in clean mediocrity or restarts three times harder.",
+            "costs": { "cbills": 60000, "days": 8, "resource": "you lose the element of surprise for good; the staged strike cannot be set up again", "risk": "The band scatters or flies off-world during your trip to check" }
+          },
+          {
+            "title": "Notify the band yourself — send the pardon terms in under a truce flag",
+            "advantages": ["Forces the legal question onto the band: anyone who keeps raiding after being notified is clearly lawful, bounty-valid prey", "Casts you as the pardon's enforcer instead of its victim, and the district government owes you for that", "Splits the band along its real fault line: the tired ones take the deal, and the hard core reveals itself"],
+            "disadvantages": ["It reveals your presence and rough strength, spending your staged strike as surely as if you had launched it", "The meeting is a perfect ambush chance for a leader with 400,000 reasons to distrust truce flags", "Nothing forces {EMPLOYER} to honor bounties on a band you just tipped off — the lawyers call this untested ground"],
+            "consequence": "The band splits on contact with the terms: a complying majority stands down in place, and a smaller, harder splinter — now legally exposed — keeps its guns. The hunt resumes with clean targets but no surprise.",
+            "costs": { "cbills": 4000, "days": 2, "resource": "you spend the element of surprise in exchange for being able to tell targets apart", "risk": "Your meeting party is exposed, and truce flags have failed in these Barrens before" }
+          }
+        ]
+      },
+      {
+        "name": "The Splinter's Former Friends",
+        "context": "The pardon is confirmed. But a splinter — 4 to 6 'Mechs of the band's hardest core — has rejected it, hit a settlement, and taken 11 hostages back into the lava-tube country. The pardoned majority, now nominally district militia, sends a rider to your camp with an offer: they know every tube, every cache, and every habit of their former comrades, and they will guide your hunt for a one-third cut of the bounties.",
+        "options": [
+          {
+            "title": "Take the guides, share the bounty",
+            "advantages": ["Nobody alive knows the splinter's hideouts better, so the hunt drops from weeks to days", "Speed helps the hostages survive more than anything else does", "It binds the pardoned group to the district's side with paid, bloody-handed commitment"],
+            "disadvantages": ["A third of the bounties is a real price: roughly 150,000 C-bills at the expected yield", "{EMPLOYER}'s paymaster may refuse to pay bounty money to last month's raiders, so expect a payment fight even if you win", "Every guide is a former comrade of your prey; one warning whispered down a tube costs you an ambush"],
+            "consequence": "The hunt runs fast but compromised: better local knowledge, divided loyalty, and a payment dispute already forming at the district seat.",
+            "costs": { "cbills": 0, "days": null, "resource": "you give up 33 percent of the bounties to the guides", "risk": "Guide betrayal is a live threat; any ambush the splinter springs was bought with information from inside your own column" }
+          },
+          {
+            "title": "Refuse — hunt alone, hunt clean",
+            "advantages": ["You keep the full bounty schedule, with no payment dispute and no divided camp", "No risk of betrayal from inside your column", "Your evidence stays simple for the legal review that is surely coming"],
+            "disadvantages": ["The tube country swallows hunters with no guides, so the hunt takes about three times as long", "Every day lowers the hostages' odds — 11 names on your conscience and in the district's newssheets", "The rejected militia group sits idle, insulted, and armed — a second problem building behind the first"],
+            "consequence": "The hunt is slow, honest, and expensive. What it costs in days it may cost in hostages, and the newssheets will do that math in public.",
+            "costs": { "cbills": null, "days": 12, "resource": "operating cost of 6,000 to 9,000 C-bills per day across a hunt that takes three times as long", "risk": "Hostages die, the district loses patience, and the idle militia group does something of its own" }
+          },
+          {
+            "title": "Use them at arm's length — blocking positions only, flat fee",
+            "advantages": ["The militia group seals the tube exits it knows without ever riding in your column", "A flat 30,000 C-bill fee instead of a bounty share — cheap for what it buys", "A compromise the paymaster can accept: no bounty money to ex-raiders, just a security subcontract"],
+            "disadvantages": ["Blockers who know the ground better than you can also leave one exit quietly open", "Coordinating across a trust gap: no shared radio encryption, no shared fire plan", "Slower than full guiding, so you still have to dig the splinter out tube by tube"],
+            "consequence": "The blockade is real but leaky in exactly the spots where loyalty failed. The hunt succeeds or fails on which tube you chose to watch yourself.",
+            "costs": { "cbills": 30000, "days": 6, "resource": null, "risk": "One exit left unwatched on purpose is all the splinter needs, and you won't know which one until afterward" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "A sentry alarm goes off at the tube camp; the band's radio net goes active on a frequency you have been reading for 9 days." },
+        { "t": "T+3:00", "event": "The first band 'Mechs power up. The tubes hide their heat, so they start warm — assume they can fight from T+3:00." },
+        { "t": "T+10:00", "event": "The band scatters as planned: 3 to 4 groups break out through separate tube exits, and support vehicles abandon anything not already loaded." },
+        { "t": "T+25:00", "event": "The scattered groups meet at backup rally points 40+ km out. Chasing past this line means single-machine hunts in ground they know." },
+        { "t": "T+50:00", "event": "The DropShip on the north face lifts off with whatever has reached it." }
+      ],
+      "hardDeadline": "At T+50:00 from the first alarm, the band's DropShip lifts from the north tube mouth with every machine that reached the ramp. After that, the hunt spreads system-wide, and the bounty schedule pays nothing for that."
+    },
+    "opforSketch": {
+      "composition": "9-14 light and medium 'Mechs in raider condition — mismatched armor, ammunition poverty, 2-3 machines down for parts at any given time — plus 6-8 armed support vehicles and a Buccaneer-class DropShip of doubtful annual certification. Quality: green-to-regular pilots, veteran survival instincts. The leader's bodyguard element (3 machines) is the band's only formation that maneuvers as a unit.",
+      "behavior": "Raiders fight to disengage, always: scatter doctrine on contact, rally at depth, lift if pressed. They will not stand to defend the camp — only the DropShip ramp, where they will stand all the way down. If the amnesty splits them, the compliant element goes passive in place while the splinter inherits the doctrine and the meanest machines."
+    },
+    "forks": [
+      {
+        "name": "OPERATION QUIET ROAD",
+        "outcomeGate": "FULL_SUCCESS",
+        "family": "GARRISON_DUTY",
+        "trigger": "Band resolved without wrongful-engagement liability; district raids ended",
+        "consequence": "The district offers the unit the standing anti-raid garrison contract the amnesty was supposed to make unnecessary — modest rate, long term, and a militia auxiliary of former raiders on the same roster. Professional. Awkward. Renewable.",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION PAID RANSOM",
+        "outcomeGate": "FAILURE",
+        "family": "EXTRACTION_RAID",
+        "trigger": "Splinter element lifts off-world with hostages aboard",
+        "consequence": "The district's bounty schedule does not cross the atmosphere, but the broadsheets put the unit's name beside 11 hostages, and {EMPLOYER} offers pursuit terms that pay in reputation recovery more than C-bills. Following is optional. Being the outfit that didn't is permanent.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION MAKE WHOLE",
+        "outcomeGate": "COMPROMISED",
+        "family": "RELIEF_DUTY",
+        "trigger": "Engagement timestamped after the established effective hour — wrongful engagement against amnestied militia",
+        "consequence": "The settlement is court-ordered: the unit escorts and delivers reparation aid to the amnestied band's home settlements at its own cost, under district observation, through country where its own gun cameras are the evidence against it.",
+        "threat": "MEDIUM"
+      }
+    ],
+    "storyElementSeed": "A sergeant pins the gazette page to the ops tent post, circles the date twice in grease pencil, and writes underneath: WHICH HOUR. WHOSE CLOCK.",
+    "voiceSlots": ["command", "intelligence", "logistics"],
+    "registerVariants": {},
+    "specifics": {
+      "band_mech_strength": { "min": 9, "max": 14, "unit": "raider 'Mechs" },
+      "bounty_per_kill": { "min": 60000, "max": 90000, "unit": "C-bills" },
+      "effective_hour_window": { "min": 3, "max": 7, "unit": "days around the gazette date" },
+      "daily_operating_cost": { "min": 6000, "max": 9000, "unit": "C-bills per day" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "The Gazette Problem",
+        "requires": "dropship",
+        "whenLacking": "reprice",
+        "lackingText": "No contractor DropShip in-system: if the band lifts, the contract ends at the atmosphere. The brief prints the T+50:00 deadline in red and appends the charter-broker's quote for pursuit lift — 480,000 C-bills, 9 days out — so the cost of not owning a hull is a number, not a feeling."
+      }
+    ],
+    "skeleton": "hunter must close on cornered prey whose legal status is being rewritten by a distant signature, where word of the change travels slower than the engagement clock and every timestamp in the gun camera is either a bounty or a felony",
+    "inspiration": "privateers after the Treaty of Ghent, 1815 — prizes taken after ratification were returned and the captors held liable"
+  },
+  {
+    "seedId": "MRC-06",
+    "family": "RIOT_DUTY",
+    "title": "OPERATION SOFT CURRENCY",
+    "eraFit": ["civil-war"],
+    "factionFit": ["fedcom"],
+    "register": "merc",
+    "threatRange": ["LOW", "MEDIUM", "HIGH"],
+    "situation": "The public-order contract for {WORLD}'s capital was signed in {YEAR} by 'the planetary government,' which back then was one thing. It is now two. The Governor's faction holds the executive tower, the Planetary Bank, and — this is the part that matters — the counters where the local paper money you are paid in gets exchanged for hard currency. Your pay is 240,000 of these local notes a month, set by a payment clause nobody argued over at signing. The Assembly faction holds the port, the food distribution network, and the legislature. Each side claims to be your real employer. Each sends you orders under the same contract number. You police the capital for both, which means for neither. The local notes have lost 40 percent of their value against the C-bill in 60 days (based on the port exchange rate, updated daily). The Bank's exchange counters are the only legal way to convert notes to hard currency, and they open and close based on how neutral the Governor thinks you are being. Three months of your pay — about 720,000 notes — sits in an account that is worth less every morning and is held hostage by a faction your contract forbids you to favor. The ground is the Mintway: a 60-meter-wide grand boulevard running 2.3 km between the executive tower and the Assembly hall. Halfway along stands the Planetary Mint — the building that physically prints your pay — behind an iron fence and 8 Bank guards. Most evenings now, crowds form at both ends: 12,000 to 20,000 at peak (based on police counts, 2 days old and solid). Each crowd is salted with the other faction's paid agitators, and each end of the boulevard is backed by a faction militia battalion that has stayed in barracks so far. Your contract's rules-of-force clause limits you to non-lethal force against civilians; you may only use deadly force against armed, organized fighters. The agitators are experts at standing right on that line. {NPC:employer-contact} carries the Governor's orders; the Assembly's arrive by courier on identical letterhead. This week the Assembly added a sweetener to its courier pouch: an offer to rewrite your whole contract in C-bills at 85 percent of face value, effective the moment you sign. All you have to do to get paid in real money is stop being neutral.",
+    "objectives": {
+      "primary": "Hold the Mintway: keep the two crowds apart, keep both militia battalions off the boulevard, and keep the Mint from burning through the whole contract cycle.",
+      "secondary": "Keep your neutrality on the record — accept or refuse every order in writing, and log every use of force within the rules-of-force clause — so neither side can win a breach case against you in arbitration.",
+      "bonus": "Solve the pay problem: end the cycle with your back pay secured in hard currency or solid collateral, by any means that holds up under legal review."
+    },
+    "complications": [
+      {
+        "name": "Paid in Falling Paper",
+        "text": "The local note is losing 8 to 12 percent of its value every month, and each riot night speeds it up. The only legal way to convert it is the Bank's counters, and their hours depend on the Governor's mood. So your treasury shrinks daily, and one faction controls the only tap that can stop the leak.",
+        "mechanicalEffect": "Your saved and incoming pay loses 8 to 12 percent of its value each month (roll monthly). You can only convert to C-bills while your standing with the Governor's faction is neutral or better. Any action they read as anti-Governor freezes the counters for 30 days."
+      },
+      {
+        "name": "Two Signatures",
+        "text": "Both sides send orders under the original contract number, and every order you obey becomes evidence in the other side's breach case against you. These cases are real: both factions have hired MRBC lawyers, on Tharkad and New Avalon.",
+        "mechanicalEffect": "Each order you accept raises your standing with that faction by 1 and lowers it with the other by 1, and adds one item to the other side's breach case. At 5 items, that side sues to cancel the contract for good — and your pay clause dies with it."
+      },
+      {
+        "name": "Paid Agitators",
+        "text": "Both factions pay agitators to stand in the other's crowd and stage the incident that lets their militia march in to 'restore order.' The first killing on the Mintway, by anyone, turns both crowds violent and brings both battalions out of barracks.",
+        "mechanicalEffect": "If you use deadly force against anyone not confirmed as an armed, organized fighter: riot intensity rises one step, both militia battalions move up to staging positions, and a rules-of-force review automatically opens a breach item against you."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Re-Paper Offer",
+        "context": "The Assembly's courier waits for a written answer: C-bills at 85 percent of face value, effective on signature, with all your back pay converted too. The offer is real and the money is real. And {NPC:employer-contact} has already hinted, pleasantly, that the Governor's office knows about the offer and is watching what you do with it.",
+        "options": [
+          {
+            "title": "Sign the Assembly's contract",
+            "advantages": ["Real money: 85 percent of face in hard currency beats 100 percent of a note that loses a tenth of its value every month", "Converting your back pay rescues the 720,000-note account before it halves again", "One employer, one set of orders, one set of books — the confusion ends"],
+            "disadvantages": ["The Governor declares breach within hours and the Bank freezes all note conversion, so your saved account is stuck and now worthless as leverage", "The Governor's militia now sees you as a player, not a referee, and half the capital's crowds agree", "Once you sell your neutrality, you can never buy it back"],
+            "consequence": "You are solvent but no longer neutral: the Mintway's referee becomes one side's tool, and the other side starts planning around that.",
+            "costs": { "cbills": 0, "days": 0, "resource": "your 720,000-note account is frozen by the Bank; you only get it back through arbitration or the Governor's fall", "risk": "Your standing with the Governor's faction drops to hostile, and you now police crowds that think you were bought" }
+          },
+          {
+            "title": "Refuse and keep the original contract",
+            "advantages": ["Your neutrality stays intact and on the record, so your arbitration position is spotless", "Both sides still need you more than they distrust you, and the referee's seat is the safest chair in the capital", "No faction's crowd has a chant about you yet"],
+            "disadvantages": ["Your pay keeps dying at 8 to 12 percent a month, compounding, while your support staff's families buy bread in the same failing notes", "The Assembly reads your refusal as a quiet lean toward the Governor, and their breach case does not pause for good intentions", "Hired technical staff paid in paper start looking like a desertion risk"],
+            "consequence": "You stay neutral and get poorer every week you succeed. The pay leak becomes the campaign's quiet countdown.",
+            "costs": { "cbills": 0, "days": null, "resource": "your treasury loses 8 to 12 percent of its real value each month, compounding", "risk": "You lose more support staff each month the notes fall, as trained techs take port jobs paid in C-bills" }
+          },
+          {
+            "title": "Counter-offer both sides: a joint C-bill escrow, or you stop work",
+            "advantages": ["An escrow account funded 50/50 in hard currency is the one setup neither side can call taking sides", "The threat to stop work is real leverage: neither faction can police the Mintway, and neither wants the other to try", "If they agree, your pay problem is solved without spending your neutrality"],
+            "disadvantages": ["Forcing two sides who each deny the other exists to co-sign anything takes 7 days of shuttle diplomacy the Mintway may not allow", "If either refuses, you have formally threatened to stop work — one item for both breach cases at once", "An escrow agent licensed for disputed-ownership accounts charges 4 percent and asks questions in writing"],
+            "consequence": "You force both sides to show which one actually wants order in the capital. The answer reshapes the contract or ends it.",
+            "costs": { "cbills": 12000, "days": 7, "resource": null, "risk": "If both refuse, you have threatened both paymasters in the same week, with the riot season still coming" }
+          }
+        ]
+      },
+      {
+        "name": "The Mint",
+        "context": "Riot night, the worst one yet. Both crowds are on the Mintway, both militia battalions stand at their ends pretending to be parade formations, and the Mint's 8 Bank guards have locked the fence and called the executive tower for help. The Governor orders you to garrison the Mint — 'protecting essential government property.' The Assembly's courier demands the Mint be sealed under joint custody until the government dispute is settled. And the building between the two crowds is the one that prints the money you are owed.",
+        "options": [
+          {
+            "title": "Garrison the Mint under the Governor's order",
+            "advantages": ["Tactically the cleanest: one defensible building, a clear perimeter, and the Bank guards help instead of resist", "The Governor's gratitude comes in the form you need: expect your frozen account unfrozen and converted within days", "It stops the night's most likely arson target from actually burning"],
+            "disadvantages": ["Obeying the Governor's order on the most disputed building is the biggest item yet for the Assembly's breach case", "The Assembly crowd sees mercenaries on the Mint fence as the Bank buying an army, so the crowd gets angrier right where you stand", "You become the thing the agitators aim at, and your rules-of-force limits get tested in front of 20,000 witnesses"],
+            "consequence": "The Mint survives the night; your neutrality does not. The Assembly's lawyers add the item and start drafting their case.",
+            "costs": { "cbills": 0, "days": null, "resource": "the Assembly breach case gains 2 items (obeying an order on disputed property)", "risk": "Your people become the main target on the boulevard, where one agitator with a pistol can decide the night" }
+          },
+          {
+            "title": "Seal it under joint custody — observers from both sides, garrisoned by neither",
+            "advantages": ["The one outcome both breach cases struggle to use: you protected the building FROM both sides", "Joint observer teams put faction people side by side in one calm room — a small but real step toward peace", "It honors the contract's real purpose — public order — over either side's order"],
+            "disadvantages": ["You obey neither order, so your standing with both sides drops and both paymasters note the defiance", "Joint custody means negotiating observer terms tonight, on the boulevard, through megaphones and couriers", "If the seal fails — one fence breach, one fire — you own that failure alone, having claimed the authority alone"],
+            "consequence": "The Mint becomes the capital's one jointly-run building: a model for calming things down, or a hostage to the next riot, depending on nights you cannot control.",
+            "costs": { "cbills": 5000, "days": null, "resource": "your standing with both factions drops by 1 (you defied both orders)", "risk": "You alone own any custody failure, and the negotiation happens inside the riot itself" }
+          },
+          {
+            "title": "Hold it yourself — assert a wage lien on the Mint as collateral",
+            "advantages": ["The contract's lien clause (standard MRBC boilerplate nobody reads) arguably lets you seize collateral for 720,000 notes of unpaid real value", "Whoever holds the Mint has the leverage to force the escrow talks both sides have dodged", "Your pay stops being a hostage and becomes your hostage instead"],
+            "disadvantages": ["Both sides will call it seizure of government property by a foreign armed force — because that is roughly what it is", "The lien only holds up in review if your rules-of-force record is spotless and the seizure is bloodless; one casualty makes it armed robbery", "Holding a building both militias want is an open invitation to a siege, written in your own hand"],
+            "consequence": "The boldest move in your history: the pay dispute becomes a fortified position, and both sides must now negotiate with their referee — or break it.",
+            "costs": { "cbills": 0, "days": null, "resource": "your standing with both factions drops by 2, and both breach cases gain 1 item", "risk": "The lien only holds up if the seizure is bloodless; one casualty makes it armed robbery of government property. Holding the building also invites a siege by both militias." }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Evening crowds converge on the Mintway from both ends; police counts pass 12,000 and their commanders go home." },
+        { "t": "T+0:40", "event": "An agitator strikes — the likely flashpoint is a firebomb thrown at the Mint fence, with the thrower impossible to identify." },
+        { "t": "T+1:10", "event": "The Governor's militia battalion forms up in the executive tower courtyard, 'just to be ready.'" },
+        { "t": "T+1:30", "event": "The Assembly's militia battalion forms up on the legislature steps, citing the other side's move." },
+        { "t": "T+2:00", "event": "If the Mint fence is breached: fires reach the printing halls in about 35 minutes, and everyone's pay burns together." }
+      ],
+      "hardDeadline": "If both militia battalions step onto the Mintway while the crowds are still between them, the contract — every version of it — voids at H+3:00 because open civil war has broken out. Keep the battalions off the boulevard, or the riot turns into a battle nobody hired you to fight."
+    },
+    "opforSketch": {
+      "composition": "Crowds of 12,000-20,000 with 30-60 paid agitators per side; about 8-12 people per crowd are armed with firearms (estimated from confiscation rates). Faction militia battalions: 400-500 each, infantry with light vehicles, plus 1 platoon of aging second-line 'Mechs apiece (3-4 machines). Quality: militia regulars with parade-ground polish and no street experience.",
+      "behavior": "Crowds surge and pull back on 20-40 minute rumor cycles. The agitators work the edge of your rules-of-force limits on purpose: their job is to get wounded by you on camera. The militia battalions advance only behind an incident that justifies it — but each commander thinks the other is about to stage one, which is its own countdown."
+    },
+    "forks": [
+      {
+        "name": "OPERATION HARD MONEY",
+        "outcomeGate": "FULL_SUCCESS",
+        "family": "SECURITY_DUTY",
+        "trigger": "Cycle completed: Mintway held, neutrality documented, joint escrow or equivalent achieved",
+        "consequence": "Both claimants, unable to fault the referee, jointly contract the unit to guard the Mint and the escrow under dual seal — the capital's only institution both sides trust, paid at last in C-bills, resented at last by everyone.",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION PAPER ASHES",
+        "outcomeGate": "FAILURE",
+        "family": "EXTRACTION_RAID",
+        "trigger": "Militia battalions meet on the Mintway; contract voids by supervening civil conflict",
+        "consequence": "The capital is a two-army city and the unit's cantonment — with its dependents, its workshops, and its worthless beautiful banknotes — sits between the armies. Getting the unit's own out through a city at war is the contract now, and nobody is paying for it.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION COMPANY SCRIP",
+        "outcomeGate": "COMPROMISED",
+        "family": "GARRISON_DUTY",
+        "trigger": "Unit read as partisan (re-paper signed, or Governor tasking honored on the Mint, with breach filed)",
+        "consequence": "The claimant that owns the unit now garrisons it at its own strongpoints, paid in promises against victory, while the other claimant's counsel pursues the breach case across every hiring board the unit ever hopes to use again.",
+        "threat": "HIGH"
+      }
+    ],
+    "storyElementSeed": "A paymaster counts the month's notes into even stacks, then weighs the stacks on a parts scale and logs the weight instead of the count.",
+    "voiceSlots": ["command", "logistics", "intelligence", "medical"],
+    "registerVariants": {
+      "is-steiner": { "decisionPoints[0].context": "The Assembly's courier waits for a written answer, and the offer is drafted the Lyran way — exchange-rate tables, conversion schedules, a footnote on archival precedent from three other contested worlds. C-bills at 85 percent of face. The covering letter regrets the circumstances and quotes commercial law. {NPC:employer-contact} has already mentioned, between pleasantries, that the Governor's office holds the unit's redemption schedule and reviews it weekly." },
+      "is-davion": { "decisionPoints[0].context": "The Assembly's courier waits for a written answer. The offer is one page: C-bills at 85 percent of face, effective on signature, back-pay included. 'Your people fight better paid in money than in promises — so do ours.' {NPC:employer-contact} has already noted, without quite saying it, that the Governor's office knows the offer exists and that redemption counters have hours." }
+    },
+    "specifics": {
+      "monthly_pay_notes": { "min": 220000, "max": 260000, "unit": "planetary notes" },
+      "monthly_devaluation": { "min": 8, "max": 12, "unit": "percent" },
+      "peak_crowd": { "min": 12000, "max": 20000, "unit": "persons" },
+      "accrued_notes": { "min": 600000, "max": 800000, "unit": "planetary notes" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Hold it yourself — assert a wage lien on the Mint as collateral",
+        "requires": "established-base",
+        "whenLacking": "lock",
+        "lackingText": "Without a defensible cantonment inside the capital, a lien garrison at the Mint cannot be relieved, resupplied, or reinforced. The option renders locked, with the line: 'collateral you cannot hold is a gift you have not yet delivered.'"
+      }
+    ],
+    "skeleton": "a neutral order-keeping force must hold the line between two claimant crowds while its wages are denominated in one claimant's collapsing currency — every act of neutrality is priced against its own payroll, and the building that prints the pay is the flashpoint",
+    "inspiration": "the Shanghai Volunteer Corps holding the International Settlement through the 1927 crisis, crossed with the Continental scrip collapse — 'not worth a Continental'"
+  },
+  {
+    "seedId": "MRC-07",
+    "family": "RELIEF_DUTY",
+    "title": "OPERATION SHORT WEIGHT",
+    "eraFit": ["late-succession-wars"],
+    "factionFit": ["ANY"],
+    "register": "merc",
+    "threatRange": ["LOW", "MEDIUM", "HIGH"],
+    "situation": "The contract sounds simple: 1,800 C-bills per ton of relief cargo delivered to the upland communities of {WORLD}'s {DISTRICT} plateau, with a quota of 4,000 tons in 60 days. {EMPLOYER}'s provincial government wrote it this way because the {TARGET_FACTION} raiding season burned the lowland harvest stores in the same quarter a crop blight ruined the plateau's own harvest — and because paying per ton puts all the risk on you, the contractor. The route is the real problem: the Saltlick Corridor, 340 km of raised causeway across salt flats, one graded lane, two passing sidings, and every convoy visible for 20 km through the heat shimmer. Your fleet is fixed: 28 cargo trucks at 8 tons each, plus your escort and recovery vehicles. The threat is {TARGET_FACTION}-backed irregulars — 2 to 4 light 'Mechs and 8 to 15 armed trucks working from beyond the flats (that report is 5 days old and rough) — plus a growing number of hijack crews who were farmers in the spring. They hit full convoys and let empty ones pass, having done the same math the contract does. Thirty-one days in, with 1,900 tons delivered and the schedule barely holding, the government runs out of money. An apologetic courier notice arrives: cash payments are suspended, and the contract's pay-in-goods clause kicks in. From now on you are paid in grain and fuel, valued by the government's own assessor at 140 percent of market price. But the port's posted prices, 3 days old, tell the real story. The grain is real — the problem is that your wage-grain rides the same 28 trucks as the relief-grain, along the same causeway, past the same communities. Every ton you take as pay is a ton short of your quota, makes the convoy fatter and more tempting to raiders, and rolls slowly past settlements that count axles from the roadside and know to the sack what they were promised. {NPC:employer-contact} signs the shipping manifests. {NPC:intel-source}, a clerk at the upland farmers' co-op, has been your best ambush-warning source for a month — and those warnings track exactly with how the co-op feels about you that week. The contract's delivery clause names 9 communities to receive grain. It says nothing about the tenth.",
+    "objectives": {
+      "primary": "Deliver the remaining 2,100 tons to the 9 listed communities inside the 60-day window, losing less than 10 percent of the tonnage to raids.",
+      "secondary": "Keep the locals on your side: the co-op's warning network is the difference between ambushes you meet ready and ambushes you walk into.",
+      "bonus": "End the contract with your wages turned into something that lasts — hard currency, transport traded for goods, or the corridor toll rights — instead of grain rotting in a warehouse you do not own."
+    },
+    "complications": [
+      {
+        "name": "The Grain Is Worth Less Than It Says",
+        "text": "The assessor values your wage-grain at 140 percent of market price for payment. But if you sell it here in a famine, you get only 60 percent — the buyers have no money. So your pay is real tonnage worth half what it says on paper, unless you ship it off-world or turn it into something else.",
+        "mechanicalEffect": "Pay-in-goods credits are worth 0.6x their stated value if you sell them locally, 1.1x if you ship them off-world (needs transport; see resourceGates), or full value only if converted through DP 'How to Take the Wage,' option 3."
+      },
+      {
+        "name": "The Same Trucks",
+        "text": "Twenty-eight trucks is your whole fleet. There is no second fleet, no rail line, and the causeway allows no detour. Your wage-grain and the relief-grain compete for the same trucks, in the same convoys, on the same exposed lane.",
+        "mechanicalEffect": "Each convoy carries up to 224 tons. Tonnage you take as wages counts zero toward the 2,100-ton quota and makes that convoy one step more attractive to raiders for every 40 tons of wage-grain aboard."
+      },
+      {
+        "name": "Hungry Eyes",
+        "text": "The people by the road are counting. Every community logs each convoy's axle count and direction, and the co-op's warning network is run by people whose children eat or starve based on how you split the load. Hauling your wages is legal and in the contract — and watched.",
+        "mechanicalEffect": "Any convoy carrying more than 25 percent wage-grain lowers your standing with the locals by 1. Below 0, the ambush warnings stop. Below -2, roadside watchers start reporting your convoy loads to the raiders instead."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "How to Take the Wage",
+        "context": "The pay-in-goods notice sits on the table next to the quota ledger. You are owed 31 days of work already, and will be owed 29 more. The assessor's rates are generous, but they are paid in a currency that is heavy, edible, and riding on your only trucks. Your lawyer's note in the margin: 'all three options are legal — price them out.'",
+        "options": [
+          {
+            "title": "Take the grain at assessment, haul it on the quota trucks",
+            "advantages": ["Paid now, in something whose famine-year value is real and rising", "No risk of an unpaid debt: the grain exists, unlike the government's cash", "The 140 percent rate is, on paper, a raise"],
+            "disadvantages": ["Every ton of pay is a ton short of quota, so your objective and your payroll are now the same limited number", "Fat convoys draw raiders the way the flats draw heat shimmer", "The roadside watches you haul your pay past their hunger at 30 km/h, and that goodwill was your cheap early warning — this spends it"],
+            "consequence": "You are rich in grain but short on quota, friends, and warning time. The contract's three clocks now work against each other.",
+            "costs": { "cbills": 0, "days": null, "resource": "you lose 1 ton of quota capacity per ton of wages hauled, and your standing with the locals is at risk (see Hungry Eyes)", "risk": "Each wage-laden convoy is more attractive to raiders, and the ambush rate rises with it" }
+          },
+          {
+            "title": "Defer your wages — take a legal claim, get C-bills within 180 days",
+            "advantages": ["Every truck stays on quota, so your schedule and your standing with the locals both survive", "A registered MRBC claim against the provincial government is enforceable and jumps the line", "Your restraint in a famine is the kind of thing hiring halls hear about"],
+            "disadvantages": ["The government that just went broke is the one you are trusting to pay you later", "You float your own costs for 180 days — fuel, parts, and pay advances all come from your reserves", "If {EMPLOYER}'s government falls or is replaced, your claim waits behind every other creditor of a dead government"],
+            "consequence": "The mission stays clean and you become your employer's creditor — a position worth exactly as much as a provincial government's odds of surviving.",
+            "costs": { "cbills": 0, "days": null, "resource": "your reserves cover 60-90 days of operating costs with no reimbursement", "risk": "The debtor may default; the claim is only as good as the government that survives the famine it caused" }
+          },
+          {
+            "title": "Take the corridor toll rights instead",
+            "advantages": ["The government offers 7 years of toll income from the rebuilt corridor instead of wages — an asset, not a one-time payout", "Expected to pay 2 to 3 times your owed wages if the corridor reopens to commercial traffic", "Turns you from creditor to owner: now the raiders are attacking your own income"],
+            "disadvantages": ["Toll income needs a corridor at peace, so the rights are worth zero until the raiding ends — meaning your pay now depends on winning", "Collecting tolls means staying: a garrison commitment after the contract, on a world you had no plans to keep", "A mercenary unit holding a planet's main road for profit is a political target the {DISTRICT} newssheets will name within a month"],
+            "consequence": "Your pay becomes a piece of the planet — a long-term investment with a garrison attached, and a reason to care about {WORLD} for years.",
+            "costs": { "cbills": null, "days": null, "resource": "a garrison commitment after the contract: at least 1 company on-world to run the toll rights", "risk": "The rights are worth nothing until the raiding ends; if the raiders win the corridor, you were paid in nothing" }
+          }
+        ]
+      },
+      {
+        "name": "The Tenth Community",
+        "context": "Verrun's Forge is not on the delivery list. Its 1,400 people ended up on the losing side of a provincial assembly vote over the spring levy, and the people who drew up the delivery schedule remember that. Their headman walks 31 km to the siding to tell you they are eating their seed grain and boiling leather. Diverting 200 tons feeds them through the gap — but the contract only pays quota credit for the 9 listed communities. {NPC:employer-contact} signs the manifests and is nobody's fool.",
+        "options": [
+          {
+            "title": "Divert the 200 tons — feed them and take the contract hit",
+            "advantages": ["1,400 people eat, and your name on this world becomes more than a line on a manifest", "The co-op network — Verrun's Forge has family in every listed community — pays you back in warnings what it cannot pay in grain", "It is the right thing, and units that always value that at zero end up as outfits nobody quite trusts"],
+            "disadvantages": ["200 tons of delivery you are not paid or credited for: roughly 360,000 C-bills of work the contract will not recognize", "A documented breach of the delivery clause gives the government leverage in every future dispute, including your wage claim", "{NPC:employer-contact} has to either falsify the manifest or report it, and both are debts someone collects later"],
+            "consequence": "Your quota gap grows by 200 tons, but your standing on the plateau hardens into loyalty. The government's books and the roadside's books now disagree about who you are.",
+            "costs": { "cbills": 0, "days": 2, "resource": "you lose 200 tons of uncredited quota, and a contract-breach item goes on file", "risk": "The government gains leverage in all later disputes, which weakens your position on the bonus objective" }
+          },
+          {
+            "title": "Refuse — the contract is the contract",
+            "advantages": ["Your quota math holds, and the 9 listed communities get every contracted ton on schedule", "No breach, no leverage given up, no faked manifest", "The government's priority list was always political, and you declining to redraw it is just the contract working as written"],
+            "disadvantages": ["Verrun's Forge starves in plain sight, 31 km from a grain convoy, and the plateau knows whose trucks rolled past", "The co-op's warning network goes quiet — not hostile at first, just quiet, which on the causeway is the same thing", "Hungry communities with nothing to lose are where hijack crews come from, and you may meet Verrun's Forge again, armed"],
+            "consequence": "The contract stays clean, and the corridor gets more dangerous by exactly the amount of goodwill this cost you.",
+            "costs": { "cbills": 0, "days": 0, "resource": "your standing with the locals drops by 2, and the ambush-warning channel weakens", "risk": "New hijack recruits from the unlisted community, and the locals turn against you for the rest of the contract" }
+          },
+          {
+            "title": "Get the list changed — push the official to add Verrun's Forge",
+            "advantages": ["If Verrun's Forge is added, the 200 tons earn full quota credit and full per-ton pay: fed people AND clean books", "A changed list sets a precedent — the next unlisted village is a paperwork question, not a moral one", "It costs the government almost nothing real; famine relief lists get amended on Tharkad and Luthien alike when officials are reminded who is watching"],
+            "disadvantages": ["The change moves at courier speed: 6 to 9 days through the provincial office while the seed grain runs out", "{NPC:employer-contact} will want something for pushing it: the going rate for a rush is a 15,000 C-bill 'processing fee' that appears on no schedule", "If the assembly faction that dropped Verrun's Forge blocks it, you have spent days and a bribe to be told no in writing"],
+            "consequence": "The list becomes the battlefield: paperwork crawls while people boil leather, and the outcome decides whether you can steer the contract or only obey it.",
+            "costs": { "cbills": 15000, "days": 7, "resource": null, "risk": "The change may be refused after the delay, and Verrun's Forge gets worse during the paperwork" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The lead truck hits a buried charge at km 210, 14 km past siding 2, and the convoy stops on the causeway." },
+        { "t": "T+4:00", "event": "Armed trucks appear out of the heat shimmer east of the flats — they were hidden in it the whole time." },
+        { "t": "T+12:00", "event": "The raider light 'Mechs (2-3) commit only if your escort has split off to chase trucks; they will not take on a formed-up escort." },
+        { "t": "T+30:00", "event": "If the convoy is still stopped: a second raider group starts stripping trailers from the rear while the first holds your escort's attention." },
+        { "t": "T+6:40:00", "event": "Nightfall on the flats. The raiders' night sights are better than yours, and everyone knows it." }
+      ],
+      "hardDeadline": "A convoy still stopped on the causeway at nightfall — H+6:40 from the morning siding — is a total loss. The contract's insurance clause won't cover night recovery on an unsecured route. Clear the lane and roll by dusk, or the cargo, the trucks, and the quota credit are all gone by morning."
+    },
+    "opforSketch": {
+      "composition": "Sponsored irregulars: 2-4 light 'Mechs (20-35 tons, maintained to raider standard) and 8-15 armed trucks and technicals with crew-served weapons; behind them, a {TARGET_FACTION} sponsor providing fuel and ammunition but no fingerprints. Local hijack crews: unarmored, desperate, growing. Quality: green-to-regular; the 'Mech element is the only disciplined formation.",
+      "behavior": "Heat-shimmer ambush doctrine: hull-down in the mirage bands, initiate with mines or cut-charges, strip cargo fast, vanish beyond the flats. They preferentially engage the fullest convoy third and avoid formed escorts entirely — their sponsor pays for grain denied, not for battles fought. Hijack crews follow the irregulars like gulls follow a trawler."
+    },
+    "forks": [
+      {
+        "name": "OPERATION TOLL GATE",
+        "outcomeGate": "FULL_SUCCESS",
+        "family": "GARRISON_DUTY",
+        "trigger": "Quota met and the toll concession taken as wages",
+        "consequence": "The unit now owns 7 years of revenue on a corridor the raiders' sponsor still wants closed. The garrison company the concession requires becomes the contract that never ends — the unit defending its own pay, in place, through the next raid season.",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION GLEANING",
+        "outcomeGate": "FAILURE",
+        "family": "RIOT_DUTY",
+        "trigger": "Quota missed by 15+ percent; plateau communities enter hard ration",
+        "consequence": "The shortfall arrives as arithmetic, then as crowds. The administration orders the unit — still its contractor, still on-world, still owed — onto the depot gates against the hungry, and the roadside that counted axles all season remembers exactly whose trucks were short.",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION DRY HARVEST",
+        "outcomeGate": "ANY",
+        "family": "PIRATE_HUNTING",
+        "trigger": "The raiders' base of operations beyond the flats is fixed by the co-op's warning network",
+        "consequence": "The administration offers a separate strike contract against the irregulars' staging ground — payable, with what passes for humor in a provincial treasury, partly in kind. The corridor cannot be safe until somebody goes out past the shimmer.",
+        "threat": "HIGH"
+      }
+    ],
+    "storyElementSeed": "A driver chalks two numbers on the tailgate before rolling — tons for them, tons for us — and a child at the first checkpoint reads both aloud, twice, to be sure.",
+    "voiceSlots": ["logistics", "command", "medical"],
+    "registerVariants": {},
+    "specifics": {
+      "quota_remaining": { "min": 1900, "max": 2300, "unit": "tons" },
+      "per_ton_rate": { "min": 1600, "max": 2000, "unit": "C-bills" },
+      "truck_fleet": { "min": 24, "max": 32, "unit": "8-ton cargo trucks" },
+      "raider_mech_element": { "min": 2, "max": 4, "unit": "light 'Mechs" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Take the grain at assessment, haul it on the quota trucks",
+        "requires": "dropship",
+        "whenLacking": "reprice",
+        "lackingText": "No lift capacity off-world: wage-grain assessed at 140 percent of market realizes 60 percent at famine resale. The brief prints both numbers side by side, and the difference is the price of not owning a hull."
+      }
+    ],
+    "skeleton": "escort must meet a per-ton relief quota when its own wages are paid in the cargo itself — every ton of pay loaded displaces a ton of quota, fattens the convoy the raiders prefer, and rolls past the people the mission exists to feed",
+    "inspiration": "Berlin Airlift civil charter carriers — paid by the delivered ton while corridor rules and weather set the arithmetic"
+  },
+  {
+    "seedId": "MRC-08",
+    "family": "PLANETARY_ASSAULT",
+    "title": "OPERATION DIVIDED STANDARD",
+    "eraFit": ["clan-invasion"],
+    "factionFit": ["fedcom", "draconis-combine", "free-rasalhague"],
+    "register": "merc",
+    "threatRange": ["HIGH", "EXTREME"],
+    "situation": "The counter-landing on {WORLD} is the biggest operation {EMPLOYER} has run since the invasion stalled, and your battalion is in the first wave because the pay was real: 2,400,000 C-bills base, a 300,000 cooperation bonus, and command rights at the Liaison level — meaning you take the employer's orders but keep tactical control of your own unit, a step down from full independence, priced accordingly. The target is the Hadrach Shelf: a 14-km coastal terrace under a cliff, the only ground on the continent flat enough to land a regiment and close enough to flank the {TARGET_FACTION} garrison's inland fortress. Four ramp roads climb the cliff. The defenders are a {TARGET_FACTION} garrison cluster at two-thirds strength, with its command star (5 of its best 'Mechs) anchoring ramp 3, the steepest and most important. That report is 8 days old: solid from orbital survey, but only rough on exactly how the command star is positioned. The assault plan, drawn up by {NPC:employer-contact}'s staff, sends three House battalions up ramps 1, 2, and 4 in sequence. Those battalions are 50 to 70 percent green — the flood of new academy graduates since the invasion, brave but untested (from the employer's own readiness reports, shared with you). Then, at H-36, the operations order arrives with paragraph 9. Under contract clause 14 — 'attachment of the unit or parts of it as operational need requires' — your battalion is to be broken into companies and parceled out, one company to stiffen each green battalion, effective on landing. The phrase 'parts of it' was slipped into the employer's final draft and initialed at signing by a major who has since left the unit. Your own analysts ran the numbers twice. Scattered as single companies under green House command, against a Clan cluster fighting on ground it chose, you project 40 percent casualties and the loss of your unit's cohesion — the very thing that makes you worth hiring. Kept together, your battalion projects taking ramp 3 itself — the hardest ramp, the one the plan quietly avoids — at 30 percent casualties, all under your own command. The Liaison channel is open. The landing clock cannot be moved. Once taken, the shelf sits under Clan artillery and fighters until the cliff crest falls — and read the contract again: it bills a fighting evacuation to you, the contractor.",
+    "objectives": {
+      "primary": "Take and hold the cliff crest above the Hadrach Shelf by H+36:00, before the {TARGET_FACTION} inland cluster finishes its road march.",
+      "secondary": "Keep the battalion whole — its cohesion, its chain of command, and a casualty count that leaves you a unit worth hiring on H+37.",
+      "bonus": "Take ramp 3's defended crest with your own command still intact — the ramp the plan avoids, and the one that decides whether the flanking position exists at all."
+    },
+    "complications": [
+      {
+        "name": "The Attachment Clause",
+        "text": "Clause 14 lets the employer attach 'the unit or parts of it' as operational need requires. Your lawyer reads 'parts' as limited by the command-integrity rider elsewhere in the contract; the employer's lawyer reads it as the right to split you down to companies. Both readings were initialed by people rushing to meet a deadline.",
+        "mechanicalEffect": "The order to split up looks legal on its face. To fight it, you must file a formal protest (DP 'Elements Thereof,' option 2) and pay its costs. Defying it without a protest is a documented breach: it voids your cooperation bonus and hands the employer a counterclaim."
+      },
+      {
+        "name": "Green Stiffening",
+        "text": "The three House battalions are 50 to 70 percent first-combat troops. They are not cowards, just new — and a Clan garrison cluster is a brutal first teacher. A company of yours attached to a green battalion is stuck with its host's reactions at every moment that matters.",
+        "mechanicalEffect": "Any of your companies operating split off under a green host battalion uses the host's morale and fire-discipline ratings in combat. When the host fails a check, your attached company suffers too: forced retreats, blocked fire lanes, and abandoned flanks."
+      },
+      {
+        "name": "The Shelf Clock",
+        "text": "Until the crest falls, the shelf is a target the Clan artillery and fighters hit on their own schedule. Your grounded DropShips, your supplies, and the field hospital sit on that beach the whole time.",
+        "mechanicalEffect": "For each 12 hours the crest stays contested: 2 percent of your landed supplies are destroyed (adding up), one hazard roll hits a grounded DropShip, and the medical backlog grows — moving the wounded competes with moving ammunition on the same ramps."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Elements Thereof",
+        "context": "H-36. Paragraph 9 sits between your contract and your casualty projection. The employer's Liaison expects your acknowledgment by H-30. Three ways to read one clause, three ways down to the shelf, and the only thing beyond dispute is that the landing happens no matter what.",
+        "options": [
+          {
+            "title": "Obey — split into companies as ordered",
+            "advantages": ["Your cooperation bonus (300,000 C-bills) and your employer relationship both survive intact", "The green battalions genuinely fight better with veteran companies alongside — the stiffening logic is not wrong, just paid for in other people's blood", "No protest, no breach risk, no arbitration hanging over your next decade"],
+            "disadvantages": ["A projected 40 percent casualties, spread out where your own command cannot reach them", "Your unit's cohesion — the thing hiring halls actually pay for — is spent into three formations that will not remember the cost", "Every one of your company commanders fights under a green battalion staff making its first real decisions against a Clan cluster"],
+            "consequence": "You perform as contracted and bleed as projected. Whatever walks off the shelf carries your name on a roster that took years to build and one operation to spend.",
+            "costs": { "cbills": 0, "days": 0, "resource": "a projected 40 percent casualties across your scattered companies, and your cohesion rating drops one step no matter the outcome", "risk": "Company-level disasters under green host command are charged to your record, not the hosts'" }
+          },
+          {
+            "title": "Formal protest — invoke the command-integrity rider and demand liaison review",
+            "advantages": ["The rider's wording is genuinely on your side; a neutral reading favors keeping the battalion whole", "The protest protects every legal position: your bonus, your breach defense, and the arbitration record for later", "If it succeeds, your battalion fights together with clean paper behind it"],
+            "disadvantages": ["The review costs the assault a day of your weight: the first wave lands without your battalion while the judges read", "If the green battalions crack on day one, being right will not be the same as being forgiven — by the employer or by the survivors", "If the review sides with the employer (the clause is honestly unclear), you are back to obey-or-breach with the relationship already burned"],
+            "consequence": "The landing goes in a battalion short while the paperwork fight runs. The outcome — and what happened on the ramps during it — defines your reputation both ways at once.",
+            "costs": { "cbills": 40000, "days": 1, "resource": "your battalion is held out of the first wave during the review", "risk": "Day-one assault results happen without you, and your employer relations drop by 1 win or lose" }
+          },
+          {
+            "title": "Counter-propose: your battalion takes ramp 3, whole",
+            "advantages": ["You stay whole AND the general gains a ramp the plan had given up on — the operational need met by a better offer", "30 percent projected casualties, but under your own command, with your own recovery and medical practices", "If it works, 'the battalion that took ramp 3' is the line every hiring hall reads for ten years"],
+            "disadvantages": ["Ramp 3 is anchored by the command star: the hardest fight on the continent, and you volunteered for it", "A counter-proposal that gets rejected is a protest made without the protest's legal protections", "You now owe the plan a win: if ramp 3 stalls, you proved the split-up order right in front of everyone"],
+            "consequence": "The general accepts — a whole battalion against the worst objective costs the plan nothing — and you have bought your integrity at the price of the command star's full attention.",
+            "costs": { "cbills": null, "days": 0, "resource": "a projected 30 percent casualties, all on your own roster, plus double the normal ammunition load", "risk": "The objective is rated EXTREME; failure turns your integrity argument into the employer's example of what not to do" }
+          }
+        ]
+      },
+      {
+        "name": "The Recall That Is Not One",
+        "context": "H+19. Your battalion is two-thirds up ramp 3, with the command star giving ground by meters, when a lawful order comes over the Liaison channel: break off, come down, and reinforce the green battalion collapsing on ramp 1. Obeying means giving up ground you won, your casualty collection point, and the momentum that is the only thing cheaper than blood on a cliff. Refusing is documented disobedience of a lawful order, mid-assault, on the record.",
+        "options": [
+          {
+            "title": "Comply in full — break off and come down",
+            "advantages": ["You obey a lawful order on the record, so your bonus and legal position stay intact", "Ramp 1's collapse genuinely threatens the whole shelf — the order is not stupid, just expensive for you", "The green battalion you save remembers, and so does its parent regiment, which votes on hiring for a generation"],
+            "disadvantages": ["You give up the ground you won on ramp 3 with your casualty collection point still forward — wounded and salvage left under Clan guns", "The command star re-anchors, so ramp 3 will cost full price again if anyone climbs it later", "Your battalion arrives at ramp 1 tired, depleted, and angry — stiffening in a worse mood than this morning"],
+            "consequence": "The shelf is probably saved and the crest probably not taken by deadline. The operation grinds toward the fighting-evacuation clause everyone has now read twice.",
+            "costs": { "cbills": 0, "days": null, "resource": "you give up your ramp 3 gains, leaving your forward casualty collection point and battlefield salvage under Clan control", "risk": "The crest-by-H+36 objective is in jeopardy, and the Shelf Clock keeps costing you" }
+          },
+          {
+            "title": "Split the difference — send one company down, push the crest with two",
+            "advantages": ["Ramp 1 gets real help within the hour, and ramp 3 keeps some of its momentum", "The least-bad math if both fights can be won — and your own analysts say they can, narrowly", "You keep your forward casualty collection point and salvage line"],
+            "disadvantages": ["Partly obeying a full order is legally the worst spot to be in — neither obedience nor principled refusal — and the judge will say so", "Two companies against the command star is the thin edge of the original projection", "If either fight fails, the finding will blame your split, not the order or the cluster"],
+            "consequence": "You bet you can be right twice at once, balancing the legal risk of disobeying against the tactical risk of obeying.",
+            "costs": { "cbills": null, "days": null, "resource": "you break up your force at the decisive point: 2 companies against the command star", "risk": "Partial-compliance breach: the employer can void your cooperation bonus, and both fights run at a reduced margin" }
+          },
+          {
+            "title": "Refuse, citing the rider — finish ramp 3 fast and swing from the crest",
+            "advantages": ["The crest, once taken, unhinges every ramp: the fastest real help ramp 1 can get is a flanked cluster", "You fight your own plan to your own finish — the integrity argument carried to its honest end", "If the timing holds, the refusal becomes a footnote to a victory, and history is kind to crests taken"],
+            "disadvantages": ["Documented refusal of a lawful order, mid-assault: breach, forfeited bonus, and an MRBC conduct file no matter the outcome", "Ramp 1 collapses or holds on its own during the hours the swing takes — and you chose that for them", "If ramp 3 stalls even briefly, you have disobeyed your way straight into the disaster the order predicted"],
+            "consequence": "Everything rides on the summit clock: you are either the battalion that won the battle by refusing an order, or the one that lost the shelf the same way — and the arbitration panel reads the same gun-camera either way.",
+            "costs": { "cbills": null, "days": null, "resource": "you forfeit the cooperation bonus (300,000 C-bills) on refusal, no matter the outcome", "risk": "Employer relations drop by 3, an MRBC conduct file opens, and your standing recovers only if the assault succeeds" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The first wave lands on the Hadrach Shelf. The Clan garrison acknowledges the landing on an open channel — formal, unhurried, already ranging its guns." },
+        { "t": "T+0:20", "event": "First fighter strike on the beach: DropShip point defenses engage, and you start dispersing supplies under fire." },
+        { "t": "T+1:30", "event": "A trinary counterattacks at the base of ramp 2 — the cluster tests the greenest formation first, and finds it wanting." },
+        { "t": "T+4:00", "event": "The command star is confirmed moving to the ramp 3 crest, and the artillery finishes ranging the shelf." },
+        { "t": "T+9:00", "event": "A second trinary arrives from the inland fortress; the defense is now at full garrison strength." },
+        { "t": "T+24:00", "event": "The inland cluster's road march is reported at the halfway point (that report is 2 hours old and solid, from aerial recon)." }
+      ],
+      "hardDeadline": "You must hold the cliff crest by H+36:00, when the inland cluster finishes its march. If the shelf is still contested at H+36, you face a fighting evacuation — and the contract bills fighting evacuations to you, the contractor, including any damage to your ships."
+    },
+    "opforSketch": {
+      "composition": "{TARGET_FACTION} garrison cluster at two-thirds strength: 2 trinaries of second-line OmniMechs plus a front-line command star (5 machines, veteran-to-elite), Elemental support, 1 artillery battery on the crest plateau, and 2 fighter pairs cycling from the inland fortress. Inland: a second cluster on a road march, arriving H+36. This report is 8 days old, updated by aerial recon, and solid.",
+      "behavior": "The cluster fights to hold ground: it gives up nothing and counterattacks wherever a ramp assault loses its formation. On ramp 3 the command star fights by zellbrigen — the Clan honor code of one-on-one duels — unless the attacker fights dishonorably, which frees it to gang up. That code favors a disciplined attacker and punishes a ragged one. Artillery hits the shelf on a steady rhythm, and fighters hunt anything moving between ramps."
+    },
+    "forks": [
+      {
+        "name": "OPERATION HIGH WATER MARK",
+        "outcomeGate": "FULL_SUCCESS",
+        "family": "GARRISON_DUTY",
+        "trigger": "Crest taken by H+36; the inland cluster declines battle and withdraws to the keep",
+        "consequence": "The unit garrisons the sector it bled for through the counter-raid season, on a renewal whose rate finally reflects the casualty sheet — and with a Clan keep forty kilometers inland that has not finished the conversation.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION SHELF TIDE",
+        "outcomeGate": "FAILURE",
+        "family": "EXTRACTION_RAID",
+        "trigger": "Crest contested at H+36; the inland cluster reaches the escarpment",
+        "consequence": "Contested evacuation under the annex that bills it to the contractor: lifting wounded, machines, and stores off a beach under artillery while the employer's staff drafts the after-action that explains whose fault the arithmetic was.",
+        "threat": "EXTREME"
+      },
+      {
+        "name": "OPERATION LOUD FLANK",
+        "outcomeGate": "PARTIAL",
+        "family": "DIVERSIONARY_RAID",
+        "trigger": "Crest half-taken; operations staff needs the cluster's attention held while House regulars regroup",
+        "consequence": "The unit — relations strained, bonus disputed, still the best formation on the shelf — is tasked to mount a loud, sustained feint along the escarpment's far shoulder. The order does not use the word expendable. It does not have to.",
+        "threat": "HIGH"
+      }
+    ],
+    "storyElementSeed": "A company sergeant repaints the battalion number on a borrowed fender, stops halfway through the second digit, and stands there with the brush, deciding which number is true tonight.",
+    "voiceSlots": ["command", "engineering", "medical", "naval"],
+    "registerVariants": {
+      "is-davion": { "decisionPoints[0].context": "H-36. Paragraph 9 sits on the command couch between the contract and the casualty projection. The liaison's covering note is pure New Avalon staff school: 'Stiffening assignments per clause 14. Acknowledge by H-30. Your people are professionals; that's why we're spending them this way.' The landing happens regardless." },
+      "is-kurita": { "decisionPoints[0].context": "H-36. Paragraph 9 sits on the command couch between the contract and the casualty projection. The liaison's covering note invokes duty the way Luthien drafts it: 'The Coordinator's soldiers and your own will share one fate on the ramps. Clause 14 merely names what honor already requires. Acknowledge by H-30.' The landing happens regardless." },
+      "is-steiner": { "decisionPoints[0].context": "H-36. Paragraph 9 sits on the command couch between the contract and the casualty projection. The liaison's covering note arrives with annexes of its own: 'Attachment schedule per clause 14, with revised logistics tables. The Estates-General expects economy of force; your battalion's distribution achieves a 12 percent efficiency. Acknowledge by H-30.' The landing happens regardless." }
+    },
+    "specifics": {
+      "base_contract": { "min": 2200000, "max": 2600000, "unit": "C-bills" },
+      "green_fraction": { "min": 50, "max": 70, "unit": "percent first-combat personnel in House battalions" },
+      "dispersed_casualty_projection": { "min": 35, "max": 45, "unit": "percent" },
+      "concentrated_casualty_projection": { "min": 25, "max": 35, "unit": "percent" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Formal protest — invoke the command-integrity rider and demand liaison review",
+        "requires": "treasury-min:40000",
+        "whenLacking": "reprice",
+        "lackingText": "Priority ComStar transmission to the MRBC field office is 40,000 C-bills the treasury does not hold: the protest rides a courier boat instead, 4 days each way. The brief prints the courier timeline beside the assault timeline so the gap can be read as what it is."
+      }
+    ],
+    "skeleton": "an attached battalion must keep itself whole through someone else's assault plan, when the employer's clause arguably allows dissolving it into stiffeners for green formations — the integrity of the force is itself the contract object in dispute, and the order that would spend it is lawful",
+    "inspiration": "the AEF amalgamation crisis, 1917-18 — allied commands demanding American battalions be fed piecemeal into foreign divisions, and the refusal that kept the army whole"
+  },
+  {
+    "seedId": "MRC-09",
+    "family": "SECURITY_DUTY",
+    "title": "OPERATION COURTESY CALL",
+    "eraFit": ["civil-war"],
+    "factionFit": ["fedcom"],
+    "register": "merc",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "situation": "For 7 months the {DISTRICT} industrial complex on {WORLD} has run on an arrangement nobody wrote down: two mercenary outfits, two employers, one working prize. Your unit holds the south half — the fusion-turbine plant and the rolling mills — under contract to the corporate board that backed {EMPLOYER}'s claimant. The north half — the fabrication halls and the foundry furnaces — belongs to a rival outfit of 2 companies (20-24 'Mechs, regular-to-veteran, kept to a standard you privately respect) under contract to the regional duke's government, which backed the other side. Between the two halves runs the Common Spur: 5.6 km of rail line both contracts require you to keep working. You and the rivals share scheduled time slots on it under a safety agreement the two commands wrote themselves across a table in a freight office — the Greenline Memorandum, signed by neither employer, honored by both outfits, and the reason the complex still runs. The rivalry has been real but professional: poached techs, undercut renewal bids, a standing bet on whose half ships more tonnage. Both outfits want the same thing — the single whole-complex contract that goes to whoever is left when the war picks a winner. Eleven days ago the war picked. The duke's government was outlawed, the rival outfit's contract was voided automatically, and their pay stopped — 5 weeks of back pay owed and counting (their own quartermaster told yours over drinks; the report is 2 days old and solid). They hold the north half anyway. Their price to leave: a 480,000 C-bill exit payment plus transport for 2 companies and 130 dependents — they own no DropShip. Yesterday {NPC:employer-contact} handed you the job: disarm and remove the rival outfit within 10 days, before {EMPLOYER}'s regular army arrives to do it with artillery and no idea how a foundry works. Attached to the job is the whole-complex security contract, pre-signed, on the condition that you deliver the north half 'secured and operational.' Operational is the key word. The foundry furnaces cannot be shut off fast — once a batch of metal is melting, it takes 14 hours to safely pour out, and if a furnace is breached everyone on the floor dies. The Spur costs 25,000 C-bills a day in penalties when it stops, charged to whoever is at fault. The rival commander {NPC:opfor-commander} answers your calls on the first ring — either professionalism, or a man counting his ammunition. Their cohesion is five unpaid weeks old and slipping, and who actually controls their second company has more than one answer (that report is 2 days old and rough).",
+    "objectives": {
+      "primary": "Deliver the north half secured and operational within 10 days — before {EMPLOYER}'s regular army arrives and solves the problem with artillery.",
+      "secondary": "Keep the Common Spur running and the furnaces intact: no stoppage penalties charged to you, and no industrial disaster.",
+      "bonus": "Resolve the rival outfit without spilling mercenary blood — the hiring halls judge outfits harshly for killing their own kind on an employer's schedule."
+    },
+    "complications": [
+      {
+        "name": "The Greenline Memorandum",
+        "text": "Seven months of sharing the site means both outfits know each other's patrol schedules, callsigns, response times, and blind spots. The memorandum's safety rules around the furnaces are the one thing both sides still follow without argument. There is no surprise left in this complex — only the question of who breaks the rules first, and what that costs around molten metal.",
+        "mechanicalEffect": "Neither side can achieve surprise through normal moves; any attack is telegraphed 2-4 hours ahead unless it breaks the memorandum's furnace-safety rules — and any plan that does breaks them triggers the industrial-disaster risk in complication 3."
+      },
+      {
+        "name": "No Exit Money",
+        "text": "The rival outfit's demand is not greed; it is math. Five weeks of unpaid wages, 130 dependents, no DropShip, no employer, and an outlawed paymaster whose accounts are frozen. Their commander is holding 2 companies together with reputation and rationed coffee. The longer the standoff drags, the less of the outfit stays under his command.",
+        "mechanicalEffect": "Each week of standoff, roll on rival cohesion. Results range from desertions (their strength drops, but deserters with inside knowledge go freelance nearby) to hardliner takeover (their second company stops obeying their commander — see DP 'The Hardliner Hour')."
+      },
+      {
+        "name": "The Works Keep Working",
+        "text": "Both the renewal contract and the penalty clause assume the complex keeps producing no matter what. A fight near the Spur stops the trains; a fight in the fabrication halls risks breaching a furnace; and a breach makes the whole question of who guards the north half pointless.",
+        "mechanicalEffect": "Combat within 400 m of the Common Spur stops rail traffic: 25,000 C-bills a day in penalties, charged to whoever is at fault. Combat inside the foundry halls while a batch is melting: roll against a furnace breach — on a breach, mass casualties, the north half prize is destroyed, and the renewal contract fails for good."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Tasking",
+        "context": "Ten days. The pre-signed renewal contract waits in its folder. {NPC:opfor-commander}'s outfit did nothing wrong except keep its word to an employer who lost — which, both commanders know, could someday be said of you instead. The regular army is coming either way.",
+        "options": [
+          {
+            "title": "Carry out the disarmament — plan the attack and take the north half",
+            "advantages": ["Decisive: you satisfy the renewal contract by your own hand, on your own schedule", "{EMPLOYER} and the corporate board see exactly the tool they paid for", "Done fast and cleanly, it beats both the hardliners and the regular army to the punch"],
+            "disadvantages": ["You are attacking an outfit that knows your response times to the second, on ground full of furnaces and penalty clauses", "Mercenaries evicting unpaid mercenaries for a contract is a story the hiring halls tell with names attached", "Their dependents live in the north half housing blocks, so there is no attack plan without them in it"],
+            "consequence": "The complex's 7-month peace ends by your choice. Win or lose, the Greenline Memorandum becomes a thing people later call naive.",
+            "costs": { "cbills": null, "days": 3, "resource": "a projected 50,000-75,000 C-bills in stoppage penalties even in a clean operation, plus ammunition and repairs from your treasury", "risk": "A reputation for evicting fellow mercenaries follows you for a decade, and you risk a furnace breach if the fight drifts north" }
+          },
+          {
+            "title": "Broker their exit — buy the receivable, front the lift",
+            "advantages": ["Bloodless: the north half changes hands by inventory checklist instead of gun camera", "Buying their 5 weeks of unpaid wages at 40 percent and covering their transport turns 1,080,000 C-bills of your money into an enforceable legal claim, plus a survival debt owed by 2 companies of professionals", "You satisfy the renewal contract with the foundries never missing a pour"],
+            "disadvantages": ["1,080,000 C-bills out the door against a legal claim on an outlawed duke's frozen accounts — your lawyer rates recovery as 'eventual, partial, or never'", "{EMPLOYER} did not order generosity and will not repay it; the board may read it as you funding a rival's survival", "If their hardliners reject the deal their commander shakes on, you have paid for a standoff you still have to resolve"],
+            "consequence": "The rival outfit leaves with its name intact and its debt acknowledged. You hold the whole complex, a thinner treasury, and a claim that pays out whenever justice does.",
+            "costs": { "cbills": 1080000, "days": 6, "resource": null, "risk": "Recovering the money is uncertain, and the employer reads your independent dealmaking however it wants to" }
+          },
+          {
+            "title": "Stall — let the regular army arrive and do it themselves",
+            "advantages": ["Your hands stay clean of mercenary blood and your treasury stays closed", "Whatever the regulars break, they break under their own flag and their own blame", "No breach of your contract — you simply prove, with documentation, that you could not do it safely in time"],
+            "disadvantages": ["Regulars solve industrial standoffs with artillery: the furnaces, the Spur, and the north half's 'operational' status are all on their target list", "The renewal contract dies with whatever the shelling hits — and your claim to the whole-complex contract dies with it", "{NPC:employer-contact} will note, in writing, that you needed the army to collect your own renewal"],
+            "consequence": "The problem gets solved by people with no stake in the prize. You keep your hands clean and lose the thing the 7 months were for.",
+            "costs": { "cbills": 0, "days": 10, "resource": "the renewal contract is at severe risk: the regulars' methods versus 'secured and operational'", "risk": "Employer relations drop by 2, and your reputation for handling hard jobs takes the quiet kind of damage" }
+          }
+        ]
+      },
+      {
+        "name": "The Hardliner Hour",
+        "context": "A private channel, 0300. {NPC:opfor-commander}, voice flat: their second company plans to seize foundry hall 2 at shift change and hold the furnaces hostage — threatening to breach them — until somebody pays. The commander offers you a joint action against his own mutineers, in exchange for the exit payment, personally guaranteed in writing, tonight. The batch in furnace 2 starts melting in 4 hours, and once it does, it cannot be safely stopped for 14.",
+        "options": [
+          {
+            "title": "Joint action — go in with the rival commander's loyal company",
+            "advantages": ["The loyalists know hall 2's catwalks, valve rooms, and the mutineers' faces — the difference between a clean raid and a massacre", "Two outfits putting down a mutiny together is a story that buries the eviction story", "The commander's demand for a guarantee is the exit deal you may want anyway, now priced by emergency"],
+            "disadvantages": ["Armed troops of the force you were told to disarm, operating inside your own objective, on trust and a handshake", "If it is fake — a staged mutiny to extract the guarantee — you have signed under pressure and armed the show", "Crossfire risk in a foundry at shift change, between two outfits that have never fought on the same side"],
+            "consequence": "The mutiny is broken by the two commands that wrote the Greenline Memorandum, which is no longer naive afterward — but the guarantee you signed at 0300 is now the deal, whatever the board thinks.",
+            "costs": { "cbills": 480000, "days": null, "resource": "the exit payment, personally guaranteed in writing — binding on you whether or not the employer reimburses it", "risk": "Trust risk: rival loyalists armed inside your perimeter during the action" }
+          },
+          {
+            "title": "Strike the mutineers alone, before shift change",
+            "advantages": ["No leak from coordinating: the mutineers' inside knowledge helps the rival's loyalists too, and this route skips both", "You control every gun in the plan — no crossfire risk, no exposure to a staged mutiny", "Acting alone against the threat keeps the spirit of the job: the north half secured by your hand"],
+            "disadvantages": ["You fight in hall 2 within 4 hours of the batch melting, against people who know which valves matter", "The rival's loyal company is also armed, also at shift change, and has not agreed to stand aside for a foreign attack on their own people", "Moving fast means breaking the memorandum's safety rules — exactly the risk complication 1 prices"],
+            "consequence": "The furnace question is settled by whoever reaches the valve room first. The rival commander learns you heard his offer and chose to treat his whole outfit as one target.",
+            "costs": { "cbills": null, "days": null, "resource": "furnace-breach risk is active for the whole action", "risk": "Two-front fight if the rival loyalists read your strike as the eviction starting; the memorandum is dead either way" }
+          },
+          {
+            "title": "Pay the mutineers' stall demand — 50,000 for 72 hours",
+            "advantages": ["The batch pours out safely; nobody fights in a foundry tonight", "72 bought hours is enough to close either the brokered exit or a coordinated disarmament with the rival commander", "By far the cheapest immediate option"],
+            "disadvantages": ["Paying armed leverage teaches it the usual lesson: there is a second demand inside every first one", "The employer will not reimburse a bribe and may treat it as you funding hostile forces inside the objective", "The rival commander's authority — your only worthwhile negotiating partner — is publicly undercut the moment the mutineers get paid"],
+            "consequence": "You buy time at a steep cost: the mutineers are now a paid faction that knows the trick works, and every clock in the complex is 72 hours closer to the regular army.",
+            "costs": { "cbills": 50000, "days": null, "resource": "the rival commander's authority is weakened — future talks run through a weaker partner", "risk": "A second demand is likely, the employer will not reimburse it, and the precedent is priced into every later standoff" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The mutineer force (6-8 'Mechs and 20 on foot) moves on foundry hall 2 at shift change." },
+        { "t": "T+0:08", "event": "They seize the furnace control room and broadcast their terms on the complex-wide channel." },
+        { "t": "T+0:30", "event": "Furnace 2's batch starts melting — from here, pouring it out takes 14 hours, and interrupting it risks a breach." },
+        { "t": "T+1:00", "event": "The rival outfit's loyal company stands ready in the north yards, though even their commander is unsure which lances will obey." },
+        { "t": "T+2:00", "event": "The corporate board demands hourly updates, and {NPC:employer-contact} gently reminds you of the word 'operational.'" },
+        { "t": "T+14:30", "event": "The pour finishes and the furnace hostage-hold ends — and everyone armed in the complex has known this hour all day." }
+      ],
+      "hardDeadline": "Furnace 2's batch starts melting at T+0:30. From then until the pour finishes at T+14:30, any fight inside hall 2 risks a breach that kills everyone on the floor and destroys the renewal contract with them. Resolve the hall before the batch starts melting, or spend 14 hours negotiating with a hand on the valves."
+    },
+    "opforSketch": {
+      "composition": "Rival outfit: 2 companies totaling 20-24 'Mechs (mixed weights, professionally maintained until the pay stopped), 4 support vehicles, organic infantry. Quality regular-to-veteran. The second company — the hardliner faction — holds 6-8 of those 'Mechs and the outfit's worst arrears grievances. Both companies trained joint exercises against the unit for 7 months: they know its doctrine the way it knows theirs.",
+      "behavior": "The commander's loyalists fight only if attacked, and fight to negotiate — they want exit, not victory. The hardliners fight for leverage: seizures, threats, and short violent demonstrations near the things both employers value. Nobody in the north half wants to die for a proscribed duke; everybody in it has dependents in the housing blocks, which is both restraint and desperation."
+    },
+    "forks": [
+      {
+        "name": "OPERATION WHOLE CLOTH",
+        "outcomeGate": "FULL_SUCCESS",
+        "family": "SECURITY_DUTY",
+        "trigger": "North half delivered secured and operational; consolidated contract executed",
+        "consequence": "The unit guards the whole complex now — twice the perimeter, twice the rate, and the losing claimant's stay-behind networks shifting their full attention to the one outfit holding the prize they could not keep.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION OLD COLLEAGUES",
+        "outcomeGate": "FAILURE",
+        "family": "PIRATE_HUNTING",
+        "trigger": "Rival outfit shattered by force — survivors scatter armed and unpaid",
+        "consequence": "Eight to twelve 'Mechs of ex-professionals who know every patrol schedule, dead zone, and supply run in the district go raider inside a month. The board contracts the unit to hunt the people it broke, and the hiring halls watch how it conducts itself with very particular attention.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION REFERENCE CHECK",
+        "outcomeGate": "COMPROMISED",
+        "family": "GARRISON_DUTY",
+        "trigger": "Eviction executed with mercenary blood and the story travels (it always travels)",
+        "consequence": "The renewal pays, and then the market answers: three straight tender rejections with no reasons given. The only paper on offer is a flat-rate garrison on a periphery transfer world nobody wants — where the unit can be useful, profitable, and quietly forgotten until the ledger entry fades.",
+        "threat": "LOW"
+      }
+    ],
+    "storyElementSeed": "Two duty officers from different payrolls meet at the rail interlocking at shift change, swap thermos cups the way they have for 7 months, and neither mentions the new ammunition crates both signed for this week.",
+    "voiceSlots": ["command", "logistics", "intelligence", "engineering"],
+    "registerVariants": {},
+    "specifics": {
+      "rival_mech_strength": { "min": 20, "max": 24, "unit": "'Mechs across 2 companies" },
+      "exit_settlement": { "min": 400000, "max": 550000, "unit": "C-bills" },
+      "rival_dependents": { "min": 110, "max": 150, "unit": "persons" },
+      "stoppage_damages": { "min": 20000, "max": 30000, "unit": "C-bills per day" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Broker their exit — buy the receivable, front the lift",
+        "requires": "treasury-min:1080000",
+        "whenLacking": "reprice",
+        "lackingText": "Treasury short of the brokered package: the option reprices as a financing request to the conglomerate board — which means revealing the plan to an employer who ordered an eviction, and taking the board's answer as part of the deal."
+      },
+      {
+        "appliesTo": "Broker their exit — buy the receivable, front the lift",
+        "requires": "dropship",
+        "whenLacking": "reprice",
+        "lackingText": "No unit hulls to lend: the rival's lift requires commercial charter — 600,000 C-bills, 12-day lead time. The brief prints the charter lead time beside the regulars' arrival estimate, and the two numbers do not get along."
+      }
+    ],
+    "skeleton": "two hired companies guarding adjacent halves of one working prize must keep a professional rivalry inside contract bounds until one employer's proscription converts the rival into the assigned target — and the order to disarm yesterday's colleagues arrives stapled to the renewal both outfits wanted",
+    "inspiration": "rival condottieri companies in a single city-state's pay — the Braccio-Sforza feud, and the disarmament commissions that ended such standoffs"
+  },
+  {
+    "seedId": "MRC-10",
+    "family": "GUERRILLA_WARFARE",
+    "title": "OPERATION WITNESS FEE",
+    "eraFit": ["late-succession-wars"],
+    "factionFit": ["ANY"],
+    "register": "merc",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "situation": "Your campaign behind {TARGET_FACTION}'s lines on {WORLD} runs on Annex D, and Annex D runs on witnesses. {EMPLOYER}'s regional command pays only for confirmed results: 40,000 C-bills per supply convoy destroyed, 70,000 per fuel or ammunition dump, 150,000 per BattleMech, 300,000 per fighter. But you only get the full rate when the employer's field assessor certifies the result in person. Gun-camera footage alone pays half — the contract calls this the 'technical means discount.' The catch is the deniability clause right next to the pay schedule: you fight under resistance colors, with no link to the employer, and the employer will deny you if you're captured. Nobody says the obvious out loud: the assessor, {NPC:employer-contact}, is plainly a House officer — House bearing, House boots, House radio gear — so every strike they show up to certify is itself a breach of the deniability everyone is paid to protect. Your safe haven is the Lantern Fens: 1,900 square km of peat bog where a crossing 'Mech leaves a trail visible from the air for 6 hours, so every strike has to fit inside the 4-to-9-hour gaps between air patrols (from 31 days of tracking their patterns). Bringing the assessor's party along adds 90 minutes to every leg. Twenty-three strikes in, your ledger reads: 9 claims paid in full, 8 paid at half, and 6 denied outright for 'insufficient persistence of effect' — meaning two trucks limped away from a dead convoy, or a dump was rebuilt from spare stock inside the 72-hour window the contract requires damage to last. {NPC:intel-source}, a clerk in the command's payment office, reports that the denial rate tracks the employer's quarterly budget cycle to within a week (that report is 12 days old and rough). This season's prize is now on the table: a battalion ammunition transfer point at the fen's eastern edge, worth 240,000 C-bills at the full rate or 120,000 at the discount — and the deepest risk you have taken yet. The occupation garrison, a sector battalion with a fighter pair on call, has started flying its patrols with shorter gaps; that report is 4 days old and solid. Your campaign only stays solvent at full rates. Full rates require the witness. The witness is the risk, and that risk falls on the fens — the only home your campaign has.",
+    "objectives": {
+      "primary": "Destroy the eastern-edge ammunition transfer point so the damage lasts beyond the contract's 72-hour verification window.",
+      "secondary": "Protect the safe haven: leave no trail leading home and nothing traceable to the fen base.",
+      "bonus": "End the quarter with your claims paid in full — by a witness, by neutral verification, or by evidence the payment office cannot argue with."
+    },
+    "complications": [
+      {
+        "name": "The Technical Means Discount",
+        "text": "Proof determines payment. Gun-camera footage alone earns only half the contract value — the employer wants a witness, not just a recording. Bringing the field assessor along to verify the strike earns full payment, but at a price: the assessor slows the team down, makes the force easier to detect, and puts a House officer inside an operation that is supposed to be deniable. Annex D never explains how a campaign can be both deniable and audited at once, because it cannot.",
+        "mechanicalEffect": "Before each strike, choose whether to bring the assessor. Without the assessor: move at full speed and receive 50 percent payment. With the assessor: add 90 minutes to each movement leg and raise compromise risk by one level during infiltration and extraction, but receive full payment if the strike succeeds while the assessor is present to witness it."
+      },
+      {
+        "name": "Persistence of Effect",
+        "text": "Destroying a target is only half the job. The damage must last. A successful strike is one that keeps the enemy from recovering for at least 72 hours: supply convoys must stay disabled, supply dumps must remain unusable, and wrecked equipment should still be sitting where it fell. If the enemy repairs or replaces what was destroyed before then, the strike does not pay. To confirm an effect held, reconnaissance teams may need to return to the strike site about three days later — a dangerous follow-up, because the enemy expects someone to come back and will be watching the ground precisely because it was hit.",
+        "mechanicalEffect": "A strike that only partially damages its target pays nothing. Any claim that the enemy might rebuild or reconstitute requires a verification revisit 72 hours later — a separate exposure roll on ground the enemy is now guarding because it was struck once already."
+      },
+      {
+        "name": "Wakes in the Peat",
+        "text": "The peat fens hide movement well, but heavy machines leave traces a skilled observer can find. Every 'Mech that crosses the wetland churns a visible path that can be spotted from the air for up to six hours afterward. Because of this, infiltration and extraction must be timed to fit inside the gaps between enemy air patrols — and those gaps are getting shorter every month. If the force is still moving after a gap closes, the fresh trail leads the patrol straight back toward the campaign's hidden base.",
+        "mechanicalEffect": "All movement in the fens must be completed inside a single patrol gap (rolled at 4-9 hours). An extraction trail stays readable from the air for 6 hours after the last movement leg. If the gap closes before that trail fades, the patrol overflies it and the base-compromise track advances one step."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Pricing the Witness",
+        "context": "You have planned the transfer-point strike two ways. The fast plan fits the average patrol gap with 40 minutes to spare and pays 120,000. The witnessed plan only fits if the gap runs long, and pays 240,000 — the difference between a solvent quarter and a borrowed one. The assessor waits at the rally point for your answer, House boots already oiled.",
+        "options": [
+          {
+            "title": "Take the assessor — full rate, thin margins",
+            "advantages": ["240,000 C-bills confirmed on the spot: no discount, no dispute, no budget-cycle games", "An assessor who walked the strike in person defends the claim in the payment office — this one and the next", "Full payment on the season's prize keeps the campaign solvent for a quarter"],
+            "disadvantages": ["Your party moves 90 minutes slower through gaps that have been shrinking for a month", "A House officer captured or killed at a resistance-flagged strike site blows the deniability clause and everything built on it", "If the gap closes early, your trail leads the patrol home — the safe haven pays for the payday"],
+            "consequence": "The strike is verified as it happens, by the one witness the employer cannot discount — carried through the fens at the campaign's own risk.",
+            "costs": { "cbills": 0, "days": null, "resource": "you use up nearly all your patrol-gap margin, leaving no slack in the escape timing", "risk": "Losing the assessor collapses your deniability (COMPROMISED fork); an early gap closure advances the base-compromise track" }
+          },
+          {
+            "title": "Go without — fast, safe, half pay",
+            "advantages": ["The fast plan fits the average gap with real margin, so your safe haven is at its lowest risk in weeks", "No House signature anywhere near the strike, so the deniability clause stays airtight", "120,000 C-bills is still your biggest single claim this quarter"],
+            "disadvantages": ["The half rate is not the worst case: denials hit hardest at the budget quarter's final month, and this is that month", "A campaign that stops buying witnesses teaches the employer that 50 percent is the price of everything", "At half rates, the math says the campaign folds in 60 to 75 days no matter how well you shoot"],
+            "consequence": "The strike succeeds quietly and goes into the ledger as an argument instead of a fact. The payment office sharpens its pencil.",
+            "costs": { "cbills": 0, "days": null, "resource": "you lose 120,000 C-bills versus the witnessed rate, before any denial risk", "risk": "The footage-only claim faces the quarter-end denial pattern; projected payout 60,000-120,000" }
+          },
+          {
+            "title": "Demand pre-certification — sensors placed, assessor at the rally point, terms in writing",
+            "advantages": ["This new arrangement splits the difference: your placed sensor records count as a witness, and the assessor signs off before the strike", "Full rate without carrying House boots to the objective", "It sets up a verification method the whole campaign can reuse — the precedent is worth more than the strike"],
+            "disadvantages": ["The assessor has to sign for results they will not see, and assessors who do that want cover — the price comes right away", "The price: the assessor wants you to plant a House sensor suite at the transfer site during the strike, sneaking the employer's own spy job into your operation, with the attribution risk that carries", "If the payment office rejects the new arrangement afterward anyway, you carried the extra gear for a discount"],
+            "consequence": "The verification problem gets a technical fix, and the mission grows a second, unwritten objective. You are now doing spy work you never priced, for a signature you had already earned.",
+            "costs": { "cbills": null, "days": 1, "resource": "you add 1 House sensor suite to plant at the objective (extra to carry, extra time, attribution risk)", "risk": "The payment office may reject the new arrangement, and the smuggled spy job is deniable by everyone except you, the one carrying it" }
+          }
+        ]
+      },
+      {
+        "name": "The Sixth Denial",
+        "context": "The denial hits your best single claim: a {TARGET_FACTION} BattleMech, killed clean in the western fen — then swallowed by the bog before the 72-hour window closed. 'No lasting wreck available to assess.' 150,000 C-bills, refused in one form sentence. The machine is eleven meters down in airless mud: perfectly preserved, impossible to reach, and completely real.",
+        "options": [
+          {
+            "title": "Raise the wreck — prove the claim with a derrick and five days",
+            "advantages": ["A recovered wreck can't be argued with: full claim paid, plus the salvage itself — bog-preserved Star League-era parts sell no matter what the ledger says", "The recovery also sends the payment office a message about how far you will go to collect", "Digging deep in the fen is invisible to road patrols — only the air can see it"],
+            "disadvantages": ["Five days of stationary derrick work under a tarp, in country where trails stay visible for 6 hours and patrol gaps are shrinking", "A fixed site you return to daily is exactly the pattern the occupation's analysts are paid to spot", "If the air finds the derrick, you have spent your safe haven's safety margin to prove a 150,000 C-bill point"],
+            "consequence": "The claim becomes physical, and so does the risk: your books improve at the exact rate your base-compromise track worsens.",
+            "costs": { "cbills": 12000, "days": 5, "resource": "your derrick party sits at one site for 5 days, and the base-compromise track rises 1 per day it is overflown", "risk": "A fixed target in shrinking gaps; discovery turns a pay dispute into a hunt for your base" }
+          },
+          {
+            "title": "Invoke the neutral-verification rider — a ComStar adjudicator",
+            "advantages": ["The clause exists for exactly this: a neutral ComStar official reviews the gun-camera, the sonar trace, and the burial site, and their ruling binds both sides", "No derrick, no days sitting still — how the official proves it is their problem, not yours", "A binding ruling breaks the denial pattern for every claim after this one; the budget cycle loses its favorite tool"],
+            "disadvantages": ["A ComStar official travels openly, asks questions in writing, and files reports you will never see — so details of a deniable campaign now sit in a third party's archive", "A 30,000 C-bill fee against a 150,000 claim, win or lose", "{EMPLOYER} reads this as escalation, and the assessor's office turns openly hostile for the rest of the campaign"],
+            "consequence": "The claim is probably paid and the campaign is certainly watched. Once you invite ComStar's interest, it does not announce when it leaves.",
+            "costs": { "cbills": 30000, "days": 14, "resource": null, "risk": "A different kind of exposure: ComStar's archive now holds your campaign, and employer relations harden" }
+          },
+          {
+            "title": "Eat the denial — aim the campaign at targets no one can deny",
+            "advantages": ["Dropped bridges, burned pumping stations, cut rail lines on the trunk line: results no 72-hour window can argue with and no assessor has to walk to", "The denial game ends because the kind of evidence changes — infrastructure does not limp away or get rebuilt overnight", "No extra risk spent on the dead claim; the bog keeps the 'Mech and the argument"],
+            "disadvantages": ["Undeniable means visible: public damage triggers the occupation's reprisal policy, and reprisals fall on the fen-edge settlements whose silence hides you", "Infrastructure strikes drift the campaign from harassment toward destruction — a different war than the one you signed up for, with a heavier weight on your conscience", "The 150,000 stays unpaid, and the payment office learns that denial works"],
+            "consequence": "Your books balance going forward on a darker target list. You solve the verification problem by becoming the kind of campaign whose results everyone can see — including the people you hide among.",
+            "costs": { "cbills": 0, "days": 0, "resource": "you write off the 150,000 C-bill claim", "risk": "Reprisals shift onto fen-edge civilians, and your safe haven's human cover erodes as the damage becomes public" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Alarm at the transfer point; the site defense (an infantry platoon and 2 turrets) stands to." },
+        { "t": "T+6:00", "event": "The sector battalion's duty company is alerted; its wheeled element starts up the fen road, 26 km out." },
+        { "t": "T+22:00", "event": "A fighter pair takes off from the sector field and makes its first pass over the eastern edge." },
+        { "t": "T+45:00", "event": "The reaction company reaches the transfer point; pursuers probe the fen margin but will not enter the bog at night." },
+        { "t": "T+6:00:00", "event": "Your escape trail fades — the last fen leg stops being visible from the air." }
+      ],
+      "hardDeadline": "Your escape trail stays visible from the air for 6 hours after your last movement leg in the fens. If the patrol gap closes before you reach cover under the eastern tree canopy, the patrol follows the fresh trail back toward your hidden base — the one thing this campaign cannot replace."
+    },
+    "opforSketch": {
+      "composition": "{TARGET_FACTION} occupation sector: 1 garrison battalion (1 'Mech company of 10-12 machines, regular; motorized infantry; engineer platoon rebuilding what the campaign breaks), 1 aerospace pair on call with a second pair 3 days' transfer away. Static site defenses at logistics nodes: infantry platoons and automated turrets.",
+      "behavior": "Occupation economy-of-force: pattern patrols, signature analysis, patience. They do not chase into the peat; they map wakes, tighten gaps, and wait for the campaign to repeat itself. Reprisal doctrine activates only against publicly visible effects — the garrison's political officers prefer an invisible war too."
+    },
+    "forks": [
+      {
+        "name": "OPERATION PAID INVOICE",
+        "outcomeGate": "FULL_SUCCESS",
+        "family": "OBJECTIVE_RAID",
+        "trigger": "Transload point destroyed with persistence; quarter's ledger settled at or near full rates",
+        "consequence": "The campaign's arithmetic finally forces {TARGET_FACTION} to garrison its logistics in depth — and {EMPLOYER}, reading the same arithmetic, offers the proven unit the sector airfield itself: the aerospace pair on the ground, at a rate that for once nobody discounts.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION PEAT SMOKE",
+        "outcomeGate": "FAILURE",
+        "family": "DIVERSIONARY_RAID",
+        "trigger": "Base-compromise track filled — the occupation fixes the fen base's location",
+        "consequence": "The fen base's location is compromised, and it is now only a matter of time before the occupation acts on it. The unit must mount a loud, sustained deception campaign at the fen's far margin — strikes whose only purpose is to be seen — while the real base relocates piece by piece under the cover that noise buys.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION ORPHAN FLAG",
+        "outcomeGate": "COMPROMISED",
+        "family": "EXTRACTION_RAID",
+        "trigger": "The assessor captured at or near a strike site",
+        "consequence": "The employer disavows the unit by reflex and, in the same encrypted breath, offers a recovery bonus for the assessor — whose interrogation will unravel the denial of a contract that officially never existed. The unit is hired to rescue the proof that it was never hired.",
+        "threat": "EXTREME"
+      }
+    ],
+    "storyElementSeed": "An assessor in borrowed local clothes initials three lines of a claim sheet by red lamplight, turns the fourth line face down, and says nothing while the rain works on the tent.",
+    "voiceSlots": ["intelligence", "command", "engineering", "logistics"],
+    "registerVariants": {},
+    "specifics": {
+      "convoy_rate": { "min": 35000, "max": 45000, "unit": "C-bills per verified convoy" },
+      "mech_kill_rate": { "min": 130000, "max": 170000, "unit": "C-bills per verified 'Mech" },
+      "patrol_gap": { "min": 4, "max": 9, "unit": "hours" },
+      "wake_visibility": { "min": 5, "max": 7, "unit": "hours air-readable" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Raise the wreck — prove the claim with a derrick and five days",
+        "requires": "depot-access",
+        "whenLacking": "reprice",
+        "lackingText": "You have no heavy recovery gear in the fen caches, so the derrick is rigged from logging equipment: 5 days become 8, and every added day is another trail the air can spot. The brief prints the new day count next to the patrol-gap trend line."
+      },
+      {
+        "appliesTo": "Invoke the neutral-verification rider — a ComStar adjudicator",
+        "requires": "treasury-min:30000",
+        "whenLacking": "reprice",
+        "lackingText": "You cannot afford the fee, so ComStar bills {EMPLOYER} directly — who then takes it out of your next paid claim at double the amount, under an Annex D cost-recovery line nobody read twice."
+      }
+    ],
+    "skeleton": "a hidden force is paid only for effects its employer's own assessor certifies, but the assessor's presence is itself the deniability breach the contract forbids and every denial saves the employer money — the campaign's books and its cover degrade on the same schedule",
+    "inspiration": "the American Volunteer Group's confirmed-kill bonus system and its verification disputes — the Flying Tigers' pay ledger"
+  }
+]

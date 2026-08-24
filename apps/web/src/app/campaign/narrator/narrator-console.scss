@@ -1,0 +1,24 @@
+/* Footer console strip (D-038) — one slim dossier line in the existing footer deadspace; height-safe
+   (no stolen content height). Mode OFF renders nothing (host collapses). Theme tokens only. */
+:host { display: contents; }
+
+.ncon {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 10px; letter-spacing: .3px; color: var(--ink2);
+    line-height: 1.4;
+}
+.nc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink2); flex: 0 0 auto; }
+.nc-dot.ready { background: var(--ok); box-shadow: 0 0 5px var(--ok); }
+.nc-dot.loading { background: var(--warn); animation: ncpulse 1s ease-in-out infinite; }
+.nc-dot.off { background: var(--ink2); opacity: .5; }
+@keyframes ncpulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+.nc-seg { white-space: nowrap; }
+.nc-seg b { color: var(--ink); font-weight: 600; }
+.nc-model { color: var(--stamp); text-transform: none; letter-spacing: .2px; }
+.nc-gpu b { color: var(--ok); }
+.nc-off { color: var(--ink2); font-style: italic; opacity: .8; }
+.nc-sys { color: var(--ink2); }
+
+@media (max-width: 720px) {
+    .nc-model, .nc-sys { display: none; } /* phone: keep dot · status · runs · tok · GPU */
+}

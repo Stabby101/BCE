@@ -1,0 +1,74 @@
+<div class="bv-head">
+    <span class="ph">Battle view</span>
+    <span class="live"><span class="pulse" aria-hidden="true"></span>LIVE · damage is the record</span>
+</div>
+<p class="note">Both sides on MekBay's own <b>editable</b> Classic sheets — mark armor, structure, criticals, and ammo as the fight unfolds. Every edit <b>commits to the unit and persists</b> automatically; reload mid-battle and the damage comes back exactly. <b>Heat is live-only</b> (cleared between engagements). GM view this slice.</p>
+
+@if (dataError()) {
+    <div class="bv-msg err">{{ dataError() }}</div>
+} @else if (!ready()) {
+    <div class="bv-msg">loading unit data + sheets from db.mekbay.com…</div>
+} @else if (nothingDeployed()) {
+    <div class="bv-empty">
+        <div class="bve-h">No 'Mechs on the field</div>
+        <p class="note">Set a 'Mech's condition to <b>DEPLOYED</b> on the <b>Unit Roster</b> to bring it to the battle view, and <b>generate a mission</b> on the Missions tab to field an OpFor.</p>
+    </div>
+} @else {
+    <!-- ── BLUFOR ── -->
+    <section class="bv-side blufor">
+        <div class="side-head">
+            <span class="badge">BLUFOR</span>
+            <span class="sh-name">Your deployed force</span>
+            <span class="sh-cnt">{{ blufor().length }} deployed</span>
+            @if (skirmish()) { <span class="sh-flag">skirmish · no active mission</span> }
+        </div>
+        @if (blufor().length) {
+            <div class="sheets">
+                @for (e of blufor(); track e.instanceId) {
+                    <div class="bcell" bceInView (inView)="load('blufor', e.instanceId)">
+                        <div class="bc-head"><span class="bc-name">{{ e.name }}</span> <span class="bc-var">{{ e.model }}</span><span class="bc-tons">{{ e.tons }}t</span></div>
+                        @if (e.status === 'ok' && e.fu) { <bce-battle-sheet [fu]="e.fu" /> }
+                        @else if (e.status === 'missing') { <div class="bc-msg">not in catalog</div> }
+                        @else if (e.status === 'error') { <div class="bc-msg">sheet unavailable</div> }
+                        @else { <div class="bc-msg">loading sheet…</div> }
+                    </div>
+                }
+            </div>
+        } @else {
+            <div class="bv-sub">No 'Mechs deployed — set a unit to DEPLOYED on the roster to field it.</div>
+        }
+    </section>
+
+    <!-- ── OPFOR ── -->
+    @if (hasMission()) {
+        <section class="bv-side opfor">
+            <div class="side-head">
+                <span class="badge">OPFOR</span>
+                <span class="sh-name">Enemy order of battle</span>
+                <span class="sh-cnt">{{ opfor().length }} 'Mechs</span>
+            </div>
+            @if (opfor().length) {
+                <div class="sheets">
+                    @for (e of opfor(); track e.instanceId) {
+                        <div class="bcell" bceInView (inView)="load('opfor', e.instanceId)">
+                            <div class="bc-head"><span class="bc-name">{{ e.name }}</span> <span class="bc-var">{{ e.model }}</span><span class="bc-tons">{{ e.tons }}t</span></div>
+                            @if (e.status === 'ok' && e.fu) { <bce-battle-sheet [fu]="e.fu" /> }
+                            @else if (e.status === 'missing') { <div class="bc-msg">not in catalog</div> }
+                            @else if (e.status === 'error') { <div class="bc-msg">sheet unavailable</div> }
+                            @else { <div class="bc-msg">loading sheet…</div> }
+                        </div>
+                    }
+                </div>
+            } @else {
+                <div class="bv-sub">This mission fields no 'Mech OpFor.</div>
+            }
+        </section>
+    } @else if (skirmish()) {
+        <section class="bv-side opfor idle">
+            <div class="side-head">
+                <span class="badge ghost">OPFOR</span>
+                <span class="sh-name">No active mission — generate one on the Missions tab to field an enemy force</span>
+            </div>
+        </section>
+    }
+}

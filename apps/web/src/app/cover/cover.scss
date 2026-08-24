@@ -1,0 +1,162 @@
+:host {
+    --desk: #17160f;
+    --paper: #d8caa4;
+    --paper2: #d0c198;
+    --panel: #cdbd8f;
+    --ink: #2b2720;
+    --ink2: #6e6347;
+    --line: #b3a06f;
+    --stamp: #92301f;
+    --ok: #5d6b34;
+    --stencil: 'Saira Stencil One', 'Oswald', sans-serif;
+    --label: 'Oswald', sans-serif;
+    --type: 'Special Elite', 'JetBrains Mono', monospace;
+    --mono: 'JetBrains Mono', monospace;
+
+    display: flex;
+    align-items: safe center; /* HOTFIX-001: center when it fits, scroll-from-top when content overflows (no clipped top) */
+    justify-content: center;
+    height: calc(100dvh - var(--bce-footer-h, 0px)); /* IMPORT-7 A — minus the reserved legal-footer space */ /* HOTFIX-001: own the scroll (body is overflow:hidden) */
+    width: 100%;
+    padding: 34px;
+    color: var(--ink);
+    font-family: var(--type);
+    background: var(--desk);
+    background-image:
+        repeating-linear-gradient(90deg, transparent 0 38px, rgba(0, 0, 0, .18) 38px 39px),
+        repeating-linear-gradient(0deg, transparent 0 38px, rgba(0, 0, 0, .18) 38px 39px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box; /* HOTFIX-001: height:100dvh includes padding (matches the dashboard host) */
+}
+
+* { box-sizing: border-box; }
+
+.sheet {
+    position: relative;
+    width: 100%;
+    max-width: 980px;
+    background: var(--paper);
+    background-image:
+        repeating-linear-gradient(0deg, transparent 0 23px, rgba(70, 58, 28, .07) 23px 24px),
+        repeating-linear-gradient(90deg, transparent 0 23px, rgba(70, 58, 28, .05) 23px 24px);
+    border: 2px solid var(--ink);
+    padding: 30px 40px 26px 64px;
+}
+
+/* registration crosshairs */
+.reg { position: absolute; width: 16px; height: 16px; }
+.reg::before, .reg::after { content: ""; position: absolute; background: var(--ink); }
+.reg::before { left: 7px; top: 0; width: 2px; height: 16px; }
+.reg::after { top: 7px; left: 0; height: 2px; width: 16px; }
+.reg.tl { left: 8px; top: 8px; } .reg.tr { right: 8px; top: 8px; }
+.reg.bl { left: 8px; bottom: 8px; } .reg.br { right: 8px; bottom: 8px; }
+
+/* punch holes */
+.holes { position: absolute; left: 22px; top: 0; height: 100%; display: flex; flex-direction: column; justify-content: space-evenly; padding: 70px 0; }
+.hole { width: 18px; height: 18px; border-radius: 50%; background: var(--desk); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .5); }
+
+header { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; border-bottom: 2px solid var(--ink); padding-bottom: 14px; }
+.brand { display: flex; gap: 16px; align-items: center; }
+.insignia { width: 62px; height: 62px; border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; position: relative; flex: 0 0 auto; background: var(--panel); }
+.insignia .hex { width: 34px; height: 34px; background: var(--ink); clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0 50%); }
+.insignia span { position: absolute; font-family: var(--stencil); font-size: 13px; color: var(--paper); }
+h1 { font-family: var(--stencil); font-size: 33px; line-height: .98; margin: 0; letter-spacing: 2px; color: var(--ink); }
+.sub { font-family: var(--label); font-weight: 600; letter-spacing: 5px; font-size: 12px; color: var(--ink2); margin-top: 7px; text-transform: uppercase; }
+.docctrl { font-family: var(--mono); font-size: 11px; color: var(--ink); text-align: right; line-height: 1.65; border: 1.5px solid var(--ink); padding: 7px 11px; min-width: 188px; }
+.docctrl b { color: var(--ink2); font-weight: 500; }
+.docctrl .row { display: flex; justify-content: space-between; gap: 14px; }
+
+.ribbon { display: flex; align-items: center; gap: 14px; margin: 16px 0 4px; }
+.ribbon .tick { flex: 1; height: 11px; border-bottom: 2px solid var(--ink); background-image: repeating-linear-gradient(90deg, var(--ink) 0 1.5px, transparent 1.5px 14px); }
+.ribbon .lbl { font-family: var(--label); font-weight: 600; letter-spacing: 3px; font-size: 13px; text-transform: uppercase; }
+
+/* Resume-last — the quick continue, distinct from the LOAD door */
+.resume-last { display: flex; align-items: center; gap: 16px; width: 100%; text-align: left; cursor: pointer; background: var(--panel); border: 1.6px solid var(--stamp); padding: 10px 16px; color: var(--ink); margin: 10px 0 2px; min-height: 56px; font-family: var(--type); transition: background .08s, color .08s; }
+.resume-last:hover, .resume-last:focus-visible { background: var(--stamp); color: var(--paper); outline: none; }
+.resume-last:hover .rl-sum, .resume-last:hover .rl-k, .resume-last:hover .enter, .resume-last:focus-visible .rl-sum, .resume-last:focus-visible .rl-k, .resume-last:focus-visible .enter { color: var(--paper); }
+.rl-k { font-family: var(--label); font-weight: 600; letter-spacing: 2px; font-size: 12px; text-transform: uppercase; color: var(--stamp); flex: 0 0 auto; }
+.rl-main { flex: 1; min-width: 0; }
+.rl-name { display: block; font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 16px; text-transform: uppercase; line-height: 1.1; }
+.rl-sum { display: block; font-family: var(--mono); font-size: 11px; color: var(--ink2); margin-top: 2px; }
+.rl-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; padding: 3px 8px; border: 1.3px solid currentColor; white-space: nowrap; color: var(--stamp); }
+.resume-last:hover .rl-tag, .resume-last:focus-visible .rl-tag { color: var(--paper); }
+
+.ops { display: flex; flex-direction: column; gap: 11px; margin: 14px 0 6px; }
+.door {
+    display: flex; align-items: center; gap: 18px; width: 100%; text-align: left; cursor: pointer;
+    background: var(--paper2); border: 1.6px solid var(--ink); padding: 13px 16px; color: var(--ink);
+    min-height: 64px; font-family: var(--type);
+    transition: background .08s, color .08s;
+}
+.door:hover:not([disabled]), .door:focus-visible:not([disabled]) { background: var(--ink); color: var(--paper); outline: none; }
+.door:hover:not([disabled]) .num, .door:focus-visible:not([disabled]) .num { border-color: var(--paper); color: var(--paper); }
+.door:hover:not([disabled]) .desc, .door:hover:not([disabled]) .enter,
+.door:focus-visible:not([disabled]) .desc, .door:focus-visible:not([disabled]) .enter { color: var(--paper); }
+.num { font-family: var(--stencil); font-size: 21px; width: 48px; height: 40px; flex: 0 0 auto; border: 1.5px solid var(--ink); display: flex; align-items: center; justify-content: center; color: var(--ink); }
+.dmain { flex: 1; min-width: 0; }
+.dtitle { display: block; font-family: var(--label); font-weight: 600; letter-spacing: 2.5px; font-size: 19px; text-transform: uppercase; line-height: 1.1; }
+.desc { display: block; font-family: var(--type); font-size: 13px; color: var(--ink2); margin-top: 3px; }
+.tag { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; padding: 3px 8px; border: 1.3px solid currentColor; white-space: nowrap; }
+.tag.host { color: var(--stamp); } .tag.always { color: var(--ok); } .tag.soon { color: var(--ink2); }
+.enter { font-family: var(--mono); font-size: 18px; color: var(--ink); width: 26px; text-align: center; flex: 0 0 auto; }
+.door[disabled] { opacity: .5; cursor: not-allowed; background: repeating-linear-gradient(45deg, var(--paper2) 0 9px, var(--panel) 9px 18px); }
+
+footer { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; margin-top: 16px; border-top: 2px solid var(--ink); padding-top: 12px; }
+.status { font-family: var(--mono); font-size: 11.5px; line-height: 1.85; color: var(--ink); }
+.status .k { color: var(--ink2); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; vertical-align: 1px; margin-right: 5px; }
+.dot.on { background: var(--ok); }
+.dot.off { background: var(--stamp); animation: blink 1.05s steps(1) infinite; }
+
+/* engine-offline banner (D-041 / MERGE-002 / T-003) — campaign ops paused, honest reason. */
+.engine-offline { display: flex; align-items: baseline; gap: 12px; margin: 12px 0 2px; padding: 10px 14px; border: 1.6px solid var(--stamp); background: var(--paper2); }
+.engine-offline .eo-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--paper); background: var(--stamp); padding: 3px 8px; white-space: nowrap; flex: 0 0 auto; }
+.engine-offline .eo-msg { font-family: var(--type); font-size: 13px; color: var(--ink); line-height: 1.5; }
+.engine-offline code { font-family: var(--mono); font-size: 11px; background: var(--paper); border: 1px solid var(--stamp); padding: 0 4px; }
+/* HOTFIX-028 — the wedged-device self-heal affordances (offline alert + footer). Field-dossier, unobtrusive. */
+.engine-offline .eo-reset { flex: 0 0 auto; font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); background: transparent; border: 1px solid var(--stamp); border-radius: 3px; padding: 4px 9px; cursor: pointer; align-self: center; }
+.engine-offline .eo-reset:hover { background: var(--stamp); color: var(--paper); }
+.reset-link { font-family: var(--mono); font-size: 10px; letter-spacing: .04em; color: var(--ink2); background: transparent; border: none; padding: 2px 0 0; margin-top: 2px; cursor: pointer; text-decoration: underline; }
+.reset-link:hover { color: var(--ink); }
+.cursor { display: inline-block; width: 9px; height: 15px; background: var(--ink); vertical-align: -2px; animation: blink 1.05s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.meta { text-align: right; font-family: var(--mono); font-size: 10.5px; color: var(--ink2); line-height: 1.7; }
+/* HOTFIX-025 — gated-mode account line (replaces the removed floating chip); field-dossier styling. */
+.acct { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; font-family: var(--mono); font-size: 11px; color: var(--ink2); }
+.acct-who b { color: var(--ink); }
+.acct-btn { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); background: transparent; border: 1px solid var(--ink); border-radius: 3px; padding: 4px 9px; cursor: pointer; }
+.acct-btn:hover { background: var(--ink); color: #f3ecdb; }
+.acct-btn.admin { border-color: var(--ink2); }
+.acct-badge { background: #a5483d; color: #fff; border-radius: 999px; padding: 0 5px; font-size: 10px; margin-left: 4px; }
+/* LINK-1 Part B1 — the guest→account upgrade CTA: an emphasized (amber, ties to the recovery-code theme) link, distinct from the plain bordered acct buttons. */
+.acct-btn.upgrade { text-decoration: none; background: #c79a3a; color: #1a1407; border-color: #c79a3a; text-transform: none; letter-spacing: .02em; font-weight: 600; }
+.acct-btn.upgrade:hover { background: #d8ab4b; color: #1a1407; }
+
+.stamp { position: absolute; right: 46px; top: 96px; transform: rotate(-13deg); border: 3px double var(--stamp); color: var(--stamp); font-family: var(--label); font-weight: 600; letter-spacing: 3px; font-size: 15px; text-transform: uppercase; padding: 6px 13px; opacity: .78; text-align: center; line-height: 1.15; pointer-events: none; }
+.stamp small { display: block; font-size: 9px; letter-spacing: 2px; font-weight: 400; }
+.ring { position: absolute; right: 120px; bottom: 78px; width: 74px; height: 74px; border-radius: 50%; border: 6px solid rgba(96, 60, 24, .28); opacity: .6; transform: rotate(8deg); pointer-events: none; }
+.ring::after { content: ""; position: absolute; inset: 7px; border-radius: 50%; border: 2px solid rgba(96, 60, 24, .16); }
+
+/* ── Tablet ── */
+@media (max-width: 900px) {
+    :host { padding: 20px; }
+    .sheet { padding: 24px 26px 22px 46px; }
+    .ring { display: none; }
+}
+
+/* ── Phone: trim the heavy dossier chrome, keep doors usable ── */
+@media (max-width: 600px) {
+    :host { padding: 0; align-items: stretch; }
+    .sheet { max-width: none; min-height: 100dvh; border: none; padding: 18px 16px 22px; }
+    .holes, .reg, .stamp, .ring { display: none; }
+    header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .docctrl { min-width: 0; align-self: stretch; }
+    .docctrl .row { justify-content: flex-start; gap: 8px; }
+    h1 { font-size: 27px; }
+    .door { gap: 12px; padding: 12px 13px; }
+    .dtitle { font-size: 17px; letter-spacing: 1.5px; }
+    .tag { display: none; }
+    footer { flex-direction: column; align-items: stretch; gap: 12px; }
+    .meta { text-align: left; }
+}

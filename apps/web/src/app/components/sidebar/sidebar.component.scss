@@ -1,0 +1,165 @@
+:host {
+    position: relative;
+    display: block;
+    z-index: 60;
+}
+
+@media print {
+    :host {
+        display: none !important;
+    }
+}
+
+/* Common inner container */
+.sidebar-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    color: #e6eef8;
+    box-sizing: border-box;
+    padding-left: max(4px, var(--safe-area-inset-left));
+    padding-right: 4px;
+    padding-top: max(8px, var(--safe-area-inset-top));
+    padding-bottom: max(8px, var(--safe-area-inset-bottom));
+    box-sizing: border-box;
+    gap: 8px;
+    width: calc(var(--sidebar-width) + var(--safe-area-inset-left));
+
+
+    &.tiny {
+        width: calc(var(--sidebar-width) + var(--safe-area-inset-left));
+    }
+
+    .header,
+    .footer {
+        display: flex;
+        align-items: center;
+        justify-self: center;
+        flex-direction: column;
+        gap: 8px;
+
+        .searchPortal {
+                width: 100%;
+        }
+    }
+
+    .logo {
+        height: 50px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        pointer-events: none;
+    }
+
+    .brand {
+        cursor: pointer;
+        position: relative;
+    }
+
+    &.tiny {
+        .logo {
+            height: 50px;
+            width: 50px;
+        }
+    }
+
+    @media (max-height: 600px) {
+        .brand {
+            display: none;
+        }
+    }
+
+    
+    .burger-lip-btn {
+        position: absolute;
+        bottom: calc(56px + var(--safe-area-inset-bottom));
+        top: min(var(--top, auto), calc( 100dvh - 90px));
+        left: 100%;
+        width: 24px;
+        height: 90px;
+        border: none;
+        color: var(--text-color);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        touch-action: none;
+        outline: none;
+        -webkit-tap-highlight-color: transparent;
+        background-repeat: no-repeat;
+        background-origin: border-box;
+        background-image:
+            linear-gradient(white, white), linear-gradient(white, white),
+            linear-gradient(white, white), linear-gradient(white, white);
+        background-size: 12px 2px, 2px 12px, 12px 2px, 2px 12px;
+        background-position: top right, top right, bottom right, bottom right;
+        
+        &:active,
+        &:focus {
+            outline: none;
+        }
+    
+        .burger-icon {
+            font-size: 24px;
+            font-weight: bold;
+        }
+    }
+}
+
+.touch-edge {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 24px;
+    z-index: 50;
+    touch-action: none;
+}
+
+.backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    transition: opacity 180ms ease;
+    pointer-events: none;
+    z-index: 30;
+}
+
+.backdrop.visible {
+    pointer-events: auto;
+    opacity: 1;
+}
+
+.drawer {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 70;
+    width: calc(var(--sidebar-expanded-width) + var(--safe-area-inset-left));
+    transition: transform 180ms ease;
+    will-change: transform;
+    touch-action: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    
+    &.desktop {
+        background-color: rgba(45, 45, 45, 0.8);
+    }
+    
+    &.open {
+        transition: transform 200ms cubic-bezier(.2, .9, .2, 1);
+        align-items: unset;
+    }
+    
+    &.swiping {
+        transition: none;
+    }
+}
+

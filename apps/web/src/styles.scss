@@ -1,0 +1,2434 @@
+:root {
+    color-scheme: dark;
+    // --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    // --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    // --safe-area-inset-left: env(safe-area-inset-left, 0px);
+    // --safe-area-inset-right: env(safe-area-inset-right, 0px);
+    --safe-area-inset-top: 0px;
+    --safe-area-inset-bottom: 0px;
+    --safe-area-inset-left: 0px;
+    --safe-area-inset-right: 0px;
+
+    --background-color: #141414;
+    --background-color-menu: #292929;
+    --background-color-light: #313131;
+    --background-input: rgba(40, 40, 40, 0.5);
+    --background-highlight: #3D3D3D;
+    --background-highlight-bright: #7A7A7A;
+    --hover-highlight-transparent: #fff1;
+    --border-color: #555;
+    --text-color: #ffffff;
+    --text-color-secondary: silver;
+    --text-color-tertiary: #888;
+    --accent-color: #EAAE3F;
+    --accent-color-background: #44391266;
+    --bt-yellow: #EAAE3F;
+    --bt-yellow-strong: #FFAE16;
+    --bt-yellow-background: #443912;
+    --bt-yellow-background-transparent: #68540faa;
+    --bt-yellow-background-bright: #5f5018;
+    --bt-yellow-background-light: #FFCF73;
+    --bt-yellow-background-bright-transparent: #68540fee;
+    color: white;
+    -webkit-tap-highlight-color: transparent;
+    --semantic-color: #17a2b8;
+    --semantic-color-highlight: #8fe7ed;
+    --primary-focus-color: rgb(154, 154, 255);
+    --primary-focus-color-highlight: rgb(174, 174, 255);
+
+    --highlight-color: #8885;
+
+    --disabled-color: #888;
+    --damage-color: #F00;
+    --danger: #F00;
+    --undamaged-highlight-color: #FEE;
+    --undamaged-night-highlight-color: #300;
+    --damaged-highlight-color: rgb(255, 105, 105);
+
+    --phase-move: #666;
+    --phase-ranged: #9191ff;
+    --phase-physical: #cfcc00;
+    --phase-heat: #dd7d00;
+    --phase-pending-effects: #d00;
+    --hot-color: #f00;
+    --cold-color: #0081FF;
+
+    --friendly-color: 100, 180, 255;
+    --enemy-color: 220, 80, 80;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #666;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #888;
+}
+
+html {
+    touch-action: pan-x pan-y;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: 100vw;
+    width: 100dvw;
+    background-color: var(--background-color);
+}
+
+body {
+    touch-action: pan-x pan-y;
+    margin: 0;
+    padding: 0;
+    /* DIRECTIVE-IMPORT-7 Part A — RESERVE the legal footer's space (COMPLIANCE-1: the bar must stay visible, but must never overlay
+       interactive controls). bce-legal-footer publishes its rendered height (safe-area inset included) as --bce-footer-h on <html>;
+       the body's content box shrinks by it, so the app shell (height:100%) — and every in-app scroll region — ends above the bar. */
+    padding-bottom: var(--bce-footer-h, 0px);
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    font-family: 'Roboto', "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Segoe UI Symbol";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-user-select: none;
+    user-select: none;
+    box-sizing: border-box;
+    cursor: default;
+}
+
+@media print {
+    :root {
+        color-scheme: light;
+    }
+    body,
+    html {    
+        background-color: white;
+    }
+}
+
+/* Hex symbol for movement display - scaled and raised like inch mark */
+.hex-symbol {
+    line-height: 0;
+    font-size: 0.8em;
+    position: relative;
+    top: -0.3em;
+}
+
+a {
+    color: #fff;
+    text-decoration: underline;
+    transition: color 0.15s ease;
+
+    &:hover {
+        color: var(--bt-yellow);
+    }
+}
+
+@keyframes tv-vertical-expand {
+    0% {
+        opacity: 0.5;
+        transform: scaleY(0.01) scaleX(0.1);
+        filter: brightness(3);
+    }
+
+    40% {
+        opacity: 1;
+        transform: scaleY(0.01) scaleX(1);
+        filter: brightness(4);
+    }
+
+    55% {
+        filter: none;
+    }
+
+    100% {
+        transform: scaleY(1) scaleX(1);
+    }
+}
+
+.tv-fade {
+    animation: tv-vertical-expand .38s cubic-bezier(0.23, 1.02, 0.35, 1) both;
+    transform-origin: center center;
+}
+
+/* Allow selection in input and textarea fields */
+input,
+textarea {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.allow-select {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #666;
+}
+
+.muted {
+    color: var(--text-color-secondary);
+}
+
+.spanner {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+}
+
+.glass {
+    background-color: rgba(45, 45, 45, 0.8);
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+}
+
+.modal-btn {
+    padding: 8px 36px;
+    font-size: 1.1em;
+    width: 140px;
+
+    @media screen and (max-width: 600px) {
+        padding: 8px 12px;
+        font-size: 1em;
+        width: 110px;
+    }
+}
+
+.overlay-backdrop,
+.cdk-overlay-dark-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+    transition: opacity 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.fullscreen-dialog-host {
+    display: flex;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100vw;
+    pointer-events: auto;
+    padding: 16px;
+    max-height: 100%;
+
+    &.fullheight {
+        height: 100vh;
+        height: 100dvh;
+        min-height: 100vh;
+        min-height: 100dvh;
+        max-height: 100vh;
+        max-height: 100dvh;
+    }
+}
+
+.cdk-overlay-pane {
+    // padding-bottom: calc(8px + var(--safe-area-inset-bottom)) !important;
+    box-sizing: border-box;
+}
+
+.has-shadow {
+    box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px;
+}
+
+.next-badge {
+    position: absolute;
+    bottom: 0px;
+    right: 18px;
+    background: #FFA800;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    padding: 1px 4px;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+.framed-borders {
+    background-repeat: no-repeat;
+    background-origin: border-box;
+    border-top: 2px solid white;
+    border-bottom: 2px solid white;
+    background-image:
+        linear-gradient(white, white), linear-gradient(white, white),
+        linear-gradient(white, white), linear-gradient(white, white);
+    background-size: 2px 12px, 2px 12px, 2px 12px, 2px 12px;
+    background-position: top left, top right, bottom left, bottom right;
+}
+
+.corner-borders {
+    transition: border 0.2s ease-in-out, background 0.2s ease-in-out, color 0.2s ease-in-out;
+    background-repeat: no-repeat;
+    background-origin: border-box;
+    background-image:
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666);
+    background-size: 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px;
+    background-position: top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+
+    &:hover {
+        background-image:
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white);
+    }
+
+    &:focus,
+    &.active,
+    &.open {
+        outline: none;
+        background-image:
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white);
+        background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+        background-position: top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+    }
+
+    &.semantic-only {
+        background-image:
+            linear-gradient(var(--semantic-color), var(--semantic-color)),
+            linear-gradient(var(--semantic-color), var(--semantic-color)),
+            linear-gradient(var(--semantic-color), var(--semantic-color)),
+            linear-gradient(var(--semantic-color), var(--semantic-color)),
+            linear-gradient(var(--semantic-color), var(--semantic-color)),
+            linear-gradient(var(--semantic-color), var(--semantic-color)),
+            linear-gradient(var(--semantic-color), var(--semantic-color)),
+            linear-gradient(var(--semantic-color), var(--semantic-color));
+    }
+}
+
+.bt-input {
+    padding: 8px;
+    border: 2px transparent;
+    color: white;
+    background: var(--background-input);
+    box-sizing: border-box;
+    transition: border 0.2s ease-in-out, background 0.2s ease-in-out, color 0.2s ease-in-out;
+    background-repeat: no-repeat;
+    background-origin: border-box;
+    background-image:
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666);
+    background-size: 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px;
+    background-position: top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+
+    &:hover {
+        background-image:
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white);
+    }
+
+    &:focus,
+    &:focus-visible {
+        outline: none;
+        background-image:
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white);
+        background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+        background-position: top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+    }
+
+    &.error {
+        background-image:
+            linear-gradient(red, red),
+            linear-gradient(red, red),
+            linear-gradient(red, red),
+            linear-gradient(red, red),
+            linear-gradient(red, red),
+            linear-gradient(red, red),
+            linear-gradient(red, red),
+            linear-gradient(red, red);
+    }
+
+    &.active {
+        background-image:
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow));
+    }
+
+    &:hover {
+        background-color: var(--background-highlight);
+    }
+
+    &:focus {
+        background-color: var(--background-input);
+    }
+}
+
+.bt-checkbox {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin: 0;
+    border: 2px transparent;
+    box-sizing: border-box;
+    cursor: pointer;
+    background: var(--background-input);
+    transition: border 0.2s ease-in-out, background 0.2s ease-in-out, color 0.2s ease-in-out;
+    background-repeat: no-repeat;
+    background-origin: border-box;
+    background-image:
+        linear-gradient(transparent, transparent),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666);
+    background-size: 2px 2px, 6px 2px, 2px 6px, 6px 2px, 2px 6px, 6px 2px, 2px 6px, 6px 2px, 2px 6px;
+    background-position: center, top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+
+    &:hover {
+        background-color: var(--background-highlight);
+        background-image:
+            linear-gradient(transparent, transparent),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white);
+    }
+
+    &:focus,
+    &:focus-visible {
+        outline: none;
+        background-color: var(--background-input);
+        background-image:
+            linear-gradient(transparent, transparent),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white);
+        background-size: 2px 2px, 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+        background-position: center, top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+    }
+
+    &:checked {
+        background-image:
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow));
+        background-repeat: no-repeat;
+        background-origin: border-box;
+        background-size: 12px 12px, 6px 2px, 2px 6px, 6px 2px, 2px 6px, 6px 2px, 2px 6px, 6px 2px, 2px 6px;
+        background-position: center, top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+    }
+
+    &:disabled,
+    &[disabled] {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+}
+
+.bt-select {
+    touch-action: none;
+    cursor: pointer;
+    padding: 8px 20px 8px 8px;
+    border: 2px transparent;
+    box-sizing: border-box;
+    background: rgba(40, 40, 40);
+    color: white;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border 0.2s ease-in-out, background 0.2s ease-in-out, color 0.2s ease-in-out;
+    background-origin: border-box;
+    ;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23999999'%3e%3cpath d='M8 11L2 5h12z'/%3e%3c/svg%3e"),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666),
+        linear-gradient(#666, #666);
+    background-repeat: no-repeat;
+    background-position: right 6px center, top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+    background-size: 12px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px;
+
+    &:focus,
+    &:focus-visible,
+    &:hover,
+    &.open {
+        outline: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3e%3cpath d='M8 11L2 5h12z'/%3e%3c/svg%3e"),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white),
+            linear-gradient(white, white);
+        background-size: 12px 12px, 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+        background-position: right 6px center, top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+    }
+
+    &.has-value {
+        color: var(--bt-yellow);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23EAAE3F'%3e%3cpath d='M8 11L2 5h12z'/%3e%3c/svg%3e"),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow));
+        border-color: var(--bt-yellow);
+    }
+
+    &.danger {
+        color: #f00;
+        background-image:
+            url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23a00'%3e%3cpath d='M8 11L2 5h12z'/%3e%3c/svg%3e"),
+            linear-gradient(#a00, #a00), linear-gradient(#a00, #a00),
+            linear-gradient(#a00, #a00), linear-gradient(#a00, #a00),
+            linear-gradient(#a00, #a00), linear-gradient(#a00, #a00),
+            linear-gradient(#a00, #a00), linear-gradient(#a00, #a00);
+
+        &:hover {
+            background-color: #300;
+            color: #f00;
+            background-image:
+                url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23f00'%3e%3cpath d='M8 11L2 5h12z'/%3e%3c/svg%3e"),
+                linear-gradient(red, red), linear-gradient(red, red),
+                linear-gradient(red, red), linear-gradient(red, red),
+                linear-gradient(red, red), linear-gradient(red, red),
+                linear-gradient(red, red), linear-gradient(red, red);
+        }
+    }
+    
+}
+
+.bt-button {
+    cursor: pointer;
+    white-space: nowrap;
+    touch-action: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background-input);
+    color: #bbb;
+    font-weight: bold;
+    box-sizing: border-box;
+    text-align: center;
+    border: 2px solid transparent;
+    transition: border 0.2s ease-in-out, background 0.2s ease-in-out, color 0.2s ease-in-out;
+    min-height: 32px;
+    background-repeat: no-repeat;
+    background-origin: border-box;
+    background-image:
+        linear-gradient(#666, #666), linear-gradient(#666, #666),
+        linear-gradient(#666, #666), linear-gradient(#666, #666),
+        linear-gradient(#666, #666), linear-gradient(#666, #666),
+        linear-gradient(#666, #666), linear-gradient(#666, #666);
+    background-size: 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px;
+    background-position: top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+
+    &:hover {
+        border-color: transparent;
+        background-color: var(--background-highlight);
+        color: white;
+        background-image:
+            linear-gradient(white, white), linear-gradient(white, white),
+            linear-gradient(white, white), linear-gradient(white, white),
+            linear-gradient(white, white), linear-gradient(white, white),
+            linear-gradient(white, white), linear-gradient(white, white);
+        background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+        background-position: top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+    }
+
+    &.selected {
+        border-color: white;
+        background-color: var(--bt-yellow);
+        color: #000;
+    }
+
+    &.danger {
+        color: #a00;
+        background-image:
+            linear-gradient(#a00, #a00), linear-gradient(#a00, #a00),
+            linear-gradient(#a00, #a00), linear-gradient(#a00, #a00),
+            linear-gradient(#a00, #a00), linear-gradient(#a00, #a00),
+            linear-gradient(#a00, #a00), linear-gradient(#a00, #a00);
+
+        &:hover {
+            background-color: #300;
+            color: red;
+            background-image:
+                linear-gradient(red, red), linear-gradient(red, red),
+                linear-gradient(red, red), linear-gradient(red, red),
+                linear-gradient(red, red), linear-gradient(red, red),
+                linear-gradient(red, red), linear-gradient(red, red);
+        }
+    }
+
+    &.warning {
+        color: rgb(222, 144, 0);
+        background-image:
+            linear-gradient(rgb(222, 144, 0), rgb(222, 144, 0)), linear-gradient(rgb(222, 144, 0), rgb(222, 144, 0)),
+            linear-gradient(rgb(222, 144, 0), rgb(222, 144, 0)), linear-gradient(rgb(222, 144, 0), rgb(222, 144, 0)),
+            linear-gradient(rgb(222, 144, 0), rgb(222, 144, 0)), linear-gradient(rgb(222, 144, 0), rgb(222, 144, 0)),
+            linear-gradient(rgb(222, 144, 0), rgb(222, 144, 0)), linear-gradient(rgb(222, 144, 0), rgb(222, 144, 0));
+
+        &:hover {
+            background-color: #352300;
+            color: var(--bt-yellow);
+            background-image:
+                linear-gradient(var(--bt-yellow), var(--bt-yellow)), linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+                linear-gradient(var(--bt-yellow), var(--bt-yellow)), linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+                linear-gradient(var(--bt-yellow), var(--bt-yellow)), linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+                linear-gradient(var(--bt-yellow), var(--bt-yellow)), linear-gradient(var(--bt-yellow), var(--bt-yellow));
+        }
+    }
+
+    &.primary {
+        color: var(--primary-focus-color);
+        background-image:
+            linear-gradient(rgb(58, 58, 255), rgb(58, 58, 255)), linear-gradient(rgb(58, 58, 255), rgb(58, 58, 255)),
+            linear-gradient(rgb(58, 58, 255), rgb(58, 58, 255)), linear-gradient(rgb(58, 58, 255), rgb(58, 58, 255)),
+            linear-gradient(rgb(58, 58, 255), rgb(58, 58, 255)), linear-gradient(rgb(58, 58, 255), rgb(58, 58, 255)),
+            linear-gradient(rgb(58, 58, 255), rgb(58, 58, 255)), linear-gradient(rgb(58, 58, 255), rgb(58, 58, 255)),
+            linear-gradient(rgb(58, 58, 255), rgb(58, 58, 255)), linear-gradient(rgb(58, 58, 255), rgb(58, 58, 255));
+
+        &:hover {
+            background-color: #003;
+            color: rgb(242, 242, 255);
+            background-image:
+                linear-gradient(rgb(81, 81, 255), rgb(81, 81, 255)), linear-gradient(rgb(81, 81, 255), rgb(81, 81, 255)),
+                linear-gradient(rgb(81, 81, 255), rgb(81, 81, 255)), linear-gradient(rgb(81, 81, 255), rgb(81, 81, 255)),
+                linear-gradient(rgb(81, 81, 255), rgb(81, 81, 255)), linear-gradient(rgb(81, 81, 255), rgb(81, 81, 255)),
+                linear-gradient(rgb(81, 81, 255), rgb(81, 81, 255)), linear-gradient(rgb(81, 81, 255), rgb(81, 81, 255)),
+                linear-gradient(rgb(81, 81, 255), rgb(81, 81, 255)), linear-gradient(rgb(81, 81, 255), rgb(81, 81, 255));
+        }
+    }
+
+    &:active {
+        background-color: var(--background-highlight-bright);
+    }
+    
+    &.active {
+        color: var(--bt-yellow);
+        background-image:
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow)),
+            linear-gradient(var(--bt-yellow), var(--bt-yellow));
+        background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+    }
+
+    &[disabled],
+    &.disabled {
+        cursor: not-allowed;
+        color: #444;
+    }
+
+    &.square {
+        display: flex;
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        overflow: hidden;
+    }
+
+    &.square-small {
+        display: flex;
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        overflow: hidden;
+    }
+
+    &.square-large {
+        display: flex;
+        flex-shrink: 0;
+        width: 48px;
+        height: 48px;
+        overflow: hidden;
+    }
+
+    &.borderless {
+        border: none;
+        background: none;
+    }
+}
+
+/* Split button: a single bt-button frame with two clickable halves.
+ * Usage:
+ *   <div class="bt-split-button">
+ *     <button class="bt-split-part">ADD</button>
+ *     <button class="bt-split-part">+</button>
+ *   </div>
+ */
+.bt-split-button {
+    cursor: pointer;
+    white-space: nowrap;
+    touch-action: none;
+    display: inline-flex;
+    align-items: stretch;
+    background: var(--background-input);
+    box-sizing: border-box;
+    border: 2px solid transparent;
+    transition: border 0.2s ease-in-out, background 0.2s ease-in-out, color 0.2s ease-in-out;
+    min-height: 32px;
+    background-repeat: no-repeat;
+    background-origin: border-box;
+    background-image:
+        linear-gradient(#666, #666), linear-gradient(#666, #666),
+        linear-gradient(#666, #666), linear-gradient(#666, #666),
+        linear-gradient(#666, #666), linear-gradient(#666, #666),
+        linear-gradient(#666, #666), linear-gradient(#666, #666);
+    background-size: 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px;
+    background-position: top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+
+    &:hover {
+        border-color: transparent;
+        background-color: var(--background-highlight);
+        background-image:
+            linear-gradient(white, white), linear-gradient(white, white),
+            linear-gradient(white, white), linear-gradient(white, white),
+            linear-gradient(white, white), linear-gradient(white, white),
+            linear-gradient(white, white), linear-gradient(white, white);
+        background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+        background-position: top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+    }
+
+    &[disabled],
+    &.disabled {
+        cursor: not-allowed;
+        pointer-events: none;
+        color: #444;
+
+        .bt-split-part {
+            color: #444;
+            cursor: not-allowed;
+        }
+    }
+
+    .bt-split-part {
+        all: unset;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-weight: bold;
+        color: #bbb;
+        transition: color 0.2s ease-in-out;
+        box-sizing: border-box;
+
+        &:hover {
+            color: white;
+        }
+
+        &:active {
+            color: white;
+            background-color: var(--background-highlight-bright);
+        }
+
+        /* Thin vertical divider between parts */
+        & + .bt-split-part {
+            border-left: 1px solid #555;
+        }
+    }
+
+    &:hover .bt-split-part + .bt-split-part {
+        border-left-color: #999;
+    }
+
+    /* When used with modal-btn, the wrapper padding is handled by the inner parts */
+    &.modal-btn {
+        padding: 0;
+
+        .split-main {
+            padding: 8px 28px;
+            flex: 1;
+        }
+
+        .split-extra {
+            padding: 8px 10px;
+        }
+
+        @media screen and (max-width: 600px) {
+            .split-main {
+                padding: 8px 16px;
+            }
+
+            .split-extra {
+                padding: 8px 8px;
+            }
+        }
+    }
+}
+
+.form-fields {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    text-align: left;
+
+    .field-label {
+        font-size: 0.85em;
+        color: var(--text-color-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+
+        &.centered {
+            text-align: center;
+        }
+        
+        .optional {
+            font-weight: normal;
+            text-transform: none;
+            font-style: italic;
+        }
+    }
+
+    &.disabled .field-label {
+        color: var(--text-color-tertiary);
+    }
+
+    .field-note {
+        font-size: 0.85em;
+        color: var(--text-color-secondary);
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.3;
+    }
+    
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
+        width: 100%;
+    }
+
+    .field-input {
+        width: 100%;
+        flex: 1 1 auto;
+        min-width: 0;
+        font-family: inherit;
+        font-size: 1.5em;
+        padding: 4px 4px 6px 4px;
+        box-sizing: border-box;
+        background: var(--background-input);
+        color: white;
+        border: 0;
+        border-bottom: 1px solid #666;
+        outline: none;
+        transition: border 0.2s ease-in-out, background 0.2s ease-in-out, color 0.2s ease-in-out;
+        white-space: normal;
+        overflow-wrap: break-word;
+        word-break: break-word;
+
+        &:focus {
+            border-bottom: 1px solid #fff;
+            outline: none;
+        }
+
+        &:disabled {
+            color: var(--text-color-tertiary);
+            cursor: not-allowed;
+        }
+
+        &[contenteditable]:empty::before {
+            content: attr(data-placeholder);
+            color: #888;
+            pointer-events: none;
+        }
+    }
+
+    select.field-input {
+        cursor: pointer;
+        text-overflow: ellipsis;
+    }
+}
+
+/* ── Wide Dialog ──
+ * CSS convention for fullscreen-dialog-host glass dialogs.
+ * Structure:
+ *   <div class="wide-dialog">
+ *     <h2 class="wide-dialog-title">Title</h2>
+ *     <div class="wide-dialog-body"> ... </div>
+ *     <div class="wide-dialog-actions"> <button class="bt-button">OK</button> </div>
+ *   </div>
+ */
+.wide-dialog {
+    display: flex;
+    flex-direction: column;
+    width: 90vw;
+    max-width: 700px;
+    max-height: calc(100dvh - 32px);
+    text-align: center;
+    box-sizing: border-box;
+    container-type: inline-size;
+}
+
+.wide-dialog-title {
+    margin: 8px 0;
+    flex-shrink: 0;
+}
+
+.wide-dialog-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* Row of .form-fields placed side-by-side; stacks below 400cqi */
+.form-row {
+    display: flex;
+    gap: 16px;
+
+    > .form-fields {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+}
+
+@container (max-width: 400px) {
+    .form-row:not(.no-stack) {
+        flex-direction: column;
+    }
+}
+
+.wide-dialog-actions {
+    padding-top: 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+
+    button {
+        padding: 8px;
+        min-width: 100px;
+    }
+
+    button[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.alphastrike-text {
+    font-family: 'Roboto Condensed', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    paint-order: stroke fill;
+    position: relative;
+    font-weight: 900;
+    color: #000;
+
+    &.stroked {
+        // color: #d22027;
+        // -webkit-text-stroke: 0.08em #ECD24B;
+        -webkit-text-stroke: 0.1em #fff;
+
+        &.colored {
+            color: #d22027;
+            -webkit-text-stroke: 0.1em #ECD24B;
+        }
+    }
+}
+
+span {
+    &.danger {
+        color: var(--danger);
+    }
+}
+
+.popup-menu {
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+    box-shadow: 0 2px 8px #000a;
+    overflow-x: auto;
+
+    .menu-item {
+        background: none;
+        border: none;
+        color: #fff;
+        padding: 10px 20px;
+        text-align: left;
+        cursor: pointer;
+        width: 100%;
+        font-size: 0.9em;
+        outline: none;
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        transition: color 0.2s, background-color 0.2s;
+
+        &:hover {
+            background-color: var(--background-highlight);
+        }
+
+        &[aria-expanded='true'] {
+            background-color: var(--background-highlight);
+        }
+
+        &:focus-visible,
+        &.cdk-keyboard-focused,
+        &.cdk-program-focused {
+            background-color: var(--background-highlight);
+        }
+
+        &:disabled {
+            color: var(--text-color-tertiary);
+            cursor: not-allowed;
+        }
+
+        .icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+
+            svg {
+                width: 100%;
+                height: 100%;
+            }
+        }
+
+        &[aria-haspopup='menu']::after {
+            content: '›';
+            margin-left: auto;
+            opacity: 0.75;
+            font-size: 1.2em;
+            line-height: 1;
+        }
+
+    }
+}
+
+hr.divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #888, transparent);
+    margin: 0;
+    margin-left: 6px;
+    margin-right: 6px;
+    padding: 0;
+    border: 0;
+}
+
+/* Unit Card */
+.unit-card {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    padding: 8px 4px;
+    box-sizing: border-box;
+
+    .primary-info {
+        container-type: inline-size;
+        flex-grow: 1;
+        gap: 4px;
+
+        .chassis {
+            font-weight: bold;
+        }
+    }
+
+    .secondary-info {
+        display: flex;
+        flex-grow: 1;
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+        color: var(--text-color-secondary);
+        font-size: 0.8em;
+        gap: 8px;
+        min-height: 15px; // Reserve some space even if empty
+
+        .model {
+            flex-grow: 1;
+            min-width: 0;
+        }
+    }
+
+    .third-info {
+        clear: both;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+
+        .info-area {
+            flex-wrap: wrap;
+            align-items: stretch;
+        }
+    }
+
+    .info-area {
+        display: flex;
+        justify-content: start;
+        align-items: center;
+        margin-top: 4px;
+        gap: 4px;
+        font-size: 0.8em;
+        font-weight: normal;
+        color: white;
+    }
+
+    .info-slot {
+        position: relative;
+        background-color: rgba(0, 0, 0, 0.2);
+        padding: 2px 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 40px;
+        justify-content: start;
+
+        &.centered {
+            justify-content: center;
+        }
+
+        &.numeric {
+            justify-content: end;
+        }
+
+        &.slim {
+            min-width: auto;
+        }
+
+        .icon {
+            width: 12px;
+            height: 12px;
+        }
+    }
+}
+
+.unit-data-container {
+    display: flow-root;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+}
+
+@container (max-width: 399px) {
+    .unit-card .info-area {
+        gap: 4px;
+    }
+}
+
+/* Energy: #6082F6, background: #1a2030, inbetween: #35407a */
+.energy {
+    --type-color: #6082F6;
+    border-left: 5px solid var(--type-color);
+    border-top: 1px solid #35407a;
+    border-right: 1px solid #35407a;
+    border-bottom: 1px solid #35407a;
+    background: #1a2030;
+}
+
+/* Ballistic: #9482B4, background: #211a29, inbetween: #5e4d7c */
+.ballistic {
+    --type-color: #9482B4;
+    border-left: 5px solid var(--type-color);
+    border-top: 1px solid #5e4d7c;
+    border-right: 1px solid #5e4d7c;
+    border-bottom: 1px solid #5e4d7c;
+    background: #211a29;
+}
+
+/* Missile: #86C86E, background: #192617, inbetween: #3e7c36 */
+.missile {
+    --type-color: #86C86E;
+    border-left: 5px solid var(--type-color);
+    border-top: 1px solid #3e7c36;
+    border-right: 1px solid #3e7c36;
+    border-bottom: 1px solid #3e7c36;
+    background: #192617;
+}
+
+/* Artillery: #A35958, background: #231a18, inbetween: #6c3e34 */
+.artillery {
+    --type-color: #A35958;
+    border-left: 5px solid var(--type-color);
+    border-top: 1px solid #6c3e34;
+    border-right: 1px solid #6c3e34;
+    border-bottom: 1px solid #6c3e34;
+    background: #231a18;
+}
+
+/* Physical: #F8F455, background: #292918, inbetween: #b3b34a */
+.physical {
+    --type-color: #c2c727;
+    border-left: 5px solid var(--type-color);
+    border-top: 1px solid #b3b34a;
+    border-right: 1px solid #b3b34a;
+    border-bottom: 1px solid #b3b34a;
+    background: #292918;
+}
+
+/* Other: #EEC16F, background: #292313, inbetween: #a68e41 */
+.other {
+    --type-color: #d0a34f;
+    border-left: 5px solid var(--type-color);
+    border-top: 1px solid #a68e41;
+    border-right: 1px solid #a68e41;
+    border-bottom: 1px solid #a68e41;
+    background: #292313;
+}
+
+/* Ammo: #CCCCCC, background: #272727, inbetween: #999999 */
+.ammo {
+    --type-color: #ccc;
+    border-left: 5px solid var(--type-color);
+    border-top: 1px solid #999;
+    border-right: 1px solid #999;
+    border-bottom: 1px solid #999;
+    background: #272727;
+}
+
+/* Misc: #7BA3A0, background: #1a2524, inbetween: #4d7370 */
+.misc {
+    --type-color: #d0a34f;
+    border-left: 5px solid var(--type-color);
+    border-top: 1px solid #a68e41;
+    border-right: 1px solid #a68e41;
+    border-bottom: 1px solid #a68e41;
+    background: #292313;
+}
+
+/* Structural: #8a8078, background: #1f1d1b, inbetween: #5c564f */
+.structural {
+    --type-color: #8a8078;
+    border-left: 5px solid var(--type-color);
+    border-top: 1px solid #5c564f;
+    border-right: 1px solid #5c564f;
+    border-bottom: 1px solid #5c564f;
+    background: #1f1d1b;
+}
+
+/* Tags */
+
+.info-slot-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    min-height: 20px;
+    justify-content: flex-end;
+}
+
+.add-tag-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: filter 0.2s ease;
+    text-decoration: none;
+}
+
+.add-tag-btn:hover {
+    filter: brightness(1.2);
+}
+
+.add-tag-btn svg {
+    width: 100%;
+}
+
+.component-damaged {
+    &::before {
+        content: '';
+        position: absolute;
+        top: 1px;
+        left: 0px;
+        width: 100%;
+        height: 4px;
+        background-image: repeating-linear-gradient(140deg,
+                #F008 0px,
+                #F008 4px,
+                transparent 5px,
+                transparent 10px);
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: 1px;
+        left: 0px;
+        width: 100%;
+        height: 4px;
+        background-image: repeating-linear-gradient(140deg,
+                #F008 0px,
+                #F008 4px,
+                transparent 5px,
+                transparent 10px);
+    }
+}
+
+
+/* MekBay SVG Sheet Styles */
+@media screen {
+    .multiple-visible .page-wrapper.selected>svg.mekbay-sheet {
+        outline: 4px solid var(--bt-yellow);
+        outline-offset: -4px;
+    }
+}
+
+.mekbay-sheet {
+    background-color: #FFF;
+    display: block;
+    box-sizing: content-box;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+
+    .damaged-strike {
+        display: none;
+    }
+
+    .disabledInventory .damaged-strike {
+        display: block;
+        stroke: var(--disabled-color);
+    }
+
+    .damagedInventory .damaged-strike {
+        display: block;
+        stroke: var(--damage-color);
+    }
+
+    .inventoryEntry>*:not(.inventoryEntryButton):not(.inventoryEntry):not(.alternativeMode) {
+        pointer-events: none;
+    }
+
+    .inventoryEntry>.alternativeMode>*:not(.inventoryEntryButton):not(.alternativeModeButton) {
+        pointer-events: none;
+    }
+
+    .inventoryEntryButton,
+    .alternativeModeButton {
+        fill: transparent;
+    }
+
+    .inventoryEntry:not(.interactive) {
+        pointer-events: none;
+    }
+
+    .inventoryEntry.disabledInventory {
+
+        .hitMod-rect,
+        .hitMod-text {
+            display: none;
+        }
+    }
+
+    .inventoryEntry.damagedInventory {
+
+        .hitMod-rect,
+        .hitMod-text {
+            display: none;
+        }
+    }
+
+    #fluff-image-fo {
+        transform: none;
+        pointer-events: none;
+        overflow: hidden;
+    }
+
+    .interactive {
+        cursor: pointer;
+        touch-action: none;
+        pointer-events: all;
+    }
+
+    .critGroup.locationDestroyed text {
+        fill: var(--damage-color) !important;
+        pointer-events: none;
+    }
+
+    .damaged {
+        fill: var(--damage-color) !important;
+
+        path {
+            fill: var(--damage-color) !important;
+        }
+
+        text {
+            fill: var(--damage-color) !important;
+        }
+    }
+
+    .wounded .checkbox-rect {
+        fill: var(--damage-color) !important;
+    }
+
+    .detached,
+    .detached>path {
+        fill: gray !important;
+        pointer-events: none;
+    }
+
+    .pip.detached {
+        stroke: silver;
+    }
+
+    .detached path {
+        fill: gray !important;
+        pointer-events: none;
+    }
+
+    .critGroup.detached text {
+        fill: silver !important;
+        pointer-events: none;
+    }
+
+    .pip {
+        stroke-linecap: square;
+        vector-effect: non-scaling-stroke;
+
+        &.damaged {
+            fill: var(--damage-color) !important;
+        }
+
+        &.half {
+            clip-path: polygon(50% -50%, 150% -50%, 150% 150%, 50% 150%)
+        }
+    }
+
+    .soldierPip.damaged {
+        filter: opacity(0.3) !important;
+    }
+
+    .disabledInventory,
+    .disabledInventory text {
+        fill: var(--disabled-color) !important;
+    }
+
+    .damagedInventory,
+    .damagedInventory text {
+        fill: var(--damage-color) !important;
+    }
+
+    .critSlot.damaged {
+        fill: var(--damage-color) !important;
+        text-decoration: line-through;
+    }
+
+    .critLoc {
+        &.damaged {
+            fill: var(--damage-color) !important;
+        }
+    }
+
+    .crewHit.damaged .crew-x {
+        opacity: 1 !important;
+    }
+}
+
+@media screen {
+    .mekbay-sheet {
+        .clickPassthrough {
+            pointer-events: none;
+        }
+
+        #heatScale text {
+            pointer-events: none;
+        }
+
+        .critSlot {
+            text {
+                pointer-events: none;
+            }
+
+            .critSlot-bg-rect {
+                &:hover {
+                    fill: var(--highlight-color);
+                }
+            }
+
+            &.willDamage .critSlot-bg-rect {
+                fill: #f669;
+
+                &:hover {
+                    fill: #f999;
+                }
+            }
+
+
+        }
+
+
+        .picker-active.critSlot text {
+            text-decoration: underline !important;
+        }
+
+        .heatEffect.hot {
+            fill: var(--hot-color) !important;
+            font-weight: bold;
+
+            &.surpassed {
+                fill: silver !important;
+                font-weight: normal;
+            }
+        }
+
+        #heatScale .overflowFrame.hot {
+            fill: var(--hot-color) !important;
+        }
+
+        #faded-arrow {
+            stroke: #aaa;
+        }
+
+        .inventoryEntry.weakenedHitMod>.hitMod-rect {
+            fill: var(--damage-color) !important;
+        }
+
+        .inventoryEntry.weakenedHitMod>.hitMod-text {
+            fill: #fff !important;
+        }
+
+        /* Skills */
+        .skillValue {
+            fill: #00f;
+        }
+
+        .customAmmoLoadout {
+            fill: #00f;
+        }
+
+        /* Armor and structure highlight */
+        .selectable,
+        .selectable>path {
+            cursor: pointer;
+            touch-action: none;
+            transition: fill ease-out 0.2s;
+        }
+
+        .selectable:not(.pip-hit-area):hover,
+        .selectable:not(.pip-hit-area):hover>path {
+            fill: var(--undamaged-highlight-color) !important;
+        }
+
+        .selectable.damaged:not(.pip-hit-area):hover,
+        .selectable.damaged:not(.pip-hit-area):hover>path {
+            fill: var(--damaged-highlight-color) !important;
+        }
+
+        .pip-hit-area:hover {
+            fill: transparent !important;
+            stroke: transparent !important;
+        }
+
+        .critLoc.willChange:not(.damaged) {
+            fill: orange !important;
+            stroke: #FF0 !important;
+            stroke-width: 1.5px;
+            paint-order: stroke fill;
+            stroke-linejoin: round;
+            stroke-linecap: round;
+            vector-effect: non-scaling-stroke;
+        }
+
+        .critLoc.damaged.willChange {
+            stroke: #03a9f4 !important;
+            fill: #d2f1ff !important;
+        }
+
+        .pip.disabled {
+            stroke: var(--disabled-color) !important;
+            fill: #666 !important;
+        }
+
+        .pip.damaged {
+            fill: var(--damage-color) !important;
+        }
+
+        .pip.fresh:not(.damaged) {
+            stroke: #03a9f4 !important;
+            stroke-width: 1.5px;
+        }
+
+        .pip.damaged.fresh {
+            fill: #FF0 !important;
+            stroke: var(--damage-color) !important;
+            stroke-width: 1.5px;
+            paint-order: stroke fill;
+        }
+
+        .pip.damaged.pending:not(.fresh) {
+            fill: orange !important;
+        }
+
+        .pip.pending:not(.damaged):not(.fresh) {
+            fill: #03a9f4 !important;
+        }
+
+        .soldierPip.fresh {
+            filter: brightness(1.1) saturate(100) hue-rotate(-140deg) !important;
+        }
+
+        .soldierPip.damaged.fresh {
+            filter: brightness(1.1) saturate(100) hue-rotate(20deg) !important;
+        }
+
+        .soldierPip.pending:not(.fresh) {
+            filter: brightness(1.1) saturate(50) hue-rotate(-120deg) !important;
+        }
+
+        .soldierPip.damaged.pending:not(.fresh) {
+            filter: brightness(1) saturate(50) hue-rotate(10deg) !important;
+        }
+
+        .inventoryEntry {
+            &:hover>.inventoryEntryButton {
+                fill: var(--highlight-color);
+            }
+
+            &:active>.inventoryEntryButton {
+                filter: brightness(1.03);
+            }
+
+            &.selected>.inventoryEntryButton {
+                fill: var(--bt-yellow);
+            }
+        }
+
+        .inventoryEntry>.alternativeMode {
+            &:hover>.inventoryEntryButton {
+                fill: var(--highlight-color);
+            }
+
+            &:active>.inventoryEntryButton {
+                filter: brightness(1.03);
+            }
+
+            &.selected>.inventoryEntryButton {
+                fill: var(--bt-yellow);
+            }
+        }
+
+        .hot {
+            &.heat0 {
+                fill: #FFFFFF !important;
+            }
+
+            &.heat1 {
+                fill: #FFFFEE !important;
+            }
+
+            &.heat2 {
+                fill: #FFFFDD !important;
+            }
+
+            &.heat3 {
+                fill: #FFFFCC !important;
+            }
+
+            &.heat4 {
+                fill: #FFFFBB !important;
+            }
+
+            &.heat5 {
+                fill: #FFFFAA !important;
+            }
+
+            &.heat6 {
+                fill: #FFFF99 !important;
+            }
+
+            &.heat7 {
+                fill: #FFFF88 !important;
+            }
+
+            &.heat8 {
+                fill: #FFFF77 !important;
+            }
+
+            &.heat9 {
+                fill: #FFFF66 !important;
+            }
+
+            &.heat10 {
+                fill: #FFFF55 !important;
+            }
+
+            &.heat11 {
+                fill: #FFFF44 !important;
+            }
+
+            &.heat12 {
+                fill: #FFFF33 !important;
+            }
+
+            &.heat13 {
+                fill: #FFFF22 !important;
+            }
+
+            &.heat14 {
+                fill: #FFFF11 !important;
+            }
+
+            &.heat15 {
+                fill: #FFFF00 !important;
+            }
+
+            &.heat16 {
+                fill: #FFEE00 !important;
+            }
+
+            &.heat17 {
+                fill: #FFDD00 !important;
+            }
+
+            &.heat18 {
+                fill: #FFCC00 !important;
+            }
+
+            &.heat19 {
+                fill: #FFBB00 !important;
+            }
+
+            &.heat20 {
+                fill: #FFAA00 !important;
+            }
+
+            &.heat21 {
+                fill: #FF9900 !important;
+            }
+
+            &.heat22 {
+                fill: #FF8800 !important;
+            }
+
+            &.heat23 {
+                fill: #FF7700 !important;
+            }
+
+            &.heat24 {
+                fill: #FF6600 !important;
+            }
+
+            &.heat25 {
+                fill: #FF5500 !important;
+            }
+
+            &.heat26 {
+                fill: #FF4400 !important;
+            }
+
+            &.heat27 {
+                fill: #FF3300 !important;
+            }
+
+            &.heat28 {
+                fill: #FF2200 !important;
+            }
+
+            &.heat29 {
+                fill: #FF1100 !important;
+            }
+
+            &.heat30 {
+                fill: #FF0000 !important;
+            }
+        }
+
+        g.hsPips.interactive {
+            .changeActiveHeatsinksCountButton {
+                transition: stroke 0.2s;
+                stroke-width: 1px;
+                stroke: transparent;
+
+                &:hover {
+                    stroke: var(--highlight-color);
+                }
+            }
+        }
+
+
+        /* workaround to prevent Battle Armor text and images to steal the click event for the armor picker */
+        #suit0>text,
+        #suit0>image,
+        #suit1>text,
+        #suit1>image,
+        #suit2>text,
+        #suit2>image,
+        #suit3>text,
+        #suit3>image,
+        #suit4>text,
+        #suit4>image,
+        #suit5>text,
+        #suit5>image {
+            pointer-events: none;
+        }
+
+        .pip.hsPip {
+            pointer-events: none;
+        }
+
+        .currentMoveMode {
+            font-weight: bold;
+        }
+
+        .unusedMoveMode {
+            opacity: 0.5;
+        }
+    }
+}
+
+/* Night mode */
+@media screen {
+    .night-mode .mekbay-sheet {
+        --svg-bg-color: #141414;
+        --svg-fg-color: #FFF;
+        --svg-fg-color-inv: #000;
+        background-color: var(--svg-bg-color);
+        color: var(--svg-fg-color);
+        fill: var(--svg-fg-color);
+
+        [fill="#000000" i],
+        [fill="#000" i],
+        [fill="black" i],
+        [style*="fill:#000000" i],
+        [style*="fill:black" i],
+        [style*="fill: #000000" i],
+        [style*="fill: black" i],
+        [style*="fill:#000" i],
+        [style*="fill: #000" i],
+        [style*="fill: rgb(0, 0, 0)" i] {
+            fill: var(--svg-fg-color) !important;
+        }
+
+        [stroke="#000000" i],
+        [stroke="#000" i],
+        [stroke="black" i],
+        [style*="stroke:#000000" i],
+        [style*="stroke:black" i],
+        [style*="stroke: #000000" i],
+        [style*="stroke: black" i],
+        [style*="stroke:#000" i],
+        [style*="stroke: #000" i],
+        [style*="stroke: rgb(0, 0, 0)" i] {
+            stroke: var(--svg-fg-color) !important;
+        }
+
+        [fill="#FFFFFF" i],
+        [fill="#FFF" i],
+        [fill="white" i],
+        [style*="fill:#FFFFFF" i],
+        [style*="fill:white" i],
+        [style*="fill: #FFFFFF" i],
+        [style*="fill: white" i],
+        [style*="fill:#FFF" i],
+        [style*="fill: #FFF" i],
+        [style*="fill: rgb(255, 255, 255)" i] {
+            fill: var(--svg-fg-color-inv) !important;
+        }
+
+        [stroke="#FFFFFF" i],
+        [stroke="#FFF" i],
+        [stroke="white" i],
+        [style*="stroke:#FFFFFF" i],
+        [style*="stroke:white" i],
+        [style*="stroke: #FFFFFF" i],
+        [style*="stroke: white" i],
+        [style*="stroke:#FFF" i],
+        [style*="stroke: #FFF" i],
+        [style*="stroke: rgb(255, 255, 255)" i] {
+            stroke: var(--svg-fg-color-inv) !important;
+        }
+
+        [fill="#c7c8ca" i],
+        [style*="fill:#c7c8ca" i],
+        [style*="fill: #c7c8ca" i] {
+            fill: #34373D !important;
+        }
+
+        [stroke="#c7c8ca" i],
+        [style*="stroke:#c7c8ca" i],
+        [style*="stroke: #c7c8ca" i] {
+            stroke: #34373D !important;
+        }
+
+        [fill="#c7c7c7" i],
+        [style*="fill:#c7c7c7" i],
+        [style*="fill: #c7c7c7" i] {
+            fill: #34373D !important;
+        }
+
+        [stroke="#c7c7c7" i],
+        [style*="stroke:#c7c7c7" i],
+        [style*="stroke: #c7c7c7" i] {
+            stroke: #34373D !important;
+        }
+
+        [fill="#bbb" i],
+        [style*="fill:#bbb" i] {
+            fill: #444 !important;
+        }
+
+        .damaged {
+            fill: var(--damage-color) !important;
+
+            path {
+                fill: var(--damage-color) !important;
+            }
+
+            text {
+                fill: var(--damage-color) !important;
+            }
+        }
+
+        image {
+            transform: none;
+            filter: invert(1);
+        }
+
+        #fluff-image-fo {
+            mix-blend-mode: lighten;
+        }
+
+        #fluff-image-injected {
+            transform: none;
+            filter: invert(1);
+            mix-blend-mode: lighten;
+        }
+
+        #faded-arrow {
+            stroke: #666;
+        }
+
+        .heatEffect.hot.surpassed {
+            fill: #3f3f3f !important;
+        }
+
+        .detached,
+        .detached>path {
+            fill: gray !important;
+            pointer-events: none;
+        }
+
+        .critGroup.detached text {
+            fill: #3f3f3f !important;
+        }
+
+        .pip.detached {
+            stroke: gray;
+        }
+
+        .pip.disabled {
+            stroke: var(--disabled-color) !important;
+            fill: #666 !important;
+        }
+
+        .pip.damaged {
+            fill: var(--damage-color) !important;
+        }
+
+        .pip.fresh:not(.damaged) {
+            stroke: #03a9f4 !important;
+        }
+
+        .pip.damaged.fresh {
+            fill: #FF0 !important;
+            stroke: var(--damage-color) !important;
+        }
+
+        .pip.damaged.pending:not(.fresh) {
+            fill: orange !important;
+        }
+
+        .pip.pending:not(.damaged):not(.fresh) {
+            fill: #03a9f4 !important;
+        }
+
+        .soldierPip.damaged {
+            filter: invert(1) opacity(0.3) !important;
+        }
+
+        .soldierPip.damaged.fresh {
+            filter: invert(1) brightness(0.6) saturate(100) hue-rotate(237deg) contrast(4) !important;
+        }
+
+        .soldierPip.fresh {
+            filter: invert(1) saturate(100) hue-rotate(10deg) !important;
+        }
+
+        .soldierPip.pending:not(.fresh) {
+            filter: invert(1) saturate(100) hue-rotate(40deg) !important;
+        }
+
+        .soldierPip.damaged.pending:not(.fresh) {
+            filter: invert(1) brightness(0.6) saturate(50) hue-rotate(217deg) contrast(1.5) !important;
+        }
+
+        .skillValue {
+            fill: #bbf;
+        }
+
+        .customAmmoLoadout {
+            fill: #bbf;
+        }
+
+        .selectable:not(.pip-hit-area):hover,
+        .selectable:not(.pip-hit-area):hover>path {
+            fill: var(--undamaged-night-highlight-color) !important;
+        }
+
+        .selectable.damaged:not(.pip-hit-area)::hover,
+        .selectable.damaged:not(.pip-hit-area)::hover>path {
+            fill: var(--damaged-highlight-color) !important;
+        }
+
+
+        .inventoryEntry {
+            &.selected>text {
+                fill: #000;
+            }
+
+            &.selected>g:not(.alternativeMode):not(.weaponQuirks):not(.linked)>text {
+                fill: #000;
+            }
+        }
+
+        .inventoryEntry>.alternativeMode {
+            &.selected>text {
+                fill: #000;
+            }
+
+            &.selected>g>text {
+                fill: #000;
+            }
+        }
+
+        .hot {
+            &.heat0 {
+                fill: #000000 !important;
+            }
+
+            &.heat1 {
+                fill: #090900 !important;
+            }
+
+            &.heat2 {
+                fill: #121200 !important;
+            }
+
+            &.heat3 {
+                fill: #1B1B00 !important;
+            }
+
+            &.heat4 {
+                fill: #242400 !important;
+            }
+
+            &.heat5 {
+                fill: #2D2D00 !important;
+            }
+
+            &.heat6 {
+                fill: #363600 !important;
+            }
+
+            &.heat7 {
+                fill: #3F3F00 !important;
+            }
+
+            &.heat8 {
+                fill: #484800 !important;
+            }
+
+            &.heat9 {
+                fill: #515100 !important;
+            }
+
+            &.heat10 {
+                fill: #5A5A00 !important;
+            }
+
+            &.heat11 {
+                fill: #636300 !important;
+            }
+
+            &.heat12 {
+                fill: #6C6C00 !important;
+            }
+
+            &.heat13 {
+                fill: #757500 !important;
+            }
+
+            &.heat14 {
+                fill: #7F7F00 !important;
+            }
+
+            &.heat15 {
+                fill: #888800 !important;
+            }
+
+            &.heat16 {
+                fill: #907F00 !important;
+            }
+
+            &.heat17 {
+                fill: #987600 !important;
+            }
+
+            &.heat18 {
+                fill: #A06D00 !important;
+            }
+
+            &.heat19 {
+                fill: #A86400 !important;
+            }
+
+            &.heat20 {
+                fill: #B05B00 !important;
+            }
+
+            &.heat21 {
+                fill: #B85200 !important;
+            }
+
+            &.heat22 {
+                fill: #C04900 !important;
+            }
+
+            &.heat23 {
+                fill: #C84000 !important;
+            }
+
+            &.heat24 {
+                fill: #D03700 !important;
+            }
+
+            &.heat25 {
+                fill: #D82E00 !important;
+            }
+
+            &.heat26 {
+                fill: #E02500 !important;
+            }
+
+            &.heat27 {
+                fill: #E81C00 !important;
+            }
+
+            &.heat28 {
+                fill: #F01300 !important;
+            }
+
+            &.heat29 {
+                fill: #F80A00 !important;
+            }
+
+            &.heat30 {
+                fill: #FF0000 !important;
+            }
+        }
+    }
+}
+
+@media screen {
+    .mekbay-sheet {
+
+        .applyHeatButtonFrame {
+            transition: stroke 0.2s, fill 0.2s;
+        }
+
+        .dirtyHeat.hot {
+            .applyHeatButtonFrame {
+                fill: hsl(0, 100%, 95%) !important;
+                stroke: var(--hot-color) !important;
+
+                .night-mode & {
+                    fill: hsl(0, 100%, 8%) !important;
+                }
+            }
+
+            #applyHeatButton path {
+                fill: var(--hot-color) !important;
+            }
+        }
+
+        .dirtyHeat.cold {
+            .applyHeatButtonFrame {
+                fill: hsl(240, 100%, 95%) !important;
+                stroke: var(--cold-color) !important;
+
+                .night-mode & {
+                    fill: hsl(240, 100%, 8%) !important;
+                }
+            }
+
+            #applyHeatButton path {
+                fill: var(--cold-color) !important;
+            }
+        }
+
+        #applyHeatButton {
+            display: none;
+        }
+
+        .dirtyHeat #applyHeatButton.interactive {
+            display: block;
+
+            path {
+                transition: filter 0.2s;
+            }
+
+            &:hover {
+                path {
+                    filter: brightness(1.2);
+                }
+            }
+        }
+
+    }
+}
+
+/* Printing */
+@media print {
+
+    * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        -webkit-transition: none !important;
+        transition: none !important;
+    }
+
+    .night-mode .mekbay-sheet,
+    .night-mode .mekbay-sheet * {
+        filter: none !important;
+    }
+
+    .mekbay-sheet {
+        transform: none !important;
+    }
+
+    html,
+    body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background: white;
+        overflow: unset;
+    }
+
+}
+
+@media screen {
+    .print-only {
+        display: none !important;
+    }
+}
+
+@media print {
+
+    .header,
+    .backdrop,
+    .screen-only {
+        display: none !important;
+    }
+
+    .print-show {
+        visibility: visible !important;
+    }
+}
+
+/* =========================================================================
+   BCE THEME TOKENS — T-015 swap seam (DIRECTIVE-008)
+   The campaign dashboard styles through these custom properties, never raw hex.
+   `.theme-dossier` is the default (and only) theme shipping now; add a sibling
+   `.theme-dark { --desk: …; }` later and swap the host class to retheme. The
+   New Campaign wizard still carries its own local palette — migrating it onto
+   these tokens is a later pass (do NOT retheme it here).
+   ========================================================================= */
+.theme-dossier {
+    --desk: #17160f;
+    --paper: #d8caa4;
+    --paper2: #d0c198;
+    --panel: #cdbd8f;
+    --ink: #2b2720;
+    --ink2: #6e6347;
+    --line: #b3a06f;
+    --stamp: #92301f;
+    --ok: #5d6b34;
+    --warn: #9a6516;
+    --cold: #5a6b7a;
+    --stencil: 'Saira Stencil One', 'Oswald', sans-serif;
+    --label: 'Oswald', sans-serif;
+    --type: 'Special Elite', 'JetBrains Mono', monospace;
+    --mono: 'JetBrains Mono', monospace;
+}
+/* D-025 — print isolation: when the mission package overlay is open, print ONLY it (clean paper). */
+@media print {
+    body:has(bce-mission-package .pkg-overlay) * { visibility: hidden; }
+    body:has(bce-mission-package .pkg-overlay) bce-mission-package,
+    body:has(bce-mission-package .pkg-overlay) bce-mission-package * { visibility: visible; }
+    body:has(bce-mission-package .pkg-overlay) bce-mission-package .pkg-overlay {
+        position: absolute; inset: 0; background: #fff;
+    }
+    body:has(bce-mission-package .pkg-overlay) bce-mission-package .no-print { display: none !important; }
+}
+/* D-034 — the AAR document prints under the same isolation. Only the OVERLAY subtree goes visible
+   (the archive list behind it stays hidden — the component nests both). */
+@media print {
+    body:has(bce-aar-tab .aar-overlay) * { visibility: hidden; }
+    body:has(bce-aar-tab .aar-overlay) bce-aar-tab .aar-overlay,
+    body:has(bce-aar-tab .aar-overlay) bce-aar-tab .aar-overlay * { visibility: visible; }
+    body:has(bce-aar-tab .aar-overlay) bce-aar-tab .aar-overlay {
+        position: absolute; inset: 0; background: #fff;
+    }
+    body:has(bce-aar-tab .aar-overlay) bce-aar-tab .no-print { display: none !important; }
+}
+
+/* D-076 — GM per-mission OpFor arms-mix toggle (dashboard Operations board). Lives GLOBAL (keeps
+   dashboard.scss under its 20kB component-style budget — HF-019); mirrors the D-068 segmented toggle look. */
+.amx-gm { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; }
+.amx-gm .amx-lbl { font-family: var(--label); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink2); }
+.amx-gm .amx-b { font-family: var(--mono); font-size: 11px; background: var(--paper2); color: var(--ink); border: 1.4px solid var(--ink); padding: 4px 10px; min-height: 34px; cursor: pointer; }
+.amx-gm .amx-b.sel { background: var(--ink); color: var(--paper); }
+.amx-gm .amx-b:hover:not(.sel), .amx-gm .amx-b:focus-visible { background: var(--panel); outline: none; }
+
+/* D-077 — operational-tempo cue (dashboard Operations board). Global (keeps dashboard.scss under its 20kB
+   component-style budget — HF-019). Read-only escalation cue + a small GM reset/adjust. */
+.tempo-cue { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; font-family: var(--mono); font-size: 11px; }
+.tempo-cue .tempo-lbl { font-family: var(--label); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink2); }
+.tempo-cue .tempo-val { font-weight: 700; color: var(--ink); }
+.tempo-cue .tempo-val.up { color: var(--stamp); }
+.tempo-cue .tempo-val.down { color: var(--ok, #2e7d32); }
+.tempo-cue .tempo-prior { color: var(--ink2); }
+.tempo-cue .tempo-gm { display: inline-flex; gap: 4px; margin-left: auto; }
+.tempo-cue .tempo-b { font-family: var(--mono); font-size: 11px; background: var(--paper2); color: var(--ink); border: 1.3px solid var(--ink); padding: 2px 8px; min-height: 30px; cursor: pointer; }
+.tempo-cue .tempo-b:hover, .tempo-cue .tempo-b:focus-visible { background: var(--ink); color: var(--paper); outline: none; }
+
+/* ═══ DIRECTIVE-HARDEN-4 Part 1 — shared modal-chrome styles, hoisted to ONE source. ═══
+   Scoped-global (the host-element prefix pierces emulated encapsulation and reaches child components:
+   bce-negotiate-modal / bce-hotspot-io inside bce-chaos-contracts) — the pattern precedent is the
+   bce-mission-package .no-print rules above. SAFE here because the .cc-* class family is used ONLY by
+   the chaos contracts tab + its two children (panel-verified). Do NOT hoist the dashboard's generic
+   .ph/.cbox/.cbtn chrome this way — a dozen nested components (flow/roster/save-dialog/pilot-detail/…)
+   reuse those class names with their own rules, and a scoped-global leaks into all of them
+   (HARDEN-4 adversarial-panel catch); the resolve child carries lockstep copies instead.
+   Declarations are VERBATIM from the component copies they replace; appearance is byte-identical by
+   the verify-h4-styles computed-style diff. Do not fork the .cc-* rules per-component again. */
+
+/* — the Hot Spots contract chrome (chaos-contracts tab + its modal/io children) — */
+bce-chaos-contracts .cc-btn { font-family:var(--label); font-weight:600; letter-spacing:1.5px; font-size:12px; text-transform:uppercase; border:1.6px solid var(--ink); background:var(--paper2, var(--paper)); color:var(--ink); padding:10px 16px; cursor:pointer; min-height:42px; }
+bce-chaos-contracts .cc-btn.small { padding:7px 12px; min-height:34px; font-size:11px; }
+bce-chaos-contracts .cc-btn.go { border-color:var(--stamp); color:var(--stamp); }
+bce-chaos-contracts .cc-btn.go:hover, bce-chaos-contracts .cc-btn.go:focus-visible { background:var(--stamp); color:var(--paper); outline:none; }
+bce-chaos-contracts .cc-btn.ghost { background:transparent; }
+bce-chaos-contracts .cc-btn.danger { border-color:var(--stamp); color:var(--stamp); margin-top:6px; }
+bce-chaos-contracts .cc-btn.danger:hover { background:var(--stamp); color:var(--paper); }
+bce-chaos-contracts .cc-btn.small.on { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+bce-chaos-contracts .cc-terms { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+bce-chaos-contracts .ct-row { display:grid; grid-template-columns:150px 1fr auto auto; gap:12px; align-items:center; border:1.3px solid var(--ink2); background:var(--paper2, var(--paper)); padding:7px 12px; }
+bce-chaos-contracts .ct-l { font-family:var(--label); font-weight:600; letter-spacing:1px; font-size:11px; text-transform:uppercase; color:var(--ink2); }
+bce-chaos-contracts .ct-v { font-family:var(--mono); font-size:14px; font-weight:700; }
+bce-chaos-contracts .cc-econ { display:flex; flex-wrap:wrap; gap:18px; font-family:var(--type); font-size:13px; color:var(--ink2); margin-bottom:14px; }
+bce-chaos-contracts .cc-econ b { font-family:var(--mono); color:var(--ink); }
+bce-chaos-contracts .cc-actions { display:flex; gap:10px; }
+@media (max-width:640px) { bce-chaos-contracts .ct-row { grid-template-columns:1fr auto; } bce-chaos-contracts .ct-l, bce-chaos-contracts .ct-v { grid-column:1; } }
+
+/* DIRECTIVE-ODM-3 addendum C — in-app packet print. ACTIVE ONLY while body.odm-printing is set (the ODM
+   briefing surface sets it around window.print() and removes it after) — inert for Classic/HS always.
+   Everything hides; the rendered packet panel prints alone, full-width. */
+@media print {
+    body.odm-printing * { visibility: hidden; }
+    body.odm-printing bce-odm-briefing [data-testid='ob-doc'],
+    body.odm-printing bce-odm-briefing [data-testid='ob-doc'] * { visibility: visible; }
+    body.odm-printing bce-odm-briefing .ob-print-run { visibility: visible; }
+    body.odm-printing bce-odm-briefing [data-testid='ob-doc'] { position: absolute; left: 0; top: 0; width: 100%; }
+}

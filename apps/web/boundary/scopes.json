@@ -1,0 +1,112 @@
+{
+ "_doc": "DIRECTIVE-BOUNDARY-1 Slice 1 \u2014 the engine/gamesystem scope map for the ESLint boundary fence. Paths are prefixes relative to apps/web/src/app (a trailing '/' = folder prefix; no trailing slash = exact file, extension omitted). Only UNAMBIGUOUS, high/medium-confidence scopes are listed \u2014 the shared engine substrate (mission/, resolve*, aar/, new-campaign-state, clock/, barracks/, battle/{force,damage,reconcile}) and every Appendix-D ambiguity are DELIBERATELY OMITTED so they are unscoped (fence-exempt) pending decision D-0..D-6 in BOUNDARY-MAP.md. See BOUNDARY-MAP.md \u00a74. HSFORGE-1 ruling D3 (James, 2026-07-16): contract/faction-matchup.ts RETAGGED engine-classic \u2192 unscoped \u2014 pure both-engines universe-plausibility logic (zero mode branches, header says it lifts to apps/api) = platform by the D-0 sort; its only consumer was Traditional's market, but the HS Forge now calls it too. No enforcement removed (no fenced edge used it) and none added. ODM-1: engine-odm = campaign/odm/ (the ruled fork container). Its Class-2 SHARED mounts (walk/inventory/repair/market-adjacent Classic UI) appear as engine-odm->engine-classic edges in the baseline \u2014 the RULED shared-platform consumption, recorded as odm's clean-start baseline; engine-odm->engine-hs must stay ZERO.",
+ "root": "apps/web/src/app",
+ "scopes": {
+  "engine-hs": [
+   "campaign/chaos/",
+   "campaign/claims/opfor-builder.ts",
+   "campaign/dashboard/sp-toast.ts",
+   "campaign/setup/chaos-campaigns.ts"
+  ],
+  "engine-classic": [
+   "campaign/walk/",
+   "campaign/inventory/",
+   "campaign/market/",
+   "campaign/repair/",
+   "campaign/orders/",
+   "campaign/intel/",
+   "campaign/personnel/",
+   "campaign/economy-ledger.ts",
+   "campaign/contract/contract-market.service.ts",
+   "campaign/contract/employer-traits.ts"
+  ],
+  "gamesystem-cbt": [
+   "equipment-handlers/",
+   "models/rules/",
+   "models/cbt-force.model.ts",
+   "models/cbt-force-unit.model.ts",
+   "models/cbt-force-unit-state.model.ts",
+   "models/c3-network.model.ts",
+   "models/motiveModes.model.ts",
+   "models/turn-state.model.ts",
+   "models/command-abilities.model.ts",
+   "utils/bv-calculator.util.ts",
+   "utils/cbt-common.util.ts",
+   "utils/cbtprint.util.ts",
+   "utils/infantry.util.ts",
+   "utils/c3-network.util.ts",
+   "services/unit-svg-mek.service.ts",
+   "services/unit-svg-aero.service.ts",
+   "services/unit-svg-infantry.service.ts",
+   "services/unit-initializer.service.ts",
+   "pipes/adjusted-bv.pipe.ts",
+   "pipes/expanded-components.pipe.ts",
+   "pipes/filter-ammo.pipe.ts"
+  ],
+  "gamesystem-as": [
+   "models/as-abilities.model.ts",
+   "models/as-alternate-munitions.model.ts",
+   "models/as-force.model.ts",
+   "models/as-force-unit.model.ts",
+   "models/as-force-unit-state.model.ts",
+   "utils/pv-calculator.util.ts",
+   "utils/as-common.util.ts",
+   "utils/asprint.util.ts",
+   "services/as-ability-lookup.service.ts",
+   "pipes/adjusted-pv.pipe.ts",
+   "components/alpha-strike-card/",
+   "components/alpha-strike-viewer/",
+   "components/edit-as-pilot-dialog/",
+   "components/ability-info-dialog/"
+  ],
+  "engine-odm": [
+   "campaign/odm/"
+  ]
+ },
+ "forbidden": [
+  [
+   "engine-classic",
+   "engine-hs"
+  ],
+  [
+   "engine-hs",
+   "engine-classic"
+  ],
+  [
+   "engine-classic",
+   "gamesystem-cbt"
+  ],
+  [
+   "engine-classic",
+   "gamesystem-as"
+  ],
+  [
+   "engine-hs",
+   "gamesystem-cbt"
+  ],
+  [
+   "engine-hs",
+   "gamesystem-as"
+  ],
+  [
+   "gamesystem-cbt",
+   "gamesystem-as"
+  ],
+  [
+   "gamesystem-as",
+   "gamesystem-cbt"
+  ],
+  [
+   "engine-odm",
+   "engine-hs"
+  ],
+  [
+   "engine-hs",
+   "engine-odm"
+  ],
+  [
+   "engine-classic",
+   "engine-odm"
+  ]
+ ]
+}

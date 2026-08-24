@@ -1,0 +1,73 @@
+<!-- FORKED FROM campaign/mission/mission-package.html @ 6cc5dae - DIRECTIVE-ODM-1 Phase 1 (a DRIFT SURFACE). Strips: every HS (hotspotBrief/track-sheet) branch - ODM renders the Traditional dossier; the odm briefing-cycle format is a content wave. -->
+@if (vm(); as v) {
+<div class="pkg-overlay" (click)="onClose()">
+  <div class="pkg-actions no-print">
+    @if (canRefine()) {
+      <button type="button" class="pa-btn refine" [disabled]="refining()" (click)="refine(); $event.stopPropagation()">{{ refining() ? '✦ Refining…' : '✦ Refine mission' }}</button>
+    }
+    @if (coherence()) {
+      <button type="button" class="pa-btn coh" [class.on]="cohOpen()" (click)="toggleCoh(); $event.stopPropagation()" title="Show / hide the GM coherence read (Esc dismisses)">⚖ Coherence</button>
+    }
+    <!-- DIRECTIVE-101: WARNORD / FRAGORD are INDEPENDENT (either, or both) — the print path prints whatever is shown.
+         DIRECTIVE-124: a premade hotspot renders the ONE authored brief, so the Forge format toggles are hidden.
+         DIRECTIVE-IMPORT-6 Part E: ANY Hot Spots track renders the TRACK sheet only — the toggles are Traditional-only. -->
+    <!-- ODM-1 FORK: HS block STRIPPED -->
+    <button type="button" class="pa-btn" (click)="onPrint(); $event.stopPropagation()">⎙ Print</button>
+    <button type="button" class="pa-btn close" (click)="onClose(); $event.stopPropagation()">✕ Close</button>
+  </div>
+  @if (canRefine() && results().length) {
+    <div class="refine-results no-print" (click)="$event.stopPropagation()">
+      @for (r of results(); track r.id) {
+        <span class="rr" [class.ok]="r.status === 'accepted'" [class.rej]="r.status === 'rejected'" [class.err]="r.status === 'error'">
+          {{ r.label }}: <b>{{ r.status }}</b>@if (r.gate) { — {{ r.gate }} }@if (r.status === 'accepted') { ({{ r.ms }}ms@if (r.validate) { · {{ r.validate.verdict }} }) }
+        </span>
+      }
+    </div>
+  }
+  <!-- D-043 — the GM-only COHERENCE verdict (advisory; the narrator reasons, the GM decides) -->
+  @if (coherence(); as cv) { @if (cohOpen()) {
+    <div class="coherence-panel no-print" [class.clean]="cv.reads === 'clean'" [class.flagged]="cv.reads === 'flags'" (click)="$event.stopPropagation()">
+      <div class="coh-h">⚖ COHERENCE READ — GM ONLY <span class="coh-model">{{ cv.model }}</span>
+        <button type="button" class="coh-x" title="Dismiss (Esc) — recall via ⚖ Coherence" (click)="closeCoh()">✕</button>
+      </div>
+      @if (cv.reads === 'clean') {
+        <div class="coh-body clean">Reads clean — timeline, OpFor, forks, and assets are internally consistent.</div>
+      } @else {
+        <ul class="coh-flags">
+          @for (f of cv.flags; track $index) { <li><b>{{ f.where }}</b> — {{ f.issue }}</li> }
+        </ul>
+      }
+      @if (refineLog().length) {
+        <div class="coh-changelog">
+          <div class="cl-h">WHAT THE REFINE CHANGED — prose only · no number, name, objective, or fork was altered OR invented (the machine diff guards every refined section — drift and fabricated figures both auto-reject to template)</div>
+          @for (e of refineLog(); track $index) {
+            <details class="cl-entry" [class.rej]="e.status !== 'accepted'">
+              <summary>{{ e.label }} — <b>{{ e.status === 'accepted' ? '✦ rewritten' : 'kept template' }}</b>@if (e.status !== 'accepted' && e.gate) { <span class="cl-why">rejected: {{ e.gate }}</span> }</summary>
+              @if (e.status === 'accepted' && e.after) {
+                <div class="cl-before"><span class="cl-tag">BEFORE</span> {{ e.before }}</div>
+                <div class="cl-after"><span class="cl-tag">AFTER</span> @for (t of proseDiff(e.before, e.after); track $index) { <span [class.ins]="t.add">{{ t.t }}</span> }</div>
+              } @else {
+                <div class="cl-kept">Template stands — the model's rewrite failed the machine diff, so nothing changed here.</div>
+              }
+            </details>
+          }
+        </div>
+      }
+      <div class="coh-note">Advisory only — the narrator reasons over the whole package; it never edits structure. The GM acts.</div>
+    </div>
+  } }
+
+  <!-- DIRECTIVE-124 — the AUTHORED premade-hotspot brief. The ONE brief (same source drives the player tablet);
+       renders instead of the Forge FRAGORD/WARNORD, which are suppressed below when a hotspot is bound. -->
+  <!-- ODM-1 FORK: HS block STRIPPED -->
+
+  <!-- DIRECTIVE-101 — FRAGORD: the condensed ~3-page order, a RENDER over the same vm (no prose/content change).
+       When both are on it prints first as the quick-reference card, then the full WARNORD on a fresh page.
+       DIRECTIVE-124 — suppressed for a premade hotspot (the authored article above is the ONE brief). -->
+  <!-- DIRECTIVE-IMPORT-6 Part E — under Hot Spots the TRACK sheet ALWAYS renders (trackOnly), whatever the FRAGORD toggle
+       says; Traditional (trackOnly false) reduces to today's `showFragord() && !hotspotBrief()` exactly. -->
+  <!-- ODM-1 FORK: HS block STRIPPED -->
+  <!-- DIRECTIVE-IMPORT-6 Part E — the Traditional WARNORD dossier never renders under Hot Spots (trackOnly); Traditional unchanged. -->
+  <!-- ODM-1 FORK: HS block STRIPPED -->
+</div>
+}

@@ -1,0 +1,196 @@
+@if (variant() === 'rail') {
+    <!-- DIRECTIVE-119 P2 — the Hot Spots top-of-sheet PROCESS RAIL: the mission lifecycle as a spine, locked-until-earned
+         (blocked = ahead of the earned frontier = non-navigating; done/pending = at/behind = clickable, back-free). -->
+    <nav class="prail" aria-label="Campaign process rail">
+        @for (s of hsRail(); track s.key) {
+            <button type="button" class="pr-step st-{{ s.status }}" [class.is-next]="s.key === hsRailNext()"
+                    [disabled]="s.status === 'blocked'" [attr.data-step]="s.key" [attr.data-status]="s.status"
+                    (click)="railStep(s)" [attr.aria-label]="s.name + ' — ' + s.status + (s.key === hsRailNext() ? ', do this next' : '')">
+                <span class="pr-ico" aria-hidden="true">@switch (s.status) { @case ('done') { ✓ } @case ('blocked') { ▢ } @default { @if (s.key === hsRailNext()) { ▶ } @else { ◉ } } }</span>
+                <span class="pr-name">{{ s.name }}</span>
+            </button>
+            @if (!$last) { <span class="pr-sep" aria-hidden="true">›</span> }
+        }
+    </nav>
+} @else {
+@if (isEmpty()) {
+    <div class="fl-head"><div class="ph">Campaign flow</div></div>
+    <div class="fl-empty">
+        <div class="fl-empty-h">No campaign flow yet</div>
+        <p class="note">Accept a contract and <b>Generate</b> its opening operation on the <b>Missions</b> tab — the branching tree appears here as each outcome unlocks the next operations.</p>
+    </div>
+} @else {
+    <div class="fl-head">
+        <div class="ph">Campaign flow</div>
+        @if (contracts().length > 1) {
+            <select class="fl-sel" (change)="select($any($event.target).value)" aria-label="Contract">
+                @for (c of contracts(); track c.id) { <option [value]="c.id" [selected]="c.id === effectiveId()">{{ c.label }}</option> }
+            </select>
+        } @else if (contracts()[0]; as c) {
+            <span class="fl-ctx">{{ c.label }}</span>
+        }
+    </div>
+    <p class="note">Outcome-gated branches — root at top, futures below. <b>Locked</b> nodes are veiled (name · threat · gate only). Tap a node for detail.@if (!isLive()) { <span class="fl-ro">archived · read-only</span> }</p>
+
+    <div class="flow-pan">
+        <div class="flow-canvas" [style.width.px]="layout().width" [style.height.px]="layout().height">
+            <svg class="edges" [attr.width]="layout().width" [attr.height]="layout().height" aria-hidden="true">
+                @for (e of layout().edges; track $index) {
+                    <path [attr.d]="e.path" class="edge" [class.e-fail]="e.gate === 'FAILURE'" [class.e-any]="e.gate === 'ANY'"></path>
+                    <text [attr.x]="e.lx" [attr.y]="e.ly" class="elabel">{{ thresholdLabel(e.gate) }}</text>
+                }
+            </svg>
+            @for (n of layout().nodes; track n.branch.branchId) {
+                <button type="button" class="fnode"
+                    [class.s-active]="n.branch.state === 'ACTIVE'" [class.s-available]="n.branch.state === 'AVAILABLE'"
+                    [class.s-locked]="n.branch.state === 'LOCKED'" [class.s-resolved]="n.branch.state === 'RESOLVED'"
+                    [class.s-retired]="n.branch.state === 'RETIRED'" [class.foc]="focusedId() === n.branch.branchId"
+                    [class.still-open]="stillOpen(n.branch)"
+                    [style.left.px]="n.px" [style.top.px]="n.py" (click)="focus(n.branch)">
+                    @if (n.branch.state === 'ACTIVE') { <span class="pulse" aria-hidden="true"></span> }
+                    <span class="fn-name">{{ n.branch.name }}</span>
+                    <span class="fn-meta">{{ n.branch.state }} · {{ n.branch.threat }}@if (n.branch.trackType) { · {{ trackTypeLabel(n.branch.trackType) }} }</span>
+                    @if (n.branch.state === 'RESOLVED') { <span class="fn-badge t-{{ n.branch.resolution?.outcomeTier }}">{{ n.branch.resolution?.outcomeTier }}</span> }
+                    @else if (n.branch.state === 'AVAILABLE') {
+                        <span class="fn-tag">{{ n.branch.continuation ? 'continuation' : n.branch.parentBranchId ? 'unlocked' : 'opening' }}</span>
+                        @if (stillOpen(n.branch)) { <span class="fn-open">still open</span> }
+                        @if (n.branch.reducedSpoils) { <span class="fn-reduced">reduced spoils</span> }
+                    }
+                    @else if (n.branch.state === 'LOCKED') { <span class="fn-tag veil">veiled · {{ thresholdLabel(n.branch.outcomeGate) }}</span> }
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (focused(); as n) {
+        <div class="fdrawer-back" (click)="closeDrawer()">
+            <aside class="fdrawer" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Branch detail"
+                [class.s-active]="n.state === 'ACTIVE'" [class.s-available]="n.state === 'AVAILABLE'"
+                [class.s-locked]="n.state === 'LOCKED'" [class.s-resolved]="n.state === 'RESOLVED'" [class.s-retired]="n.state === 'RETIRED'">
+                <div class="fd-head">
+                    <div class="fd-htext">
+                        <div class="fd-name">{{ n.name }}</div>
+                        <div class="fd-state">{{ n.state }} · {{ n.threat }} threat@if (n.trackType) { · {{ trackTypeLabel(n.trackType) }} }@if (n.outcomeGate !== 'ANY') { · opens {{ thresholdLabel(n.outcomeGate) }} }</div>
+                    </div>
+                    <button type="button" class="fd-x" (click)="closeDrawer()" aria-label="Close">✕</button>
+                </div>
+
+                @switch (n.state) {
+                    @case ('RESOLVED') {
+                        <div class="fd-tier t-{{ n.resolution?.outcomeTier }}">{{ n.resolution?.outcomeTier }}</div>
+                        <!-- IMPORT-6 FOLLOWUPS — a Hot Spots track resolved under a VP model: the AUTHORED objectives with the marks the
+                             GM set (snapshotted at resolve, resolution.aar.objectiveMarks). Legacy / Traditional → the trio below, unchanged. -->
+                        @if (n.resolution?.aar?.objectiveMarks?.length) {
+                            <div class="fd-sec">Objective outcome</div>
+                            <ul class="fd-ans">
+                                @for (o of ourMarks(n); track $index) { <li>{{ o.text }} <span class="fd-vp">{{ o.vp }} VP</span> <b [class.no]="!o.met">{{ o.met ? 'MET' : 'NOT MET' }}</b></li> }
+                                @if (n.resolution?.answers?.broke) { <li>Force broke / withdrew <b class="no">YES</b></li> }
+                            </ul>
+                        } @else if (n.resolution?.answers; as a) {
+                            <div class="fd-sec">Objective outcome</div>
+                            <ul class="fd-ans">
+                                <li>Primary <b [class.no]="!a.primary">{{ a.primary ? 'MET' : 'NOT MET' }}</b></li>
+                                <li>Secondary <b [class.no]="!a.secondary">{{ a.secondary ? 'MET' : 'NOT MET' }}</b></li>
+                                <li>Bonus <b [class.no]="!a.bonus">{{ a.bonus ? 'MET' : 'NOT MET' }}</b></li>
+                                <li>Compromised <b [class.no]="a.compromised">{{ a.compromised ? 'YES' : 'NO' }}</b></li>
+                            </ul>
+                        }
+                        @if (n.resolution?.notes) { <div class="fd-sec">Notes</div><p class="fd-p">{{ n.resolution?.notes }}</p> }
+                        <div class="fd-date">Resolved {{ dateText(n.resolution?.resolvedDate) }}</div>
+                        <!-- DIRECTIVE-122 — the per-mission ITERATION LEDGER pop-out (Hot Spots-only; Traditional never
+                             sets resolution.ledger). Renders the stored snapshot verbatim — no re-derive. -->
+                        @if (isHotspots() && n.resolution?.ledger; as L) {
+                            <details class="fd-ledger">
+                                <summary>Iteration ledger<span class="fdl-win">@if (L.dateFrom) { {{ L.dateFrom }}@if (L.dateTo && L.dateTo !== L.dateFrom) {  → {{ L.dateTo }} } }</span></summary>
+                                <div class="fdl-body">
+                                    <div class="fdl-row"><span>Warchest</span><b>{{ L.warchestStart }} → {{ L.warchestEnd }} SP</b></div>
+                                    <div class="fdl-row"><span>SP spent</span><b>{{ L.spSpent }} SP</b></div>
+                                    <div class="fdl-row"><span>Units deployed</span><b>{{ L.deployed }}</b></div>
+                                    <div class="fdl-row"><span>Units gained</span><b>{{ L.gained }}</b></div>
+                                    <div class="fdl-row"><span>Units lost</span><b>{{ L.lost }}</b></div>
+                                    <div class="fdl-row"><span>Damage taken</span><b>{{ L.damageTaken ?? '—' }}</b></div>
+                                    <div class="fdl-row"><span>Damage given</span><b>{{ L.damageGiven ?? '—' }}</b></div>
+                                    <div class="fdl-row"><span>Wounds</span><b>{{ L.wounds }}</b></div>
+                                    @if (L.purchases.length) {
+                                        <div class="fdl-sub">Market purchases</div>
+                                        @for (p of L.purchases; track $index) { <div class="fdl-row buy"><span>{{ p.label }}</span><b>{{ p.sp }} SP</b></div> }
+                                    } @else { <div class="fdl-none">No market purchases this cycle.</div> }
+                                </div>
+                            </details>
+                        }
+                    }
+                    @case ('ACTIVE') {
+                        <div class="fd-sec">Objectives</div>
+                        <ul class="fd-obj">@for (o of activeObjectives(); track $index) { <li>{{ o }}</li> }</ul>
+                        @if (hasPackage()) {
+                            <button type="button" class="fd-btn go" (click)="openPkg()">Open full package &raquo;</button>
+                        } @else {
+                            <p class="fd-note">Generic operation — no extended package (the brief is the whole operation).</p>
+                        }
+                    }
+                    @case ('AVAILABLE') {
+                        @if (n.reducedSpoils) { <div class="fd-veil">Reached by grading down — your outcome out-graded the authored fork, so the command advances on a lesser branch (reduced spoils).</div> }
+                        @if (n.forkContext; as fc) {
+                            <div class="fd-sec">If you take this operation</div>
+                            <p class="fd-p">{{ fc.consequence }}</p>
+                        } @else {
+                            <p class="fd-p">The opening operation. Generate it to stand up the mission and reveal the lookahead.</p>
+                        }
+                        @if (stillOpen(n)) { <p class="fd-note">Still open — this option stays playable while the contract window holds, even though the campaign has moved on.</p> }
+                        <button type="button" class="fd-btn go" [disabled]="!canGenerate()" (click)="generate(n)">Generate operation &raquo;</button>
+                        @if (!isLive()) { <p class="fd-note">Archived contract — read-only.</p> }
+                        @else if (!canGenerate()) { <p class="fd-note">Resolve the active mission first — one operation runs at a time.</p> }
+                    }
+                    @case ('LOCKED') {
+                        <div class="fd-veil">Veiled future — its mission detail is earned by playing the branch that unlocks it.</div>
+                        <div class="fd-sec">Opens at <b>{{ thresholdLabel(n.outcomeGate) }}</b></div>
+                        @if (n.forkContext; as fc) {
+                            <div class="fd-sec">The hook</div><p class="fd-p">{{ fc.trigger }}</p>
+                            <div class="fd-sec">If it comes to pass</div><p class="fd-p">{{ fc.consequence }}</p>
+                        }
+                    }
+                    @case ('RETIRED') {
+                        <div class="fd-sec">Closed</div>
+                        <p class="fd-p">@if (n.resolution?.notes) { {{ n.resolution?.notes }} } @else { The outcome went another way — this branch did not unlock (it opens {{ thresholdLabel(n.outcomeGate) }}). }</p>
+                        @if (n.resolution?.resolvedDate) { <div class="fd-date">{{ dateText(n.resolution?.resolvedDate) }}</div> }
+                    }
+                }
+            </aside>
+        </div>
+    }
+}
+
+<!-- DIRECTIVE-073 — the CURRENT mission's STATE MACHINE + GATES (dev/diagnostic). READ-ONLY reflection of the
+     real lifecycle state; sits BELOW the campaign flow above (which is unchanged). Updates live as the mission
+     advances (deploy → claims → AAR → repair & salvage → infirmary → outcome). -->
+<!-- DIRECTIVE-120 — the advisory gate window duplicates the D-119 top-of-sheet Process Rail under Hot Spots, so hide
+     it there (the HS Contracts embed shows the TREE only). Traditional keeps it in its Flow tab (unchanged). -->
+@if (!isHotspots()) {
+<section class="gateflow">
+    <div class="fl-head"><div class="ph">Mission state &amp; gates <span class="gf-tag">dev · live</span></div></div>
+    @if (missionStage(); as ms) {
+        <p class="note">The current mission's lifecycle — what's resolved and what's gating completion. <b>{{ ms.label }}</b></p>
+        <!-- DIRECTIVE-115 — advisory clickable rail: each step jumps to where it's done; the next actionable step is
+             flagged "do this next". Navigation only — you can still open any tab and edit. -->
+        <div class="gf-track">
+            @for (g of ms.nodes; track g.key) {
+                <button type="button" class="gf-node st-{{ g.status }}" [class.is-next]="g.key === nextGate()?.key"
+                    [attr.data-gate]="g.key" [attr.data-status]="g.status" (click)="goStep(g)"
+                    [attr.aria-label]="'Go to ' + g.name + ' — ' + g.status + (g.key === nextGate()?.key ? ', do this next' : '')">
+                    <span class="gf-ico" aria-hidden="true">@switch (g.status) { @case ('done') { ✓ } @case ('blocked') { ✕ } @default { ○ } }</span>
+                    <span class="gf-name">{{ g.name }}@if (g.key === nextGate()?.key) { <span class="gf-next">▶ do this next</span> }</span>
+                    <span class="gf-cond">{{ g.detail }}</span>
+                    <span class="gf-st">{{ g.status }}</span>
+                </button>
+            }
+        </div>
+    } @else {
+        <div class="fl-empty">
+            <div class="fl-empty-h">No active mission</div>
+            <p class="note">@if (isHotspots()) { Accept a contract to start a mission tree — its lifecycle stages (deploy → claims → AAR → repair → infirmary → outcome) track here as it advances. } @else { Accept a contract / generate a mission — its lifecycle stages (deploy → claims → AAR → repair &amp; salvage → infirmary → outcome) track here as it advances. }</p>
+            <button type="button" class="gf-start" (click)="goStart()">▶ {{ isHotspots() ? 'Accept a contract' : 'Accept a contract / generate a mission' }} &raquo;</button>
+        </div>
+    }
+</section>
+}
+}

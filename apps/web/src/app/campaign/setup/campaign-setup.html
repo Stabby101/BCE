@@ -1,0 +1,82 @@
+<main class="sheet" aria-label="New campaign — setup">
+    <span class="reg tl" aria-hidden="true"></span><span class="reg tr" aria-hidden="true"></span>
+    <span class="reg bl" aria-hidden="true"></span><span class="reg br" aria-hidden="true"></span>
+    <div class="holes" aria-hidden="true"><div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div></div>
+    <div class="stamp" aria-hidden="true">New Campaign</div>
+
+    <header>
+        <div>
+            <div class="ttl">BATTLETECH CAMPAIGN ENGINE</div>
+            <div class="crumb">{{ quick() ? 'Quick Mission' : 'Create campaign' }} &nbsp;&rsaquo;&nbsp; <b>Setup</b> &nbsp;&rsaquo;&nbsp; era &nbsp;&rsaquo;&nbsp; forces &nbsp;&rsaquo;&nbsp; resources</div>
+        </div>
+        <div class="step"><div><b>STEP</b> 00 / 04</div><div><b>FIELD</b> SETUP</div></div>
+    </header>
+
+    <div class="lead">Set how this campaign plays before you pick the era. <b>Defaults</b> — Classic BattleTech, Traditional — run the campaign exactly as before.</div>
+
+    <!-- DIRECTIVE-108 (1) — Game System (relocated D-083). Classic BattleTech is the default; Alpha Strike
+         swaps the unit card for the fast-play Alpha Strike card. CBT behaves exactly as before. -->
+    <div class="cg" role="group" aria-label="Game system">
+        <span class="cg-l">Game system</span>
+        <div class="cg-opts">
+            <button type="button" class="cg-b" [class.on]="gameSystem() === GameSystem.CLASSIC" [attr.aria-pressed]="gameSystem() === GameSystem.CLASSIC" (click)="setGameSystem(GameSystem.CLASSIC)">
+                Classic BattleTech <small>record sheets &middot; default</small>
+            </button>
+            <button type="button" class="cg-b" [class.on]="gameSystem() === GameSystem.ALPHA_STRIKE" [attr.aria-pressed]="gameSystem() === GameSystem.ALPHA_STRIKE" (click)="setGameSystem(GameSystem.ALPHA_STRIKE)">
+                Alpha Strike <small>fast-play cards</small>
+            </button>
+        </div>
+    </div>
+
+    <!-- DIRECTIVE-108 (2) — Campaign System. Traditional = Campaign Operations; Hot Spots = Chaos Campaign. -->
+    <div class="cg" role="group" aria-label="Campaign system">
+        <span class="cg-l">Campaign system</span>
+        <div class="cg-opts">
+            <button type="button" class="cg-b" [class.on]="campaignSystem() === 'traditional'" [attr.aria-pressed]="campaignSystem() === 'traditional'" (click)="setCampaignSystem('traditional')">
+                Traditional <small>Campaign Operations rules</small>
+            </button>
+            <button type="button" class="cg-b" [class.on]="campaignSystem() === 'hotspots'" [attr.aria-pressed]="campaignSystem() === 'hotspots'" (click)="setCampaignSystem('hotspots')">
+                Hot Spots <small>Chaos Campaign rules</small>
+            </button>
+        </div>
+    </div>
+
+    <!-- DIRECTIVE-108 (3) — Hot Spot campaign, only under Hot Spots. Data-driven; only available:true selectable.
+         D-108b — era-locked campaigns show their era; the generic engine mode is era-free (picked on the Era step). -->
+    @if (campaignSystem() === 'hotspots') {
+        <div class="cg col" role="group" aria-label="Hot Spot campaign">
+            <span class="cg-l">Hot Spot campaign</span>
+            <div class="hs-list">
+                @for (c of campaigns; track c.id) {
+                    <button type="button" class="hs" [class.on]="hotSpotCampaign() === c.id" [class.soon]="!c.available"
+                            [disabled]="!c.available" [attr.aria-pressed]="hotSpotCampaign() === c.id" (click)="pickCampaign(c)">
+                        <span class="hs-head">
+                            <span class="hs-name">{{ c.name }}</span>
+                            @if (!c.available) { <span class="hs-tag">coming soon</span> }
+                            @if (c.eraLocked && c.era) { <span class="hs-era">{{ c.era }}</span> }
+                            @else { <span class="hs-era">any era</span> }
+                        </span>
+                        <span class="hs-blurb">{{ c.blurb }}</span>
+                        @if (c.book) {
+                            <span class="hs-book">{{ c.book }} &middot; requires the rulebook</span>
+                        } @else {
+                            <span class="hs-book">engine-generated &middot; no rulebook needed</span>
+                        }
+                    </button>
+                }
+            </div>
+            <!-- D-108b (2) — an era-locked campaign sets the era; surface it (the Era step is skipped). -->
+            @if (lockedEra(); as le) {
+                <div class="era-lock"><span class="el-dot" aria-hidden="true"></span>{{ le }} era &mdash; set by this campaign</div>
+            }
+        </div>
+    }
+
+    <footer>
+        <div class="nav">
+            <button type="button" class="btn" (click)="back()">&lsaquo; Back</button>
+            <button type="button" class="btn go" [disabled]="!canProceed()" [attr.aria-disabled]="!canProceed()" (click)="proceed()">Proceed &rsaquo;</button>
+        </div>
+        <div class="meta">BCE v0.1 &middot; campaign setup<br>system &middot; era &middot; forces &middot; resources</div>
+    </footer>
+</main>

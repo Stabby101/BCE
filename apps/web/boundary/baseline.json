@@ -1,0 +1,32 @@
+[
+  {
+    "from": "campaign/chaos/campaign-pilot-card.ts",
+    "to": "utils/bv-calculator.util",
+    "fromScope": "engine-hs",
+    "toScope": "gamesystem-cbt"
+  },
+  {
+    "from": "campaign/chaos/chaos-market-tab.ts",
+    "to": "campaign/repair/repair-bays",
+    "fromScope": "engine-hs",
+    "toScope": "engine-classic"
+  },
+  {
+    "from": "campaign/chaos/chaos-repair-tab.ts",
+    "to": "campaign/repair/repair-bays",
+    "fromScope": "engine-hs",
+    "toScope": "engine-classic"
+  },
+  {
+    "from": "models/as-force-unit.model.ts",
+    "to": "services/unit-initializer.service",
+    "fromScope": "gamesystem-as",
+    "toScope": "gamesystem-cbt"
+  },
+  {
+    "from": "models/as-force.model.ts",
+    "to": "services/unit-initializer.service",
+    "fromScope": "gamesystem-as",
+    "toScope": "gamesystem-cbt"
+  }
+]

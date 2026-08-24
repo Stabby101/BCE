@@ -1,0 +1,1048 @@
+/*
+ * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
+ *
+ * This file is part of MekBay.
+ *
+ * MekBay is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License (GPL),
+ * version 3 or (at your option) any later version,
+ * as published by the Free Software Foundation.
+ *
+ * MekBay is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * A copy of the GPL should have been included with this project;
+ * if not, see <https://www.gnu.org/licenses/>.
+ *
+ * NOTICE: The MegaMek organization is a non-profit group of volunteers
+ * creating free software for the BattleTech community.
+ *
+ * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
+ * of The Topps Company, Inc. All Rights Reserved.
+ *
+ * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
+ * InMediaRes Productions, LLC.
+ *
+ * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
+ * Microsoft's "Game Content Usage Rules"
+ * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
+ * affiliated with Microsoft.
+ */
+
+import { signal, computed, type WritableSignal, type Injector } from '@angular/core';
+import { Subject } from 'rxjs';
+import type { DataService } from '../services/data.service';
+import type { Unit } from "./units.model";
+import type { UnitInitializerService } from '../services/unit-initializer.service';
+import { generateUUID } from '../services/ws.service';
+import { type SerializedForce, type SerializedUnit, type SerializedGroup, type SerializedC3NetworkGroup, C3_NETWORK_GROUP_SCHEMA } from './force-serialization';
+import type { ForceUnit } from './force-unit.model';
+import { GameSystem } from './common.model';
+import { C3NetworkUtil } from '../utils/c3-network.util';
+import { Sanitizer } from '../utils/sanitizer.util';
+import { LoggerService } from '../services/logger.service';
+import { FACTION_EXTINCT, type Faction } from './factions.model';
+import type { Era } from './eras.model';
+import { type FormationTypeDefinition, type FormationMatch, isNoFormation } from '../utils/formation-type.model';
+import { LanceTypeIdentifierUtil } from '../utils/lance-type-identifier.util';
+import { FormationNamerUtil } from '../utils/formation-namer.util';
+import type { OrgSizeResult } from '../utils/org/org-types';
+import { getOrgFromForce, getOrgFromGroup } from '../utils/org/org-namer.util';
+import { getUnitsAverageTechBase, TechBase } from './tech.model';
+
+/*
+ * Author: Drake
+ */
+export const MAX_GROUPS = 50;
+export const MAX_UNITS = 100;
+
+function getEraEndYear(era: Era): number {
+    return era.years.to ?? Number.POSITIVE_INFINITY;
+}
+
+function hasFactionEraAvailability(faction: Faction, eraId: number): boolean {
+    const eraUnits = faction.eras[eraId] as Set<number> | number[] | undefined;
+    if (!eraUnits) return false;
+    return eraUnits instanceof Set ? eraUnits.size > 0 : Array.isArray(eraUnits) && eraUnits.length > 0;
+}
+
+function hasFactionUnitMembership(faction: Faction | null | undefined, eraId: number, unitId: number): boolean {
+    if (!faction) return false;
+    const eraUnits = faction.eras[eraId] as Set<number> | number[] | undefined;
+    if (!eraUnits) return false;
+    return eraUnits instanceof Set ? eraUnits.has(unitId) : eraUnits.includes(unitId);
+}
+
+function hasEraUnitMembership(era: Era, unitId: number): boolean {
+    const eraUnits = era.units as Set<number> | number[];
+    return eraUnits instanceof Set ? eraUnits.has(unitId) : eraUnits.includes(unitId);
+}
+
+export interface EraUnitValidationSummary {
+    totalUnits: number;
+    validUnits: number;
+    invalidTrackedUnits: number;
+    invalidTrackedUnitNames: string[];
+    extinctTrackedUnits: number;
+    extinctTrackedUnitNames: string[];
+    invalidYearFallbackUnits: number;
+    invalidYearFallbackUnitNames: string[];
+}
+
+function formatEraWarningUnits(unitNames: readonly string[]): string {
+    return unitNames.map(unitName => `"${unitName}"`).join(', ');
+}
+
+export function getEraUnitValidationSummary(
+    units: readonly ForceUnit[],
+    era: Era,
+    eras: readonly Era[],
+    extinctFaction: Faction | null,
+): EraUnitValidationSummary {
+    const eraEndYear = getEraEndYear(era);
+    let invalidTrackedUnits = 0;
+    const invalidTrackedUnitNames: string[] = [];
+    let extinctTrackedUnits = 0;
+    const extinctTrackedUnitNames: string[] = [];
+    let invalidYearFallbackUnits = 0;
+    const invalidYearFallbackUnitNames: string[] = [];
+
+    for (const forceUnit of units) {
+        const unit = forceUnit.getUnit();
+        const displayName = forceUnit.getDisplayName();
+        const isTrackedInAnyEra = eras.some(candidateEra => hasEraUnitMembership(candidateEra, unit.id));
+
+        if (isTrackedInAnyEra) {
+            const existsInSelectedEra = hasEraUnitMembership(era, unit.id);
+            const isExtinctInSelectedEra = existsInSelectedEra
+                && hasFactionUnitMembership(extinctFaction, era.id, unit.id);
+
+            if (isExtinctInSelectedEra) {
+                extinctTrackedUnits++;
+                extinctTrackedUnitNames.push(displayName);
+            } else if (!existsInSelectedEra) {
+                invalidTrackedUnits++;
+                invalidTrackedUnitNames.push(displayName);
+            }
+            continue;
+        }
+
+        if (unit.year > eraEndYear) {
+            invalidYearFallbackUnits++;
+            invalidYearFallbackUnitNames.push(displayName);
+        }
+    }
+
+    const totalUnits = units.length;
+    const validUnits = totalUnits - invalidTrackedUnits - extinctTrackedUnits - invalidYearFallbackUnits;
+
+    return {
+        totalUnits,
+        validUnits,
+        invalidTrackedUnits,
+        invalidTrackedUnitNames,
+        extinctTrackedUnits,
+        extinctTrackedUnitNames,
+        invalidYearFallbackUnits,
+        invalidYearFallbackUnitNames,
+    };
+}
+
+export class UnitGroup<TUnit extends ForceUnit = ForceUnit> {
+    private _forceRef = signal<Force>(null!);
+
+    /**
+     * The force this group belongs to.
+     * Backed by a signal so that computed properties automatically react
+     * when the group is moved to a different force.
+     */
+    get force(): Force { return this._forceRef(); }
+    set force(value: Force) { this._forceRef.set(value); }
+
+    id: string = generateUUID();
+    name = signal<string | undefined>(undefined);
+    color?: string;
+    formation = signal<FormationTypeDefinition | null>(null);
+    formationLock?: boolean; // If true, the formation name will not be upgraded by the random generator (this is unset when we have automatic formation)
+    formationHistory = new Set<string>(); // Temporarily stores previously assigned formation IDs for this group
+    units: WritableSignal<TUnit[]> = signal([]);
+
+    totalBV = computed(() => {
+        return this.units().reduce((sum, unit) => sum + (unit.getBv()), 0);
+    });
+
+    constructor(force: Force) {
+        this.force = force;
+        this.id = generateUUID();
+    }
+
+    setName(name: string | undefined, emitChange: boolean = true) {
+        this.name.set(name);
+        if (emitChange) {
+            this.force?.emitChanged();
+        }
+    }
+
+    /** Reorder a unit within this group (no-op if indices are equal or out of range). */
+    reorderUnit(fromIndex: number, toIndex: number): void {
+        if (fromIndex === toIndex) return;
+        const units = [...this.units()];
+        if (fromIndex < 0 || fromIndex >= units.length || toIndex < 0 || toIndex >= units.length) return;
+        const [moved] = units.splice(fromIndex, 1);
+        units.splice(toIndex, 0, moved);
+        this.units.set(units);
+    }
+
+    /** Remove and return the unit at the given index, or null if out of range. */
+    removeUnitAt(index: number): TUnit | null {
+        const units = [...this.units()];
+        if (index < 0 || index >= units.length) return null;
+        const [removed] = units.splice(index, 1);
+        this.units.set(units);
+        return removed;
+    }
+
+    /** Insert a pre-existing ForceUnit at the given index (appends if omitted). Updates the unit's force reference. */
+    insertUnit(unit: ForceUnit, index?: number): void {
+        unit.force = this.force;
+        const units = [...this.units()];
+        const insertAt = index !== undefined ? Math.min(Math.max(0, index), units.length) : units.length;
+        units.splice(insertAt, 0, unit as TUnit);
+        this.units.set(units);
+    }
+
+    /**
+     * Move a unit from this group to another group (may be in a different force).
+     * Returns the moved unit, or null if the index is out of range.
+     * Automatically updates the unit's force reference to match the target group's force.
+     */
+    moveUnitTo(fromIndex: number, targetGroup: UnitGroup, toIndex?: number): TUnit | null {
+        const removed = this.removeUnitAt(fromIndex);
+        if (!removed) return null;
+        targetGroup.insertUnit(removed, toIndex);
+        return removed;
+    }
+
+    /** Create and add a new unit via the owning Force's factory. */
+    addUnit(unit: Unit): ForceUnit {
+        return this.force.addUnit(unit, this as UnitGroup);
+    }
+
+    /** Structural evaluation result for this group (name + matched ForceType). */
+    organizationalResult = computed<OrgSizeResult>(() => {
+        const result = getOrgFromGroup(this, {
+            displayOnlyTopLevel: true,
+        });
+        return result;
+    });
+
+    organizationalName = computed(() => {
+        return this.organizationalResult().name;
+    });
+
+    activeFormation = computed<FormationTypeDefinition | null>(() => {
+        const formation = this.formation();
+        return !!formation && !isNoFormation(formation) ? formation : null;
+    });
+
+    groupDisplayName = computed<string>(() => {
+        const name = this.name();
+        if (name) return name;
+        return this.formationDisplayName() ?? this.organizationalName();
+    });
+
+    isFormationAlreadyInGroupName = computed<boolean>(() => {   
+        const formation = this.activeFormation();
+        if (!formation) return true;
+        const customName = this.name();
+        // No custom name means display name is derived from the formation, so it's inherently included
+        if (!customName) return true;
+        return customName.includes(formation.name);
+    });
+    
+    formationDisplayName = computed<string | null>(() => {
+        const formation = this.activeFormation();
+        if (!formation) return null;
+        return FormationNamerUtil.composeFormationDisplayName(
+            formation,
+            this,
+            this.isFormationRequirementsFiltered()
+        );
+    });
+
+    /**
+     * Formation validation.
+     * Returns the FormationMatch if the current formation is valid, or null.
+     */
+    private _formationMatch = computed<FormationMatch | null>(() => {
+        const formation = this.activeFormation();
+        if (!formation) return null;
+        return LanceTypeIdentifierUtil.isFormationValidForGroup(formation, this);
+    });
+
+    hasValidFormation = computed<boolean>(() => {
+        const formation = this.activeFormation();
+        if (!formation) return true;
+        return this._formationMatch() !== null;
+    });
+
+    /** Whether the current formation required organization-level unit filtering. */
+    isFormationRequirementsFiltered = computed<boolean>(() => {
+        return this._formationMatch()?.requirementsFiltered ?? false;
+    });
+
+    formationRequirementsFilterNotice = computed<string | null>(() => {
+        return this._formationMatch()?.requirementsFilterNotice ?? null;
+    });
+}
+
+export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
+    gameSystem: GameSystem = GameSystem.CLASSIC;
+    instanceId: WritableSignal<string | null> = signal(null);
+    _name: WritableSignal<string>;
+    timestamp: string | null = null;
+    groups: WritableSignal<UnitGroup<TUnit>[]> = signal([]);
+    _c3Networks: WritableSignal<SerializedC3NetworkGroup[]> = signal([]); // C3 network configurations
+    loading: boolean = false;
+    cloud?: boolean = false; // Indicates if this force is stored in the cloud
+    owned = signal<boolean>(true); // Indicates if the user owns this force (false if it's a shared force)
+    faction = signal<Faction | null>(null);
+    factionLock: boolean = false; // If true, the force faction cannot be changed by the random generator
+    era = signal<Era | null>(null);
+    eraLock: boolean = false; // If true, the force era cannot be changed by the random generator
+    c3Networks = this._c3Networks.asReadonly();
+    /** Emits after each debounced mutation: subscribe to react to force changes. */
+    public readonly changed = new Subject<void>();
+    private _debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    protected dataService: DataService;
+    protected unitInitializer: UnitInitializerService;
+    protected injector: Injector;
+
+    constructor(name: string,
+        dataService: DataService,
+        unitInitializer: UnitInitializerService,
+        injector: Injector) {
+        this._name = signal(name);
+        this.dataService = dataService;
+        this.unitInitializer = unitInitializer;
+        this.injector = injector;
+    }
+
+    readOnly = computed<boolean>(() => {
+        return !this.owned();
+    });
+
+    units = computed<TUnit[]>(() => {
+        return this.groups().flatMap(g => g.units());
+    });
+
+    /** Total BV (C3 tax is applied at unit level via adjustedBv, not here) */
+    totalBv = computed(() => {
+        return this.units().reduce((sum, unit) => sum + (unit.getBv()), 0);
+    });
+
+    get name(): string {
+        return this._name();
+    }
+
+    displayName = computed<string>(() => {
+        const name = this.name;
+        if (!name) {
+            return this.organizationalName();
+        }
+        return name;
+    });
+
+    public setName(name: string, emitChange: boolean = true) {
+        this._name.set(name);
+        if (this.instanceId() || emitChange) {
+            this.emitChanged();
+        }
+    }
+
+    organizationalResult = computed<OrgSizeResult>(() => {
+        const result = getOrgFromForce(this, {
+            displayOnlyTopLevel: true,
+        });
+        return result;
+    });
+
+    organizationalName = computed(() => {
+        return this.organizationalResult().name;
+    });
+
+    techBase = computed((): TechBase => {
+        return getUnitsAverageTechBase(this.units().map(u => u.getUnit()).filter((u): u is Unit => u !== undefined));
+    });
+
+    eraWarning = computed<string | null>(() => {
+        return this.getEraWarningMessage(this.era(), this.faction());
+    });
+
+    /**
+     * Factory method to create the appropriate ForceUnit subclass.
+     * Must be implemented by subclasses to create CBTForceUnit, ASForceUnit, etc.
+     */
+    protected abstract createForceUnit(unit: Unit): TUnit;
+
+    /**
+     * Creates a ForceUnit compatible with this force's game system,
+     * without adding it to any group. Useful for cross-system unit conversion.
+     */
+    public createCompatibleUnit(unit: Unit): TUnit {
+        return this.createForceUnit(unit);
+    }
+
+    /**
+     * Factory method to deserialize the appropriate ForceUnit subclass.
+     * Must be implemented by subclasses to deserialize CBTForceUnit, ASForceUnit, etc.
+     */
+    protected abstract deserializeForceUnit(data: SerializedUnit): TUnit;
+
+    getEraWarningMessage(era: Era | null, faction: Faction | null): string | null {
+        if (!era) {
+            return null;
+        }
+
+        const warnings: string[] = [];
+        const eras = this.dataService.getEras();
+        const extinctFaction = this.dataService.getFactionById(FACTION_EXTINCT) ?? null;
+        const {
+            invalidTrackedUnits,
+            invalidTrackedUnitNames,
+            extinctTrackedUnits,
+            extinctTrackedUnitNames,
+            invalidYearFallbackUnits,
+            invalidYearFallbackUnitNames,
+        } = getEraUnitValidationSummary(this.units(), era, eras, extinctFaction);
+
+        if (faction && !hasFactionEraAvailability(faction, era.id)) {
+            warnings.push(`${faction.name} does not exist in this era.`);
+        }
+
+        if (invalidTrackedUnits > 0) {
+            const unitLabel = invalidTrackedUnits === 1 ? 'unit is' : 'units are';
+            warnings.push(`${invalidTrackedUnits} ${unitLabel} not listed in the ${era.name} era: ${formatEraWarningUnits(invalidTrackedUnitNames)}.`);
+        }
+
+        if (extinctTrackedUnits > 0) {
+            const unitLabel = extinctTrackedUnits === 1 ? 'unit is' : 'units are';
+            warnings.push(`${extinctTrackedUnits} ${unitLabel} extinct in the ${era.name} era: ${formatEraWarningUnits(extinctTrackedUnitNames)}.`);
+        }
+
+        if (invalidYearFallbackUnits > 0) {
+            const unitLabel = invalidYearFallbackUnits === 1 ? 'unit is' : 'units are';
+            warnings.push(`${invalidYearFallbackUnits} ${unitLabel} newer than this era ends in ${era.years.to}: ${formatEraWarningUnits(invalidYearFallbackUnitNames)}.`);
+        }
+
+        return warnings.length > 0 ? warnings.join(' ') : null;
+    }
+
+    public addUnit(unit: Unit, targetGroup?: UnitGroup<TUnit>): TUnit {
+        if (this.units().length >= MAX_UNITS) {
+            throw new Error(`Cannot add more than ${MAX_UNITS} units to a single force`);
+        }
+        const forceUnit = this.createForceUnit(unit);
+        if (this.groups().length === 0) {
+            this.addGroup();
+        }
+
+        // Use provided target group or pick the last group
+        const groups = this.groups();
+        const group = targetGroup && groups.includes(targetGroup) ? targetGroup : groups[groups.length - 1];
+
+        const units = group.units();
+        group.units.set([...units, forceUnit]);
+        if (this.instanceId()) {
+            this.emitChanged();
+        }
+        return forceUnit;
+    }
+
+    public hasMaxGroups = computed<boolean>(() => {
+        return this.groups().length >= MAX_GROUPS;
+    });
+
+    public hasEmptyGroups = computed<boolean>(() => {
+        return this.groups().some(g => g.units().length === 0);
+    });
+
+    public addGroup(name?: string): UnitGroup<TUnit> {
+        if (this.hasMaxGroups()) {
+            throw new Error(`Cannot add more than ${MAX_GROUPS} groups`);
+        }
+        const newGroup = new UnitGroup<TUnit>(this);
+        if (name) {
+            newGroup.setName(name);
+        }
+        this.groups.update(groups => [...groups, newGroup]);
+        if (this.instanceId()) this.emitChanged();
+        return newGroup;
+    }
+
+    /** Reorder groups within this force. */
+    public reorderGroup(fromIndex: number, toIndex: number): void {
+        if (fromIndex === toIndex) return;
+        const groups = [...this.groups()];
+        if (fromIndex < 0 || fromIndex >= groups.length || toIndex < 0 || toIndex >= groups.length) return;
+        const [moved] = groups.splice(fromIndex, 1);
+        groups.splice(toIndex, 0, moved);
+        this.groups.set(groups);
+        if (this.instanceId()) this.emitChanged();
+    }
+
+    /**
+     * Detach and return the group at the given index without merging its units elsewhere.
+     * Does not emit changes: the caller is responsible for coordinating emits
+     */
+    public detachGroupAt(index: number): UnitGroup<TUnit> | null {
+        const groups = [...this.groups()];
+        if (index < 0 || index >= groups.length) return null;
+        const [removed] = groups.splice(index, 1);
+        this.groups.set(groups);
+        return removed;
+    }
+
+    /**
+     * Adopt an existing group into this force at the given index (appends if omitted).
+     * Re-parents the group and all its units to this force. Deduplicates IDs.
+     */
+    public adoptGroup(group: UnitGroup, atIndex?: number): void {
+        group.force = this;
+        for (const unit of group.units()) {
+            unit.force = this;
+        }
+        const groups = [...this.groups()];
+        const insertAt = atIndex !== undefined ? Math.min(Math.max(0, atIndex), groups.length) : groups.length;
+        groups.splice(insertAt, 0, group as UnitGroup<TUnit>);
+        this.groups.set(groups);
+        this.deduplicateIds();
+    }
+
+    public removeGroup(group: UnitGroup<TUnit>, relocateUnits: boolean = false): void {
+        const groups = [...this.groups()];
+        const idx = groups.findIndex(g => g.id === group.id);
+        if (idx === -1) return;
+        const removed = groups.splice(idx, 1)[0];
+        if (relocateUnits) {
+            // Move removed units into previous group or create default
+            if (groups.length === 0) {
+                const defaultGroup = this.addGroup();
+                defaultGroup.units.set(removed.units());
+            } else {
+                const targetIdx = Math.max(0, idx - 1);
+                const targetGroup = groups[targetIdx];
+                targetGroup.units.set([...targetGroup.units(), ...removed.units()]);
+            }
+        } else {
+            // Destroy all units in the group and clean up C3 networks
+            const currentNetworks = this._c3Networks();
+            for (const unit of removed.units()) {
+                if (currentNetworks.length > 0 && C3NetworkUtil.isUnitConnected(unit.id, currentNetworks)) {
+                    const result = C3NetworkUtil.removeUnitFromAllNetworks(currentNetworks, unit.id);
+                    this._c3Networks.set(result.networks);
+                }
+                unit.destroy();
+            }
+        }
+        this.groups.set(groups);
+        if (this.instanceId()) this.emitChanged();
+    }
+
+    public removeUnit(unitToRemove: TUnit) {
+        const groups = this.groups();
+        for (const g of groups) {
+            const originalCount = g.units().length;
+            const filtered = g.units().filter(u => u.id !== unitToRemove.id);
+            if (filtered.length !== originalCount) {
+                g.units.set(filtered);
+            }
+        }
+
+        // Clean up C3 networks - remove the unit from all networks it participates in
+        const currentNetworks = this._c3Networks();
+        if (currentNetworks.length > 0 && C3NetworkUtil.isUnitConnected(unitToRemove.id, currentNetworks)) {
+            const result = C3NetworkUtil.removeUnitFromAllNetworks(currentNetworks, unitToRemove.id);
+            this._c3Networks.set(result.networks);
+        }
+
+        unitToRemove.destroy();
+        this.removeEmptyGroups();
+        if (this.instanceId()) {
+            this.emitChanged();
+        }
+    }
+
+    public removeEmptyGroups() {
+        const groups = this.groups();
+        const nonEmptyGroups = groups.filter(g => g.units().length > 0);
+        if (nonEmptyGroups.length === groups.length) return; // No change
+        this.groups.set(nonEmptyGroups);
+        if (this.instanceId()) {
+            this.emitChanged();
+        }
+    }
+
+    /**
+     * Ensures no duplicate group or unit IDs exist within this force.
+     * If duplicates are found, regenerates them with fresh UUIDs.
+     * @returns true if any duplicate IDs were found and fixed.
+     */
+    public deduplicateIds(): boolean {
+        let fixed = false;
+        const seenGroupIds = new Set<string>();
+        const seenUnitIds = new Set<string>();
+        for (const group of this.groups()) {
+            if (seenGroupIds.has(group.id)) {
+                group.id = generateUUID();
+                fixed = true;
+            }
+            seenGroupIds.add(group.id);
+            for (const unit of group.units()) {
+                if (seenUnitIds.has(unit.id)) {
+                    unit.id = generateUUID();
+                    fixed = true;
+                }
+                seenUnitIds.add(unit.id);
+            }
+        }
+        return fixed;
+    }
+
+    public setUnits(newUnits: TUnit[]) {
+        this.groups.set([]);
+        const defaultGroup = this.addGroup();
+        defaultGroup.units.set(newUnits);
+        if (this.instanceId()) {
+            this.emitChanged();
+        }
+    }
+
+    public setNetwork(networks: SerializedC3NetworkGroup[]) {
+        this._c3Networks.set(networks);
+        this.emitChanged();
+    }
+
+    public loadAll() {
+        this.units().forEach(unit => unit.load());
+    }
+
+    /**
+     * Replaces a unit in the force with a new one, preserving pilot data and position.
+     * This is the core logic for unit replacement - dialogs and notifications should be handled by the caller.
+     * 
+     * @param originalUnit The ForceUnit to replace
+     * @param newUnitData The new Unit data to create the replacement from
+     * @returns Object containing the new ForceUnit and the group it was placed in, or null if failed
+     */
+    public replaceUnit(originalUnit: TUnit, newUnitData: Unit): { newUnit: TUnit; group: UnitGroup<TUnit> } | null {
+        // Find the group containing the original unit
+        const groups = this.groups();
+        let originalGroup: UnitGroup<TUnit> | null = null;
+        let originalIndex = -1;
+
+        for (const group of groups) {
+            const groupUnits = group.units();
+            const idx = groupUnits.findIndex(u => u.id === originalUnit.id);
+            if (idx !== -1) {
+                originalGroup = group;
+                originalIndex = idx;
+                break;
+            }
+        }
+
+        if (!originalGroup || originalIndex === -1) {
+            return null; // Unit not found in any group
+        }
+
+        // Create the new force unit
+        const newForceUnit = this.createForceUnit(newUnitData);
+
+        // Disable saving during transfer to avoid triggering saves prematurely
+        newForceUnit.disabledSaving = true;
+        try {
+            // Transfer pilot data from original to new unit
+            this.transferPilotData(originalUnit, newForceUnit);
+        } finally {
+            newForceUnit.disabledSaving = false;
+        }
+
+        // Remove old unit from C3 networks
+        const currentNetworks = this._c3Networks();
+        if (currentNetworks.length > 0 && C3NetworkUtil.isUnitConnected(originalUnit.id, currentNetworks)) {
+            const result = C3NetworkUtil.removeUnitFromAllNetworks(currentNetworks, originalUnit.id);
+            this._c3Networks.set(result.networks);
+        }
+
+        // Remove old unit from the group (without calling removeUnit which would also clean up empty groups)
+        const groupUnits = originalGroup.units();
+        const filteredUnits = groupUnits.filter(u => u.id !== originalUnit.id);
+
+        // Insert new unit at the original position
+        filteredUnits.splice(originalIndex, 0, newForceUnit);
+        originalGroup.units.set(filteredUnits);
+
+        // Destroy the old unit
+        originalUnit.destroy();
+
+        // Emit changed event
+        if (this.instanceId()) {
+            this.emitChanged();
+        }
+
+        return { newUnit: newForceUnit, group: originalGroup };
+    }
+
+    /**
+     * Transfers pilot data (name, skills, abilities) from one unit to another.
+     * Must be implemented by subclasses to handle game-system-specific pilot data.
+     */
+    protected abstract transferPilotData(fromUnit: TUnit, toUnit: TUnit): void;
+
+    /** Serialize this Force instance to a plain object */
+    public serialize(): SerializedForce {
+        let instanceId = this.instanceId();
+        if (!instanceId) {
+            instanceId = generateUUID();
+            this.instanceId.set(instanceId);
+        }
+        const serializedGroups: SerializedGroup[] = this.groups().filter(g => g.units().length > 0).map(g => {
+            const formation = g.activeFormation();
+            return {
+                id: g.id,
+                name: g.name() || undefined,
+                color: g.color,
+                formationId: formation?.id,
+                formationLock: g.formationLock || undefined,
+                units: g.units().map(u => u.serialize())
+            };
+        });
+        const result: SerializedForce = {
+            version: 1,
+            timestamp: this.timestamp ?? new Date().toISOString(),
+            instanceId: instanceId,
+            type: this.gameSystem,
+            name: this.name,
+            factionId: this.faction()?.id,
+            factionLock: this.factionLock || undefined,
+            eraId: this.era()?.id,
+            eraLock: this.eraLock || undefined,
+            groups: serializedGroups,
+            c3Networks: this.c3Networks().length > 0 ? this.c3Networks() : undefined,
+        };
+        if (this.gameSystem === GameSystem.ALPHA_STRIKE) {
+            result.pv = this.totalBv();
+        } else {
+            result.bv = this.totalBv();
+        }
+        return result;
+    }
+
+    /** Deserialize a plain object to a Force instance - must be implemented by subclass */
+    public static deserialize(data: SerializedForce, dataService: DataService, unitInitializer: UnitInitializerService, injector: Injector): Force<ForceUnit> {
+        throw new Error('Force.deserialize must be implemented by subclass');
+    }
+
+    emitChanged() {
+        if (this.loading) return;
+        if (this.readOnly()) {
+            const logger = this.injector.get(LoggerService);
+            logger.warn(`Force.emitChanged() blocked: force "${this.name}" is read-only. Changes will not be persisted.`);
+            return;
+        }
+        if (this._debounceTimer) {
+            clearTimeout(this._debounceTimer);
+        }
+        this._debounceTimer = setTimeout(() => {
+            this.timestamp = new Date().toISOString();
+            this.changed.next();
+            this._debounceTimer = null;
+        }, 300); // debounce
+    }
+
+    /**
+     * Flushes any pending debounced save, executing it immediately.
+     * Call this before tearing down a force slot so the save fires
+     * while the subscription is still active.
+     */
+    public flushPendingChanges() {
+        if (this._debounceTimer) {
+            clearTimeout(this._debounceTimer);
+            this._debounceTimer = null;
+            this.timestamp = new Date().toISOString();
+            this.changed.next();
+        }
+    }
+
+    /**
+     * Cancels any pending debounced save.
+     * Call this before deleting a force to prevent stale saves.
+     */
+    public cancelPendingChanges() {
+        if (this._debounceTimer) {
+            clearTimeout(this._debounceTimer);
+            this._debounceTimer = null;
+        }
+    }
+
+    /**
+     * Sanitize incoming serialized data using a schema.
+     * Must be implemented by subclasses to apply the appropriate schema.
+     */
+    protected abstract sanitizeForceData(data: SerializedForce): SerializedForce;
+
+    /**
+     * Populates this force instance from serialized data.
+     * Called by subclass static deserialize() methods after creating the instance.
+     */
+    protected populateFromSerialized(data: SerializedForce): void {
+        const sanitizedData = this.sanitizeForceData(data);
+        if (!sanitizedData.groups || !Array.isArray(sanitizedData.groups)) {
+            throw new Error('Invalid serialized Force: missing or invalid groups array');
+        }
+        this.loading = true;
+        try {
+            this.instanceId.set(sanitizedData.instanceId);
+            this.owned.set(sanitizedData.owned !== false);
+
+            // Resolve faction from factionId
+            this.factionLock = sanitizedData.factionLock || false;
+            if (sanitizedData.factionId != null) {
+                const faction = this.dataService.getFactionById(sanitizedData.factionId) ?? null;
+                this.faction.set(faction);
+            }
+
+            // Resolve era from eraId
+            this.eraLock = sanitizedData.eraLock || false;
+            if (sanitizedData.eraId != null) {
+                const era = this.dataService.getEraById(sanitizedData.eraId) ?? null;
+                this.era.set(era);
+            }
+
+            const logger = this.injector.get(LoggerService);
+            const parsedGroups: UnitGroup<TUnit>[] = [];
+            for (const g of sanitizedData.groups) {
+                const groupUnits: TUnit[] = [];
+                for (const unitData of g.units) {
+                    try {
+                        groupUnits.push(this.deserializeForceUnit(unitData));
+                    } catch (err) {
+                        logger.error(`Force.deserialize error on unit "${unitData.unit}": ${err}`);
+                        continue;
+                    }
+                }
+                const group = new UnitGroup<TUnit>(this);
+                if (g.id) {
+                    group.id = g.id;
+                }
+                if (g.name) {
+                    group.setName(g.name, false);
+                } else {
+                    group.setName(undefined, false);
+                }
+                group.color = g.color || '';
+                if (g.formationId) {
+                    group.formation.set(LanceTypeIdentifierUtil.getDefinitionById(g.formationId, this.gameSystem));
+                    group.formationLock = g.formationLock || undefined;
+                } else {
+                    group.formation.set(null);
+                    group.formationLock = undefined;
+                }
+                group.units.set(groupUnits);
+                parsedGroups.push(group);
+            }
+            this.groups.set(parsedGroups);
+            this.timestamp = sanitizedData.timestamp ?? null;
+            if (sanitizedData.c3Networks) {
+                const sanitizedNetworks = Sanitizer.sanitizeArray(sanitizedData.c3Networks, C3_NETWORK_GROUP_SCHEMA);
+                const unitMap = new Map<string, Unit>();
+                for (const group of parsedGroups) {
+                    for (const forceUnit of group.units()) {
+                        unitMap.set(forceUnit.id, forceUnit.getUnit());
+                    }
+                }
+                this.setNetwork(C3NetworkUtil.validateAndCleanNetworks(sanitizedNetworks, unitMap));
+            }
+        } finally {
+            this.loading = false;
+        }
+    }
+
+    /** Updates the force in-place from serialized data. */
+    public update(data: SerializedForce): void {
+        const sanitizedData = this.sanitizeForceData(data);
+        this.loading = true;
+        try {
+            if (this.name !== sanitizedData.name) this.setName(sanitizedData.name, false);
+            this.timestamp = sanitizedData.timestamp ?? null;
+
+            // Resolve faction from factionId
+            this.factionLock = sanitizedData.factionLock || false;
+            if (sanitizedData.factionId != null) {
+                const faction = this.dataService.getFactionById(sanitizedData.factionId) ?? null;
+                this.faction.set(faction);
+            } else {
+                this.faction.set(null);
+            }
+
+            // Resolve era from eraId
+            this.eraLock = sanitizedData.eraLock || false;
+            if (sanitizedData.eraId != null) {
+                const era = this.dataService.getEraById(sanitizedData.eraId) ?? null;
+                this.era.set(era);
+            } else {
+                this.era.set(null);
+            }
+
+            const incomingGroupsData = sanitizedData.groups || [];
+            const currentGroups = this.groups();
+            const currentGroupMap = new Map(currentGroups.map(g => [g.id, g]));
+            const allCurrentUnitsMap = new Map(this.units().map(u => [u.id, u]));
+            const allIncomingUnitIds = new Set(incomingGroupsData.flatMap(g => g.units.map(u => u.id)));
+
+            // Destroy units that are no longer in the force at all
+            for (const [unitId, unit] of allCurrentUnitsMap.entries()) {
+                if (!allIncomingUnitIds.has(unitId)) {
+                    unit.destroy();
+                    allCurrentUnitsMap.delete(unitId);
+                }
+            }
+
+            // Update existing groups and add new ones, and update/move units
+            const updatedGroups: UnitGroup<TUnit>[] = incomingGroupsData.map(groupData => {
+                let group = currentGroupMap.get(groupData.id);
+                if (group) {
+                    // Update existing group
+                    if (group.name() !== groupData.name) {
+                        if (groupData.name) {
+                            group.setName(groupData.name, false);
+                        } else {
+                            group.setName(undefined, false);
+                        }
+                    }
+                    group.color = groupData.color;
+                    group.formation.set(groupData.formationId
+                        ? LanceTypeIdentifierUtil.getDefinitionById(groupData.formationId, this.gameSystem)
+                        : null);
+                    group.formationLock = groupData.formationLock || undefined;
+                    if (!group.formationLock && groupData.formationId) {
+                        group.formationHistory.add(groupData.formationId);
+                    }
+                } else {
+                    // Add new group
+                    group = new UnitGroup<TUnit>(this);
+                    if (groupData.name) {
+                        group.setName(groupData.name, false);
+                    }
+                    group.id = groupData.id;
+                    group.color = groupData.color;
+                    if (groupData.formationId) {
+                        group.formation.set(LanceTypeIdentifierUtil.getDefinitionById(groupData.formationId, this.gameSystem));
+                        group.formationLock = groupData.formationLock || undefined;
+                        if (!group.formationLock) {
+                            group.formationHistory.add(groupData.formationId);
+                        }
+                    } else {
+                        group.formation.set(null);
+                        group.formationLock = undefined;
+                    }
+                }
+
+                const groupUnits = groupData.units.map(unitData => {
+                    let unit = allCurrentUnitsMap.get(unitData.id);
+                    if (unit) {
+                        // Unit exists, update it
+                        unit.update(unitData);
+                    } else {
+                        // Unit is new to the force, create it
+                        unit = this.deserializeForceUnit(unitData);
+                    }
+                    return unit;
+                });
+                group.units.set(groupUnits);
+                return group;
+            });
+
+            this.groups.set(updatedGroups);
+            this.removeEmptyGroups();
+
+            // Update C3 networks with sanitization and validation
+            if (sanitizedData.c3Networks) {
+                const sanitizedNetworks = Sanitizer.sanitizeArray(sanitizedData.c3Networks, C3_NETWORK_GROUP_SCHEMA);
+                const unitMap = new Map<string, Unit>();
+                for (const group of this.groups()) {
+                    for (const forceUnit of group.units()) {
+                        unitMap.set(forceUnit.id, forceUnit.getUnit());
+                    }
+                }
+                this.setNetwork(C3NetworkUtil.validateAndCleanNetworks(sanitizedNetworks, unitMap));
+            } else {
+                this.setNetwork([]);
+            }
+        } finally {
+            this.loading = false;
+        }
+    }
+
+    /**
+     * Subclass factory: deserialize a SerializedForce into a new Force instance
+     * using this instance's injected services.
+     */
+    protected abstract deserializeFrom(serialized: SerializedForce): Force;
+
+    /**
+     * Clone this force (uses serialize + deserialize)
+     * Returns a brand-new owned Force with fresh instanceId, group ids,
+     * unit ids, and remapped C3 network references.
+     */
+    public clone(): Force {
+        const serialized = this.serialize();
+
+        // Build old→new unit ID map
+        const unitIdMap = new Map<string, string>();
+        serialized.instanceId = generateUUID();
+        if (serialized.groups) {
+            for (const group of serialized.groups) {
+                group.id = generateUUID();
+                for (const unit of group.units) {
+                    const newId = generateUUID();
+                    unitIdMap.set(unit.id, newId);
+                    unit.id = newId;
+                }
+            }
+        }
+
+        // Remap C3 network references
+        if (serialized.c3Networks) {
+            const remapId = (id: string): string => {
+                const parts = id.split(':');
+                const mapped = unitIdMap.get(parts[0]);
+                if (mapped) {
+                    parts[0] = mapped;
+                    return parts.join(':');
+                }
+                return id;
+            };
+            for (const network of serialized.c3Networks) {
+                network.id = generateUUID();
+                if (network.peerIds) {
+                    network.peerIds = network.peerIds.map(remapId);
+                }
+                if (network.masterId) {
+                    network.masterId = remapId(network.masterId);
+                }
+                if (network.members) {
+                    network.members = network.members.map(remapId);
+                }
+            }
+        }
+
+        serialized.timestamp = new Date().toISOString();
+        serialized.owned = true;
+
+        return this.deserializeFrom(serialized);
+    }
+}

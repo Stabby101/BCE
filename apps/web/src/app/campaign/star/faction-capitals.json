@@ -1,0 +1,37 @@
+{
+  "_meta": {
+    "provenance": "DIRECTIVE-079 — OUR faction tag -> capital systemId. Absent/missing -> Terra.",
+    "fallback": "terra"
+  },
+  "capitals": {
+    "Federated Suns": "new-avalon",
+    "Lyran Commonwealth": "tharkad",
+    "Draconis Combine": "luthien",
+    "Free Worlds League": "atreus",
+    "Capellan Confederation": "sian",
+    "Federated Commonwealth": "new-avalon",
+    "Free Rasalhague Republic": "rasalhague",
+    "Rasalhague Dominion": "rasalhague",
+    "Republic of the Sphere": "terra",
+    "ComStar": "terra",
+    "Word of Blake": "terra",
+    "St. Ives Compact": "st-ives",
+    "Duchy of Andurien": "andurien",
+    "Duchy of Tamarind-Abbey": "tamarind",
+    "Marik-Stewart Commonwealth": "stewart",
+    "Oriente Protectorate": "oriente",
+    "Regulan Fiefs": "regulus",
+    "Taurian Concordat": "taurus",
+    "Magistracy of Canopus": "canopus",
+    "Outworlds Alliance": "alpheratz",
+    "Marian Hegemony": "alphard",
+    "Circinus Federation": "circinus",
+    "Wolf's Dragoons": "outreach",
+    "Kell Hounds": "arc-royal",
+    "Gray Death Legion": "glengarry",
+    "Northwind Highlanders": "northwind",
+    "Clan Wolf": "tamar",
+    "Clan Jade Falcon": "sudeten",
+    "Clan Ghost Bear": "alshain"
+  }
+}

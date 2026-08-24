@@ -1,0 +1,244 @@
+@if (archetypeName(); as arch) {
+<main class="sheet" aria-label="New campaign — faction and starting unit">
+    <span class="reg tl" aria-hidden="true"></span><span class="reg tr" aria-hidden="true"></span>
+    <span class="reg bl" aria-hidden="true"></span><span class="reg br" aria-hidden="true"></span>
+    <div class="holes" aria-hidden="true"><div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div></div>
+    <div class="stamp" aria-hidden="true">New Campaign</div>
+
+    <header>
+        <div>
+            <div class="ttl">BATTLETECH CAMPAIGN ENGINE</div>
+            <div class="crumb">Create &nbsp;&rsaquo;&nbsp; <span class="done">era &#10003;</span> &nbsp;&rsaquo;&nbsp; <span class="done">date+force &#10003;</span> &nbsp;&rsaquo;&nbsp; <b>Faction &amp; unit</b> &nbsp;&rsaquo;&nbsp; size &amp; capital</div>
+        </div>
+        <div class="step"><div><b>STEP</b> 03 / 04</div><div><b>FIELD</b> FACTION</div></div>
+    </header>
+
+    <div class="ctx">
+        <span class="clabel">Archetype (from step 2)</span>
+        <span class="aname">{{ arch }}</span>
+        <span class="era">ERA: {{ eraLine() }}</span>
+    </div>
+    @if (isMerc()) {
+        <p class="hint"><b>Mercenary command setup.</b> Model your outfit on a <b>canon command</b> (signature ’Mechs &amp; notable pilots) or <b>build your own</b>, name it, and set a starting rating. <span class="ph-note">Free agent on market logistics — you assemble the force next.</span></p>
+
+        <div class="merc">
+            <div class="mmode" role="tablist">
+                <button type="button" class="mtab" [class.sel]="mercMode() === 'canon'" (click)="useCanonMode()">Model on a canon command</button>
+                <button type="button" class="mtab" [class.sel]="mercMode() === 'own'" (click)="buildOwn()">Build your own</button>
+            </div>
+
+            <div class="mcols" [class.own]="mercMode() === 'own'">
+                @if (mercMode() === 'canon') {
+                    <div class="panel mlist">
+                        <div class="ph">Canon commands <small>model your outfit</small></div>
+                        <div class="list">
+                            @for (c of mercCommands; track c.name) {
+                                <button type="button" class="mrow" [class.sel]="selectedMerc()?.name === c.name"
+                                    [style.--c1]="c.colors[0]" [style.--c2]="c.colors[1]" (click)="selectMerc(c)">
+                                    <span class="maccent" aria-hidden="true"></span>
+                                    <span class="mn">{{ c.name }}</span>
+                                    <span class="my">est. {{ c.foundedYear }}</span>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <div class="panel mdetail">
+                    <div class="ph">Command identity</div>
+                    <label class="mfield">
+                        <span class="mlbl">Command name <span class="req">required</span></span>
+                        <input class="mi" type="text" [value]="commandName()" (input)="onNameInput($event)" placeholder="Name your command" maxlength="60" autocomplete="off" />
+                    </label>
+                    <div class="mfield">
+                        <span class="mlbl">Starting rating</span>
+                        <div class="mrate" role="radiogroup">
+                            @for (r of ratings; track r) {
+                                <button type="button" class="rbtn" [class.sel]="rating() === r" [attr.aria-checked]="rating() === r" role="radio" (click)="setRating(r)">{{ r }}</button>
+                            }
+                        </div>
+                    </div>
+
+                    @if (mercMode() === 'canon' && selectedMerc(); as c) {
+                        <div class="mblurb">{{ c.blurb }}</div>
+                        <div class="mactive">{{ c.activeNote }}</div>
+                        <div class="msec">
+                            <div class="msl">Signature ’Mechs</div>
+                            <div class="mgrid">
+                                @for (m of c.signatureMechs; track $index) {
+                                    <div class="mmech">
+                                        <span class="mch">{{ m.chassis }}@if (m.variant) { <span class="mvar">{{ m.variant }}</span> }</span>
+                                        @if (m.pilot) { <span class="mpl">{{ m.pilot }}</span> }
+                                        @if (m.note) { <span class="mnt">{{ m.note }}</span> }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="msec">
+                            <div class="msl">Notable pilots</div>
+                            <div class="mgrid">
+                                @for (p of c.notablePilots; track $index) {
+                                    <div class="mpil">
+                                        <span class="pn">{{ p.name }}@if (p.gunnery != null && p.piloting != null) { <span class="pgp">G{{ p.gunnery }}/P{{ p.piloting }}</span> }</span>
+                                        @if (p.role) { <span class="prole">{{ p.role }}</span> }
+                                        @if (p.note) { <span class="pnt">{{ p.note }}</span> }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="msrc">Modeled on a canon command · <a [href]="c.sources[0]" target="_blank" rel="noopener noreferrer">source (Sarna)</a> · name &amp; force are yours to change</div>
+                    }
+                    @if (mercMode() === 'own') {
+                        <div class="mown">Building an independent command from scratch — name it and set a starting rating, then muster its force in the next step. No canon template applied.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    } @else {
+        <p class="hint">Only factions <b>active in {{ eraShort() }}</b> are shown. Pick one, then the <b>command you'll lead</b> — a real <b>canon formation</b> (its signature ’Mechs &amp; notable pilots of the era), or <b>make your own</b>. <span class="ph-note">You command a lance/company within the formation; its signature ’Mechs seed your force.</span></p>
+
+        <div class="cols">
+            <!-- LEFT: era-gated faction picker -->
+        <div class="panel picker">
+            <div class="ph">Faction
+                @if (ready()) { <small>{{ availCount() }} active &middot; {{ eraShort() }}</small> }
+            </div>
+
+            @if (ready() && pick().sections.length) {
+                <div class="pbody">
+                    @if (pick().relaxed) {
+                        <div class="relax">No <b>{{ arch }}</b> factions active in {{ eraShort() }} — showing all available.</div>
+                    }
+                    @if (pick().note) { <div class="relax">{{ pick().note }}</div> }
+                    @for (sec of pick().sections; track sec.group) {
+                        <div class="fsec">
+                            <div class="fseclbl">{{ sec.label }} <span>{{ sec.visible.length + sec.overflow.length }}</span></div>
+                            <div class="fgrid">
+                                @for (v of sec.visible; track v.faction.id) {
+                                    <button type="button" class="fcard" [class.sel]="selectedFaction() === v.faction.name"
+                                        [style.--c1]="v.flavor?.colors?.[0] || 'transparent'" [style.--c2]="v.flavor?.colors?.[1] || 'transparent'"
+                                        [attr.aria-pressed]="selectedFaction() === v.faction.name" (click)="selectFaction(v.faction.name)">
+                                        <span class="faccent" aria-hidden="true"></span>
+                                        <img class="flogo" [src]="v.faction.img" (error)="onLogoError($event)" alt="" loading="lazy" />
+                                        <span class="fmain">
+                                            <span class="fname">{{ v.faction.name }}</span>
+                                            <span class="faff">{{ v.faction.group }}</span>
+                                            @if (v.flavor) { <span class="fblurb">{{ v.flavor.blurb }}</span> }
+                                        </span>
+                                    </button>
+                                }
+                                @if (isExpanded(sec.group)) {
+                                    @for (v of sec.overflow; track v.faction.id) {
+                                        <button type="button" class="fcard" [class.sel]="selectedFaction() === v.faction.name"
+                                            [style.--c1]="v.flavor?.colors?.[0] || 'transparent'" [style.--c2]="v.flavor?.colors?.[1] || 'transparent'"
+                                            [attr.aria-pressed]="selectedFaction() === v.faction.name" (click)="selectFaction(v.faction.name)">
+                                            <span class="faccent" aria-hidden="true"></span>
+                                            <img class="flogo" [src]="v.faction.img" (error)="onLogoError($event)" alt="" loading="lazy" />
+                                            <span class="fmain">
+                                                <span class="fname">{{ v.faction.name }}</span>
+                                                <span class="faff">{{ v.faction.group }}</span>
+                                                @if (v.flavor) { <span class="fblurb">{{ v.flavor.blurb }}</span> }
+                                            </span>
+                                        </button>
+                                    }
+                                }
+                            </div>
+                            @if (sec.overflow.length) {
+                                <button type="button" class="moretoggle" [class.open]="isExpanded(sec.group)" [attr.aria-expanded]="isExpanded(sec.group)" (click)="toggleSection(sec.group)">
+                                    <span class="tw" aria-hidden="true">{{ isExpanded(sec.group) ? '&#9662;' : '&#9656;' }}</span> {{ isExpanded(sec.group) ? 'Show fewer' : 'More ' + sec.label }} <small>{{ sec.overflow.length }}</small>
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+            } @else if (showFallback()) {
+                <div class="pbody">
+                    <div class="errnote">@if (dataError()) {Unit catalog unavailable — showing placeholder factions.} @else {Limited faction data for {{ eraShort() }} — showing major factions.}</div>
+                    <div class="list">
+                        @for (f of fallbackGroups(); track f.name) {
+                            <button type="button" class="row" [class.sel]="selectedFaction() === f.name" [attr.aria-pressed]="selectedFaction() === f.name" (click)="selectFaction(f.name)">
+                                <span>{{ f.name }}</span>
+                                @if (f.sub) { <span class="sub">{{ f.sub }}</span> }
+                            </button>
+                        }
+                    </div>
+                </div>
+            } @else {
+                <div class="loading"><span class="spin" aria-hidden="true"></span> Loading faction registry&hellip;<small>era-gated list from the unit catalog</small></div>
+            }
+        </div>
+
+        <!-- RIGHT: starting command (canon OOB, era + faction filtered) -->
+        <div class="panel">
+            <div class="ph">Starting command <small>{{ selectedFaction() ?? '—' }}</small></div>
+            @if (!selectedFaction()) {
+                <div class="nofrm">Pick a faction first.</div>
+            } @else if (formations().length) {
+                <div class="list">
+                    @for (f of formations(); track f.name) {
+                        <button type="button" class="urow" [class.sel]="selectedUnit() === f.name" [attr.aria-pressed]="selectedUnit() === f.name" (click)="selectFormation(f)">
+                            <span class="uinfo">
+                                <span class="uname">{{ f.name }}@if (f.broaderEra) { <span class="ube" title="fielded in a nearby era">±</span> }</span>
+                                <span class="umeta">{{ f.role }}</span>
+                            </span>
+                            <!-- D-061: right-side visual — mirrored unit crest (else the faction crest) + a REDRAWN paint swatch -->
+                            <span class="uviz" aria-hidden="true">
+                                <img class="ucrest" [src]="f.crest || selectedFactionImg()" [attr.data-faction-crest]="selectedFactionImg()" (error)="onCrestError($event)" alt="" loading="lazy" />
+                                <span class="uswatch" [style.background]="swatchBg(f)" [title]="paintTip(f)"></span>
+                            </span>
+                        </button>
+                    }
+                </div>
+                @if (selectedFormation(); as f) {
+                    <div class="frmdetail">
+                        <div class="mblurb">{{ f.blurb }}</div>
+                        <div class="mactive">{{ f.role }}</div>
+                        <div class="msec">
+                            <div class="msl">Signature ’Mechs <span class="lore">seed your force</span></div>
+                            <div class="mgrid">
+                                @for (m of f.signatureMechs; track $index) {
+                                    <div class="mmech">
+                                        <span class="mch">{{ m.chassis }}</span>
+                                        @if (m.note) { <span class="mnt">{{ m.note }}</span> }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        @if (f.notablePilots.length) {
+                            <div class="msec">
+                                <div class="msl">Notable pilots <span class="lore">lore — not your roster</span></div>
+                                <div class="mgrid">
+                                    @for (p of f.notablePilots; track $index) {
+                                        <div class="mpil">
+                                            <span class="pn">{{ p.name }}@if (p.gunnery != null && p.piloting != null) { <span class="pgp">G{{ p.gunnery }}/P{{ p.piloting }}</span> }</span>
+                                            @if (p.role) { <span class="prole">{{ p.role }}</span> }
+                                            @if (p.note) { <span class="pnt">{{ p.note }}</span> }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        <div class="msrc">You command a lance/company within this formation · <a [href]="f.sources[0]" target="_blank" rel="noopener noreferrer">source (Sarna)</a></div>
+                    </div>
+                }
+            } @else {
+                <div class="nofrm">No notable commands on record for <b>{{ selectedFaction() }}</b> in {{ eraShort() }}. <span>Strike your own banner below.</span></div>
+            }
+            <div class="own">
+                <button type="button" class="ownbtn" [class.sel]="selectedUnit() === CUSTOM" [attr.aria-pressed]="selectedUnit() === CUSTOM" (click)="selectCustom()">
+                    <span class="g" aria-hidden="true">&#10022;</span> Make your own — strike your own banner
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <footer>
+        <div class="nav">
+            <button type="button" class="btn" (click)="back()">&lsaquo; Back</button>
+            <button type="button" class="btn go" [disabled]="!canProceed()" (click)="proceed()">Proceed &rsaquo;</button>
+        </div>
+        <div class="meta2">BCE v0.1 &middot; campaign parameter 3 of 4<br>era &middot; date+force &middot; <b>faction</b> &middot; size</div>
+    </footer>
+</main>
+}

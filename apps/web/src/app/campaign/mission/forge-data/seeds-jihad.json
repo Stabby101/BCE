@@ -1,0 +1,1282 @@
+[
+  {
+    "seedId": "JIH-01",
+    "family": "RELIEF_DUTY",
+    "title": "OPERATION HUNGRY GROUND",
+    "eraFit": ["jihad"],
+    "factionFit": ["is-marik", "merc"],
+    "register": "is-marik",
+    "threatRange": ["LOW", "MEDIUM"],
+    "situation": "When the Word of Blake garrison abandoned {WORLD} in {YEAR}, it spent its last six hours of air cover poisoning the Carseland floodplain. That floodplain is 11,400 hectares of grain land, and it is the only grain land the northern hemisphere has. The Blakists seeded it with chemical canisters. The coalition survey calls the poison SABLE RAIN. It kills on contact and stays deadly in wet soil for about 30 months. The provincial assembly at {DISTRICT} voted three times to make relief a priority but paid for it only once. That money bought your unit, {CLEAR_TEAMS} certified clearance teams, and one warehouse of antidote injectors. {EMPLOYER} wants you to guard the clearance work and speed it up, certify at least 6,200 hectares as clean before the planting window closes, and hold the exclusion line until then.\n\nThe deadline comes from the river, not from politics. The Carse floods every winter. The water went down 9 days ago, and crops can only be sown within {PLANT_WINDOW} days of that. Miss the window and there is no growing season, and no food for 900,000 people. Each team clears 14 to 22 hectares a day, depending on how thickly the canisters were laid. That does not reach 6,200 hectares in time. To close the gap you need either more workers or more risk, and the assembly has twice refused to vote on which.\n\nThe hard ground is the levees. The Carseland Levees are the only ground in the floodplain that can carry anything over 40 tons. Everything off the levee tops is waterlogged rice paddy that bogs down vehicles and traps the poison in the root mat. The Blakists knew this, so they seeded the levee tops four times as heavily as the fields. Your 'Mechs can only watch over the flats from the levees, but the levees have to be cleared first. The clearance teams want your 'Mechs watching before they walk the levee tops. So one side has to go first, unprotected.\n\nThree more facts. First, the people are not waiting. Their food covers 40 days at three-quarter rations, and at night they cross the tape to scavenge seed grain and salvage. In the first 19 days, 31 died and 64 were poisoned (from the district medical registry, three days old). Second, cleared plots are not staying clean. Someone has re-seeded canisters on 4 plots you already certified, all within 800 meters of the Blackbottom drainage cuts. The pattern points to a stay-behind team of 6 to 10 people with at least one small boat, though this is unconfirmed. Third, the poison-density map your whole schedule depends on came from a Blakist deserter handled by {NPC:intel-source}. It is nine days old. So far it has been right about every levee but wrong about two of the five field grids, so assume it stays two-fifths wrong.\n\nThe injectors are the resource nobody votes on. You have {INJECTOR_STOCK} doses, resupply is 60 days away, and every casualty draws from the same shelf, whether soldier, clearance tech, or scavenger.",
+    "objectives": {
+      "primary": "Certify 6,200 hectares of the Carseland floodplain clean, levee tops included, before the planting window closes {PLANT_WINDOW} days after the flood went down.",
+      "secondary": "Find and stop the team re-seeding poison from the Blackbottom drainage cuts. After day 20, no certified plot gets poisoned again.",
+      "bonus": "Train and equip a local clearance corps to coalition standard so the work continues after your contract ends."
+    },
+    "complications": [
+      {
+        "name": "The Map Is Two-Fifths Wrong",
+        "text": "The deserter's poison-density map sets the clearance schedule, but it is wrong on 40 percent of the field grids. Nobody finds out a grid is wrong until a team is already standing in it.",
+        "mechanicalEffect": "When a team opens a new field grid, roll for map accuracy. A wrong grid cuts that team's daily rate in half and forces a one-day re-survey before certification can start again."
+      },
+      {
+        "name": "Scavengers",
+        "text": "Hungry people cross the tape at night, on paths they know, to reach seed grain your teams have not cleared yet. Whether or not they are your responsibility, they become your casualties.",
+        "mechanicalEffect": "On any night with no dedicated tape patrols, a civilian casualty event occurs. It draws 2-8 injectors from stock and costs the nearest clearance team its next morning for recovery and decontamination."
+      },
+      {
+        "name": "The Injector Shelf",
+        "text": "One stock of antidote serves everyone inside the exclusion line. The medical annex is clear: below 300 doses, clearance slows to half speed by standing order. Clearing poison without a reserve of antidote just makes more casualties.",
+        "mechanicalEffect": "Track injector stock as a campaign resource. Below 300 doses, all clearance rates drop by half. At zero, clearance stops entirely until resupply on day 60."
+      },
+      {
+        "name": "Soft Ground",
+        "text": "Off the levee tops, the rice paddy bogs down anything heavy and holds poison in the root mat. Pulling out a bogged vehicle is hard enough on its own, and the mud is poisoned too.",
+        "mechanicalEffect": "Vehicles over 40 tons must stay on the levee tops. 'Mechs off the tops roll a bog check each turn of sustained movement. Any recovery in poisoned paddy costs a full decontamination cycle and 4-6 injectors held in reserve."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Whose Hands",
+        "context": "The certified teams alone cannot clear 6,200 hectares before the planting window closes. There are three ways to close the gap, and the assembly has refused to pick one.",
+        "options": [
+          {
+            "title": "Certified Teams Only",
+            "advantages": ["The lowest casualty rate of any way to do the work", "Every cleared plot is properly certified and can be defended later", "No political risk with the assembly"],
+            "disadvantages": ["You still fall short by an estimated 1,400 to 2,200 hectares", "That shortfall becomes a 14-month food deficit", "As uncleared land stays uncleared, more scavengers cross the tape"],
+            "consequence": "You keep professional standards, but the harvest pays for it. The shortfall shows up first as missing grain, then as smaller rations, then as deaths in the spring records.",
+            "costs": { "cbills": 0, "days": null, "resource": "harvest shortfall: 1,400-2,200 hectares left unplanted for 14 months", "risk": "the food shortage becomes next winter's emergency, with your unit's name on the certification record" }
+          },
+          {
+            "title": "Paid Volunteer Corps",
+            "advantages": ["Closes the gap with 200 to 300 local workers at 14 C-bills a day", "Those workers know the drainage cuts and the scavenger paths", "The assembly's farm bloc backs it loudly"],
+            "disadvantages": ["Volunteers get killed 3 to 5 times as often as certified teams do", "Every casualty drains the same injector shelf and the same political goodwill", "Training the volunteers costs the certified teams 6 working days up front"],
+            "consequence": "The land gets cleared, and the price is paid locally, a little at a time, at funerals the assembly members attend.",
+            "costs": { "cbills": 85000, "days": 6, "resource": "injectors burn twice as fast for as long as the program runs", "risk": "one bad day with many volunteer deaths ends both the program and the assembly's support" }
+          },
+          {
+            "title": "Blakist Prisoner Labor",
+            "advantages": ["Among 240 prisoners of war, 31 are trained combat engineers, the fastest hands you have", "It costs nothing from the relief budget", "It closes the gap with 9 to 12 days to spare"],
+            "disadvantages": ["The rules are clear: dangerous work by prisoners needs their consent, and that consent vanishes after the first death", "Count on sabotage from inside the labor force, and plan for it", "The first prisoner killed by his own side's poison becomes propaganda for both sides at once"],
+            "consequence": "The people who poisoned the ground are the ones who clear it. Every other consequence lands later, by committee, by broadcast, and in the next contract's terms.",
+            "costs": { "cbills": 0, "days": null, "resource": "1 platoon tied up guarding prisoners for the whole program", "risk": "one sabotage or revenge incident turns the relief program into a war-crimes inquiry, with your unit on the record as the jailer" }
+          }
+        ]
+      },
+      {
+        "name": "The Boat in the Cuts",
+        "context": "The re-seeding team works from the Blackbottom drainage cuts at night. Every plot it poisons is a plot you already paid to clear.",
+        "options": [
+          {
+            "title": "Night Ambush Program",
+            "advantages": ["Stops the problem at its source if you catch the team", "The cuts are a narrow approach, which makes for a good ambush", "A captured re-seeder is your best lead on the remaining poison caches"],
+            "disadvantages": ["Your best infantry leaves the tape to run it, so scavenger deaths rise on those nights", "The team shows up every 3 to 6 days at random, so expect 2 to 3 empty weeks of waiting", "Night fighting on poisoned ground means fighting in full protective gear, half-blind"],
+            "consequence": "Pulling infantry off the tape to watch the cuts thins your patrols elsewhere. You trade a known nightly risk to scavengers for an uncertain chance of catching the team in one clean fight.",
+            "costs": { "cbills": null, "days": null, "resource": "tape patrol coverage drops 40 percent on ambush nights; expect about one extra civilian casualty event per week", "risk": "a firefight on poisoned ground in protective gear; friendly casualties draw 10-15 injectors in one night" }
+          },
+          {
+            "title": "Weekly Re-Survey",
+            "advantages": ["Every certified plot is re-checked weekly, so no farmer walks onto a re-seeded plot thinking it is clean", "No fighting, just careful work", "It also catches map errors as a bonus"],
+            "disadvantages": ["Clearance slows 20 percent for the whole program, so the gap reopens", "The re-seeding team keeps the upper hand for as long as this lasts", "Teams re-checking ground they think is clean get careless, and careless is how certification fails"],
+            "consequence": "The program soaks up the attacks instead of stopping them. It is safe and slow, but the 20 percent slowdown reopens the shortfall problem from another angle.",
+            "costs": { "cbills": null, "days": null, "resource": "clearance rate drops 20 percent; 900-1,300 hectares of your time margin spent on re-checking", "risk": "the team steps up and starts poisoning the levee tops behind your watch pattern" }
+          },
+          {
+            "title": "Grate the Drainage Cuts",
+            "advantages": ["Blocks the boat for good, and it is built once instead of patrolled nightly", "Frees your infantry for the tape once it is done", "It is sturdy, plain to see, and cheap to keep up"],
+            "disadvantages": ["6 engineering days at three cut mouths, working in poisoned water", "Blocking the cuts backs up the field drains for two villages, waterlogging 380 hectares of your target into next season", "The team switches to coming in overland; slower for them, but the threat changes rather than ends"],
+            "consequence": "The cuts close and the water backs up elsewhere. The two flooded villages will be told it was the cheaper choice. That is true, and it will not comfort them.",
+            "costs": { "cbills": 12000, "days": 6, "resource": "380 hectares of your target lost to flooding", "risk": "political: two village delegations show up at the assembly mid-program, with the farm bloc listening" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "A blast or a poisoning on a certified plot: re-seeding is confirmed in the grid you are working." },
+        { "t": "T+0:10", "event": "You send a medical and decontamination team; the injectors they use are logged against your stock." },
+        { "t": "T+1:00", "event": "The plot loses its clean rating; nearby grids pause for re-check. Clearance teams hold at the tape." },
+        { "t": "T+6:00", "event": "Re-check of the poisoned plot is done, at the cost of one team-day against the window." },
+        { "t": "T+24:00", "event": "The district registry publishes the casualty. Scavengers shift to grids they think are untouched, and the assembly puts off its questions to the next sitting." }
+      ],
+      "hardDeadline": "The planting window closes {PLANT_WINDOW} days after the flood goes down. Every hectare not certified by that morning stays unplanted for 14 months. The northern hemisphere's food count is based on what your teams actually certified, not on what they tried or what the assembly voted for."
+    },
+    "opforSketch": {
+      "composition": "Word of Blake stay-behind re-seeding team: 6-10 effectives (Veteran), one shallow-draft boat, man-portable canister stocks cached in the drainage network. Secondary contact volume from armed scavenger bands (Green, 4-12 per band, smallarms only) working the exclusion zone's edges. Generator should keep direct combat rare and small; the threat is to the program, not the unit.",
+      "behavior": "The team avoids all contact and attacks certification itself: re-seeds by night, observes response patterns, and will mine a levee crown if 'Mech overwatch settles into routine. Scavengers flee from force and return behind it. Nobody on the other side wants your battle; they want your schedule."
+    },
+    "forks": [
+      { "name": "OPERATION SEED CORN", "family": "GARRISON_DUTY", "outcomeGate": "FULL_SUCCESS", "trigger": "6,200+ hectares certified inside the window; re-seeding interdicted.", "consequence": "The crop goes in, and the harvest becomes the district's strategic asset — and target. The unit is offered the follow-on garrison contract: granaries, levee patrol lines, and the first harvest convoys under guard.", "threat": "LOW" },
+      { "name": "OPERATION EMPTY BOWL", "family": "RIOT_DUTY", "outcomeGate": "FAILURE", "trigger": "Certified acreage falls short by 1,000 hectares or more, or clearance suspends on a dry injector shelf.", "consequence": "Ration issue drops to half by mid-winter. The district food offices come under crowd pressure on a published schedule — issue days — and the unit still under contract becomes the line between the queue and the warehouse.", "threat": "MEDIUM" },
+      { "name": "OPERATION GLASS HOUSE", "family": "SECURITY_DUTY", "outcomeGate": "COMPROMISED", "trigger": "A prisoner-labor incident, volunteer mass-casualty day, or gleaner shooting at the tape becomes an assembly inquiry.", "consequence": "An inquiry commission arrives with subpoena power over the unit's logs while the clearance program continues around it. The unit guards the commission, its records, and its witnesses — having become, in part, the subject.", "threat": "MEDIUM" }
+    ],
+    "storyElementSeed": "A clearance tech kneels at the flag line, lifts a canister the size of a thermos with two fingers and a held breath, and sets it in the sand box. Behind the tape a farmer watches the row she is not yet allowed to plant and counts days on her fingers.",
+    "voiceSlots": ["engineering", "medical", "logistics", "command"],
+    "registerVariants": {
+      "merc": {
+        "situation.framing": "Read clause 9 before the first boot crosses the tape. Your unit is liable for any poisoning inside the exclusion line, scavengers included. The real treasure on this contract is the injector shelf: C-bills arrive by wire transfer, but antidote takes 60 days to resupply, and the employer's relief committee has never had to stand downwind of either problem."
+      }
+    },
+    "specifics": {
+      "PLANT_WINDOW": { "min": 28, "max": 34, "unit": "days after flood recession" },
+      "CLEAR_TEAMS": { "min": 6, "max": 9, "unit": "certified clearance teams" },
+      "INJECTOR_STOCK": { "min": 900, "max": 1300, "unit": "antidote auto-injectors on hand" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Certified Teams Only", "requires": "depot-access", "whenLacking": "reprice", "lackingText": "Without depot engineering stocks such as flail rigs and spare protective suits, certified-team rates drop from 14-22 to 9-14 hectares per day, and the projected shortfall grows to 2,400-3,200 hectares." }
+    ],
+    "skeleton": "clearance force must certify poisoned cropland against an immovable planting date while the hungry population enters the ground faster than it is cleared and a night team re-seeds what the day certified",
+    "inspiration": "post-liberation agricultural demining, France 1945-46, including the POW-labor controversy"
+  },
+  {
+    "seedId": "JIH-02",
+    "family": "SECURITY_DUTY",
+    "title": "OPERATION SEALED REGISTER",
+    "eraFit": ["jihad"],
+    "factionFit": ["comstar"],
+    "register": "comstar",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "situation": "The Blessed Order's compound above {DISTRICT} on {WORLD} was retaken in {YEAR} with its transmission floor intact, which the after-action summary called good luck. The summary said little about what sits two levels below that floor: the district ROM registry, called the Register. It holds {FILE_COUNT} informer and case files covering 11 Protectorate worlds. Who informed. Who was paid. Who was forced to sign but signed anyway. Who wore ComStar white but worked for the Word of Blake from day one. A coalition commission lands in {COMMISSION_DAYS} days to take the files and judge them. Until its custody officer signs for them, your detail holds the vault. And every survivor of the schism wants to know what the vault says about everyone else.\n\nYou face four threats. First, the retreating staff rigged the vault to burn. There are 31 thermite charges, set to fire either on command or if anyone tampers with them, and the staff drained the fire-suppression lines before they left. Only one man knows how to disarm it: the captured Custodian-Adept, held under guard in the compound and now bargaining. Second, a Word of Blake remnant cell is still in the city below, an estimated 12 to 20 fighters, from intelligence six days old. The Register names their stay-behind network, so their job is to destroy it. Two probing attacks on the vehicle ramp in nine days fit that theory. Third, the petitioners: a camp of {PETITIONERS} people has grown on the Procession Stair, families of the disappeared whose files are inside, adding 40 to 80 more with every new rumor. Fourth, and stated plainly because the Order owes itself honesty, the Order is split. One faction wants the Register sealed and handed over untouched. Another wants it opened now and read aloud, to clear the Order's name by naming the traitors. Both factions have followers inside this compound. And 14 of your own guards served on worlds the Register covers. Nobody has read their files. That is the only neutrality left here, and one locked door protects it.\n\nThe hard ground is the Stair. The compound sits on a rocky hill above the city. Only two routes reach it: one vehicle ramp that switchbacks up the north face, and the Procession Stair on the south, 1,100 steps that a crowd can climb but no vehicle can. You cannot simply close the Stair, because its midpoint landing holds the cistern the petitioners' camp drinks from. Cut off water to 800 civilians and 11 worlds will know by the end of the week. Meanwhile the transmission floor has to keep relaying coalition traffic. The interdiction was only just lifted, and theater command logs every hour it goes dark. You are holding a relay, a vault, a prisoner, a crowd, and a roster, and the commission's signature is {COMMISSION_DAYS} days away.",
+    "objectives": {
+      "primary": "Hand the Register to the commission complete and unread, with the chain of custody unbroken, on the day its custody officer signs for it.",
+      "secondary": "Keep the transmission floor passing coalition traffic, with total downtime under 4 hours for the whole holding period.",
+      "bonus": "Disarm the thermite charges completely before the commission lands, without granting the Custodian-Adept the immunity he wants."
+    },
+    "complications": [
+      {
+        "name": "The Charges",
+        "text": "Thirty-one thermite charges, set to fire if tampered with, and the fire-suppression lines are drained. Any unauthorized entry starts a 90-second arming cycle that only the disarm sequence can stop. The trap that guards the vault can also destroy it.",
+        "mechanicalEffect": "Any breach of the vault perimeter, whether hostile, accidental, or friendly but unauthorized, starts a 90-second clock. If no one with disarm authority reaches the vault floor in time, the Register burns and the primary objective fails for good."
+      },
+      {
+        "name": "Fourteen Names",
+        "text": "Fourteen of your guards may have files in the drawers they guard. No one has read them, and the whole arrangement holds because no one has. Every rumor of a leak tests that.",
+        "mechanicalEffect": "Guards posted near the vault roll morale and loyalty checks after any leak event or approach by the faction that wants the files opened. A failed check produces an access irregularity the GM resolves: an error, a confession, or an attempt to reach the files."
+      },
+      {
+        "name": "The Stair and the Cistern",
+        "text": "The Stair brings crowds up, and you cannot close it without cutting the camp's water. The camp is grieving families in a line, and by the second retelling a rumor becomes fact to them.",
+        "mechanicalEffect": "Crowd events come up the Stair and grow with each rumor cycle. Closing the Stair triggers a humanitarian crisis within 48 hours: the commission censures you, the open-the-files faction gains recruits, and the crowd doubles."
+      },
+      {
+        "name": "The Transmission Floor",
+        "text": "The relay has to keep running. It ties up 40 percent of compound power and one of your sections around the clock, and theater command checks the uptime log before it reads your reports.",
+        "mechanicalEffect": "One section and 40 percent of power stay committed to the relay. You may pull them for a crisis, but each hour counts as logged downtime against the 4-hour secondary-objective limit."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Custodian's Price",
+        "context": "He will disarm the charges in exchange for passage off-world and immunity from the commission. He built the trap, he knows exactly how many days you have, and he bargains like a man reading your calendar over your shoulder.",
+        "options": [
+          {
+            "title": "Take the Deal",
+            "advantages": ["The one man who knows the sequence disarms the charges", "Vault risk drops to ordinary security risk for the rest of the days", "His debriefing reveals the cell's support network, at medium reliability"],
+            "disadvantages": ["The commission's clearest case walks free, with your signature on the release", "The petitioners' camp will find out, because the Stair hears everything, and your neutrality suffers", "Every future custodian on 11 worlds learns that rigging an archive buys a way out"],
+            "consequence": "The Register survives to convict the whole network, but its keeper goes free. The trade makes sense on paper, yet the camp on the Stair will never accept it, and they are right to feel that way.",
+            "costs": { "cbills": 0, "days": 1, "resource": "political cost: you give up the commission's flagship case before it even lands", "risk": "the deal leaks to the Stair before the transfer, and a crowd surge hits his departure convoy" }
+          },
+          {
+            "title": "Disarm It Without Him",
+            "advantages": ["You concede nothing; the Custodian-Adept faces the commission for everything he did", "Coalition engineers put the odds of a safe disarm at 60 percent, over a 6-hour work window", "Success ends both the trap and the bargaining"],
+            "disadvantages": ["The 40 percent chance of failure means losing the Register, which is the whole mission, for good", "Six hours of work on the vault floor is six hours when the cell can try to force the charges", "The suppression lines are drained, so once the thermite starts, nothing can stop it"],
+            "consequence": "The Order keeps its integrity and bets the archive on the engineers' 60 percent odds. Win or lose, rigging an archive no longer buys a way out, and no custodian gets to bargain like this again.",
+            "costs": { "cbills": null, "days": null, "resource": "a 6-hour disarm window during which you cannot both defend the vault and work in it", "risk": "40 percent chance the Register burns by your own hands, handing the cell exactly what it wanted" }
+          },
+          {
+            "title": "Carry It Out Under the Array",
+            "advantages": ["Takes the prize out of the trap without disturbing the trap", "Hand-carry teams can work within the authorized-access zone, so no arming cycle starts if discipline holds", "The Register ends the holding period in the coalition cantonment's proper secure storage"],
+            "disadvantages": ["{FILE_COUNT} files over three nights on the vehicle ramp make a convoy pattern the cell can read by the second night", "The chain of custody spreads across 60 to 80 containers and every hand that touches them", "The trap stays armed behind you in an empty vault, leaving a booby-trapped room in your own compound for good"],
+            "consequence": "The archive goes down the mountain in crates while everyone watches everyone's hands. What arrives is what was carried, and proving nothing left the chain is the commission's first question and your answer forever.",
+            "costs": { "cbills": 4000, "days": 3, "resource": "chain-of-custody risk: 60-80 sealed containers, logged by two witnesses at both ends, every shift", "risk": "a second-night ambush on the switchbacks, the cell's one clean shot at the whole Register in the open" }
+          }
+        ]
+      },
+      {
+        "name": "Reading Rights",
+        "context": "Sealed, the Register is a source of pressure. Opened, it becomes a weapon. Three parties have asked in writing for access, and refusing all three is itself a choice with a price.",
+        "options": [
+          {
+            "title": "Total Seal",
+            "advantages": ["The cleanest record for the commission: zero access, the strongest legal position", "No faction can claim your detail took a side", "The fourteen names on your roster stay unread with everything else, so your neutrality holds"],
+            "disadvantages": ["The camp's pressure keeps building with no release, and crowd events grow weekly", "The open-the-files faction works around you, so expect forged access orders and a sympathetic adept at a door", "Sealed files answer no urgent question, so the cell's network stays hidden from coalition intelligence the whole time"],
+            "consequence": "The door stays shut and becomes the one thing every faction agrees on. Everyone who wanted the files looks for another way in, and every one of those ways runs through your perimeter.",
+            "costs": { "cbills": 0, "days": null, "resource": "crowd pressure keeps building: one escalation step per rumor cycle, with no release", "risk": "a forged-order access attempt by your own side, which the charges cannot tell apart from a hostile one" }
+          },
+          {
+            "title": "Controlled Disclosure",
+            "advantages": ["Publishing the confirmed-coerced list of 1,400 names eases the camp's worst grief with proof on paper", "It shows the Register's value publicly, hardening the will to protect it", "The commission inherits a calmer Stair"],
+            "disadvantages": ["The evidence is now tainted: the defense at every future trial starts with your partial release", "Leaving a name off convicts it, because the camp assumes anyone not on the coerced list is guilty", "Choosing names means reading files, and reading means readers, so the neutrality of not-looking ends by your own order"],
+            "consequence": "Fourteen hundred families get their answer early, and the Register is no longer sealed in any way that survives cross-examination. Mercy now, paid for in weaker verdicts later.",
+            "costs": { "cbills": null, "days": 2, "resource": "evidence integrity: the partial release is argued against at every trial the Register feeds for a decade", "risk": "the names left off the list spark the exact vigilante violence the disclosure was meant to prevent" }
+          },
+          {
+            "title": "Admit the Precentor's Audit",
+            "advantages": ["The Precentor's reconciliationist team brings 20 trained adepts who strengthen compound security for the duration", "The Order's senior survivor owes your detail a debt that will pay off in the long run", "An audited inventory strengthens the manifest the commission signs"],
+            "disadvantages": ["An audit is one faction's hand inside the drawers, dressed up as procedure", "Whatever the team copies, and audit teams do copy, carries your co-signature into the Order's own war", "The other faction sees you letting one side in as permission for both"],
+            "consequence": "Security improves and the inventory firms up, but the Register quietly enters ComStar politics through the door you opened. The commission gets everything except the certainty that it got everything.",
+            "costs": { "cbills": 0, "days": null, "resource": "political cost: your detail becomes a named creditor and debtor in the Order's factional accounts", "risk": "audit copies surface later in a purge proceeding, traced back to your holding period" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Vault tamper alarm: the arming cycle starts. Everything else is now second priority." },
+        { "t": "T+0:01:30", "event": "Arming threshold. Get disarm authority onto the vault floor within 90 seconds, or the Register burns." },
+        { "t": "T+4:00", "event": "The remnant cell hits the vehicle ramp checkpoint, matching both earlier probes: the tamper attempt is the real effort, the ramp is a distraction." },
+        { "t": "T+12:00", "event": "The Stair camp surges up toward the compound gate; the alarms draw the crowd the way church bells draw a town." },
+        { "t": "T+25:00", "event": "The compound reaction force is fully committed across vault, ramp, and Stair. Anything more goes unanswered." }
+      ],
+      "hardDeadline": "The commission lands in {COMMISSION_DAYS} days, and until its custody officer signs, every file is your responsibility. But the clock that really matters is short: 90 seconds from tamper to thermite. Hold those 90 seconds every time and the days take care of themselves. Lose them once and 11 worlds' worth of answers go up in smoke over {DISTRICT}."
+    },
+    "opforSketch": {
+      "composition": "Word of Blake remnant cell: 12-20 effectives (Veteran), smallarms, breaching charges, 1-2 civilian vehicles, possibly one converted IndustrialMech held back in the city (UNCONFIRMED — basis: machine-shop power draws). Crowd events are a separate, unarmed pressure the generator should run on the Stair axis. Internal threats — forged orders, access irregularities — arrive through friendly channels.",
+      "behavior": "The cell's objective is the vault's destruction, not the compound's capture; it will spend itself to start the arming cycle. Expect diversion at the ramp, main effort at the vault, and crowd surges timed to both. It treats the petitioners as a tool and the Order's factions as unwitting allies, and it is not entirely wrong about either."
+    },
+    "forks": [
+      { "name": "OPERATION NAMED NIGHT", "family": "OBJECTIVE_RAID", "outcomeGate": "FULL_SUCCESS", "trigger": "Register delivered complete; commission adjudication begins on schedule.", "consequence": "The files map the stay-behind network across the district: 9 safe sites, 2 caches, a courier spine. The commission authorizes simultaneous strikes before the network learns what the Register held, and the unit that kept the files is asked to act on them.", "threat": "MEDIUM" },
+      { "name": "OPERATION UNWRITTEN", "family": "GUERRILLA_WARFARE", "outcomeGate": "FAILURE", "trigger": "The Register burns or leaves custody incomplete.", "consequence": "The network the files would have named stays dark and goes active: sabotage tempo across the district within a month. The campaign to find by patrol and capture what could have been read from a drawer falls, with appropriate irony, to the detail that held the vault.", "threat": "HIGH" },
+      { "name": "OPERATION SPILLED INK", "family": "RIOT_DUTY", "outcomeGate": "COMPROMISED", "trigger": "A partial list — leaked, audited, or disclosed — circulates beyond control, traced to the holding period.", "consequence": "Vigilante purges begin off an incomplete and partly wrong list in three district towns. The detail is retasked to protect accused collaborators from crowds armed with its own leaked paper.", "threat": "HIGH" }
+    ],
+    "storyElementSeed": "In the vault doorway an acolyte reads the drawer labels without opening anything. He finds the drawer for his home district and stands in front of it a while, hands behind his back, then logs the cabinet temperature on his round sheet and walks on.",
+    "voiceSlots": ["intelligence", "command", "engineering"],
+    "registerVariants": {
+      "merc": {
+        "situation.framing": "The employer calls it an archive. The contract calls it a flammable building full of other people's secrets, and the chain-of-custody liability rider runs four pages, longer than the combat annex. Take the hint: on this job the enemy is anyone holding a match, a key, or a grudge, and the pay table only counts the first kind."
+      }
+    },
+    "specifics": {
+      "COMMISSION_DAYS": { "min": 9, "max": 14, "unit": "days until the commission lands" },
+      "FILE_COUNT": { "min": 38000, "max": 46000, "unit": "case files" },
+      "PETITIONERS": { "min": 600, "max": 900, "unit": "persons in the Stair camp" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Carry It Out Under the Array", "requires": "dropship", "whenLacking": "reprice", "lackingText": "With no unit lift, the convoy has to run the valley road 60 kilometers to the coalition cantonment instead of using the compound airfield. Three nights become six, the ambush risk doubles, and the cell gets four extra rumor cycles to learn the schedule." }
+    ],
+    "skeleton": "custodial force must keep an archive of informers intact and unread while its own order's factions, the network the files name, and a rigged self-destruct all contend for it ahead of an adjudication deadline",
+    "inspiration": "the seizure and sealing of secret-police informer files, Berlin 1990"
+  },
+  {
+    "seedId": "JIH-03",
+    "family": "RIOT_DUTY",
+    "title": "OPERATION COLD DOCKET",
+    "eraFit": ["jihad"],
+    "factionFit": ["is-steiner", "merc"],
+    "register": "is-steiner",
+    "threatRange": ["LOW", "MEDIUM"],
+    "situation": "Liberation reached {DISTRICT} on {WORLD} in {YEAR}, and the occupation's records reached the Assize House eleven days later. The old bonded-customs hall now holds 214 detainees from the Protectorate's civil administration: the Director-General, his department heads, and the long line of dispatchers, registrars, and clerks who kept the machine running. The military governor's order is exact. All 214 must reach the tribunal alive, which sits in {TRIBUNAL_DAYS} days. Crowd deaths must be zero. And both counts will be audited. Your unit holds the building, the perimeter, and the tight gap between keeping those two numbers at zero.\n\nEvery night a crowd gathers in Weighbridge Square, up to {CROWD_PEAK} at the evening peak by police count. Five tram lines run into the square and feed it, and the square's shape funnels everyone toward the Assize House portico. The veterans' association, led by {NPC:resistance-leader}, has handed you a list of 31 names it wants turned over to 'people's custody,' and it reads the list aloud each night. The association buried 4,000 of its own during the occupation, so the list is more than talk.\n\nThree things make the custody harder. First, the city still runs on its prisoners. The detainee in cell nine ran the water grid for eleven years, and the pumping schedule that keeps four districts supplied is partly in his head, so the public works office asks to consult him under escort every week. Second, counterintelligence flags 3 of the 214 as probable ROM cadre hiding behind collaborator cover, based on odd pay records and nothing firmer. The most dangerous men in the building are not the ones the crowd chants about, and moving them where anyone can see would warn whoever planted them. Third, a Word of Blake stay-behind cell wants the detainees dead before they can testify, because dead men name no networks. Two fires in the records annex in 16 days share the same incendiary residue, a solid forensic match. The cell's cleanest weapon is the crowd: a breach it starts, a fire that rides a crowd surge, a death the mob gets blamed for.\n\nThe hard ground comes in two parts. In front, the square funnels crowds onto your doorstep on tram schedules you do not control. Behind the building, the Bonded Basin offers an escape by water: two barges that can carry all 214 with escort. But the basin's lock gates are run from the Harbormaster's tower, 340 meters outside your perimeter, by a civilian crew that may simply not show up on the one night the barges matter. Ration tonnage, guard overtime, and lamp oil for the portico are all in annex B, and the governor's auditors have already questioned line 14.",
+    "objectives": {
+      "primary": "All 214 detainees alive and present on tribunal day, with zero crowd deaths blamed on the custody force.",
+      "secondary": "Identify and quietly separate the 3 probable ROM cadre without any visible change in how detainees are handled.",
+      "bonus": "Keep the weekly water-grid consultations going without a public incident, so the pumps keep running and the crowd never hears about the visits."
+    },
+    "complications": [
+      {
+        "name": "The Square Funnels",
+        "text": "Five tram lines feed Weighbridge Square, and the square feeds the portico. The tram timetable sets the size of the crowd. Cutting tram service caps the crowd but starts a general strike within 72 hours, because the transit union buried its own during the occupation too.",
+        "mechanicalEffect": "Crowd event size scales with the tram service level. Cutting service halves the crowd peaks but, after 72 hours, starts a strike escalation track that adds unrest events across the city."
+      },
+      {
+        "name": "The Lock Gates",
+        "text": "The barge escape needs 40 minutes of gate work by a civilian crew in a tower outside the wire. On a calm day that is one phone call. During a riot it is just a hope.",
+        "mechanicalEffect": "Barge evacuation needs the Harbormaster crew on station plus 40 minutes to cycle the gates. During any active crowd event, roll for crew availability. Putting troops in the tower beforehand makes evacuation reliable but is visible to everyone (see decision point)."
+      },
+      {
+        "name": "Cell Nine Runs the Pumps",
+        "text": "The water-grid director must consult weekly under escort, or four districts start losing water. Every consultation moves the building's most hated kind of prisoner, in daylight, on a set schedule.",
+        "mechanicalEffect": "Skip two consultations in a row and the district pumps start failing, a public-health clock that adds crowd grievance events. Each consultation you run is a movement the cell can watch and the crowd can find out about."
+      },
+      {
+        "name": "Three Wrong Faces",
+        "text": "The probable cadre are mixed in among the clerks. Any visible move to separate them leaks through detainee trustees and guard-shift gossip within 24 to 48 hours, and warns the cell its men are suspected.",
+        "mechanicalEffect": "Changes to how detainees are handled leak on a 24-48 hour clock. If the cell learns its men are flagged, it escalates from arson-by-proxy to a direct breach attempt within one week."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Thirty-One",
+        "context": "The association reads its list aloud every night, and every night the angry silence after it gets shorter. The governor has left the response to the custody commander's discretion, in writing, and here 'discretion' is the polite Commonwealth word for liability.",
+        "options": [
+          {
+            "title": "Transfer the Thirty-One to Orbit",
+            "advantages": ["Removes the heart of the crowd's grievance: the nightly list has no one left to demand", "The 31 top defendants become unreachable by mob, fire, or cell", "The tribunal's headline cases are physically safe"],
+            "disadvantages": ["The convoy has to cross the square or the basin, a flashpoint either way, and the crowd will know within hours", "Tribunal counsel objects on the record: separating defendants from the evidence weakens 31 cases", "The association calls the removal a rescue, and 'they are being taken beyond justice' becomes its next placard"],
+            "consequence": "The building's most dangerous prisoners are gone, and the crowd is left with anger and no target. History says it simply aims that anger at whoever remains.",
+            "costs": { "cbills": 18000, "days": null, "resource": "one full company tied up in a single convoy, thinning the perimeter for 6 hours", "risk": "the transfer convoy is the single most dangerous event of the whole custody period" }
+          },
+          {
+            "title": "Preliminary Hearings On-Site",
+            "advantages": ["Openness eases the pressure: 6 hearings a day, recorded, with gallery seats given to the association", "The crowd's energy shifts from the portico to the courtroom", "Early testimony locks in evidence before anyone can be intimidated"],
+            "disadvantages": ["A published hearing schedule is also a published target schedule, giving the cell dates, times, and a gallery", "Hearings create near-verdict moments daily, any of which can set off the square", "Tribunal counsel is split: on-site hearings first may taint the main trial"],
+            "consequence": "The Assize House becomes a courthouse early, with a courthouse's calendar and a courthouse's crowds. The pressure comes off on a schedule, and so does the risk.",
+            "costs": { "cbills": 6000, "days": null, "resource": "one platoon per hearing day committed to gallery and witness security", "risk": "one gallery incident, real or staged, happening in front of recording gear and 200 witnesses" }
+          },
+          {
+            "title": "No Concessions, Harden the Line",
+            "advantages": ["The cleanest legal position: the tribunal gets an untouched case", "No schedules, hearings, or convoys for the cell to plan around", "The garrison's posture is simple to drill and easy to audit"],
+            "disadvantages": ["With no release, the nightly crowds grow angrier, and crowd events escalate weekly", "The governor's political standing drains at a steady rate, and the placards have started naming the governor", "Hardening looks like protecting the accused, so recruitment for the association doubles"],
+            "consequence": "The line holds because it has to, every night, against odds that get worse every week. Clean law, rising risk, and the audit reads both columns.",
+            "costs": { "cbills": 0, "days": null, "resource": "political cost: the governor's standing drains weekly, and that standing is what shields the contract", "risk": "when the breach finally comes, it comes at the peak of the anger curve instead of the middle" }
+          }
+        ]
+      },
+      {
+        "name": "The Tower",
+        "context": "The barge escape is the only exit that avoids the square. It all depends on a civilian-crewed tower 340 meters outside the wire, and the question is what to do about that before the night you actually need it.",
+        "options": [
+          {
+            "title": "Garrison the Tower Now",
+            "advantages": ["Evacuation becomes an order, not a hope: the gates cycle on your schedule", "The tower overlooks the basin approach, a useful lookout against the cell's waterside moves", "One less civilian dependency in the crisis plan"],
+            "disadvantages": ["Openly occupying harbor infrastructure tells the crowd you have already decided the verdict", "One platoon committed outside the wire, reachable only along the basin edge", "The Harbormaster's office protests through the trade ministry, and annex B grows a line 15"],
+            "consequence": "You secure the exit and announce it in the same act. Now the crowd plans around the barges too, and the square's speakers have a new word: flight.",
+            "costs": { "cbills": null, "days": null, "resource": "1 platoon detached outside the perimeter for the whole custody period", "risk": "the visible preparation speeds up the crowd's timeline, so the surge you prepared for arrives sooner because you prepared" }
+          },
+          {
+            "title": "Contract the Crew Quietly",
+            "advantages": ["Cheap, invisible, and deniable: a retainer plus a night-call bonus", "No troops committed and no public signal", "The crew knows the gates better than any platoon would"],
+            "disadvantages": ["A paid crew can be paid by someone else, and the cell has money too", "The crew lives in the city the crowd comes from, so on the worst night their loyalty competes with family at their door", "You cannot make them come; if they do not, the plan is just a rumor with a receipt"],
+            "consequence": "The exit stays secret and stays soft. Whether it works at all gets tested the moment you actually need it.",
+            "costs": { "cbills": 7500, "days": null, "resource": null, "risk": "one point of failure: four civilians showing up, and you cannot know if they will until the night the barges are the plan" }
+          },
+          {
+            "title": "Write Off the Barges",
+            "advantages": ["No dependence on civilians, towers, or lock machinery", "You focus resources on the perimeter and the ground evacuation drill", "At least armored night movement through the square is entirely under your command"],
+            "disadvantages": ["The ground route crosses the crowd's home turf, so the funnel now works against you", "You need 12 protected transports for 214 detainees, pulled from a garrison pool the auditors are already asking about", "If the square is blocked on the night, there is no backup exit at all"],
+            "consequence": "The plan comes down to one door, and that door opens into Weighbridge Square. Everything now rides on the perimeter never failing, which is the very thing this plan was meant to guard against.",
+            "costs": { "cbills": 11000, "days": 4, "resource": "12 protected transports from the garrison pool, held for an emergency that may never come", "risk": "no backup: if the perimeter fails during a peak crowd, 214 lives are trapped behind one door and one mob" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Portico breach alarm: crowd pressure at the main doors pushes past the barrier line." },
+        { "t": "T+2:00", "event": "The shield line commits at the portico. From here on, 200 hand cameras record every contact." },
+        { "t": "T+6:00", "event": "Fresh crowds arrive by tram; the lines keep delivering on schedule no matter what they deliver into." },
+        { "t": "T+15:00", "event": "Fire risk peaks: the records-annex pattern shows the incendiary attempt rides the surge, not the front of it." },
+        { "t": "T+25:00", "event": "If the entry hall is not cleared, the custody floor is within reach. Twenty-five minutes is how long the building holds; after that the crowd decides." }
+      ],
+      "hardDeadline": "Hold every breach under 25 minutes and every detainee to tribunal day, {TRIBUNAL_DAYS} days out. A detainee dead in your custody is a mob verdict signed with your name, and the audit, as the governor made clear, keeps that line forever."
+    },
+    "opforSketch": {
+      "composition": "Primary pressure is the crowd: {CROWD_PEAK} at peak, unarmed, with an organized core around the veterans' association. The armed threat is a Word of Blake stay-behind cell, 8-15 effectives (Veteran), incendiary specialists with smallarms and breaching charges, operating under crowd cover; 0-1 light vehicles. Generator should keep direct fire engagements rare, brief, and catastrophic to the political situation when they occur.",
+      "behavior": "The cell times action to crowd peaks and never engages the line directly: its victory is dead detainees by any hand, preferably the crowd's, ideally yours. The association's leadership wants custody transfers, not corpses — but it controls the crowd's grievance, not its hands, and knows it."
+    },
+    "forks": [
+      { "name": "OPERATION LONG GAVEL", "family": "SECURITY_DUTY", "outcomeGate": "FULL_SUCCESS", "trigger": "All 214 delivered to tribunal day; zero crowd fatalities.", "consequence": "The tribunal sits for a projected 90 days, and everything that pressured the Assize House transfers to the courtroom: witnesses to protect, galleries to screen, and the 3 cadre cases — now formally charged — drawing the cell's last and best effort.", "threat": "MEDIUM" },
+      { "name": "OPERATION IRON CURFEW", "family": "GARRISON_DUTY", "outcomeGate": "FAILURE", "trigger": "Detainee deaths in custody — by breach, fire, or engineered surge.", "consequence": "The governor declares district martial law. The unit that lost the Assize House holds the curfew it caused: checkpoints, sweeps, and a city that has stopped distinguishing the custody force from the occupation it replaced.", "threat": "HIGH" },
+      { "name": "OPERATION MATCHHEAD", "family": "RECON_RAID", "outcomeGate": "COMPROMISED", "trigger": "Custody-force weapons kill civilians in the square, justified or not.", "consequence": "An inquiry convenes with the unit as its subject. The only acquitting evidence is the cell itself: find the incendiary team, its residue-matched stocks, and its link to the breach nights — before the inquiry finishes finding you.", "threat": "MEDIUM" }
+    ],
+    "storyElementSeed": "A guard walks the custody corridor handing supper trays through the slots. At cell nine he passes the tray without looking up; the man inside signed the water-rationing order that kept the guard's street alive two winters ago, and both of them know it, and the tray changes hands in silence.",
+    "voiceSlots": ["command", "intelligence", "logistics", "medical"],
+    "registerVariants": {
+      "merc": {
+        "situation.framing": "Before signing, read the indemnity schedule. It excludes 'civil disturbance outcomes,' which means every death in that square is billed to your account no matter whose hands did it. The employer bought a result, 214 alive and the crowd alive and the audit clean, and left you holding every event that produces a different number. Treat the discretion clause as the liability it is."
+      }
+    },
+    "specifics": {
+      "TRIBUNAL_DAYS": { "min": 12, "max": 18, "unit": "days until the tribunal convenes" },
+      "CROWD_PEAK": { "min": 2000, "max": 6000, "unit": "persons at evening peak" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Transfer the Thirty-One to Orbit", "requires": "dropship", "whenLacking": "lock", "lackingText": "With no unit lift, an orbital transfer has to wait for the governor's shuttle rotation, 11 days out. That fits inside the tribunal window only if nothing slips, so the option is locked with that timing shown." }
+    ],
+    "skeleton": "custody force must keep accused collaborators alive to a tribunal date against a crowd that wants them, a city that still runs on them, and a hidden cell that needs them dead before they testify",
+    "inspiration": "the épuration in liberated France, 1944-45"
+  },
+  {
+    "seedId": "JIH-04",
+    "family": "GARRISON_DUTY",
+    "title": "OPERATION MUSTER OUT",
+    "eraFit": ["jihad"],
+    "factionFit": ["is-davion"],
+    "register": "is-davion",
+    "threatRange": ["LOW", "MEDIUM"],
+    "situation": "{WORLD} mostly freed itself. By the time coalition forces landed in {YEAR}, the Volunteers had already pushed the Protectorate garrison into two pockets, at a cost of three years of fighting. They are 2,600 fighters in 4 loose battalions organized by valley. They field 9 salvaged BattleMechs, 3 of them not currently working, plus 47 armed vehicles counting the converted farm equipment, and a field-phone network they built themselves that is faster than yours. Now the AFFS has taken back control, and it has handed you the kind of order nobody signs up to carry out: confine the Volunteers to cantonments and collect their weapons. In return you can offer amnesty certificates, veterans' pension cards, and 380 regular militia slots, for 2,600 applicants. Your unit runs the three cantonment sites on the Greenmantle bench and keeps the ledger. The ledger is the mission.\n\nThe lift schedule is fixed. Coalition transports leave in {LIFT_DAYS} days, carrying the heavy salvage and your unit onward. By standing order, anything not turned in or formally signed over by lift day minus 2 becomes contraband. But the order does not come with enough troops to seize contraband from 2,600 veterans of a war they won.\n\nThree problems, worst one last. First, the 'Mechs. To the AFFS they are crown property recovered from a war zone. To the Volunteers they are back pay, proof of what they did, and the graves of the men who captured them. Both sides mean it. Second, paper. A forged document is going around on AFFS letterhead: a 'post-amnesty review' list of {LIST_NAMES} Volunteer names. The provost is confident it is fake, from the typeface and seal, but it looks real to people the Protectorate trained to fear lists, and turn-in attendance dropped by a fifth the week it appeared. The real question is who made it: a Word of Blake stay-behind trying to wreck the disarmament, or a Volunteer faction trying to wreck it for the opposite reason. Both theories fit every fact you have. Third, the arithmetic of resentment: 380 slots, 2,600 applicants, and every rejection letter goes to a man still deciding whether to hand in his rifle.\n\nThe hard ground is the incline. The three cantonments sit on the bench above the Greenmantle Escarpment. The only way down for anything over 20 tons is the cog-rail incline: one car, an 80-ton limit, and 40 minutes per round trip, run from a winch house at the top. Whoever holds the winch house decides whether the 'Mechs go down as turn-ins or stay up top as a standing threat. Right now a Volunteer honor guard holds it, under an unwritten agreement that both sides follow and neither side trusts.",
+    "objectives": {
+      "primary": "Finish the turn-in and cantonment processing of all 4 battalions by lift day minus 2, with no shot fired at any ceremony.",
+      "secondary": "Trace the forged review list to its source, Blakist or Volunteer, with evidence that holds up to a provost review.",
+      "bonus": "Fill the 380 militia slots with vetted Volunteers and hold the first muster parade before lift, with the signed-over lance, if any, on the parade."
+    },
+    "complications": [
+      {
+        "name": "The Winch House",
+        "text": "Every heavy turn-in rides the incline, the incline is run from the winch house, and the winch house is held by an honor guard whose orders rest on a handshake. Taking it by force would prove the forgery right.",
+        "mechanicalEffect": "Any plan that moves 'Mechs or heavy salvage needs the winch house crew's cooperation. Seizing it by force ends all ceremony attendance at once and starts the FAILURE fork's conditions. Negotiated access is a diplomatic action, resolved per event."
+      },
+      {
+        "name": "Paper Against Paper",
+        "text": "The forged list cannot be un-printed. Your receipts, certificates, and pension cards are the answer to it, and they only work if every single one is honored every time.",
+        "mechanicalEffect": "Each ceremony rolls for rumor strength. Left unanswered, attendance drops 15-30 percent per ceremony. Every honored certificate and settled grievance improves the roll; every clerical error worsens it."
+      },
+      {
+        "name": "The Ledger Is the Weapon",
+        "text": "A lost receipt is not just paperwork. It is a man who handed over his rifle and cannot prove it. On this contract the clerks matter as much as the lances.",
+        "mechanicalEffect": "Ledger errors create grievance events. A site audit clears the built-up errors but costs that site a full processing day against the lift clock."
+      },
+      {
+        "name": "Four Battalions, Four Tempers",
+        "text": "The valleys fought the same war but not in the same way. Any deal you make with one battalion, the other three demand to match before the ink dries.",
+        "mechanicalEffect": "The generator assigns postures: one battalion hardline, one cooperative, two watching. Any concession to one battalion forces a roll with the other three: match it, or take a grievance event."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Nine Machines",
+        "context": "The 'Mechs are what disarmament really means here. Everything else is rifles and paperwork. These decide whether the war's winners get to keep what winning cost them.",
+        "options": [
+          {
+            "title": "Buy Them at Fair Salvage",
+            "advantages": ["A clean transfer of ownership: paid men sign receipts, and receipts end arguments", "The price holds up in any audit, because the salvage rates are fair and posted openly", "The hardline battalion's main grievance turns into cash its widows' fund can use"],
+            "disadvantages": ["1.6 to 2.2 million C-bills, from a budget sized for pension cards", "The precedent spreads: every militia on every liberated world learns that holding 'Mechs through liberation pays off", "The Volunteers who died taking the machines are now a line item, and their battalions will hear it put that way"],
+            "consequence": "Ownership transfers with no standoff, and the March learns the price of a salvaged 'Mech held by determined men. The bill comes twice: once now, once on the next world.",
+            "costs": { "cbills": 1900000, "days": null, "resource": null, "risk": "the precedent gets quoted on three liberated worlds within the year, a strategic cost your unit pays nothing for and the AFFS pays for a decade" }
+          },
+          {
+            "title": "Federate a Volunteer Lance",
+            "advantages": ["Four working 'Mechs stay with vetted Volunteer MechWarriors under AFFS commission, and five hulls turn in", "It costs almost nothing in cash and puts the cooperative battalion's full weight behind the program", "The federated lance at the first muster is the picture the whole policy needs"],
+            "disadvantages": ["Vetting 4 MechWarriors in {LIFT_DAYS} days with the records the Protectorate left is really just guesswork", "The lance cuts both ways: proof of loyalty if it holds, an armed precedent if it goes bad", "The hardline battalion will demand the same deal for its 2 walkers within a week, so the matching problem is guaranteed"],
+            "consequence": "The Volunteers keep a fist and the AFFS keeps count of the fingers. Cheap and popular, but the vetting file is the thinnest paper in the plan.",
+            "costs": { "cbills": 40000, "days": 5, "resource": "political cost: you must defend the deal up the AFFS chain, where 'armed irregulars still under arms' reads worse than it does on the bench", "risk": "one federated MechWarrior later tied to anything at all turns the picture into the indictment" }
+          },
+          {
+            "title": "Crown-Property Seizure on Schedule",
+            "advantages": ["By the book and free: the regulation exists, the order cites it, and the title was never in doubt", "No precedent of payment or a federation deal for any future world to point to", "The quartermaster's manifest closes with no exceptions"],
+            "disadvantages": ["Ceremony attendance collapses the day the seizure notice goes up, which is exactly the proof the forgery promised", "The winch house question goes live at once: the 'Mechs come down only if the honor guard allows it, and the notice tells them not to", "Every likely outcome now runs through a confrontation at the top of the incline"],
+            "consequence": "The law is enforced at the one spot where the law has no troops. What happens next depends on which side blinks at the winch house, and the officer who wrote the order is 40 light-years away.",
+            "costs": { "cbills": 0, "days": null, "resource": "the cooperative battalion's goodwill, spent entirely on the day the notice goes up", "risk": "an armed standoff at the winch house with 19 days on the lift clock and the forgery proven right in every way that counts" }
+          }
+        ]
+      },
+      {
+        "name": "The List",
+        "context": "The forged list works because it looks believable. Your counter-move has to prove it false faster than rumor can turn it into accepted fact.",
+        "options": [
+          {
+            "title": "Joint Commission of Inquiry",
+            "advantages": ["Provost and Volunteer investigators work side by side, and the openness itself is the message", "Finds the source in 8-15 days if it can be found, with the search visible the whole way", "Whichever theory proves out, the finding carries both signatures"],
+            "disadvantages": ["Opening the records cuts both ways: people you have not vetted read your counterintelligence files", "8-15 days is most of the lift clock, and the rumor works around the clock while the commission works office hours", "If the source is a Volunteer faction, the finding becomes an accusation against the war's heroes, co-signed by their own"],
+            "consequence": "The joint inquiry becomes the relationship itself: shared files, shared findings, shared blame. It is slow and honest, and the answer it produces may be one nobody on the bench wants written down.",
+            "costs": { "cbills": null, "days": 10, "resource": "counterintelligence risk: your source-handling methods are visible to uncleared Volunteer investigators", "risk": "the finding arrives after the ceremonies it was meant to save" }
+          },
+          {
+            "title": "Accelerate the Schedule",
+            "advantages": ["Squeeze 19 days of ceremonies into 9, and outrun the rumor with finished facts", "Each completed ceremony is its own counter-evidence: certificates honored, nobody arrested", "The lift clock gains a margin it does not currently have"],
+            "disadvantages": ["Tired clerks make ledger errors, and ledger errors are exactly the grievance events the forgery feeds on", "Faster ceremonies mean faster vetting at the militia-slot desk, so the 380 are chosen quicker and worse", "The rush itself looks like fear, and the rumor adapts: 'they are hurrying it before the arrests'"],
+            "consequence": "Speed against story. If the clerks hold up, the program finishes before the fear does. If they slip, the program creates the very proof the forgery needed.",
+            "costs": { "cbills": 9000, "days": -10, "resource": "the ledger error rate triples during the rush, and each error is a grievance event waiting to happen", "risk": "one bad ceremony at this pace does the damage of three at normal pace" }
+          },
+          {
+            "title": "The Governor Countersigns On Stage",
+            "advantages": ["The planetary governor personally countersigns amnesty certificates at every remaining ceremony, the strongest guarantee the AFFS can physically make", "It answers the forgery head-on: the top authority's own hand against an anonymous list", "In every comparable case the political officers can cite, attendance recovers within two ceremonies"],
+            "disadvantages": ["The governor becomes both the program's single point of failure and its highest-value target at once", "Guarding the governor takes a company per ceremony, pulled from the same force running the sites", "If any countersigned Volunteer is later arrested for cause, and with 2,600 men there will be cause somewhere, the whole guarantee collapses after the fact"],
+            "consequence": "The state stakes its name on the bench. It works until it is tested, and the test, when it comes, aims at the one signature everyone was told to trust.",
+            "costs": { "cbills": null, "days": null, "resource": "political cost: the governor's personal standing pledged against every future prosecution of a certified Volunteer", "risk": "a provocateur incident at a ceremony now puts the governor at its center" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Shots or violence at a cantonment ceremony: the flashpoint, whoever caused it." },
+        { "t": "T+1:00", "event": "The honor guard at the winch house stands to and closes the incline. Heavy movement off the bench is now stopped." },
+        { "t": "T+3:00", "event": "Word reaches the other two cantonments by Volunteer field phone, which is faster than yours, so their version arrives first." },
+        { "t": "T+10:00", "event": "Battalion assemblies form at all three sites, armed with whatever has not been turned in yet." },
+        { "t": "T+30:00", "event": "It resolves or it does not: by 30 minutes either the ceremony ground is calm and the line re-forms, or the cantonment heads uphill into the bush with its weapons." }
+      ],
+      "hardDeadline": "Lift day is fixed at {LIFT_DAYS} days. Everything not turned in by lift day minus 2 is contraband by standing order. But seizing contraband from 2,600 veterans of a war they won is not police work, it is the next war, and the order does not come with the force to fight it."
+    },
+    "opforSketch": {
+      "composition": "No conventional OPFOR. The provocateur cell is 4-12 effectives — quality Veteran if Blakist stay-behind, Regular if Volunteer hardline faction; the ambiguity is the scenario. Worst-case engagement is infantry-scale violence at a ceremony with an armed crowd present and 1-2 Volunteer 'Mechs powering up. The Volunteers' 9 'Mechs and 47 vehicles are the theoretical force; the design intent is that they never deploy.",
+      "behavior": "The provocateur seeks one massacre, witnessed and recorded. The Volunteers seek their pay, their pride, and proof the amnesty is real; nobody else wants to fight. Posture, ceremony discipline, and clerical accuracy are the effective weapons on both sides."
+    },
+    "forks": [
+      { "name": "OPERATION FIRST MUSTER", "family": "CADRE_DUTY", "outcomeGate": "FULL_SUCCESS", "trigger": "All 4 battalions processed by lift day minus 2; no ceremony violence.", "consequence": "The 380-slot militia stands up with the federated lance (if formed) at its core, and the unit is offered the training cadre contract: 90 days to make a militia out of veterans who already think they know — and partly do.", "threat": "LOW" },
+      { "name": "OPERATION GREEN WINTER", "family": "GUERRILLA_WARFARE", "outcomeGate": "FAILURE", "trigger": "A cantonment empties into the bush armed, or the winch house standoff turns to force.", "consequence": "Between 400 and 900 Volunteers go to the hills with their weapons and their grievance, led by men your ledger trained them to distrust. The counterinsurgency tasking that follows is written for the unit that was already on the ground.", "threat": "HIGH" },
+      { "name": "OPERATION BLACK ARMBAND", "family": "RIOT_DUTY", "outcomeGate": "COMPROMISED", "trigger": "A massacre or mass-casualty incident at a ceremony, whatever its authorship.", "consequence": "Planet-wide unrest within 72 hours; the lift delays; the unit is confined to honor-guard and crowd-line duties under a board of inquiry while every valley holds funerals on the same day.", "threat": "MEDIUM" }
+    ],
+    "storyElementSeed": "At a trestle table a clerk tags a rifle, reads its serial aloud, and hands across a receipt and a pension card. The militiaman reads the receipt twice, front and back. The line behind him watches what his face does before it decides anything.",
+    "voiceSlots": ["command", "logistics", "intelligence"],
+    "registerVariants": {
+      "merc": {
+        "situation.framing": "Strip away the ceremony language and the job is this: repossession agents for a government that wants both the gratitude and the guns. The contract's 'civil incident' clause makes your unit liable for outcomes you can influence but not control, which is the definition of every bad clause ever signed. Your one defense is the ledger: run it perfectly and it is armor, run it loosely and it is the plaintiff's exhibit A."
+      }
+    },
+    "specifics": {
+      "LIFT_DAYS": { "min": 16, "max": 22, "unit": "days until lift" },
+      "LIST_NAMES": { "min": 90, "max": 140, "unit": "names on the forged review list" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Buy Them at Fair Salvage", "requires": "treasury-min:1600000", "whenLacking": "reprice", "lackingText": "Below 1.6 million, the buyout has to be paid in installments against next quarter's garrison subsidy. The Volunteers keep 4 'Mechs as collateral until the final payment, and the winch house agreement, honor guard and all, stays in place with them." }
+    ],
+    "skeleton": "garrison must convert a victorious irregular army into civilians on a fixed lift schedule, trading amnesty, pensions, and salvage claims for weapons, while a forged arrest list works to turn one ceremony into proof that disarmament is a trap",
+    "inspiration": "partisan disarmament after liberation — Greece and Italy, 1944-45"
+  },
+  {
+    "seedId": "JIH-05",
+    "family": "GUERRILLA_WARFARE",
+    "title": "OPERATION MIRROR BANNER",
+    "eraFit": ["jihad"],
+    "factionFit": ["is-kurita"],
+    "register": "is-kurita",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "situation": "The Dragon's authority has not reached {WORLD} since the Protectorate took it in {YEAR}, but the Dragon's soldiers are still here. Your command keeps the resistance alive: three understrength lances scattered in the high country and 11 village cells across the Kiso Terraces. The occupier has chosen not to hunt you down. Instead, it has chosen to impersonate you.\n\nYour intelligence calls the enemy formation UNIT MIRROR: an estimated {MIRROR_STRENGTH} ROM-trained troops operating 4 captured DCMS BattleMechs repainted in your colors, carrying your insignia, and answering challenges in passable local dialect. This is not a guess. An actuator serial number from a wrecked 'Mech matches one your side lost in the fighting at the spaceport, a solid match from 21 days ago. In 11 weeks, five atrocities have been done in your name: granaries burned at two terrace villages, a headman's family murdered, livestock seized at gunpoint 'for the resistance.' Recruitment has dropped 60 percent. Two cells have been lost in six weeks, both within days of being contacted by friendly couriers nobody actually sent. The pattern is clear: MIRROR approaches your people pretending to be fellow fighters, then captures them whole.\n\nThe deadline is a bureaucratic one, which makes it firm. The Protectorate governor has announced a reconciliation census in {CENSUS_DAYS} days. Every male aged 15 to 50 must register at a district station, where testimony booths record accounts of 'bandit crimes,' and ROM will mine those booths for intelligence. If the terraces still believe your side burned the granaries when census day comes, they will freely and accurately describe your real cells, at the booths, to the very enemy you exist to protect them from. The resistance survives the winter on what those booths record, or it does not.\n\nThe hard ground is the mountain passes. The Kiso Terraces stack six farming valleys against the mountains, and moving between them means traveling at night over the high passes, single file, in cloud. At night, in column, your troops and MIRROR's look identical, to a village watcher, to a sentry, and to each other. The problem of telling friend from foe has a hard physical limit, and that limit is a mountain in the dark. Your ISF liaison adds the obvious note: treat the courier network as compromised, and run trust audits. The note does not say where the time for those audits is supposed to come from. Honor demands you answer the atrocities. Survival demands you answer the census. These are two different jobs, and you have {CENSUS_DAYS} days for both.",
+    "objectives": {
+      "primary": "Set up a way to verify identity that ends cell losses to fake couriers within 30 days, without freezing recruitment.",
+      "secondary": "Show the terrace villages hard proof, not just claims, that the occupier committed the atrocities, before census day.",
+      "bonus": "Find UNIT MIRROR's base and pin its location down well enough to strike, with the fix good for at least 72 hours."
+    },
+    "complications": [
+      {
+        "name": "Night Passes",
+        "text": "Every move between valleys risks running into a column that may be friendly, may be MIRROR, or may be a militia patrol, and you get 30 seconds to decide. Both wrong answers kill you: firing on friends now, or hesitating and getting ambushed.",
+        "mechanicalEffect": "Every move between valleys includes an identification encounter roll. A friendly-fire result feeds the enemy's narrative track; a hesitation result risks ambush. The verification method chosen at decision point one modifies this roll."
+      },
+      {
+        "name": "The Courier Net Is the Wound",
+        "text": "Every verification scheme travels by courier, and couriers are exactly what MIRROR captures. Each captured courier weakens the scheme by a set amount, and you have to count that honestly.",
+        "mechanicalEffect": "Verification schemes age. Any scheme older than 20 days, or hit by a courier loss, drops one reliability step. Replacing a scheme costs 6 days of courier circulation, during which contact discipline is at its weakest."
+      },
+      {
+        "name": "The Census Clock",
+        "text": "The booths record what the valleys believe. Every atrocity you leave unanswered adds testimony against the real Front, and every counter-fact you prove takes some away. What gets measured is belief, not truth.",
+        "mechanicalEffect": "Track a narrative score. On census day, that score sets the volume of denunciations, and cell-exposure events in the following campaign month scale directly with it."
+      },
+      {
+        "name": "Your Own Colors",
+        "text": "Four enemy machines wear your insignia. Any fight near witnesses gets remembered by the valley as the Front fighting itself, or worse, the Front being wiped out by the Front, which is the story MIRROR wants.",
+        "mechanicalEffect": "Fighting MIRROR within sight of any village produces hostile-narrative events, unless the plan includes witness handling such as pre-briefed elders or recovered physical proof."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Proof of Self",
+        "context": "The Front has to recognize its own people in the dark, fast, through farmers' hands. Any method strong enough to stop MIRROR is also a method MIRROR can use if it captures it.",
+        "options": [
+          {
+            "title": "Rotating Challenge Codes",
+            "advantages": ["Can be deployed in days over the existing courier net", "Simple enough for village cells to use without training", "A blown code costs one rotation, not the membership"],
+            "disadvantages": ["The scheme rides the courier net, which is the very channel that is compromised", "One captured courier with one current code table lets MIRROR pass as friendly for a full rotation", "Code discipline across 11 cells of farmers is a hope, not a fact"],
+            "consequence": "Quick to deploy, but thin protection. The Front is safe only as long as its unluckiest courier stays uncaptured, one code rotation at a time.",
+            "costs": { "cbills": null, "days": 4, "resource": "courier net risk: distribution runs at double tempo every rotation cycle", "risk": "a silent compromise, MIRROR holding a live code table and waiting, looks exactly like safety until it is used" }
+          },
+          {
+            "title": "Vouch-By-Acquaintance Network",
+            "advantages": ["Cannot be faked: contact only through faces known before the occupation", "No code tables to capture and nothing to decrypt", "Cell losses stop within days, because MIRROR cannot fake a shared childhood"],
+            "disadvantages": ["Recruitment freezes: a man no member knows cannot join, so the 60 percent drop becomes the new ceiling", "The network exists in people's heads, so every arrest now gives up more, because each member's contacts are the map", "Operations between valleys slow to the pace of who knows whom"],
+            "consequence": "The Front becomes a closed circle: no impostor gets in, but no new recruit gets in either. It is safe this winter and smaller every winter after. And because each member's known contacts are the map, every capture costs more than one person.",
+            "costs": { "cbills": 0, "days": null, "resource": "recruitment: frozen at current strength for as long as this method runs", "risk": "ROM interrogations pay off better, because every capture now maps a whole neighborhood of the network" }
+          },
+          {
+            "title": "Prove It By Action",
+            "advantages": ["Verify by joint operation: only the tasked cells know the task, so only real cells show up", "It builds strength while it verifies, so the Front fights more, not less", "MIRROR cannot get into position for operations it was never told about"],
+            "disadvantages": ["Tempo rises, and so do ammunition use and exposure", "Every joint operation is an opening MIRROR can take by arriving as the second cell, so the verification event is also the ambush site", "Failed operations now carry a cost: an absent cell is treated as fake until proven captured"],
+            "consequence": "The Front proves itself by fighting, which is what it is for, but every proof happens in the open, where the enemy wearing your face is invited to show up.",
+            "costs": { "cbills": null, "days": null, "resource": "operational tempo: ammunition and exposure spent on verification operations the campaign plan never called for", "risk": "one ambushed joint operation kills two verified cells in a single night, the worst case of this method and the Front's worst night of the war" }
+          }
+        ]
+      },
+      {
+        "name": "Answering the Fires",
+        "context": "The actuator serial number, the paint samples, and three witness statements sit in a strongbox. Evidence proves nothing until the valleys have seen it, and every way of showing them costs something you cannot replace.",
+        "options": [
+          {
+            "title": "Broadcast the Evidence",
+            "advantages": ["The captured transmitter on the massif reaches every valley receiver at once", "Serial numbers, salvage records, and witness statements read aloud, using the occupier's own logistics records against it", "One broadcast resets the narrative score before the census, in a single night"],
+            "disadvantages": ["ROM will locate the transmitter within 3 to 5 broadcasts, so it is gone within a week", "A broadcast can be answered: expect a counter-broadcast naming your witnesses within days", "The valleys hear it once, but MIRROR's fires they can see, and seeing sticks better than hearing"],
+            "consequence": "The Front spends its one broadcast asset loudly, all at once. What the valleys believe afterward comes down to whether proof read over a radio outweighs the burned granaries they can see and touch.",
+            "costs": { "cbills": 0, "days": null, "resource": "the massif transmitter: gone within 3-5 broadcasts, the Front's only broadcast asset lost for the war", "risk": "the named witnesses need to be moved at once, three families through the passes in census season" }
+          },
+          {
+            "title": "Hunt UNIT MIRROR",
+            "advantages": ["Four 'Mechs need spare parts, and parts move on roads, so patient work can find their supply line", "A battlefield is the one proof no counter-story survives: MIRROR dead in your colors, photographed, with ROM paybooks", "Success delivers the bonus objective and the narrative at the same time"],
+            "disadvantages": ["Your best lance and 2 cells drop all other tasking for 20 days or more", "MIRROR is ROM-run, so its supply line may be set as bait, and the hunt may be walking into a trap", "If census day arrives mid-hunt with nothing to show, the fires stand unanswered at the moment of testimony"],
+            "consequence": "Everything rides on producing the one thing that ends the argument: the impostors themselves, dead or unmasked, before the booths open. That bet is the whole campaign.",
+            "costs": { "cbills": null, "days": 20, "resource": "the Front's best lance and 2 cells committed; all interdiction tasking suspended for the duration", "risk": "a baited supply trail costs you the lance, and with it the Front's power to mean anything the census could threaten" }
+          },
+          {
+            "title": "Standing Village Guards",
+            "advantages": ["The six most-threatened granaries get armed watches, so the next fire is fought, not just suffered", "Protection is the proof the villages actually asked for, and presence beats broadcasts", "Any MIRROR raid on a guarded village becomes the battlefield evidence the Front needs"],
+            "disadvantages": ["Holding fixed positions is the one thing a guerrilla force cannot survive: static guards can be found, pinned, and destroyed", "Six fixed postings tie up half the Front's infantry for as long as they last", "MIRROR can just raid the seventh village; the guards protect points, but the story is everywhere"],
+            "consequence": "The Front plants its flag where the people are, which is honorable and visible, and exactly what every occupier's hunter-killer doctrine is written to punish.",
+            "costs": { "cbills": null, "days": null, "resource": "half the Front's infantry tied to fixed postings; each guard-week is priced in exposure the generator tracks", "risk": "ROM concentrates on one guarded village with militia armor support, and the guard post is trapped" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "An unknown column challenges, or is challenged, at a night pass: the standing encounter your verification method has to answer." },
+        { "t": "T+0:30", "event": "The challenge-response window closes. Your options: commit, or break contact and pull back downslope. Wait past 30 seconds and the initiative goes to whichever column is lying." },
+        { "t": "T+2:00", "event": "If shots are fired, the pass is compromised, and a ROM watch covers it for the next 10 days." },
+        { "t": "T+12:00", "event": "Survivors' accounts reach the valley below by morning market. Whose story arrives first matters more than what actually happened." },
+        { "t": "T+48:00", "event": "On any confirmed contact, ROM sweeps the nearer valley: two days of house searches, and the cell there goes quiet or gets taken." }
+      ],
+      "hardDeadline": "Census day is {CENSUS_DAYS} days out. On that day the valleys testify to what they believe, in booths your rifles cannot reach, and the Front survives the winter on what they say, or it does not. Every operation between now and then is also an argument before that census."
+    },
+    "opforSketch": {
+      "composition": "UNIT MIRROR: {MIRROR_STRENGTH} ROM-trained effectives (Elite in covert work, Veteran in combat), 4 captured DCMS BattleMechs with authentic insignia and unit markings, light transport. On call behind them: Protectorate Militia sweep companies (Regular) and district ROM interrogation teams. Generator should make MIRROR rare, deliberate, and always ambiguous at first contact.",
+      "behavior": "Impersonation-first doctrine: MIRROR engages civilians as theater and real cells as 'comrades,' taking them at the rendezvous, not in battle. It avoids any fight it cannot stage-manage and withdraws from honest contact. On exposure risk it pivots to discrediting the evidence — its survival condition is the valleys' uncertainty, not its own."
+    },
+    "forks": [
+      { "name": "OPERATION FIRST LIGHT", "family": "OBJECTIVE_RAID", "outcomeGate": "FULL_SUCCESS", "trigger": "MIRROR unmasked before census day — by battlefield proof or broadcast evidence that holds.", "consequence": "The terraces turn: recruitment recovers in a month what it lost in a season, and the booths run dry. The Front's strength supports its first true offensive tasking — the district ROM fort that ran MIRROR, while its files on the program are still in one place.", "threat": "HIGH" },
+      { "name": "OPERATION LAST LANTERN", "family": "EXTRACTION_RAID", "outcomeGate": "FAILURE", "trigger": "Census day passes with the narrative unanswered; denunciation volume confirms cell exposure at scale.", "consequence": "The network is burning by winter. What remains of the Front's leadership, files, and the three witness families must reach the coast pickup before the sweeps reach them — an extraction conducted by the hunted, through passes now watched by both kinds of enemy.", "threat": "HIGH" },
+      { "name": "OPERATION ASH ROOT", "family": "GUERRILLA_WARFARE", "outcomeGate": "COMPROMISED", "trigger": "The chosen authentication scheme is captured intact — MIRROR walks into the network as a verified friend.", "consequence": "Three cells taken in nine days. The survivors rebuild from cutouts under a doctrine that trusts nothing it did not bury itself: the same war, restarted smaller, with the lattice's lesson paid for in full.", "threat": "EXTREME" }
+    ],
+    "storyElementSeed": "Two columns halt on opposite slopes of a night pass. A challenge lamp blinks twice. No answer comes. Both columns stand in the cold for eleven minutes, neither advancing, then back away down their own valleys, and the pass stays empty until morning.",
+    "voiceSlots": ["intelligence", "command", "logistics"],
+    "registerVariants": {
+      "merc": {
+        "situation.framing": "If the employer is the government-in-exile, learn the unwritten clause before the written ones. A hidden force that can be impersonated is a hidden force that can be tested, and the employer will be checking YOU at the same time you are checking everyone else. Expect tests. Pass them where they can see. The contract pays in scrip you can only cash after a liberation that is, for now, only a hope."
+      }
+    },
+    "specifics": {
+      "CENSUS_DAYS": { "min": 25, "max": 40, "unit": "days until the reconciliation census" },
+      "MIRROR_STRENGTH": { "min": 30, "max": 50, "unit": "ROM-trained effectives" }
+    },
+    "skeleton": "resistance must keep recruiting while an occupier's impostor unit commits atrocities in its name, and every authentication measure strong enough to unmask the impostors also maps the resistance for the hunter",
+    "inspiration": "pseudo-gang counterinsurgency, Kenya Emergency, 1952-56"
+  },
+  {
+    "seedId": "JIH-06",
+    "family": "PLANETARY_ASSAULT",
+    "title": "OPERATION COMMON TONGUE",
+    "eraFit": ["jihad"],
+    "factionFit": ["merc"],
+    "register": "merc",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "situation": "The coalition is liberating {WORLD} with two armies that agree on the enemy and nothing else. Task Force NORTH is two DCMS battalions with aerospace attached. Task Force SOUTH is two AFFS battalions with an armor brigade. They are closing on the capital from opposite sides of the Verdigris Cut, and your unit holds the boundary between them under a boundary-force contract from the coalition field headquarters. Read the contract before you complain about the fighting: any boundary incident is docked from your pay at replacement cost, you get no salvage rights in either army's zone, and either House liaison can throw your sub-units out of his zone 'for cause,' with no appeal. The employer knows exactly what this job is. That is why it hired it out.\n\nHere is the friction, one item at a time. Recognition codes: the DCMS will not share IFF codes with a force that carries AFFS liaison officers, and the AFFS will not drop its liaisons. So you run two separate radio systems plus a paper-and-flare recognition code, agreed over a tea kettle at the morning boundary meeting. Clocks: NORTH runs on local solar time, SOUTH on fleet standard, a 41-minute difference that has already dropped one artillery barrage on a grid square that was empty, but was only supposed to be empty 41 minutes later. Prisoners: Protectorate militia conscripts are surrendering in organized groups to SOUTH, whose prison camps have a bad reputation, while NORTH treats those same men as fighters fleeing the battle. The columns cross the boundary because rumor told them which camp to pick, and they cross right under DCMS guns to do it.\n\nThe defender understands all of this. The Word of Blake garrison, one understrength Level III plus militia, attacks along the boundary and retreats back across it. It also runs decoy transmitters that copy each army's radio signatures to trick them into firing across the boundary at each other. One decoy transmitter was recovered four days ago. The logic is simple: every allied shell that lands on an ally is worth a company to them.\n\nThe ground: the Verdigris Cut is a flooded open-pit mine trench, 14 kilometers long and 300 meters wide, with water 9 to 40 meters deep. It can only be crossed at three dragline causeways: ALPHA rated for 100 tons, BRAVO for 60, CHARLIE for foot troops and light vehicles only. The boundary between the two armies runs the full length of the Cut, so the causeways belong to nobody but you. H-hour for the joint assault on the capital is {HHOUR_DAYS} days away, and the order sets one written condition: 72 straight hours with no boundary incident, because the capital plan has the two armies fighting street by street, mixed together. Meanwhile the Blakists are demolishing the capital's three fusion plants, which engineers estimate will take {DEMOLITION_DAYS} days to finish. Every delay to H-hour is paid for in lost fusion plants.",
+    "objectives": {
+      "primary": "Deliver 72 hours in a row with no boundary incident, so H-hour confirms on schedule.",
+      "secondary": "Find and destroy the decoy-transmitter teams working along the Cut.",
+      "bonus": "A written procedure for surrendered-personnel crossings, agreed and signed by both contingent headquarters."
+    },
+    "complications": [
+      {
+        "name": "Two Clocks",
+        "text": "The two contingents' clocks are 41 minutes apart, and neither will switch. Every joint action that crosses the boundary either goes through your command post to be converted both ways, or it goes wrong on the 41-minute gap.",
+        "mechanicalEffect": "Any cross-boundary fire mission, movement order, or deconfliction request rolls for a time-base error unless your CP converts it both ways first. A conversion failure produces the empty-grid barrage event, or a not-empty-grid one."
+      },
+      {
+        "name": "Red Cards",
+        "text": "Each liaison can throw your sub-units out of his zone for cause, and 'cause' is whatever he decides at the morning meeting. The more friction there is, the smaller your usable force gets.",
+        "mechanicalEffect": "After any incident in a zone, that House's liaison may red-card the sub-unit involved: it is barred from that zone for 96 hours, and you must rebuild the boundary coverage plan around the gap."
+      },
+      {
+        "name": "The Causeway Ratings",
+        "text": "ALPHA carries 'Mechs, BRAVO carries mediums and lighter, CHARLIE carries men. The defender knows the weight limits as well as you do and ends every raid at a crossing your heavy units cannot follow across.",
+        "mechanicalEffect": "The causeway weight limits constrain any pursuit across the Cut, and the defender always withdraws by a crossing that fits its own weight class. Demolishing any causeway permanently reroutes both enemy and friendly heavy traffic through the ones that remain."
+      },
+      {
+        "name": "Decoy Transmitters",
+        "text": "Near the boundary, treat every sensor contact as friendly until proven hostile, which is the opposite of what any crew is trained to do. The recovered transmitter copied a DCMS lance command frequency almost exactly.",
+        "mechanicalEffect": "Contacts near the boundary that show up on sensors alone are unreliable. Engaging without visual or a second source risks firing on your own side. Requiring confirmation adds 2-4 minutes to every response, and that is the gap the enemy raids through."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Three Causeways",
+        "context": "The causeways are the only links across the boundary. How you hold them decides what kind of war happens along 14 kilometers of water.",
+        "options": [
+          {
+            "title": "Garrison All Three",
+            "advantages": ["A presence at every crossing: nothing moves over the Cut unseen", "Both liaisons get what they asked for, so the red-card pressure drops", "Surrendered columns meet a checkpoint instead of a no-man's-land"],
+            "disadvantages": ["Three fixed positions, each too thin to stop a deliberate raid", "The Level III can mass against any one garrison and outnumber it locally on a night of its choosing", "Your reserve shrinks to a single lance"],
+            "consequence": "Coverage everywhere, strength nowhere. The boundary is well-managed but thinly defended, and on any given night the enemy chooses which of those two facts matters most.",
+            "costs": { "cbills": 0, "days": null, "resource": "reserve cut to one lance for the whole contract", "risk": "beaten piece by piece: one garrison overrun before the reserve can cross 7 kilometers of boundary road" }
+          },
+          {
+            "title": "Hold ALPHA, Drop BRAVO and CHARLIE",
+            "advantages": ["Concentrate your strength: one crossing, fully defended, with the reserve behind it", "The defender's hit-and-run-across doctrine loses two of its three exits", "You replace hopeful patrolling with a sure block along 14 kilometers"],
+            "disadvantages": ["A post-war bill: the provisional government needs those causeways, and blowing them lands politically on whoever ordered it", "Surrendered columns and civilian traffic all funnel through ALPHA into your checkpoint line, with all the problems crowds bring", "Funneling everything through ALPHA also funnels it for the enemy, so ALPHA becomes the one place every problem on the boundary shows up"],
+            "consequence": "The boundary simplifies to one gate, strongly held and owned by you, along with every line, claim, and grievance that now has only one place to go.",
+            "costs": { "cbills": 30000, "days": 2, "resource": "political cost: two causeways charged against the coalition's rebuilding budget, with your unit's name on the demolition order", "risk": "a mass surrender and a Blakist raid arriving at ALPHA in the same hour, with the crowd in the kill zone" }
+          },
+          {
+            "title": "Mobile Patrol with Joint Liaison Teams",
+            "advantages": ["Flexible: the patrol goes wherever the last incident was not", "The only working code-sharing setup on the planet, one DCMS and one AFFS officer in the same vehicle, deconflicting in real time", "No fixed target for the decoy teams to plan against, so they have to guess"],
+            "disadvantages": ["The gaps are built in: 14 kilometers, only so many patrols, and the enemy can count", "The two liaison officers are a single point of failure, and one ambush kills the deconfliction setup and both contingents' trust at once", "The patrol pace wears out machines faster than the contract's maintenance budget covers"],
+            "consequence": "The boundary is held by movement and by two officers' working relationship. It works until the night the enemy targets that relationship itself, which a captured map case suggests they have thought about.",
+            "costs": { "cbills": null, "days": null, "resource": "maintenance: patrol pace at 160 percent of the contract's budgeted rate", "risk": "the joint liaison vehicle is the highest-value target on the boundary, and both Houses' codes ride in it" }
+          }
+        ]
+      },
+      {
+        "name": "The Columns",
+        "context": "Surrendered militia columns keep crossing the boundary toward SOUTH's camps, under NORTH's guns, through your ground. The contract says nothing about this. The guns do not.",
+        "options": [
+          {
+            "title": "Escort the Crossings",
+            "advantages": ["Order at the boundary: set crossing times, with your vehicles flanking the columns", "Casualties drop right away, since no escorted column has ever been fired on in any case on file", "SOUTH's liaison becomes your ally in every dispute"],
+            "disadvantages": ["Your escorts stand between DCMS weapons and what the DCMS considers lawful targets", "NORTH's liaison logs every escort as meddling in its zone, and the red-card count climbs", "Each escort is a boundary incident waiting on one nervous gunner from either side"],
+            "consequence": "You protect the crossings by putting your own machines physically between the two sides. The columns survive and the contract's record fills up, and now the 72-hour clean streak depends on every single escort going perfectly.",
+            "costs": { "cbills": null, "days": null, "resource": "escort duty: one lance per crossing window, off boundary patrol", "risk": "one shot during an escort is an incident with your unit physically in the middle of it, exactly the case the deduction clause was written for" }
+          },
+          {
+            "title": "Turn the Columns Back",
+            "advantages": ["Boundary incidents stop being your problem, because the crossings end", "NORTH's liaison endorses the policy in writing the same day", "The boundary force goes back to watching the boundary instead of managing a migration"],
+            "disadvantages": ["The columns go back to the very custody they crossed a kill zone to escape", "What happens to them there is recorded elsewhere, and you will read about it for years", "SOUTH's liaison files a protest with the coalition headquarters that hired you, and the employer's own conscience clause stirs"],
+            "consequence": "The boundary quiets down and the contract's record stays clean, paid for with something the contract never priced. The mercenary trade has a long memory for units that learned to stop counting that cost.",
+            "costs": { "cbills": 0, "days": null, "resource": "reputation: the policy follows the unit into every future contract talk where the other side has heard about it", "risk": "a turned-back column forces the crossing anyway, at night and unescorted, so the incident happens regardless, and bigger" }
+          },
+          {
+            "title": "Broker a Formal Corridor",
+            "advantages": ["A signed crossing procedure turns the boundary's worst flashpoint into a schedule", "Both House signatures on one document, which achieves the bonus objective as a side effect", "It lasts: the corridor outlives the operation and the contract"],
+            "disadvantages": ["Days of staff work at two headquarters that share no building, no code, and no clock", "While it is unsigned, the columns keep coming and the other two options keep happening anyway", "Either House can kill it with one staffing delay, and neither pays a price if it dies"],
+            "consequence": "The long game: a procedure instead of more armor. If it signs, the boundary goes quiet, which is the contract fulfilled. Until it signs, every day is the same day, plus negotiation.",
+            "costs": { "cbills": null, "days": 5, "resource": "your executive officer and both liaison officers tied up shuttling between staffs for the whole negotiation", "risk": "the corridor gets signed the day after the incident that would have justified it" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Cross-boundary fire alarm: weapons are landing across the boundary, and at first neither the source nor the target is confirmed." },
+        { "t": "T+1:00", "event": "The nearest patrol moves to get between the two sides. That is the contract's method, and the contract's most dangerous minute." },
+        { "t": "T+4:00", "event": "Both liaison channels demand the same facts in different formats on different clocks. Your CP's double conversion is now the only version both sides accept." },
+        { "t": "T+9:00", "event": "If it drags on, local commanders on each side start 'protective' repositioning that the other side reads as getting ready to attack." },
+        { "t": "T+20:00", "event": "Either one agreed timeline of the incident reaches both headquarters, or two different timelines exist and the 72-hour clock resets to zero." }
+      ],
+      "hardDeadline": "H-hour confirms only after 72 hours in a row with no incident, and H-hour is {HHOUR_DAYS} days out. Every reset costs fusion plants downstream: the demolition finishes in {DEMOLITION_DAYS} days and will not wait. Whether the capital still has power after liberation is the difference between a contract fulfilled and a contract merely survived."
+    },
+    "opforSketch": {
+      "composition": "Word of Blake garrison remnant: one understrength Level III committing 6-12 units (Veteran) to seam operations at any one time, 2-3 false-emission decoy teams (Elite, vehicle-mounted), Protectorate Militia screening elements (Green). Generator should present the Level III as raid packages, never a massed defense.",
+      "behavior": "Raids exclusively along and through the boundary; withdraws across causeways its own weight class can use and pursuit cannot. Decoy teams bait cross-seam fire by imitating each contingent's signatures. The defender's victory metric is allied incidents per week, not ground held — it is fighting your contract, not your lances."
+    },
+    "forks": [
+      { "name": "OPERATION JOINED HANDS", "family": "PLANETARY_ASSAULT", "outcomeGate": "FULL_SUCCESS", "trigger": "72 clean hours delivered; H-hour confirms.", "consequence": "The joint capital assault proceeds with both contingents interleaved block by block — and the boundary force, having kept the seam, is assigned the seam's continuation: the assault corridor where NORTH's and SOUTH's blocks meet, all the way to the plant district.", "threat": "HIGH" },
+      { "name": "OPERATION SANDBAG", "family": "GARRISON_DUTY", "outcomeGate": "FAILURE", "trigger": "The 72-hour clock resets past the demolition estimate; H-hour slips indefinitely.", "consequence": "The plants are lost and the assault is repriced into a siege. The unit digs in along the Cut for a winter rotation the contract never priced, holding a boundary that now divides three armies that all consider the campaign someone else's failure.", "threat": "MEDIUM" },
+      { "name": "OPERATION REAR RANK", "family": "SECURITY_DUTY", "outcomeGate": "COMPROMISED", "trigger": "Unit weapons kill allied personnel — decoy-baited or not.", "consequence": "Both liaisons red-card simultaneously: the unit is pulled to rear-area security at the coalition logistics hub while a board of inquiry sits on the incident. The contract's deduction clause executes; the rear area, naturally, turns out not to be quiet.", "threat": "LOW" }
+    ],
+    "storyElementSeed": "At the causeway midpoint, two liaison officers who do not share a language take tea from the same kettle at 0600 and check each other's incident logs line by line, pointing at numbers. When the figures match, each initials the other's page, and the day is allowed to begin.",
+    "voiceSlots": ["command", "logistics", "intelligence"],
+    "registerVariants": {
+      "is-kurita": {
+        "situation.framing": "Task Force NORTH's order is not cruelty; it is the law as the district reads it. A Protectorate soldier who runs from custody is running from judgment, and to put off judgment is to put off duty. Yes, the Davion camps are softer, and that softness is why the columns walk west. The boundary force is asked to help neither the flight nor the pursuit, only to keep the boundary itself from becoming the battlefield. This order is exact. Follow it exactly."
+      }
+    },
+    "specifics": {
+      "HHOUR_DAYS": { "min": 8, "max": 12, "unit": "days until H-hour" },
+      "DEMOLITION_DAYS": { "min": 10, "max": 16, "unit": "days until demolition completion" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Hold ALPHA, Drop BRAVO and CHARLIE", "requires": "depot-access", "whenLacking": "reprice", "lackingText": "With no depot access, you have no demolition stores of your own, so you must beg the charges from Task Force SOUTH's engineers. The favor is paid in salvage: the option's C-bill cost converts to a salvage-rights claim on your next recovery." }
+    ],
+    "skeleton": "boundary force must keep two allied contingents that share neither codes, clocks, nor custody doctrine from fighting each other across a seam the defender deliberately attacks, with every incident billed to the force holding the line and a confirmation clock that resets on each one",
+    "inspiration": "coalition boundary friction at Kasserine Pass, 1943"
+  },
+  {
+    "seedId": "JIH-07",
+    "family": "PLANETARY_ASSAULT",
+    "title": "OPERATION QUIET CLOISTER",
+    "eraFit": ["jihad"],
+    "factionFit": ["is-liao"],
+    "register": "is-liao",
+    "threatRange": ["HIGH", "EXTREME"],
+    "situation": "The employer's official paperwork calls this public-health quarantine enforcement. The operational annex, which far fewer people see, describes the real job: destroying the Communion of the Five Pillars, a Word of Blake-aligned enclave holding a walled arcology-monastery in the Cistern Vale on {WORLD}, {YEAR}. The population is 800 to 1,400, of whom 200 to 280 are armed: one Level II equivalent of BattleMechs and armor plus militia infantry in prepared wall positions. The last parish census, four years old, counted 240 children inside. Treat every figure as rough, because the Communion stopped reporting to anyone once it stopped needing anyone.\n\nTwo clocks govern this, and neither is yours. The first is inside the wall. A defected deacon's diagram shows the compound's fusion plant with its safety systems deliberately disabled, which means the congregation can start a reactor meltdown 40 to 70 minutes after they decide to, killing everything within 1.2 to 2.1 kilometers plus a fallout plume. The diagram is 23 days old and low confidence, and the Maskirovka annex says only, in a carefully hedged sentence, that it neither believes nor disbelieves it. The second clock is in the sky. Analysis of the Blakist resupply flotilla that serves hidden enclaves predicts its next arrival window in {FLOTILLA_DAYS} days. If it arrives while your cordon is still up, the besiegers become the trapped, and the vale has only one road out.\n\nThe ground is karst limestone. The compound draws its water from cave galleries under the vale. Three mapped cave mouths open outside the wall, and the galleries connecting them are unmapped past the 400-meter survey line. There is no radio underground, so parties below ground are out of contact for 20 to 90 minutes at a stretch. The Communion has held this vale for two generations and knows its own caves.\n\nThen there are the people leaving. Since the cordon closed, the Communion has been releasing its people in batches: 60 elderly on day two, 41 on day five, each batch walking to the wire under white cloth. Screening at the relief camp 6 kilometers back has already caught 2 people with false identities in the first batch, so cadre are almost certainly being slipped in among them. But the leavers are also genuinely old and genuinely sick, and each batch uses up escort, decontamination, and registration capacity the camp cannot spare. Refuse a batch and you hand the Communion propaganda for the week. Accept a batch and you accept whatever is hidden inside it. The Maskirovka observer at your headquarters files a report every day, watches which choice you make each time, and has offered no opinion so far, which everyone present correctly reads as its own kind of pressure.",
+    "objectives": {
+      "primary": "Destroy the enclave's ability to fight while keeping the reactor cold, with no meltdown before or during the assault.",
+      "secondary": "Get the non-combatant population out alive and screened, and let no more false identities through after the first batch.",
+      "bonus": "Capture the Communion's signals room intact, because its traffic logs lead to the other hidden enclaves the flotilla serves."
+    },
+    "complications": [
+      {
+        "name": "The Plant",
+        "text": "Once started, the meltdown takes 40 to 70 minutes, according to a low-confidence diagram. The safeties were disabled by people who pray in the plant hall. Knowing the timing is not the same as knowing what the congregation will do.",
+        "mechanicalEffect": "Any assault alarm rolls for whether the meltdown starts. Once it starts, a hidden 40-70 minute clock runs, ended only by seizing the plant hall or an engineer performing an emergency shutdown. The generator may secretly vary the clock within, or slightly beyond, that range, because the diagram is low confidence and the table should feel that."
+      },
+      {
+        "name": "The Galleries",
+        "text": "The caves are a way in, a way out, and a blindfold all at once. Parties underground have no radio and cannot be recalled, and the Communion's counter-tunnel watch has had two generations to prepare the ground.",
+        "mechanicalEffect": "Underground elements are out of command for 20-90 minutes per leg: no recall, no updates, and they follow the orders they were given. Past the 400-meter survey line, they move at half speed and are exposed to ambush until they map the way by moving through it."
+      },
+      {
+        "name": "The Leaver Batches",
+        "text": "Every batch is both mercy and infiltration in one line. The camp's screening line is the second front, and it is run by medics.",
+        "mechanicalEffect": "Each batch uses one day of the camp's screening and escort capacity. Refusing a batch costs you narrative and morale and raises the meltdown risk. Accepting one rolls for cadre slipping through, and any who get through report your cordon positions back inside, accurate to within 24 hours."
+      },
+      {
+        "name": "The Observer",
+        "text": "The Maskirovka files a report every day. Certain words must never appear in your logs, and certain orders come only by word of mouth, so that everything can be denied later. Whatever you decide here will be quoted afterward, with or without its context.",
+        "mechanicalEffect": "Each decision-point choice adds to a political record the campaign layer reads after the mission. Compensation claims, commendations, and the employer's next contract terms all draw on the observer's file."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Three Doors",
+        "context": "You can empty the enclave by talking, empty it by cutting off water, or take it by force. Each path kills a different number of people, and none of those numbers can be known ahead of time.",
+        "options": [
+          {
+            "title": "The Deacon Channel",
+            "advantages": ["{NPC:intel-source} still has standing inside, so staged-surrender terms can reach the moderate congregation under the inner circle", "Every family that walks out reduces what every later option has to deal with", "Talking costs no ammunition and builds the screening camp's records"],
+            "disadvantages": ["Days spent under the flotilla clock, which does not pause for negotiations", "His safe-conducts deliver exactly the people the inner circle is willing to lose, so watch what each success tells you about who remains", "If talks collapse in public, the inner circle gets its siege story at peak attendance"],
+            "consequence": "The patient path. The enclave empties from the outside in: the moderate families leave, the hard core stays, and the calendar burns down while you buy people out one batch at a time, until either the flotilla arrives or the inner circle ends the deal.",
+            "costs": { "cbills": null, "days": 6, "resource": "flotilla margin: 6-9 days of the {FLOTILLA_DAYS}-day window spent talking", "risk": "each negotiated exit leaves behind a harder, more fanatic core for the final assault to take" }
+          },
+          {
+            "title": "Cut the Water",
+            "advantages": ["Damming the three cave mouths leaves the compound's cisterns with {CISTERN_DAYS} days of water, and thirst empties wall positions faster than fire would", "No assault casualties while it works, and the engineering is straightforward", "Batches of leavers speed up as the cisterns run low, so the population separates itself from the garrison"],
+            "disadvantages": ["It is a collective punishment against a population that is mostly ordinary congregation, and it earns the observer's longest file entry", "The surge of leavers triples the screening load at a camp already short, and the cadre's best traffic rides that worst crowding", "The inner circle controls the story inside the wall: 'the unrighteous have closed the springs' is a sermon aimed straight at the plant hall"],
+            "consequence": "The siege becomes a matter of water. It works on a known schedule, and every day of it is preached inside as prophecy, while the meltdown risk climbs as the cistern gauge falls. The generator ties the two together.",
+            "costs": { "cbills": 8000, "days": 4, "resource": "camp screening: the number of leavers triples for the duration, and cadre-passage rolls worsen to match", "risk": "the device answers the thirst: the meltdown risk rises each day the cisterns drop below half" }
+          },
+          {
+            "title": "The Galleries Assault",
+            "advantages": ["Engineer-led teams go underground to the plant hall while a wall assault is timed to match, the only option that can take the reactor before any clock matters", "If it works inside the week, speed closes off the flotilla problem entirely", "Seize the plant hall and every other problem shrinks to a cordon and a screening line"],
+            "disadvantages": ["Everything rides on the low-confidence diagram and the unmapped 400 meters", "Underground teams have no radio and cannot be recalled, so if the situation changes mid-assault, the plan runs anyway, as written, in the dark", "Two attacks at once, above and below ground, on separate clocks with no link between them, so the ways it can fail multiply rather than add"],
+            "consequence": "The fast door, opened blind. If the diagram is honest and the caves are passable, it ends in an afternoon. Each 'if' is paid for by the people sent beyond recall to test it.",
+            "costs": { "cbills": null, "days": 1, "resource": "engineer teams sent beyond recall, out of contact for the whole assault", "risk": "the diagram is wrong by one corridor, and the plant-hall team arrives at minute 50 of a 40-minute clock" }
+          }
+        ]
+      },
+      {
+        "name": "The Second Clock",
+        "context": "The flotilla window opens in {FLOTILLA_DAYS} days. The mouth of the vale is the only ground a relief landing can use, and the question is what the cordon can spare to hold it.",
+        "options": [
+          {
+            "title": "Fortify the Vale Mouth Now",
+            "advantages": ["A third of your force dug in on the only usable landing zone, so if the flotilla comes, it lands into prepared ground", "The work is visible from the wall, so hope inside fades with every earthwork", "The cordon's rear is now secured, not just assumed safe"],
+            "disadvantages": ["The cordon itself thins by a third for the whole period, and the enclave's wall patrols will map the thin spot within days", "If the flotilla does not come, you lengthened the siege for nothing", "The engineering work competes with everything the other options need"],
+            "consequence": "Insurance bought at the cordon's expense. The enclave watches you prepare for a landing that may never come, while the gap your preparation opened is now watched by people praying for exactly that landing.",
+            "costs": { "cbills": 14000, "days": 3, "resource": "cordon strength: a third of your force fixed at the vale mouth for the duration", "risk": "the enclave reads the thinned sector right and runs a breakout, or a supply column, through it" }
+          },
+          {
+            "title": "Keep the Cordon Whole",
+            "advantages": ["The siege runs at full strength, and every door option runs at its best speed", "No gap for the wall patrols to find", "The flotilla window is, after all, only a medium-confidence estimate"],
+            "disadvantages": ["If the flotilla arrives, your force is caught between the wall and the landing zone with neither prepared", "The annex calls this 'acceptable concentration risk,' but the annex does not stand in the vale", "Pulling back under a relief landing means abandoning the siege works and the screening camp's security in the same hour"],
+            "consequence": "Full pressure now, full exposure later. The bet is that the siege ends before the sky opens, and the only thing backing that bet is a medium-confidence estimate with nothing of its own at stake.",
+            "costs": { "cbills": 0, "days": 0, "resource": null, "risk": "the two-front hour: the flotilla lands at the vale mouth while the wall sallies, and the cordon fights both directions at once or fights neither" }
+          },
+          {
+            "title": "Request Coalition Aerospace",
+            "advantages": ["A coalition fighter wing on call makes the flotilla's approach a fight, the strongest deterrent you can get", "No ground force pulled away, so the cordon and the door options continue untouched", "The threat alone may close the window without a shot"],
+            "disadvantages": ["It spends the favors the employer is owed, so the employer will owe you proportionally less afterward", "The wing can only stay 10 days, which starts a third clock you must guess against the second", "The observer's file notes who invited foreign fighters over a Capellan vale, in those exact words"],
+            "consequence": "The sky problem is solved with borrowed strength and borrowed standing. If the window and the 10 days overlap, it was good statecraft. If they miss, the favor is gone, the file is written, and the flotilla still sails.",
+            "costs": { "cbills": null, "days": null, "resource": "political cost: a coalition-scale favor drawn on the employer's account, repaid out of your unit's standing", "risk": "the 10-day window on the wing misses the flotilla window, spending both clocks with no coverage when it matters" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "A reactor heat spike is detected, the sign of a meltdown starting, or an assault alarm sounds, whichever comes first." },
+        { "t": "T+2:00", "event": "Plant-hall seizure teams go in if they are in position. If not, the withdrawal order goes out: everyone beyond 2.5 kilometers." },
+        { "t": "T+15:00", "event": "Cordon posts inside 1.5 kilometers pull back or dig in. The leaver gate closes, and whoever is in the screening lane stays there." },
+        { "t": "T+40:00", "event": "Earliest the meltdown could hit. From now until T+70:00, nothing moves toward the wall for any reason." },
+        { "t": "T+70:00", "event": "Latest the meltdown could hit. If the vale is still standing, either the diagram overestimated the timing, the seizure worked, or the meltdown was a bluff, and only the plant hall knows which." }
+      ],
+      "hardDeadline": "From heat spike to meltdown is 40 to 70 minutes, on a low-confidence diagram. Either you hold the plant hall within 40 minutes, or everyone you command stands beyond 2.5 kilometers and finds out what the diagram was worth. And the flotilla window opens in {FLOTILLA_DAYS} days no matter what, so the siege ends, one way or another, before the sky becomes a second front."
+    },
+    "opforSketch": {
+      "composition": "Communion forces: one Level II equivalent of mixed BattleMechs and armor (Regular skill, fanatic morale — does not rout, does not surrender as units), 200-280 militia infantry on prepared wall positions, and a ROM cadre of 10-20 (Elite) running internal security, the plant hall, and the leaver-seeding program. Generator should weight the defense toward infantry and fortification; the Level II is the counterattack reserve, not the line.",
+      "behavior": "Defensive theology: the Communion fights at its wall and husbands the device as the final sermon. No sallies unless the flotilla lands. The ROM cadre is the rational actor inside — it runs the leavers, reads the cordon, and will trigger nothing while its own exit remains plausible. The inner circle is the irrational actor, and the two are not always in agreement; the generator may play the seam."
+    },
+    "forks": [
+      { "name": "OPERATION DRY SLIP", "family": "PIRATE_HUNTING", "outcomeGate": "FULL_SUCCESS", "trigger": "Enclave reduced, reactor cold, signals annex taken intact.", "consequence": "The traffic logs map the flotilla's circuit: four enclaves, two landfall patterns, one predictable bunkering stop. The employer wants the bunkering stop ambushed during the very window the siege just beat — the intelligence is freshest exactly while the unit is most spent.", "threat": "MEDIUM" },
+      { "name": "OPERATION GREY RAIN", "family": "RELIEF_DUTY", "outcomeGate": "FAILURE", "trigger": "Excursion — by initiation, assault accident, or the model being wrong.", "consequence": "The vale is a plume map and the camp of 1,200 becomes a camp of 9,000 as the downwind valleys empty. The reduction tasking converts to relief operations under contamination protocols, run by the force that watched it happen from 2.5 kilometers.", "threat": "HIGH" },
+      { "name": "OPERATION STRANGER'S BREAD", "family": "SECURITY_DUTY", "outcomeGate": "COMPROMISED", "trigger": "Cadre passage through the leaver screening is confirmed after the fact.", "consequence": "Between 4 and 11 ROM cadre hold camp registrations and ration cards. The camp's security becomes a counter-infiltration tasking conducted among genuine refugees — every measure that might find them is a measure applied to people who have already lost everything once.", "threat": "MEDIUM" }
+    ],
+    "storyElementSeed": "At the wire an elderly leaver unwraps a cloth bundle for inspection: seed packets, a photograph, a brass cup. The soldier inventories the items on a form with four carbon copies, hands three back, and waves the next one forward. The queue moves at the speed of the form.",
+    "voiceSlots": ["engineering", "intelligence", "command", "medical"],
+    "registerVariants": {
+      "merc": {
+        "situation.framing": "The contract says quarantine enforcement; the indemnity annex says reactor. The annex is the part that matters. Note clause 31: 'outcomes attributable to deliberate energy release by the quarantined population' are excluded from employer liability, which means that if the device fires, it is officially nobody's fault and in practice yours. Price the galleries accordingly."
+      }
+    },
+    "specifics": {
+      "FLOTILLA_DAYS": { "min": 12, "max": 20, "unit": "days until the predicted flotilla window" },
+      "CISTERN_DAYS": { "min": 4, "max": 6, "unit": "days of compound water if the cave mouths are dammed" }
+    },
+    "resourceGates": [
+      { "appliesTo": "The Galleries Assault", "requires": "depot-access", "whenLacking": "reprice", "lackingText": "Without depot engineering stocks such as shoring, breaching kits, and hardline comm spools, the underground teams are out of contact the whole time instead of only in stretches. Their time out of command doubles, and the two attacks must be timed blind." }
+    ],
+    "skeleton": "siege force must end a fortified congregation's resistance with its rigged reactor cold while a predicted relief flotilla prices every day of patience and every batch of released believers both relieves and infiltrates the cordon",
+    "inspiration": "cult-compound sieges — Waco 1993, era-translated"
+  },
+  {
+    "seedId": "JIH-08",
+    "family": "RECON_RAID",
+    "title": "OPERATION FIVE HEARTHS",
+    "eraFit": ["jihad"],
+    "factionFit": ["merc"],
+    "register": "merc",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "situation": "Someone is raiding three systems' worth of coalition logistics from a hidden base, and the employer has narrowed it to one continent. Your contract is to narrow it to a single grid square. Read the fee structure before you celebrate the retainer: 40 percent on signing, and the other 60 percent only on two-source confirmation of the site's exact location. The strike package, allied aerospace plus a ground battalion, commits exactly once. A false hit sends it against nothing, the raiders relocate, and the contract is voided with a blacklist and damages. The employer has been burned twice on this hunt already, which is why the terms read like a grudge.\n\nThe target is a Word of Blake hidden operating base on {WORLD}'s outback continent, empty except for grazing leases, bore-well fields, and survey stations. Analysis gives five possible sites, HEARTH ONE through FIVE, spread across 60,000 square kilometers: two flagged by heat readings, three by diverted grain and fuel shipments. The base has relocated twice in 14 months, each time within 72 hours of a change in coalition overflight patterns, going by the age of the refit debris at both abandoned sites. Working assumption: they have a trip-wire that detects reconnaissance and a rehearsed drill to relocate within 72 hours of it going off. Anything loud enough to confirm the base is loud enough to make them move it.\n\nYour cover is a contracted mineral survey, and the cover has to actually work: real instruments and real assay filings lodged with the lease registry on a real schedule. The registry is public, so the enemy can read it too, which means a survey that stops surveying is a flare with paperwork attached.\n\nThe ground is the Chalk Maze: eroded pale badlands where ground radar throws false returns off the chalk and a vehicle track crumbles away into the whiteness within a day of wind. The key to the whole analysis is water. Nine working bore-wells serve the entire region, all metered for the grazing leases, and a garrison of 200-plus people has to drink somewhere. Buried in that slow, dull bore-well data is a water-draw pattern that matches no livestock herd. The last limit is the sky: the dust season shuts down all optical and sensor work in {STORM_DAYS} days. After that, the base winters where you cannot find it, and the spring raids, one every {RAID_INTERVAL} days on the recent pattern, are as good as already paid for while your invoice sits unpaid.",
+    "objectives": {
+      "primary": "Deliver two-source confirmation of the base's exact location before the dust season shuts down collection.",
+      "secondary": "Keep the survey cover intact to the end of the contract, because the cover company is real, registered, and meant to be reused.",
+      "bonus": "A pattern-of-life package, covering garrison strength, lift schedule, and watch rotations, good enough for the strike package to plan against."
+    },
+    "complications": [
+      {
+        "name": "The Tripwire",
+        "text": "Burned twice already, the site treats any suspicion as confirmation. Its relocation drill is rehearsed, you do not know what sets it off, and the only sure thing is the 72 hours.",
+        "mechanicalEffect": "Each active measure, such as an overflight deviation, a close approach, bore tampering, or planting a sensor in watched ground, rolls against detection. On a suspicion result, a hidden 72-hour relocation clock starts, and only action inside it can matter."
+      },
+      {
+        "name": "The Cover Must Work",
+        "text": "The survey is a real company, not a costume. Assay filings are due at the registry on schedule, and skipped filings stand out in any audit, including the enemy's.",
+        "mechanicalEffect": "Survey teams must produce real filings on a fixed calendar. Each crisis week that pulls teams off survey work risks a registry flag, and two flags blow the cover and start the COMPROMISED fork's conditions."
+      },
+      {
+        "name": "Chalk Ghosts",
+        "text": "The Maze swallows signals. Radar ghosts, magnetometer noise, tracks gone by morning: on 40 percent of the candidate ground, the data is unreliable and you have to judge what to trust and what to throw out.",
+        "mechanicalEffect": "Sensor results across 40 percent of the Maze include false contacts. Each false contact you accept into the analysis weakens your confirmation, and each one you investigate costs 2-3 days of team time."
+      },
+      {
+        "name": "The Raids Continue",
+        "text": "Every {RAID_INTERVAL} days, another strike lands somewhere in three systems, and another message arrives asking how the survey is going. The employer's patience runs out a little more each time.",
+        "mechanicalEffect": "Each raid during the contract advances a contract-relations track. At the third raid, the employer demands an interim assessment. At the fifth, the fee is renegotiated downward."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "How Loud to Look",
+        "context": "How hard you collect is the whole game: extra effort buys speed but spends concealment, and the level that trips the enemy's trip-wire is not written down anywhere.",
+        "options": [
+          {
+            "title": "Fully Passive",
+            "advantages": ["Bore-well data, registry traffic, and watching survey routes, none of which can trip anything", "The cover gets stronger with every honest filing", "The analysis narrows steadily: 30 to 40 days to a single candidate at current data rates"],
+            "disadvantages": ["30 to 40 days against a {STORM_DAYS}-day season leaves no margin", "The raids continue the whole time, charged to your patience at the employer's table", "Passive data alone may never reach the two-source standard; narrowing it down is not the same as confirming it"],
+            "consequence": "The quiet road, at the mercy of the season. If the storm comes early or the math lands late, the hunt ends with a strong suspicion, an intact cover, and no fee.",
+            "costs": { "cbills": 0, "days": 35, "resource": "the storm margin: 30-40 of {STORM_DAYS} days spent narrowing it down", "risk": "the season beats the analysis, and a strongest-candidate-but-unconfirmed result is worth exactly 40 percent of the contract" }
+          },
+          {
+            "title": "One Active Probe",
+            "advantages": ["A 6-person recon of the best candidate over 5 nights: eyes on the ground, the best evidence there is", "If it goes clean and the candidate is right, that is your first confirmation source in under a week", "The probe team also collects the pattern-of-life data for the bonus objective"],
+            "disadvantages": ["Detection starts the 72-hour clock against the whole contract", "The Maze favors whoever has lived in it: their counter-recon knows the chalk, yours knows the manual", "A probe of the wrong candidate spends the risk and buys nothing"],
+            "consequence": "One sharp question asked quietly. Answered, it halves the problem. Overheard, it ends the hunt on a 72-hour clock the team in the chalk learns about last.",
+            "costs": { "cbills": 9000, "days": 7, "resource": "the unit's best recon element exposed for 5 nights beyond support range", "risk": "detection starts the 72-hour relocation clock while your team is still inside the site's security radius" }
+          },
+          {
+            "title": "Lace the Supply Channel",
+            "advantages": ["The employer holds a captured Blakist supply contact: tagged goods, such as marked lubricants and doped flour, pushed through it travel to the site on their own", "No unit presence anywhere near the candidates", "If the tagged goods reach a hearth, that is your first confirmation source, with a clear trail"],
+            "disadvantages": ["If the contact is a ROM plant, the hunt has just announced itself by name", "The tagged goods take 2 to 3 weeks to arrive, the slowest of the three clocks", "The channel handles one shipment, and a wasted load cannot be re-run inside the season"],
+            "consequence": "Clever, slow, and balanced on one question nobody can answer: who is really running whom through the contact. The tagged goods arrive at a hearth, or at a ROM counterintelligence desk with your contract attached.",
+            "costs": { "cbills": 15000, "days": 18, "resource": "the captured supply contact: a one-use strategic asset, spent on this hunt whatever happens", "risk": "if it is a plant, the blacklist clause has your name pre-typed and the employer's two prior burns as precedent" }
+          }
+        ]
+      },
+      {
+        "name": "One Source Short",
+        "context": "The evidence rests on a single source, the dust storm is {STORM_DAYS} days out and closing, and the strike package commits only once. Now the contract's hard numbers become a real decision.",
+        "options": [
+          {
+            "title": "Call the Strike on One Source",
+            "advantages": ["If it is right, the raids end this season and three systems' logistics get a break", "The employer has signaled it would accept one source at a reduced fee, 15 percent down", "No more collection risk, and the cover retires clean"],
+            "disadvantages": ["One source is exactly how the employer got burned twice, so expect the proposal read in that light", "If it is wrong: contract void, blacklist, damages, and the site relocates on the strike's own warning", "The 15 percent cut prices doubt, not effort, so the unit eats the difference either way"],
+            "consequence": "The bet is the unit's name against a single stream of evidence. Right, and the fee cut is a rounding error on a finished contract. Wrong, and the blacklist does what blacklists do.",
+            "costs": { "cbills": null, "days": 0, "resource": "fee: 15 percent cut accepted for committing on one source", "risk": "the whole downside, void and damages and blacklist, riding on one go or no-go signature: yours" }
+          },
+          {
+            "title": "Hold for the Second Source",
+            "advantages": ["Meets the contract's standard as written: full fee, no cut, no argument", "Every extra day of bore-well data sharpens the picture anyway", "The strike package commits against certainty, the way its owners prefer"],
+            "disadvantages": ["8 to 14 more days of collection at current rates, against a storm that will not wait", "The raids continue: one, maybe two more strikes land while you verify", "If the season closes first, the evidence you held loses value over the winter as the site relocates on its normal cycle"],
+            "consequence": "Professional patience, priced by the weather. The full fee waits at the end of a window that is closing from both sides, and how long that window is, is only an estimate.",
+            "costs": { "cbills": 0, "days": 11, "resource": "storm margin: 8-14 days of a closing season spent on verification", "risk": "the season closes at one source, and the strongest hunt of the war files as an unconfirmed assessment and a 40 percent invoice" }
+          },
+          {
+            "title": "Spend the Human Source",
+            "advantages": ["The employer holds a captured Blakist supply clerk whose debrief can back up a candidate within 48 hours", "The fastest path to a second source: the fee standard met this week", "The clerk's information also fills out the pattern-of-life package"],
+            "disadvantages": ["Using the debrief openly tells the Word their clerk talked, so the contact network that produced your candidate list dies within a month", "The employer's other hunts on other worlds draw from that same network, so your confirmation is billed to their whole collection effort", "The clerk's reliability is interrogation-grade: it backs up a candidate, it does not prove one, and everyone signing knows it"],
+            "consequence": "You buy the second source out of the employer's own seed corn. The fee pays this season, and the network that would have found the next five hearths, on the next five worlds, stops existing.",
+            "costs": { "cbills": 0, "days": 2, "resource": "the employer's contact network: spent for one corroboration, with every dependent hunt repriced", "risk": "political: the employer's intelligence directorate notes which contractor spent its network, and directorates outlast contracts" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The site's counter-recon detects collection: a team spotted, a sensor found, or bore-well data tampering noticed." },
+        { "t": "T+2:00", "event": "A security patrol heads toward the detection point, an estimated one 'Mech lance plus mounted infantry, investigating rather than pursuing." },
+        { "t": "T+12:00", "event": "Exposed elements are either clear of the Maze or in a fight the contract forbids, because the survey cover cannot explain a firefight." },
+        { "t": "T+24:00", "event": "If the suspicion holds, the site starts preparing to relocate: heat bloom, convoy forming up, the one stretch when the site is loud." },
+        { "t": "T+72:00", "event": "Relocation complete. The candidate list is dead, the season is shorter, and the hunt starts over from the retainer." }
+      ],
+      "hardDeadline": "Confirm the site before the dust season closes, in {STORM_DAYS} days, or it winters out of reach and the spring raids are as good as already paid for. And from any tripwire event, 72 hours is the only deadline left: act inside it with whatever is ready, or start over from the retainer, with less trust than before."
+    },
+    "opforSketch": {
+      "composition": "Hidden site garrison: estimated 200-280 personnel; security element of one BattleMech lance and one vehicle lance (Veteran); counter-reconnaissance teams of 4-6 (Elite) on light vehicles with chalk-country fieldcraft. Generator should keep the garrison invisible until provoked and overwhelming only in the displacement window.",
+      "behavior": "Detection-averse: sorties investigate and turn back at 20 kilometers, every time — pursuit reveals more than it catches, and they know it. The site's weapon is displacement, not battle. Counter-recon prefers capturing collection equipment intact: what you were looking at tells them what you know."
+    },
+    "forks": [
+      { "name": "OPERATION SPENT MATCH", "family": "OBJECTIVE_RAID", "outcomeGate": "FULL_SUCCESS", "trigger": "Dual-source confirmation delivered inside the season; strike package commits.", "consequence": "The unit guides the strike in and takes the cutoff positions on the displacement routes its own analysis mapped — the contract's quiet final clause, and the first time in the hunt anyone wants you to be loud.", "threat": "HIGH" },
+      { "name": "OPERATION LONG SCENT", "family": "PIRATE_HUNTING", "outcomeGate": "FAILURE", "trigger": "The site displaces unconfirmed, or the season closes at one source.", "consequence": "The hunt resumes after the storms on a fresh candidate list, a thinner fee, and an employer whose patience is now itself single-source. The raids resume first.", "threat": "MEDIUM" },
+      { "name": "OPERATION PULLED STAKE", "family": "EXTRACTION_RAID", "outcomeGate": "COMPROMISED", "trigger": "The survey cover is blown — registry flag, captured sensor, or the dangle scenario confirmed.", "consequence": "The site's counter-intelligence sweep rolls up everything the cover touched: three scattered sensor teams, the cover company's local staff, and a registry clerk who asked the wrong favor. Seventy-two hours to extract them all from a continent that has started looking back.", "threat": "HIGH" }
+    ],
+    "storyElementSeed": "A survey tech logs bore seven's evening draw — the same figure as yesterday, the same as the day before. Then she stops, thumbs back nine pages, and reads the night flows again with a torch held in her teeth, and does not put the logbook down for an hour.",
+    "voiceSlots": ["intelligence", "logistics", "command"],
+    "registerVariants": {
+      "is-davion": {
+        "situation.framing": "The proof standard is the mission. Two sources or it did not happen, not because the first source is wrong, but because the strike commits once and the officer authorizing it has been burned twice. Treat certainty as the deliverable and the clock as the enemy's weapon, and write every assessment as if a board of inquiry reads it next week. It might."
+      }
+    },
+    "specifics": {
+      "STORM_DAYS": { "min": 24, "max": 38, "unit": "days until the dust season closes collection" },
+      "RAID_INTERVAL": { "min": 9, "max": 12, "unit": "days between raids" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Lace the Supply Channel", "requires": "depot-access", "whenLacking": "lock", "lackingText": "Without depot access, you have no tagging materials, so the option is locked. The employer can ship them in 16 days, a real offer, but accepting it spends the storm margin." }
+    ],
+    "skeleton": "hunters must reduce five candidate sites to one proven base with collection quiet enough not to trip a 72-hour relocation reflex, under a season that will blind every sensor and a fee that pays only for certainty",
+    "inspiration": "the coalition Scud hunt, western desert, 1991"
+  },
+  {
+    "seedId": "JIH-09",
+    "family": "OBJECTIVE_RAID",
+    "title": "OPERATION FIRST CIRCUIT",
+    "eraFit": ["jihad"],
+    "factionFit": ["comstar", "merc"],
+    "register": "comstar",
+    "threatRange": ["HIGH", "EXTREME"],
+    "situation": "The {WORLD} hyperpulse generator has been dark to our side since the schism, and useful to the enemy every day since: blocked to coalition traffic, transmitting only what the Protectorate allows. The sector offensive needs the relay working by day {OFFENSIVE_DAYS}, or three task forces launch coordinating by courier boat, which means on faith, with a six-day message lag. The Precentor Martial's staff has run the numbers on offensives coordinated by faith. Those numbers are why you are reading this.\n\nThe station is the Caldera Bowl compound: a transmission complex on the floor of an extinct volcano, reached by one road through the Pilgrim's Notch, with rim positions overlooking every approach for 9 kilometers. A derelict observatory funicular climbs the outer slope to a service gate on the rim: rated for 2.5 tons, 11 minutes per trip up, 4 troops per car. On this ground you can have weight or surprise, but not both, and each part of the plan has to pick one.\n\nBe clear on what the objective is and is not. There is no demolition charge on the core, because ROM does not trust fuses near something it values this much. The order to destroy it is a procedure instead: a 14-minute manual sequence run in the core chamber, which any of the 4 authorized duty officers can perform. From the moment any alarm sounds, each of those four officers is a walking 14-minute countdown. Keep all four out of the chamber and the core survives, by definition.\n\nAnd the core is the easier half of the job. The station staff, 31 adepts and acolytes of the old Order forced into Blakist service in {YEAR}, are the only people within 40 light-years who can restart a core, and our own two qualified techs are 11 weeks' travel away. The staff's families, 74 people, live in Residence Row in the district town, 7 kilometers down the valley, under a Protectorate political office that keeps attendance records. That threat to their families is the station's real hold on them, and it has to be broken in the same hour you take the station. The Row's duty signaler reports in every hour, and a missed report alerts the station within 60 minutes. Last, the truth the operational annex states once, plainly: a restart crew working under coercion can sabotage a core in ways no instrument check will catch for six weeks. {NPC:employer-contact} personally trained two of the people on that transmission floor. Both sides of this fight came from the same Order. The prize is not the machine. The prize is 31 people choosing to run it.",
+    "objectives": {
+      "primary": "Take the station with the core intact, letting no authorized officer finish the destruction sequence, and secure Residence Row within the same alarm cycle.",
+      "secondary": "Win the staff's freely given cooperation: they restart the core themselves and transmit verified coalition traffic by day {OFFENSIVE_DAYS}.",
+      "bonus": "Capture the interdiction-era traffic logs intact, because they record which stations passed Blakist traffic willingly, an audit the Order owes itself."
+    },
+    "complications": [
+      {
+        "name": "The Procedure",
+        "text": "Four officers, one sequence, fourteen minutes. There is nothing to defuse and nothing to cut, only people to keep out of a room.",
+        "mechanicalEffect": "From any alarm, track all 4 authorized officers. Any officer who gets 14 minutes alone in the core chamber ends the primary objective for good. Seizing the chamber, or accounting for all 4 officers, ends the threat."
+      },
+      {
+        "name": "The Rim Sees Everything",
+        "text": "A vehicle approach through the Notch is spotted 9 kilometers out, giving at least 25 minutes of warning. The funicular carries only 4 troops per 11-minute cycle. This ground offers stealth or weight, never both.",
+        "mechanicalEffect": "A Notch approach gives the defense 25 minutes to prepare. Funicular infiltration moves 4 troops per 11 minutes with a 2.5-ton lift limit: no battle armor over that weight, and no support weapons heavier than man-portable."
+      },
+      {
+        "name": "Residence Row",
+        "text": "The Row's political office reports to the station every hour. Both objectives share one alarm link, and that link is one clerk with a schedule.",
+        "mechanicalEffect": "A missed hourly report from the Row alerts the station within 60 minutes, and a station alarm triggers the Row's relocation protocol within 40. You must start both objectives inside the same reporting cycle, or each one warns the other."
+      },
+      {
+        "name": "The Staff Are Kin",
+        "text": "The people at the consoles are the Order's own, whatever insignia the occupation sewed on them. In the only judgment that decides the secondary objective, theirs, every casualty among them turns a rescue into a raid.",
+        "mechanicalEffect": "Staff casualties from your fire stack up as penalties on the cooperation outcome at decision point two. Zero staff casualties is a stated planning requirement, not a hope."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Order of Operations",
+        "context": "Two objectives, 7 kilometers apart, sharing one alarm link. The order you choose decides which clock starts first, and every clock in this valley is short.",
+        "options": [
+          {
+            "title": "Both at Once",
+            "advantages": ["No warning travels either way, because both alarm paths are cut in the same minutes", "The Row's families and the station's officers are each secured before either knows about the other", "The cleanest version of the night, if it works"],
+            "disadvantages": ["Both teams are understrength: the funicular feeds the station team only 4 troops per 11 minutes while the valley team works the Row", "The window to sync the two attacks is 8 minutes wide and depends on a derelict funicular motor", "No reserve: whoever is already there has to handle every surprise"],
+            "consequence": "Either everything happens at once or nothing does. What makes the plan brilliant is exactly what makes it fragile, and all of it rides on a cable car built for astronomers.",
+            "costs": { "cbills": null, "days": 0, "resource": "force split: neither team above 60 percent of the strength its task needs", "risk": "the funicular motor: one mechanical failure mid-cycle strands half the station team on a cliff face at H-hour" }
+          },
+          {
+            "title": "Residence Row First",
+            "advantages": ["The families are physically safe before any station alarm can happen", "The valley team works at full strength against the lighter objective", "The hold over the staff breaks first: whatever happens next, the political office has lost its leverage"],
+            "disadvantages": ["The Row's missed hourly report alerts the station within 60 minutes, so the infiltration team must already be through the rim gate when the signal stops", "Sixty minutes sounds like a lot until you measure it against 4 officers and 14 minutes", "If the station alarm beats the infiltration, the raid becomes an assault on a warned rim"],
+            "consequence": "You solve the hostage problem first and make the station problem harder by exactly one missed phone call. The infiltration team's timetable pays for the difference.",
+            "costs": { "cbills": null, "days": null, "resource": "the 60-minute report window: the station assault's entire surprise budget, spent in advance", "risk": "a 14-minute procedure fits inside a 60-minute warning four times over, so the only margin is officer confusion, not the clock" }
+          },
+          {
+            "title": "Station First, Row by Speed",
+            "advantages": ["Full strength against the harder objective: you can seal the core chamber before any officer reaches it", "You can keep the station's fall off the air for a useful stretch, so the Row learns late", "The funicular infiltration gets every capable specialist instead of half"],
+            "disadvantages": ["On a station alarm, the political office's standing order is relocation: the families load onto trucks for the district fort within 40 minutes", "The race down-valley is run with whatever the station assault has left", "The 31 will be watching the valley road, not the consoles, so their cooperation waits on news of the Row, and that news is a truck convoy"],
+            "consequence": "You secure the machine, but the people who must run it stand at the windows. Whether the raid won anything is decided 7 kilometers away, by a road race the plan scheduled last.",
+            "costs": { "cbills": null, "days": null, "resource": "the relocation race: 40 minutes against trucks, run by whatever the assault has left", "risk": "the families reach the district fort, so the hold over the staff survives the raid intact, now held by people who know exactly what it is worth" }
+          }
+        ]
+      },
+      {
+        "name": "What the Staff Are Owed",
+        "context": "The core is taken; the consoles wait. Thirty-one people who have spent years under one set of masters now weigh the new set. The honest restart is theirs to give or withhold.",
+        "options": [
+          {
+            "title": "Ask, Face to Face",
+            "advantages": ["{NPC:employer-contact} goes in with the first element, unarmored, to speak Order to Order", "If they believe it, cooperation comes at once and complete, the strongest restart on the fastest clock", "The gesture itself is proof: the coalition sent someone who knows their names, not a requisition form"],
+            "disadvantages": ["The one person the restart depends on most is risked in the breach, first", "Belief is not a plan: years under ROM teach people to read sincerity as a trick", "If they refuse, the refusal is public and personal, and every later approach starts from there"],
+            "consequence": "The Order asks its own people to come home, in person, at the moment of greatest fear. Everything after this, the restart, the offensive, the audit, flows from what those 31 people decide in that room about one familiar face.",
+            "costs": { "cbills": 0, "days": 0, "resource": "{NPC:employer-contact} committed to the assault echelon, the mission's irreplaceable asset placed at its point of highest risk", "risk": "a stray round or a ROM holdout in the first ten minutes turns the appeal into a martyrdom and the restart into a negotiation with the grieving" }
+          },
+          {
+            "title": "Terms in Writing",
+            "advantages": ["Evacuation for all 31 plus the 74, stipends, resettlement, and the employer's seal on every page", "Cooperation becomes a contract: durable, auditable, and safe from second thoughts on both sides", "The staff has families to think of, and the terms put those families first, which the staff will notice"],
+            "disadvantages": ["380,000 C-bills plus lift commitments, against a treasury that also has an offensive to fund", "Negotiation takes days the offensive clock will not spare", "The staff knows exactly the difference between being valued and being priced, and the paper shows which this is"],
+            "consequence": "Cooperation bought honestly is still bought. The relay restarts on schedule or close to it, run by professionals fulfilling terms, and the loyalty is exactly as good as professional, which the annex says is good enough. Probably.",
+            "costs": { "cbills": 380000, "days": 3, "resource": "lift commitment: 105 evacuees on coalition transport inside the offensive's loading schedule", "risk": "the terms leak to ROM stay-behinds in the district, and 105 named people become targets in transit, under your escort" }
+          },
+          {
+            "title": "Verification Instead of Trust",
+            "advantages": ["Restart under full instrument audit, with the two distant techs reviewing readings by relay at each stage", "No reliance on goodwill, gratitude, or anyone's read of anyone's heart", "The procedure holds up to every staff section that has never met an adept"],
+            "disadvantages": ["Nine days instead of two, against an offensive clock of {OFFENSIVE_DAYS} days", "The staff reads exactly what the instruments mean: they are suspects with consoles", "Audited people align cores exactly as well as the audit can detect, which is the original problem again with better paperwork"],
+            "consequence": "Trust gives way to instrument readings, and the readings are honest about everything except intention. The relay comes up slowly and certified, and the one question the audit cannot answer rides every transmission of the offensive.",
+            "costs": { "cbills": 25000, "days": 9, "resource": "offensive margin: 9 of {OFFENSIVE_DAYS} days spent on staged verification", "risk": "the six-week failure mode: a sabotage no instrument catches, surfacing mid-offensive with three task forces relying on its traffic" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Station alarm, from any source: a sentry contact, a funicular gate breach, or the Row's missed report arriving on its own path." },
+        { "t": "T+1:00", "event": "Duty board check: 2 authorized officers on the transmission floor, 1 in quarters, 1 elsewhere. Security teams move to seal the core chamber approaches, racing yours with different maps." },
+        { "t": "T+14:00", "event": "Earliest the destruction sequence can finish, if any officer reached the chamber at the alarm. The primary objective now comes down to which doors held." },
+        { "t": "T+25:00", "event": "Rim positions fully manned and the Notch road closed. Whatever has not entered the caldera is not getting in." },
+        { "t": "T+60:00", "event": "Residence Row's reporting cycle runs out: whichever objective you did not start is now warned, and its protocol, destruction or relocation, is running." }
+      ],
+      "hardDeadline": "The offensive's coordination traffic flows by day {OFFENSIVE_DAYS}, or three task forces launch on courier lag. Behind that public clock sits the private one: from any alarm, 14 minutes alone in the core chamber and the relay becomes a monument. There is no second relay in this sector. There is no second staff anywhere."
+    },
+    "opforSketch": {
+      "composition": "Station security: one Word of Blake Level II of mixed BattleMechs and battle armor (Veteran) plus 2 infantry platoons on rim positions. Residence Row: political office detachment — 1 infantry platoon, 2 light vehicles (Regular). The 4 authorized officers are objectives with legs, not primarily combatants. Generator should weight the fight toward infantry actions in compound interiors; the Level II is the outer shell.",
+      "behavior": "Station doctrine is delay toward the core chamber: security fights to buy the procedure its 14 minutes, not to destroy the raiders. Residence Row doctrine is relocation, not defense. ROM officers will use the staff as passive cover — knowing exactly what staff casualties cost you — and the generator should make that arithmetic visible at the table."
+    },
+    "forks": [
+      { "name": "OPERATION CLEAR SIGNAL", "family": "GARRISON_DUTY", "outcomeGate": "FULL_SUCCESS", "trigger": "Core intact, staff cooperating, relay transmitting coalition traffic.", "consequence": "The station's first coalition transmission is also its first confession of capture: the counter-raid tasking writes itself at the district fort within hours. The unit that took the relay holds it — through the offensive it just made possible.", "threat": "HIGH" },
+      { "name": "OPERATION KEPT WORD", "family": "EXTRACTION_RAID", "outcomeGate": "FAILURE", "trigger": "The core is burned out, or the staff's cooperation is refused beyond recovery.", "consequence": "The relay is a monument and the 31 plus 74 are burned assets the moment the raid touched the valley — ROM's after-action arithmetic is thorough. The evacuation the terms would have promised must happen anyway, unpaid, pursued, and owed.", "threat": "MEDIUM" },
+      { "name": "OPERATION SECOND VOICE", "family": "RECON_RAID", "outcomeGate": "COMPROMISED", "trigger": "A subtle misalignment surfaces when the relay fails mid-offensive — the six-week failure mode, arrived early.", "consequence": "Three task forces lose coordination in mid-stride. The nearest alternative relay is one jump out, status unknown, garrison unknown: a reconnaissance to determine what it would cost to ask the same question again, somewhere worse.", "threat": "HIGH" }
+    ],
+    "storyElementSeed": "In a warehouse far from the valley, the infiltration team rehearses the core-chamber corridor with chalk lines on concrete. Fourteen minutes is paced out at a walk, then at a run, then carrying a stretcher. The last rehearsal nobody speaks at all, and it comes in at eleven.",
+    "voiceSlots": ["intelligence", "engineering", "command"],
+    "registerVariants": {
+      "merc": {
+        "situation.framing": "The employer's brief calls the station staff 'human terrain,' which is how institutions say 'people we need who do not work for us.' The bonus structure is more honest: the restart clause pays triple the seizure clause, because the employer knows the machine is the cheap half. Note clause 12: staff casualties void the restart bonus entirely. Someone upstairs did that math in lives first and C-bills second, and for once the contract is the better moral guide."
+      }
+    },
+    "specifics": {
+      "OFFENSIVE_DAYS": { "min": 14, "max": 21, "unit": "days until the offensive requires the relay" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Terms in Writing", "requires": "treasury-min:400000", "whenLacking": "reprice", "lackingText": "Below 400,000 C-bills, the written terms become just the employer's promise to pay later. The staff has spent nine years learning what institutional promises are worth, so the cooperation outcome drops, and the annex will not estimate by how much." }
+    ],
+    "skeleton": "raiders must capture a facility whose worth exists only if its operators choose to run it, denying four officers a fourteen-minute destruction procedure while simultaneously freeing the hostage families that guarantee the operators' obedience",
+    "inspiration": "T-Force seizures of intact technical plant and personnel ahead of scorched-earth orders, Germany 1945"
+  },
+  {
+    "seedId": "JIH-10",
+    "family": "RELIEF_DUTY",
+    "title": "OPERATION LAST TRAM",
+    "eraFit": ["jihad"],
+    "factionFit": ["merc", "is-steiner"],
+    "register": "merc",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "situation": "The strike happened in {YEAR}; the reckoning is now. Someone set off a low-yield warhead over {DISTRICT}'s fusion plant district on {WORLD}. The reactor fires did the rest, throwing up a fallout plume that turned the city's second core into ground you measure in radiation dose, not distance. The coalition radiation survey, revision 3, gives the remaining people {EVAC_DAYS} days before their total exposure crosses the mass-casualty line. The model is four days old, and revision 2 gave six more days than this one, so plan to the worse number, because the model only ever revises one way. The zone holds {ZONE_POP} people by the last pre-strike count, which is the only count there is.\n\nYou are contracted to run three decontamination-and-registration portals, NORTH, RAIL, and SOUTH, which can certify at most 6,000 evacuees per day when everything works. The way out is one rail line over the Causeway Viaduct: 11 kilometers raised across salt marsh, damaged by the blast, limited to one 14-car train per 70-minute cycle. Engineering's plan to strengthen it takes 30 days, which the window does not allow. Road convoys along the marsh service track add only 400 to 700 a day, at brutal cost to the vehicles. Set {ZONE_POP} people against 6,000 a day and it barely fits inside {EVAC_DAYS} days. There is almost no slack, and no portal-hour lost can be made up anywhere.\n\nThe contract is standard coalition boilerplate from the post-atrocity period, and it is harsh: you are paid per evacuee certified through decontamination, you are liable for any contamination in the clean camps, and clause 22 extends that liability to 'persons certified in error.' Read the threat assessment and you will see why clause 22 exists. A Word of Blake cadre of 30 to 60 people, with a ROM-trained core, has been in the city since before the strike. The assessment's careful phrasing, 'elements displaced into the zone in the 72 hours preceding the strike,' means they knew it was coming. They need to get out, and they cannot pass biometric screening. Their best way out is a broken portal and a surge of panicked people through the wire. Their second-best is a stream of forged certifications running from inside your own process. Expect both to be tried, in that order or together.\n\nLast, the people staying: an estimated {REFUSERS} residents are refusing to leave, pensioners, plant-watch volunteers, and people guarding property that is all they have left. They are owed a policy too, and whatever policy you choose is also the cadre's best long-term hiding place. The Viaduct's three nearest piers are cracking steadily and are monitored hourly. The load limit may drop. It will not rise.",
+    "objectives": {
+      "primary": "Certify and lift the zone's willing population before day {EVAC_DAYS}, reaching at least 92 percent of those registered.",
+      "secondary": "Zero unscreened crossings: the cadre leaves in custody or not at all.",
+      "bonus": "Register, supply, and map the people staying behind, so the follow-on cordon inherits a proper list instead of a rumor."
+    },
+    "complications": [
+      {
+        "name": "The Viaduct Counts Down",
+        "text": "Eleven kilometers of cracked concrete carries the whole plan. The pier monitoring is honest, and the news is never good twice in a row.",
+        "mechanicalEffect": "Weekly pier-integrity rolls. A degraded result drops the limit to 10 cars per train, which reprices throughput at once. Any overload or panic-boarding event risks closing the line entirely."
+      },
+      {
+        "name": "Certified in Error",
+        "text": "Under clause 22, every cadre member who walks through your portal with clean paper is a liability with your unit's signature on it: found later, billed after the fact, and never forgotten.",
+        "mechanicalEffect": "The generator logs each cadre-passage event in secret. Confirmed passages surface during the fork phase, bringing contract penalties plus the COMPROMISED fork's conditions."
+      },
+      {
+        "name": "The People Staying",
+        "text": "Use force on the people staying and you empty the queues of the people going, because the districts watch how you knock on doors. Trust quietly multiplies throughput, and no budget accounts for it.",
+        "mechanicalEffect": "Door-to-door operations cost 1 platoon per district-day and roll against a trust track. Lost trust thins the voluntary queues at all portals by 10-20 percent the following week."
+      },
+      {
+        "name": "The Model Moves",
+        "text": "Revisions arrive every 4 to 6 days, and revision 4 will not be kinder than revision 3. Plans built on the hopeful number fail in public.",
+        "mechanicalEffect": "On each model revision event, the {EVAC_DAYS} deadline may shorten by 1-3 days. Schedules with no slack absorb the change as triage, and the GM applies it to whichever decision the table most recently priced tight."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Throughput Against Integrity",
+        "context": "By week two the portals are behind schedule, as they always are, and each of the three ways to catch up means giving up something the contract says is not for sale.",
+        "options": [
+          {
+            "title": "Cut Screening Depth",
+            "advantages": ["Dropping secondary biometrics to spot-checks raises throughput 40 percent, and the math closes with 2 days to spare", "Queue wait times halve, giving the cadre fewer crowd surges to exploit", "The medical line gains capacity it badly needs"],
+            "disadvantages": ["The cadre's chance of a clean walk rises toward certain, which is clause 22 in slow motion", "Forged certifications that full screening would catch now pass at spot-check rates", "The decision is on record: when passages surface later, 'the unit chose to cut screening' is the first line of the finding"],
+            "consequence": "You meet the deadline and quietly open the wire, by your own decision. Everyone certified gets out, but exactly who got out among them becomes a question for the camps, the inquiry, and the years afterward.",
+            "costs": { "cbills": 0, "days": -4, "resource": "screening integrity: cadre-passage odds rise to near-certain, and clause 22 exposure builds each day", "risk": "liability after the fact: every confirmed passage is billed against the unit once the contract closes, when the evidence cannot be argued" }
+          },
+          {
+            "title": "Hold Full Screening",
+            "advantages": ["The wire stays clean: you meet the secondary objective by procedure, not luck", "Clause 22 exposure stays at the level the contract expected", "Every certification you issue survives every later audit"],
+            "disadvantages": ["You miss the window by a projected 4 to 6 days at current rates", "The extra exposure over those days means an estimated 200 to 400 casualties, stated plainly in the model annex and nowhere else", "The employer's reply to your notice arrives after the decision mattered, which is exactly what the brief-and-proceed clause is for"],
+            "consequence": "Integrity held, at the price the model names. The unit does the defensible thing and the dose curve does what dose curves do, and both facts go in the same report.",
+            "costs": { "cbills": null, "days": 5, "resource": "the dose model's margin: 4-6 days past the window, an estimated 200-400 extra casualties carried on the operation's record", "risk": "the model revises downward mid-decision and the miss grows after the choice is already made" }
+          },
+          {
+            "title": "Fourth Portal, Deputized Staff",
+            "advantages": ["A tram-depot portal staffed by deputized residents under your NCOs adds 25 percent throughput", "Local knowledge reads faces that paperwork cannot: the deputies have caught both false identities so far", "The districts see their own people running their own exit, and the trust track improves"],
+            "disadvantages": ["The cadre may already have deputies of its own, and vetting locals with the records this city has left is barely vetting at all", "Favoritism in the line at a neighbor-run portal is certain, visible, and a spark for a riot", "Your NCOs stretch across four sites, thinning supervision exactly where the new risk is highest"],
+            "consequence": "You recruit the city into its own evacuation, with everything that buys and everything it costs. The fourth portal is the fastest and the least under your control, in equal measure.",
+            "costs": { "cbills": 22000, "days": -3, "resource": "NCO supervision stretched across four sites, with deputy vetting admittedly minimal", "risk": "a cadre-owned deputy is a forged-certification stream with a coalition stamp, the cadre's second-best exit, staffed by your own signature" }
+          }
+        ]
+      },
+      {
+        "name": "The Last Districts",
+        "context": "Three days before the window closes, two districts and the people staying are still here. How you spend the final days is what this operation will be remembered for, and that gets decided now.",
+        "options": [
+          {
+            "title": "Compulsory Clearance",
+            "advantages": ["The window is met to the letter: nobody's grandmother is left to the dose curve by her own bad math", "The medical annex backs it fully, because the model does not care about consent", "The follow-on cordon inherits an empty city, the cleanest possible handover"],
+            "disadvantages": ["Troops carrying pensioners out of apartments, filmed from every window that still has glass, and that imagery follows the unit into every future contract talk", "Resistance eats the final days' escort capacity: each forced district costs throughput the willing queues needed", "The clause covering 'involuntary relocation outcomes' is vague, and vagueness in a liability contract always resolves against the signer"],
+            "consequence": "Everyone leaves, which was the mission. How they leave is what gets remembered, which is the cost. The dose curve is beaten by force, with the unit as the force.",
+            "costs": { "cbills": null, "days": null, "resource": "final-days throughput: 30-40 percent of escort capacity pulled off certification to force people out", "risk": "one violent incident in a stairwell, filmed, becomes the operation's public name" }
+          },
+          {
+            "title": "Final-Notice Protocol",
+            "advantages": ["A published last tram, a 6-hour hold at the platform, and departure on schedule: the contract's letter met exactly", "No images of forced removals, and the trust track holds for the willing queues' final surge", "Whoever stays, stays by documented choice, so the legal position is clean"],
+            "disadvantages": ["The record is also {REFUSERS} people, and it will be read aloud someday with the casualty model next to it", "The cadre's patient remainder simply waits among the people staying for the cordon to lose interest", "The 6-hour hold is the operation's last big crowd, and the cadre's final and best-rehearsed window"],
+            "consequence": "The last tram leaves full, on time, with empty seats held to the final minute. What stays behind stays by choice, and the operation's conscience is filed away as paperwork.",
+            "costs": { "cbills": 0, "days": 0, "resource": null, "risk": "the 6-hour platform hold gathers the largest crowd of the operation at its most weakly screened moment" }
+          },
+          {
+            "title": "Stay-Behind Compact",
+            "advantages": ["Registered residents, supply caches, marked shelters, and 72 hours of radiation-safety training: the bonus objective achieved as policy", "The people staying become wardens of the empty districts instead of obstacles in them", "The follow-on cordon inherits names, addresses, and a working relationship"],
+            "disadvantages": ["The compact makes official the very thing the evacuation exists to prevent, with your stamp on the ration cards", "A recognized stay-behind community is the cadre's best long-term shelter, so the secondary and bonus objectives collide here, in writing", "The medical annex formally objects, and that objection stays in the contract file forever"],
+            "consequence": "You buy order inside the zone by admitting the zone is still inhabited. It is humane and organized, and the cleanest gift the cadre's patient men will ever be handed.",
+            "costs": { "cbills": 17000, "days": 2, "resource": "72 hours of training and cache logistics in the final week, taken from the lift schedule's margin", "risk": "the compact's registry becomes the cadre's cover documents, so your bonus objective doubles as their false identities" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Portal attack alarm at the RAIL portal, matching the pattern the assessment predicted." },
+        { "t": "T+1:00", "event": "The crowd compresses at the wire: the barrier line takes casualties from crowd pressure before any order is given." },
+        { "t": "T+4:00", "event": "The clean lane holds or it is breached: 200-plus unscreened into the marsh approaches is the cadre's big move, and the marsh has no second wire." },
+        { "t": "T+20:00", "event": "The portal reopens at a reduced rate, or the day's roughly 2,000 certifications are gone from a plan that had no spare 2,000." },
+        { "t": "T+70:00", "event": "The next train. The Viaduct does not wait, and empty seats on a 70-minute cycle are the one truly unforgivable waste." }
+      ],
+      "hardDeadline": "On day {EVAC_DAYS} the dose model crosses its line, and the contract's window closes with it. Work backward from there: any portal dark more than 18 hours, or the Viaduct at 10 cars for more than a week, and no later effort makes up the difference. The model does not negotiate, and neither do the piers."
+    },
+    "opforSketch": {
+      "composition": "Word of Blake cadre: 30-60 effectives — ROM-trained core of 8-12 (Elite), remainder Regular — with smallarms, breaching charges, 2-3 civilian vehicles, and possibly one cached battle armor suit (UNCONFIRMED — basis: pre-strike power-cell purchases traced to a zone address). Generator should produce infantry-scale incidents against process infrastructure, never a stand-up fight.",
+      "behavior": "The cadre fights the process, not the unit: portal attacks timed to peak queues, forged-certification probes, rumor seeding among refusers and deputies. It needs chaos at a portal exactly once, and it will spend weeks buying that minute. Direct engagement means it has already failed and is spending itself on spite — which the ROM core, notably, will not do while an exit remains."
+    },
+    "forks": [
+      { "name": "OPERATION VACANT WATCH", "family": "SECURITY_DUTY", "outcomeGate": "FULL_SUCCESS", "trigger": "Evacuation completed inside the window; no confirmed unscreened crossings.", "consequence": "The emptied city becomes the cordon, and the cadre still inside becomes the only population that moves after dark. The follow-on contract is the hunt through a city of empty windows — with the refuser ledger (if it exists) as the only map of who belongs.", "threat": "MEDIUM" },
+      { "name": "OPERATION THIN BLANKET", "family": "RIOT_DUTY", "outcomeGate": "FAILURE", "trigger": "The window is missed by 4+ days, or a breach event floods the camps with unscreened arrivals.", "consequence": "The camp system breaks where the city did not: over capacity, under screened, and angry in the specific way of people who did everything asked of them. The unit's contract extension is crowd lines at the ration points it built.", "threat": "HIGH" },
+      { "name": "OPERATION CENSUS GHOST", "family": "RECON_RAID", "outcomeGate": "COMPROMISED", "trigger": "Cadre passage through the portals is confirmed after certification.", "consequence": "Between 6 and 20 cadre hold clean camp registrations among 100,000 genuine victims. Finding them is collection work conducted in ration queues and tent rows — every method that might work is a method applied to people the operation just finished saving.", "threat": "HIGH" }
+    ],
+    "storyElementSeed": "At Portal 2 a decon line worker chalks a number on each suitcase and the same number on its owner's wrist. When the train doors close she counts the chalk stubs left in the box, writes the count in a school notebook, and starts sharpening for tomorrow.",
+    "voiceSlots": ["medical", "logistics", "command", "engineering"],
+    "registerVariants": {
+      "is-steiner": {
+        "situation.framing": "The Commonwealth measures relief in tonnage and timetables, because tonnage and timetables are the only mercy that scales; compassion without rolling stock behind it is just a speech. The three numbers that matter are the Viaduct cycle, the portal ceiling, and the dose model. Put your attention on whichever of the three is currently lying, and one of them always is."
+      }
+    },
+    "specifics": {
+      "EVAC_DAYS": { "min": 17, "max": 23, "unit": "days until the dose model crosses the mass-casualty line" },
+      "ZONE_POP": { "min": 95000, "max": 130000, "unit": "persons in the affected zone (pre-strike count)" },
+      "REFUSERS": { "min": 8000, "max": 12000, "unit": "residents refusing evacuation" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Fourth Portal, Deputized Staff", "requires": "depot-access", "whenLacking": "reprice", "lackingText": "With no depot access, the decontamination supplies for a fourth lane have to come from the existing three, so the net throughput gain drops from 25 percent to 10, while the vetting and favoritism risks stay at full price." }
+    ],
+    "skeleton": "evacuation force must move a poisoned city through fixed-throughput screening before a dose-model deadline while an embedded enemy needs the screening to fail in order to leave inside the crowd",
+    "inspiration": "the Pripyat evacuation, 1986, crossed with displaced-persons screening, 1945"
+  }
+]
+

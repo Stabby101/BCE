@@ -1,0 +1,1587 @@
+[
+  {
+    "seedId": "ARC-01",
+    "family": "OBJECTIVE_RAID",
+    "title": "OPERATION FIRST INSULT",
+    "eraFit": ["succession-wars"],
+    "factionFit": ["is-davion", "is-kurita"],
+    "register": "is-davion",
+    "skeleton": "raider must inflict precisely calibrated, attributable damage on a producing site - enough to demand an answer, too little to be an atrocity - while overkill is permanently available and self-defeating",
+    "inspiration": "the Doolittle Raid, 1942 (a strike whose strategic value was the message it sent, not the damage it did)",
+    "threatRange": ["LOW", "MEDIUM"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.3,
+    "localeFit": { "settlement": ["industrial"], "regionRole": ["border", "contested"], "terrain": ["industrial", "mountain"] },
+    "situation": "{WORLD}, {DISTRICT} border, {YEAR}. {EMPLOYER} has ordered one careful strike against {TARGET_FACTION}'s heavy foundry in the industrial belt. The goal is not to destroy the production line. It is to visibly cripple it, so the district's commander must strike back or lose face with his own superiors. This is the first move in a planned feud: a raid meant to be survived, traced to {EMPLOYER}, and resented. The foundry sits at the head of the rail cut, a 6-kilometer trench dug to carry ore from the open pits to the smelters. The cut is the terrain problem. It is 90 meters wide at the floor and walled by 40-meter rock faces on both sides. It is the only path a 'Mech can take to the foundry gantries without crossing the open pit lakes, so it is also where the defender expects you. {NPC:intel-source} reports the foundry keeps a security section: one reinforced 'Mech lance plus a tracked-armor platoon, Regular quality, with dug-in Goblin emplacements covering the trench floor. That report is 11 days old, so treat the numbers as a floor, not a ceiling. The pour schedule matters. At shift change, 0600 and 1800 local, the gantry cranes lift 60-ton crucibles of molten metal over the casting floor. If a crucible is hit during a firefight, it drops and guts the line for a year. That would turn a measured insult into a war crime {EMPLOYER} cannot be seen to commit. Your job is to break the rolling mill and the No. 2 furnace tap, both repairable in 90 to 120 days, then withdraw with the damage clearly the work of an outside lance. Leave the crucibles alone. The foundry is worth more standing, so the enemy has something to defend next time. In the cut, the rock walls blind magscan past 300 meters and trap engine heat. A 'Mech that has moved through leaves a warm heat trace on the trench floor for 4 to 6 minutes. The gunners can mistake that fading trace for a live target. About 800 foundry workers are on shift at any hour, housed in barracks 1.2 kilometers from the casting floor. They will not fight. They will photograph everything, and the images will reach the district commander's staff within a day. That is the point. This raid is meant to be seen.",
+    "objectives": {
+      "primary": "Disable the No. 2 furnace tap and the rolling mill drive train — damage rated at 90 days' minimum repair, both confirmed wrecked before withdrawal.",
+      "secondary": "Withdraw the full raiding force off-world with no unit captured and no machine left identifiable to {EMPLOYER}.",
+      "bonus": "Leave the casting floor and its loaded crucibles untouched. The strike then reads as professional restraint, not terror, and the district commander is more likely to answer it out of pride."
+    },
+    "complications": [
+      {
+        "name": "The Pour Schedule",
+        "text": "At 0600 and 1800 the gantry cranes lift loaded crucibles over the casting floor. A stray hit on a gantry during these windows drops 60 tons of molten metal across the shop, killing workers and gutting the line for a year. {EMPLOYER}'s feud needs a lamed foundry, not a slaughtered one.",
+        "mechanicalEffect": "If any weapons fire hits a gantry hex during a pour window, the bonus objective is voided and a permanent employer-standing penalty applies. The line is destroyed instead of disabled, and the reprisal fork escalates one threat tier."
+      },
+      {
+        "name": "Trench Heat Traces",
+        "text": "The rock walls of the cut trap engine heat. A 'Mech that moves through leaves a warm heat trace on the trench floor for 4 to 6 minutes after it has gone. The defender's gunners can mistake that fading trace for a live target, so the ground draws fire onto spots your machines have already left.",
+        "mechanicalEffect": "After any friendly 'Mech leaves a trench-floor hex, that hex reads as a thermal contact to the defender for the next 2 turns. The defender may make one indirect-fire attack per turn against such a hex."
+      },
+      {
+        "name": "Eight Hundred Witnesses",
+        "text": "Foundry workers will photograph the raid from the barracks blocks. That imagery is how the strike gets traced to {EMPLOYER}, which is the whole point. But a single civilian death in the frame turns a survivable insult into an atrocity, and the enemy answers an atrocity with a punitive war, not a measured reprisal.",
+        "mechanicalEffect": "Any collateral damage to the barracks blocks or worker casualties converts the FULL_SUCCESS and SUCCESS forks' typed follow-on to the COMPROMISED branch regardless of objective completion."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Reaching the Foundry",
+        "context": "The rail cut is the obvious road and the defender knows it. The pit-lake causeways are slower, wetter, and partially flooded, but they bypass the trench emplacements. How you arrive decides whether you fight the Goblins on their ground or your own.",
+        "options": [
+          {
+            "title": "Drive the Cut",
+            "advantages": ["Direct line to the gantries — fastest demolition setup", "Rock walls protect your flanks from the armor platoon's wider envelopment"],
+            "disadvantages": ["The Goblin emplacements have ranged the trench floor for years", "Thermal ghosts let the defender place fire where you have just been"],
+            "consequence": "You trade time for a head-on fight against prepared positions; demolition begins early but under direct fire from the trench guns.",
+            "costs": { "cbills": 0, "days": null, "resource": "ammunition: a head-on breach burns the SRM and short-range load you brought for the demolition fight", "risk": "The trench guns have pre-ranged the floor — the first two turns are fought inside their cone whether you like it or not" }
+          },
+          {
+            "title": "Cross the Pit-Lake Causeways",
+            "advantages": ["Bypasses the trench emplacements entirely", "Arrives on the foundry's flank, away from the prepared kill zone"],
+            "disadvantages": ["Flooded causeway sections limit 'Mechs to 50 tons and below at safe footing", "Slower approach concedes time the defender uses to reposition armor"],
+            "consequence": "You arrive unblooded but late, against a defender who has had time to wheel his armor onto the casting-floor approaches.",
+            "costs": { "cbills": 0, "days": null, "resource": "time: the causeway crossing adds two turns of movement before contact", "risk": "Weight ceiling forces your heaviest 'Mech to take the Cut alone or stay home" }
+          },
+          {
+            "title": "Demolition Charge the Trench Wall",
+            "advantages": ["A blown rock face creates a new entry the defender has not ranged", "Collapses one Goblin emplacement under rubble before the fight begins"],
+            "disadvantages": ["Charge placement requires a dismounted tech team and a 40-minute fuse window", "The blast announces the raid before the demolition objective is even started"],
+            "consequence": "You buy a fresh approach at the price of surprise; the defender's reaction clock starts at the wall blast, not at the foundry gate.",
+            "costs": { "cbills": 15000, "days": 3, "resource": "demolition stores: shaped charges and a dismounted tech team exposed for 40 minutes", "risk": "A premature detonation or a discovered tech team starts the reaction timeline early with your force still strung out on the approach" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Foundry security control logs an unidentified 'Mech contact at the Cut mouth or the causeway flank; site alarm sounds and the security lance starts engines." },
+        { "t": "T+4:00", "event": "Goblin emplacements go weapons-free on the trench floor; the tracked-armor platoon moves to the casting-floor approaches." },
+        { "t": "T+11:00", "event": "Demolition of the furnace tap and rolling mill must be underway by now to finish inside the window; foundry workers begin evacuating the barracks blocks toward the imagery you want them to take." },
+        { "t": "T+18:00", "event": "District QRF lance, scrambled from the district garrison 22 kilometers off, reaches the foundry perimeter road." },
+        { "t": "T+26:00", "event": "QRF and the recovered security lance can fight as a combined force; your withdrawal window closes against superior numbers." }
+      ],
+      "hardDeadline": "Both targets must be wrecked and the force moving to extraction by T+18:00. Miss it and the arriving QRF lance pins you against the foundry with the security section still fighting, and the raid fails because you are trapped, not because you did too little damage."
+    },
+    "opforSketch": {
+      "composition": "One reinforced security lance of medium 'Mechs (40-60 tons) at Regular quality, defending a fixed site, supported by a tracked-armor platoon of 4 to 6 vehicles (Vedette/Goblin behavior) and 2 dug-in Goblin emplacements covering the trench floor. The emplaced vehicles do not maneuver; the platoon does. Heavy reliance on prepared positions and pre-ranged fire.",
+      "behavior": "Site-defense doctrine: hold the trench guns as an anvil, maneuver the armor platoon to fix the raiders against the prepared kill zone, and protect the casting floor above all. The security lance fights conservatively to preserve the line; it breaks contact at 45 percent force damage and falls back to the gantry core rather than pursue."
+    },
+    "forks": [
+      {
+        "name": "OPERATION RETURNED FAVOR",
+        "outcomeGate": "SUCCESS",
+        "trigger": "Foundry lamed cleanly, force extracted, the strike attributed to {EMPLOYER} as intended.",
+        "consequence": "The district commander cannot let the insult stand. Within the season he stages a heavier reprisal against {EMPLOYER}'s own holdings — a stiffer raid your command must now garrison against, the feud's first answer.",
+        "threat": "MEDIUM",
+        "family": "GARRISON_DUTY"
+      },
+      {
+        "name": "OPERATION COLD FORGE",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Foundry lamed, force extracted clean, AND the casting floor left untouched — the restraint reads as professionalism.",
+        "consequence": "{EMPLOYER}'s intelligence staff exploits the clean attribution to bait the district commander into a poorly chosen counter-raid that exposes a forward depot — a follow-on objective raid against a target the enemy revealed in his anger.",
+        "threat": "MEDIUM",
+        "family": "OBJECTIVE_RAID"
+      },
+      {
+        "name": "OPERATION SPILLED CRUCIBLE",
+        "outcomeGate": "FAILURE",
+        "trigger": "Raid fails, a unit is captured, or the casting floor is destroyed and workers killed.",
+        "consequence": "The atrocity — real or pinned on you — gives the district commander moral cover for a punitive expedition. {EMPLOYER} pulls your command into a hasty defense of a settlement marked for reprisal, the feud now ugly and public.",
+        "threat": "HIGH",
+        "family": "RELIEF_DUTY"
+      }
+    ],
+    "storyElementSeed": "A demolition tech kneels at the furnace tap, charge timer in hand, watching the gantry crane swing a loaded crucible across the far end of the shop. She counts the seconds until the metal is clear before she arms the fuse, because the order was to cripple the line, not kill the workers.",
+    "voiceSlots": ["command", "engineering", "intelligence"],
+    "registerVariants": {
+      "is-kurita": {
+        "objectives.primary": "The damage itself is the message. Break the No. 2 tap and the rolling mill precisely, and spare the casting floor on purpose. {EMPLOYER} requires that the district commander read the restraint as clearly as the insult."
+      },
+      "merc": {
+        "objectives.primary": "Contract specifies disabling damage only — the auditors will assess repair time, and a destroyed line voids the restraint bonus in Section 9. Crucible damage triggers the atrocity-liability clause; read it before you commit a heavy 'Mech to the gantry approaches."
+      }
+    },
+    "specifics": {
+      "REPAIR_DAYS": { "min": 90, "max": 120, "unit": "days to repair the disabled line" },
+      "FOUNDRY_WORKERS_ON_SHIFT": { "min": 700, "max": 900, "unit": "civilian witnesses on shift" },
+      "GHOST_PERSIST_MINUTES": { "min": 4, "max": 6, "unit": "minutes a thermal ghost persists in the Cut" },
+      "QRF_DISTANCE_KM": { "min": 18, "max": 26, "unit": "kilometers to the district QRF garrison" }
+    },
+    "phases": [
+      {
+        "name": "INGRESS — THE CUT MOUTH",
+        "lead": "The raid lives or dies on how it reaches the gantries. The rail cut is the fast road and the expected one; the causeways are slow and wet. The force commits to an approach before the first emplacement opens fire.",
+        "dataBlock": {
+          "Cut dimensions": "90m wide at the floor, 40m rock walls, 6km from mouth to foundry gate",
+          "Causeway ceiling": "Flooded sections rated to 50 tons safe footing; heavier machines must take the Cut",
+          "Sensor floor": "Magscan blind under 300m in the trench; thermal returns bloom and persist 4-6 minutes",
+          "Pour windows": "0600 and 1800 local — loaded crucibles over the casting floor, no fire permitted near the gantries"
+        },
+        "routes": [
+          { "name": "RED — THE CUT FLOOR", "desc": "Direct down the trench to the foundry gate", "tradeoff": "Fastest to the gantries; fought inside the pre-ranged trench-gun cone from the first turn" },
+          { "name": "BLUE — PIT-LAKE CAUSEWAYS", "desc": "Flanking crossing over the flooded ore-pit causeways", "tradeoff": "Bypasses the emplacements but caps 'Mech weight at 50 tons and costs two turns of approach" }
+        ],
+        "protocol": "Attribution is the mission: the raiding force shows a clean false unit blazon and uses no employer call-signs on any net. Codeword DROP CLEAR, passed on the demolition channel, means the gantry pour window has closed and weapons are free near the casting floor; until DROP CLEAR no fire is authorized within 200m of a loaded gantry.",
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "Why a raid meant to be attributed is harder than one meant to vanish — the deliberate evidence trail you leave, and the single frame of a dead worker that would turn the whole message into a confession." }
+      },
+      {
+        "name": "GROUND — THE TAP AND THE MILL",
+        "lead": "Two targets, both repairable, both meant to read as the work of a professional outside lance. The demolition fight is short and loud; the discipline is in stopping there.",
+        "dataBlock": {
+          "Primary charges": "No. 2 furnace tap and the rolling-mill drive train — 90 to 120 day repair if cleanly broken",
+          "Forbidden targets": "Loaded crucibles, gantry cranes, barracks blocks — any hit voids restraint and escalates the answer",
+          "Demolition window": "Both targets wrecked and force moving by T+18:00 before the QRF closes",
+          "Thermal discipline": "Every vacated trench hex reads as a live contact for 2 turns — do not loiter where you have stood"
+        },
+        "sidebarKernel": { "voiceSlot": "engineering", "kernel": "The difference between disabling a furnace tap and destroying it: where the charge goes for a 90-day repair versus a year, and why the easier shot is the wrong one here." }
+      },
+      {
+        "name": "EXTRACTION — BEFORE THE QRF",
+        "lead": "The security lance falls back to the gantry core; the district QRF is 18 to 26 kilometers out. The force withdraws the way it can, not the way it came, and clears the system before attribution turns into pursuit.",
+        "dataBlock": {
+          "QRF arrival": "T+18:00 to the perimeter road; combined enemy force fightable at T+26:00",
+          "Withdrawal ceiling": "Causeway exit caps at 50 tons; the Cut exit risks the thermal-ghost gauntlet again",
+          "Off-world clock": "Force clear of the foundry by T+18:00 to make the DropShip lift window"
+        },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "Why you withdraw before the QRF arrives even with the fight going your way — the feud needs the enemy alive and angry, not destroyed and avenged." }
+      }
+    ]
+  },
+  {
+    "seedId": "ARC-02",
+    "family": "GARRISON_DUTY",
+    "title": "OPERATION ANSWERED HONOR",
+    "eraFit": ["late-succession-wars"],
+    "factionFit": ["is-kurita"],
+    "register": "is-kurita",
+    "skeleton": "defender must answer an enemy who arrives openly to collect an honor debt, choosing whether to win on the challenger's terms or favorable terrain while a self-imposed ban on its own heavy assets makes a dishonorable victory worse than defeat",
+    "inspiration": "the medieval trial by combat / judicial duel (a challenge that must be answered in form, where winning by the wrong means loses the cause)",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "MECH_ONLY",
+    "localeFit": { "settlement": ["frontier"], "regionRole": ["border"], "terrain": ["ice", "mountain"] },
+    "situation": "{WORLD}, {DISTRICT} border, {YEAR}. Three months ago a {TARGET_FACTION} raid burned the regimental colors of the unit your command now reinforces. The district has not forgiven it, and the enemy commander, {NPC:opfor-commander}, is not finished. {NPC:intel-source} judges that the same officer means to return openly and challenge the garrison to a stand-up 'Mech fight on the open steppe, not another raid. He is coming to collect an honor debt in full view. That report is 8 days old and rated reliable. The terrain problem is the steppe itself: 200 kilometers of frozen high grassland with one feature that matters, a 9-kilometer cliff line that splits it into an upper and a lower shelf. The only vehicle route between the shelves is the switchback cut, a road 14 meters wide that a single lance can hold against a regiment. Whoever holds the cut decides where the duel happens. {EMPLOYER}, the district warlord, has set the political terms plainly. This is a matter of face, fought 'Mech against 'Mech under the old conventions. A garrison that hides behind fortifications or fields tanks against a 'Mech challenge will be remembered as having shamed the district a second time. You command the steppe garrison: your lance, plus a depleted house company of 8 'Mechs at Regular quality, still recovering from the raid that cost them their colors, billeted at the upper-shelf fort. The fort's fixed defenses work, but the warlord has forbidden their use against an honor challenge. Your operations officer has asked twice and been refused twice. The steppe is open and flat, with clear-day observation out to 8 kilometers. But ground blizzards roll off the cliff 5 days in 7 and cut visibility below 600 meters with no warning. Few civilians live here: nomadic herders who move 40,000 head of cattle along the lower shelf and will report the enemy's approach in exchange for being left to graze. The enemy is coming to be answered. The one thing the brief cannot decide for you is whether you answer him on his terms or on yours.",
+    "objectives": {
+      "primary": "Defeat or repulse {NPC:opfor-commander}'s reprisal force, holding the steppe garrison area and the upper-shelf fort against capture.",
+      "secondary": "Conduct the engagement within the honor conventions the warlord has imposed — no fixed-defense fires, no non-'Mech combat units committed — so the district's face is restored, not further damaged.",
+      "bonus": "Defeat {NPC:opfor-commander} in a way that breaks his unit's will to return — a decisive result that ends the cycle rather than feeding it."
+    },
+    "complications": [
+      {
+        "name": "The Warlord's Constraint",
+        "text": "{EMPLOYER} has forbidden the use of the fort's fixed defenses and any non-'Mech combat unit against an honor challenge. The constraint is political, absolute, and twice-confirmed. Winning dishonorably loses the campaign even if it wins the battle.",
+        "mechanicalEffect": "If fixed-emplacement fire or any vehicle/aerospace unit engages the enemy 'Mech force, the secondary objective fails permanently and the district-standing reward is forfeit regardless of the battle's outcome."
+      },
+      {
+        "name": "Escarpment Ground Blizzards",
+        "text": "Blizzards roll off the escarpment 5 days in 7 and cut visibility to under 600 meters within minutes. The enemy may use one to mask his approach to the switchback cut, or it may strand his force on the open lower shelf at your mercy. The weather belongs to neither side.",
+        "mechanicalEffect": "Roll 1d6 at the start of each engagement: on 1-3 a blizzard is active, halving all detection and visual ranges and removing the upper shelf's observation advantage for 1d3 turns."
+      },
+      {
+        "name": "The Depleted Company",
+        "text": "The house company recovering at the upper-shelf fort lost its colors to this same enemy and lost good crews with them. They are 8 'Mechs, Regular quality, with morale wounded in a way no field repair touches. They will fight, but their first instinct under fire is the memory of the last defeat.",
+        "mechanicalEffect": "The allied house company begins the engagement with a -1 morale modifier; it is removed if your command lands the first confirmed kill, or worsens to -2 if the enemy draws first blood against any allied unit."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Where the Duel Happens",
+        "context": "{NPC:opfor-commander} is coming to fight in the open, on the lower shelf, where his honor is satisfied and his numbers tell. You can meet him there, hold the switchback cut and force him to fight on a frontage one lance wide, or refuse the ground entirely and let him come to the fort — each choice reads differently to the watching district.",
+        "options": [
+          {
+            "title": "Meet Him on the Lower Shelf",
+            "advantages": ["The cleanest possible honor result — open ground, full view, no terrain advantage taken", "A decisive win here ends the cycle most completely"],
+            "disadvantages": ["His numbers and his fresh crews fight your depleted company on equal terms", "No fallback if the wounded company breaks"],
+            "consequence": "You fight the duel he wants, on the ground he chose; the honor reward is maximal and so is the risk to your understrength force.",
+            "costs": { "cbills": 0, "days": null, "resource": "morale exposure: the depleted company fights its tormentor on open ground with no terrain to lean on", "risk": "If the wounded company breaks in the open, there is no line to fall back to and the rout is total" }
+          },
+          {
+            "title": "Hold the Switchback Cut",
+            "advantages": ["A 14-meter frontage lets one lance fight his whole force in sequence", "Honor-conventions intact — it is terrain, not fortification"],
+            "disadvantages": ["A patient enemy may decline the cut and raid the herders' lower shelf to bait you down", "Holding the cut concedes the initiative and the moral high ground of meeting him openly"],
+            "consequence": "You fight on favorable ground but on the defensive; the district notes that you chose advantage over a clean meeting, a smaller restoration of face.",
+            "costs": { "cbills": 3000, "days": 2, "resource": "engineering: clearing and revetting the switchback for a defensive stand", "risk": "He declines the cut, burns the lower shelf grazing, and dares you to come down — every hour you hold is an hour the herders pay for" }
+          },
+          {
+            "title": "Refuse the Ground, Defend the Fort",
+            "advantages": ["Forces him to attack you across open approaches to the upper-shelf fort", "Preserves the depleted company behind known ground"],
+            "disadvantages": ["Reads as the garrison hiding from the challenge — the warlord's worst outcome short of defeat", "Surrenders the steppe and the herders to the enemy's free movement"],
+            "consequence": "You may win the fight and lose the campaign; defending the fort against an honor challenge is the dishonor the warlord warned against, even without firing an emplacement.",
+            "costs": { "cbills": 0, "days": null, "resource": "political capital: refusing open battle spends the district's patience whatever the tactical result", "risk": "Even a clean defensive victory is logged as having shamed the district a second time" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Herder runners reach the upper-shelf fort: {NPC:opfor-commander}'s force is on the lower shelf, formed for battle, broadcasting a challenge in clear on the district honor frequency." },
+        { "t": "T+5:00", "event": "Enemy 'Mech force advances to the base of the escarpment; a blizzard front is building off the upper shelf." },
+        { "t": "T+12:00", "event": "Enemy lead lance reaches the switchback-cut approach; if unopposed it begins the climb to the upper shelf and the fort." },
+        { "t": "T+20:00", "event": "If the garrison has not committed to ground by now, the enemy interprets silence as refusal and begins burning the lower-shelf grazing to force a response." },
+        { "t": "T+30:00", "event": "Full enemy force can reach the fort's outer approaches; the honor window closes and the engagement becomes a straightforward defense of the fort." }
+      ],
+      "hardDeadline": "The garrison must commit to its chosen ground and make contact by T+20:00. Wait longer and {NPC:opfor-commander} reads the delay as refusing the challenge. He burns the grazing, and the secondary honor objective fails before a shot is fired."
+    },
+    "opforSketch": {
+      "composition": "One reinforced 'Mech company (9 to 12 machines) at Regular-to-Veteran quality, weighted toward heavy and medium 'Mechs (45-75 tons), led by {NPC:opfor-commander} in a command heavy. No vehicles, no aerospace, no infantry committed — this is a declared honor engagement and the enemy holds to the convention as strictly as the warlord demands of you. Fresh crews, intact morale, a grievance to settle.",
+      "behavior": "Honor-challenge doctrine: advance openly, accept the duel on declared terms, and fight to a decisive result rather than a raid's quick withdrawal. {NPC:opfor-commander} fights from the front and does not break at the usual thresholds — his force holds to 60 percent damage before any withdrawal, and he personally will not retreat while his command 'Mech is mobile."
+    },
+    "forks": [
+      {
+        "name": "OPERATION CLOSED LEDGER",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Enemy force decisively defeated within the honor conventions and {NPC:opfor-commander} broken — captured, killed, or routed beyond return.",
+        "consequence": "The cycle ends here. The district's face is restored and the warlord, satisfied, entrusts your command with cadre authority to rebuild the colorless house company into a unit worth its standard again.",
+        "threat": "LOW",
+        "family": "CADRE_DUTY"
+      },
+      {
+        "name": "OPERATION SECOND STEPPE",
+        "outcomeGate": "SUCCESS",
+        "trigger": "Enemy repulsed and the honor conventions kept, but {NPC:opfor-commander} withdraws his force intact and unbroken.",
+        "consequence": "He has the measure of you now and will return with the lesson learned — a heavier, less ceremonious push that drops the honor pretense. Your command garrisons against a real assault next.",
+        "threat": "HIGH",
+        "family": "GARRISON_DUTY"
+      },
+      {
+        "name": "OPERATION TWICE SHAMED",
+        "outcomeGate": "FAILURE",
+        "trigger": "Garrison defeated, or the honor conventions broken even in victory.",
+        "consequence": "The district is shamed a second time and the warlord must answer to his own superiors. Your command is committed to a desperate counter-raid into {TARGET_FACTION} territory to recover the lost honor by force — a deep strike against odds.",
+        "threat": "EXTREME",
+        "family": "OBJECTIVE_RAID"
+      }
+    ],
+    "storyElementSeed": "A pilot from the colorless company sits in his cockpit on the upper shelf, watching the enemy form up below. He recognizes the paint scheme of the machine that took his unit's standard, and waits for the order. Down the line, the operations officer asks the warlord about the fort guns one more time, and is refused one more time.",
+    "voiceSlots": ["command", "intelligence", "medical"],
+    "registerVariants": {
+      "is-davion": {
+        "objectives.secondary": "The political read matters more than the kill count. Win it clean — 'Mech against 'Mech, no fort guns, no tanks on the line — or the district decides you saved the fort and lost the point. Pragmatism here is knowing which fight you are actually in."
+      }
+    },
+    "specifics": {
+      "ENEMY_MECHS": { "min": 9, "max": 12, "unit": "enemy 'Mechs in the reprisal force" },
+      "BLIZZARD_DAYS_PER_7": { "min": 4, "max": 6, "unit": "days in 7 with ground-blizzard risk" },
+      "STEPPE_OBSERVATION_KM": { "min": 6, "max": 8, "unit": "kilometers clear-day observation on the steppe" },
+      "HERD_HEAD": { "min": 30000, "max": 50000, "unit": "head of cattle on the lower shelf" }
+    },
+    "phases": [
+      {
+        "name": "POSTURE — THE STEPPE WATCH",
+        "lead": "The garrison knows he is coming and roughly when. The work before contact is reading the weather off the escarpment, keeping the herders' goodwill, and steadying a company that remembers losing to this same enemy.",
+        "dataBlock": {
+          "Garrison": "Your lance plus a depleted house company of 8 'Mechs, Regular, recovering at the upper-shelf fort",
+          "Forbidden assets": "Fort fixed defenses and all non-'Mech combat units — warlord's standing order",
+          "Weather": "Ground blizzards 5 days in 7, visibility under 600m, no warning",
+          "Early warning": "Herder runners and grazing patterns — the enemy cannot cross the lower shelf unseen"
+        },
+        "protocol": "The challenge will come in clear on the district honor frequency; the warlord requires it be acknowledged in clear, by name, before contact. Codeword IRON STANDARD on the garrison net means the engagement is to be fought strictly to convention — no station may request or fire a fixed emplacement once IRON STANDARD is set.",
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "Why a warlord forbids his own guns: the difference between holding a fort and holding face, and what the district remembers a year later about how the fight was won." }
+      },
+      {
+        "name": "FLASHPOINT — THE ANSWER",
+        "lead": "He forms up on the lower shelf and calls you out. The garrison chooses its ground — open meeting, the switchback cut, or the fort approaches — and the depleted company's nerve is tested in the first exchange.",
+        "dataBlock": {
+          "Switchback cut": "14m switchback ramp, the one vehicle-capable link between shelves — one lance can hold it against a company",
+          "Honor window": "Contact by T+20:00 or the challenge reads as refused",
+          "Morale hinge": "First confirmed kill removes the company's -1; first blood against an ally deepens it to -2",
+          "Weather roll": "Blizzard active on a 1-3 — halves ranges, erases the upper-shelf overwatch"
+        },
+        "sidebarKernel": { "voiceSlot": "medical", "kernel": "A unit that lost its colors carries the wound into the next fight — what a depleted, grieving company needs in the first sixty seconds of contact to fight as itself again." }
+      },
+      {
+        "name": "RESOLUTION — THE LEDGER",
+        "lead": "The result is read by an audience well beyond the steppe. A decisive, convention-clean win closes the feud; a repulse that lets him withdraw whole only schedules the next round.",
+        "dataBlock": {
+          "Decisive break": "{NPC:opfor-commander}'s force holds to 60 percent damage before withdrawal; his command 'Mech leaving the field is the break point",
+          "Honor audit": "The warlord's observers confirm no fixed fire and no vehicles engaged before any reward is paid",
+          "Herder settlement": "Lower-shelf grazing rights confirmed to the herders who carried the warning"
+        },
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "Reading whether the enemy is broken or merely withdrawn — the signatures of a unit that will not come back versus one that is already planning the next visit." }
+      }
+    ]
+  },
+  {
+    "seedId": "ARC-03",
+    "family": "DIVERSIONARY_RAID",
+    "title": "OPERATION GLASS PROVOCATION",
+    "eraFit": ["succession-wars"],
+    "factionFit": ["is-liao", "is-davion"],
+    "register": "is-liao",
+    "skeleton": "bait force must provoke one proud commander into personally overcommitting his reserve by repeating an insult, holding the pursuit on punishing terrain for a fixed window while fighting too well kills the trap and fighting too poorly reveals it",
+    "inspiration": "the feigned retreat at Hastings, 1066 (a deliberately convincing rout used to draw a disciplined defender off prepared ground)",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "MECH_ONLY",
+    "localeFit": { "settlement": ["frontier"], "regionRole": ["contested", "border"], "terrain": ["desert", "mountain"] },
+    "situation": "{WORLD}, {DISTRICT}, {YEAR}. {NPC:opfor-commander} is the {TARGET_FACTION} battalion commander holding the uplands. His service file marks him proud, impatient, and easily insulted. {EMPLOYER} wants him drawn out of his prepared positions and made to commit his reserve where {EMPLOYER}'s main force can destroy it. Your command is the bait. You will stage a provoking demonstration against the upland garrison. The point is not to take ground; it is to sting the commander's pride until he chases you in person. He will read the raid as contempt and answer it 'Mech against 'Mech, because he will not stoop to replying with artillery. The terrain problem is the glass plain: a 30-kilometer stretch of ground fused into black glass by an orbital strike centuries ago. It rings under a 'Mech's tread and shatters into ankle-deep blades wherever weight bears down. The glass will carry 'Mechs, but it punishes maneuver. Sharp turns and jump landings crack the surface and cost footing, and the sound of movement across it carries for kilometers. {NPC:intel-source} reports that {NPC:opfor-commander} keeps a heavy pursuit lance ready at all times to answer raids. A raid two months ago escaped clean and left him hunting the unit responsible. That grudge is your lever. Your raid must clearly be the same insult, repeated, so he commits not just the duty lance but his pride and his reserve. Then you must hold his attention and draw his pursuit across the glass toward {EMPLOYER}'s killing ground at the narrows, and keep it there for 40 minutes. That is long enough to pull his reserve out of position, but not so long that your bait force is destroyed. Here is the danger: every act that makes the bait more convincing pulls your lance deeper into a fight you are ordered neither to win nor to lose cleanly. No civilians are here. The glass supports nothing, and the same strike that made it emptied the uplands. The only witnesses are the man you are baiting and the force waiting to spring the trap.",
+    "objectives": {
+      "primary": "Provoke {NPC:opfor-commander} into committing his pursuit lance and reserve to a personal chase, drawing them across the glass plain toward the narrows for a sustained 40-minute window.",
+      "secondary": "Preserve the bait force — extract with no 'Mech lost, so the deception survives to be used again and the unit is not consumed for one engagement.",
+      "bonus": "Lure {NPC:opfor-commander}'s own command 'Mech into the narrows kill zone personally, decapitating the upland battalion in {EMPLOYER}'s ambush."
+    },
+    "complications": [
+      {
+        "name": "The Glass Underfoot",
+        "text": "Movement across the glass plain rings for kilometers and cracks the surface where weight bears down. Jump jets and hard turns shatter the glass and cost footing. So the glass tells the enemy where you are, and every evasive move risks a fall.",
+        "mechanicalEffect": "Any jump landing or rapid-turn maneuver on Glass hexes requires a piloting check at +2 difficulty; failure costs the 'Mech its movement next turn. The enemy always knows the bait force's hex unless it is stationary."
+      },
+      {
+        "name": "Too Convincing a Bait",
+        "text": "A bait that works pulls the enemy in hard, and the balance is delicate. Fight too well and you kill the chase, because a destroyed pursuit lance never reaches the narrows. Fight too poorly and the commander guesses it is a trap. One bad exchange either way can lose the whole plan.",
+        "mechanicalEffect": "If the bait force destroys more than one enemy 'Mech before reaching the narrows, the enemy commander breaks off the pursuit, suspecting an ambush, and the primary objective fails. The bait must lose convincingly without dying."
+      },
+      {
+        "name": "The Patient Lance",
+        "text": "Not every officer takes the bait. {NPC:opfor-commander} may send his duty lance and hold his reserve, reading the raid as a probe. If his pride loses to his professionalism even once, the diversion delivers nothing and {EMPLOYER}'s main effort strikes an intact reserve.",
+        "mechanicalEffect": "At T+12:00, roll 2d6 with a +2 modifier if the bait force has inflicted at least one casualty or struck a prestige target: on 8 or higher the commander commits his reserve; on 7 or lower he sends only the duty lance and the diversion partially fails."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Setting the Hook",
+        "context": "The provocation must be unmistakably personal — the same insult, repeated, aimed at the man rather than the garrison. How you bait him determines whether he commits his pride or merely his duty roster.",
+        "options": [
+          {
+            "title": "Strike His Prestige Target",
+            "advantages": ["Hitting his personal command post or trophy hangar guarantees the insult lands", "Maximizes the chance he commits the reserve in a fury"],
+            "disadvantages": ["The prestige target is deep in the garrison's prepared positions", "Reaching it exposes the bait force to the fixed defenses you must survive"],
+            "consequence": "The hook is set deepest but the bait force fights its way out of the garrison's teeth before the chase even begins.",
+            "costs": { "cbills": 0, "days": null, "resource": "exposure: the bait force enters the garrison's prepared-fire envelope to reach the trophy target", "risk": "A bait force chewed up inside the garrison may not survive to be chased — the deception dies in the opening move" }
+          },
+          {
+            "title": "Mock Him on the Open Glass",
+            "advantages": ["A taunting demonstration in clear view, just out of reach, with no garrison fires to brave", "Keeps the bait force on ground it can run on"],
+            "disadvantages": ["A purely theatrical provocation may read as a probe rather than the insult that repeats", "Relies entirely on the commander's temper, with no concrete prestige loss to enrage him"],
+            "consequence": "The bait force stays whole and mobile but the hook depends on pride alone; a disciplined commander shrugs it off.",
+            "costs": { "cbills": 0, "days": null, "resource": "uncertainty: the provocation rests entirely on the enemy commander's temperament", "risk": "If he is having a patient day, the demonstration delivers nothing and the main effort hits an intact reserve" }
+          },
+          {
+            "title": "Mimic the First Raiders' Blazon",
+            "advantages": ["Painting the bait 'Mechs in the earlier raiders' markings makes the insult unmistakably the same", "Turns the commander's existing grudge into the engine of the trap"],
+            "disadvantages": ["Requires time and paint stores to alter the unit's appearance before insertion", "If the deception is ever unmasked, it confirms to the enemy that the two raids were one coordinated effort"],
+            "consequence": "The hook leverages his standing humiliation directly, but the unit carries a false identity that, if blown, links the whole campaign together for enemy intelligence.",
+            "costs": { "cbills": 8000, "days": 4, "resource": "deception stores: repaint and false transponder codes on every bait 'Mech", "risk": "An unmasked blazon proves to {TARGET_FACTION} that both raids were one operation — the diversion becomes a confession" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Bait force makes contact — the provocation lands; the upland garrison sounds and {NPC:opfor-commander}'s duty lance starts engines." },
+        { "t": "T+6:00", "event": "Bait force begins its fighting withdrawal onto the Glass, drawing the duty lance after it; the reserve commander weighs whether to follow." },
+        { "t": "T+12:00", "event": "The reserve-commitment decision resolves — if the hook is set, {NPC:opfor-commander} releases his pursuit reserve onto the Glass." },
+        { "t": "T+28:00", "event": "Pursuit reaches the midpoint of the Glass; the bait force must keep them coming without being run down, the 40-minute window half elapsed." },
+        { "t": "T+40:00", "event": "Pursuit enters the narrows; {EMPLOYER}'s main effort springs the ambush. The bait force's job is done if the reserve is inside the trap." }
+      ],
+      "hardDeadline": "The pursuit must be drawn into the narrows by T+40:00. {EMPLOYER}'s main force springs the trap at that mark whether the reserve is fully in or not. Any enemy still short of the narrows escapes the ambush and falls on the bait force's exposed flank."
+    },
+    "opforSketch": {
+      "composition": "One heavy pursuit lance (60-80 tons) at Veteran quality on instant readiness, backed by a reserve lance of medium-to-heavy 'Mechs (45-70 tons) at Regular quality and {NPC:opfor-commander}'s command heavy. No vehicles — the vitrified Glass shreds tracks and tires, and the commander disdains answering a 'Mech insult with armor. Aggressive, fast, pride-driven.",
+      "behavior": "Pursuit doctrine warped by grievance: the duty lance gives chase by the book, but {NPC:opfor-commander}, if provoked, abandons caution and drives the reserve forward to catch the unit that humiliated him. He does not break off for damage while he believes he is winning; he breaks off only if he detects the trap, and he is slow to suspect one when his pride is engaged."
+    },
+    "forks": [
+      {
+        "name": "OPERATION SHATTERED RESERVE",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Reserve fully drawn into the narrows AND {NPC:opfor-commander}'s command 'Mech caught in the kill zone, the upland battalion decapitated.",
+        "consequence": "With the commander gone and his reserve destroyed, {EMPLOYER} exploits the collapse immediately — your command leads the follow-on assault to seize the now-leaderless uplands before {TARGET_FACTION} can reconstitute.",
+        "threat": "MEDIUM",
+        "family": "PLANETARY_ASSAULT"
+      },
+      {
+        "name": "OPERATION SECOND HOOK",
+        "outcomeGate": "SUCCESS",
+        "trigger": "Pursuit reserve drawn into the narrows and mauled by the ambush, bait force extracted, but {NPC:opfor-commander} survives.",
+        "consequence": "He understands now that the raids were bait, and he will hunt the deception unit with cold method instead of hot pride. Your command must run a follow-on diversion against an enemy who has stopped taking the obvious lure.",
+        "threat": "HIGH",
+        "family": "DIVERSIONARY_RAID"
+      },
+      {
+        "name": "OPERATION UNSPRUNG",
+        "outcomeGate": "FAILURE",
+        "trigger": "Hook fails to set, bait force destroyed, or the enemy detects the trap and withdraws his reserve intact.",
+        "consequence": "{NPC:opfor-commander} now has the deception unmasked and an intact reserve. He turns the tables, hunting {EMPLOYER}'s exposed main effort, and your command is committed to a covering recon to find his counter-move before it lands.",
+        "threat": "HIGH",
+        "family": "RECON_RAID"
+      }
+    ],
+    "storyElementSeed": "A bait-force pilot fumbles a turn on the glass on purpose, shedding footing in a spray of black shards exactly as planned. On his rear scope he watches the pursuing lance speed up to close the gap. He has to trust that the men waiting at the narrows are real and ready, and not just a line on a briefing slide.",
+    "voiceSlots": ["command", "intelligence", "engineering"],
+    "registerVariants": {
+      "is-davion": {
+        "objectives.primary": "Make him chase you. Hit his pride hard enough that he commits the reserve, then run — forty minutes onto the Glass and into our narrows. We are not here to win a fight; we are here to deliver his reserve to the men who will."
+      },
+      "clan": {
+        "situation": "{WORLD}, {DISTRICT}, {YEAR}. {EMPLOYER} requires {NPC:opfor-commander} drawn from his prepared ground and his reserve committed where it can be destroyed. This stratagem offends the honor of an open engagement; it is a deception, and you will execute it because the surat you face has earned no better. The glass plain rings beneath the tread and shatters where weight gathers."
+      }
+    },
+    "specifics": {
+      "DIVERSION_WINDOW_MIN": { "min": 35, "max": 45, "unit": "minutes the pursuit must be held on the Glass" },
+      "GLASS_EXPANSE_KM": { "min": 25, "max": 35, "unit": "kilometers of vitrified plain" },
+      "PURSUIT_MECHS": { "min": 4, "max": 8, "unit": "enemy 'Mechs that can be drawn into pursuit" }
+    },
+    "phases": [
+      {
+        "name": "INGRESS — SETTING THE HOOK",
+        "lead": "The bait force inserts and makes itself unmistakably the insult the commander cannot ignore. Everything in this phase is theater aimed at one man's temper.",
+        "dataBlock": {
+          "Provocation type": "Prestige strike, open mockery, or mimicked blazon — set before insertion",
+          "Glass behavior": "Movement rings for kilometers; jumps and hard turns crack footing at +2 piloting difficulty",
+          "Commitment check": "T+12:00, 2d6 +2 if a casualty or prestige hit was scored — 8+ commits the reserve"
+        },
+        "protocol": "The bait force runs the earlier raiders' false identity throughout; no genuine call-signs cross any net. Codeword OPEN HAND, passed in the clear and contemptuously, is the scripted taunt meant to be intercepted — it names the commander's earlier humiliation directly and is the single most provoking act in the plan.",
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "Baiting a specific man rather than a unit — what in {NPC:opfor-commander}'s file says he will chase, and the difference between an insult he must answer and one he can afford to ignore." }
+      },
+      {
+        "name": "GROUND — THE CHASE ON THE GLASS",
+        "lead": "The bait force runs a fighting withdrawal across thirty kilometers of singing glass, losing convincingly without being caught, keeping the pursuit hot and coming for the full window.",
+        "dataBlock": {
+          "Window": "40 minutes of sustained pursuit from commitment to the narrows",
+          "Credibility band": "Destroy more than one pursuer and the commander smells the trap and breaks off",
+          "Footing penalty": "Every evasive maneuver risks a piloting failure that strands the 'Mech for a turn",
+          "Pace": "Stay caught-but-not-killed — too fast loses him, too slow loses you"
+        },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "The arithmetic of a credible bait: how to lose ground at a rate that keeps a pursuer committed, and why the hardest order to give is hold fire when the shot is there." }
+      },
+      {
+        "name": "EXTRACTION — CLEAR OF THE NARROWS",
+        "lead": "At the narrows {EMPLOYER}'s main effort springs and the bait force's task inverts from running to surviving the moment the trap closes and the enemy realizes what happened.",
+        "dataBlock": {
+          "Spring point": "T+40:00 at the narrows — main effort fires whether the reserve is fully in or not",
+          "Bait extraction": "Bait force peels off the chase line the instant the ambush opens and runs for its own exit",
+          "Stragglers": "Any pursuer short of the narrows escapes the ambush and falls on the bait force's flank"
+        },
+        "sidebarKernel": { "voiceSlot": "engineering", "kernel": "Getting a hard-run bait force off the Glass intact — the heat, the shed footing, and the cracked actuators a forty-minute fighting withdrawal leaves you to nurse home." }
+      }
+    ]
+  },
+  {
+    "seedId": "ARC-04",
+    "family": "PIRATE_HUNTING",
+    "title": "OPERATION BAD ATTRIBUTION",
+    "eraFit": ["clan-invasion", "civil-war"],
+    "factionFit": ["merc", "is-steiner"],
+    "register": "merc",
+    "skeleton": "hunter contracted as reprisal must follow a trail that loops back to its own paymaster, choosing between a clean bounty that buries the truth and an answer that destroys the contract, while the only intelligence source profits from either ending",
+    "inspiration": "the false-flag provocation pattern of the Gleiwitz incident, 1939 (an attack staged by the very party that later claims to avenge it)",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.4,
+    "localeFit": { "settlement": ["frontier"], "regionRole": ["border", "contested"], "terrain": ["desert", "mountain"] },
+    "situation": "{WORLD}, {DISTRICT} occupation border, {YEAR}. Three weeks ago a raiding band hit your unit's camp on {WORLD}, killed two techs, and burned a DropShip cargo bay. {EMPLOYER} has now put your command under contract to find them and finish it, calling the hunt payback for a pirate insult. The contract reads clean. The trail does not. {NPC:intel-source}, a salvage-and-information broker working the system's mining belt, sells you the raiders' likely bolt-hole: a worked-out chromium mine in the badlands, the deep adit. But followed honestly, the same trail keeps bending back toward {EMPLOYER}'s own supply arm. The burned cargo, it turns out, was insured at three times its listed value, and the raiders knew exactly which bay to hit. That tip is 14 days old and shaky, and the source profits no matter how the hunt ends, so weigh it carefully. The terrain problem is the badlands: a maze of chromium-tailings canyons. The ore dust glows under 'Mech spotlights and clogs air filters, cutting engagement range below 500 meters and forcing units single file through slot canyons 8 to 12 meters wide. The deep adit sits at the head of one such slot, a fortified mine mouth a single lance could hold against three times its number. {NPC:intel-source} reports the band as about one lance of mixed 'Mechs plus a hover-armor section running on salvaged parts, Green-to-Regular, fighting like people who want to survive, not win. Here is what the contract leaves out. If the raid was an insurance fraud set up through {EMPLOYER}'s own supply arm, the band you are hunting may be hired subcontractors, and the man paying you to kill them may be the man who hired them. That makes the truth worth more than the bounty, and more dangerous than the fight. A few independent prospectors work the badlands. They owe no one loyalty and will sell either side directions for a little water. The hunt itself is simple. Working out who you are really working for is not.",
+    "objectives": {
+      "primary": "Locate, corner, and neutralize the raiding band responsible for the leaguer strike — destroyed, captured, or driven off-world for good.",
+      "secondary": "Recover physical evidence of who directed the raid — a contract, a payment record, a prisoner who will talk — before it is destroyed or buried in the deep adit.",
+      "bonus": "Confirm or disprove {EMPLOYER}'s involvement in the original strike, and get the proof off-world intact, whatever it costs the contract."
+    },
+    "complications": [
+      {
+        "name": "The Source's Motive",
+        "text": "{NPC:intel-source} sells to both sides and profits whichever way the hunt ends. The trail to the deep adit may be true, or a trap to thin your force in the slot canyons, or true but pointed exactly where the broker wants you. And every time you buy directions, you show the broker what you plan to do.",
+        "mechanicalEffect": "Each piece of intelligence bought from {NPC:intel-source} has a hidden reliability: the gamemaster rolls 1d6 per purchase, and on a 1-2 the information is a deliberate steer that places the band's strength or position one band off the truth."
+      },
+      {
+        "name": "Chromium Fog",
+        "text": "Tailings dust fluoresces under spotlights and fouls intakes. Engagement ranges fall under 500 meters and any sustained movement at speed forces filter purges that vent heat and announce position. The badlands fight is close, blind, and hot.",
+        "mechanicalEffect": "All detection and weapon ranges in the badlands are reduced to 500 meters maximum; any 'Mech moving at flank speed for two consecutive turns must vent or suffer +3 heat the following turn."
+      },
+      {
+        "name": "The Employer's Shadow",
+        "text": "If the strike was an insurance arrangement, {EMPLOYER} has every reason to ensure the band dies quietly and the evidence with them. Orders may arrive mid-hunt to destroy rather than capture, to skip the Adit's records, to call it done early. Following them ends the question; refusing them ends the contract.",
+        "mechanicalEffect": "If the secondary or bonus objective is pursued, a mid-mission employer order arrives instructing immediate destruction of the band without capture; complying voids the secondary and bonus, refusing imposes a contract-breach penalty and shifts the resolution to the FAILURE-adjacent fork."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Working the Trail",
+        "context": "The deep adit is where the trail points, but the trail bends back toward your own employer at every honest reading. You can take the band the fast way and not ask, dig for the truth at the cost of speed, or hedge — and the badlands punish indecision with ambush.",
+        "options": [
+          {
+            "title": "Hit the Adit Fast, Ask Nothing",
+            "advantages": ["Fastest route to the bounty and the contract's clean closure", "Denies the band time to scatter into the canyon maze"],
+            "disadvantages": ["A frontal assault on a fortified mine mouth in a slot canyon is the band's best chance to bleed you", "Whatever the strike really was dies with the band and the records"],
+            "consequence": "You collect the bounty and close the contract, but the question of who you worked for stays buried under the deep adit forever.",
+            "costs": { "cbills": 0, "days": null, "resource": "casualties: a frontal slot-canyon assault on prepared positions is the costliest way in", "risk": "The Adit's single lane lets a defending lance fight you in detail — the bounty is real but so is the butcher's bill" }
+          },
+          {
+            "title": "Take a Prisoner, Pull the Thread",
+            "advantages": ["A captured raider may name who hired the strike", "Evidence off-world is leverage worth more than the bounty"],
+            "disadvantages": ["Capture operations are slower and riskier than killing", "Pulling the thread puts you crosswise with the man signing your checks"],
+            "consequence": "You may learn the truth and you may regret learning it; the contract sours the moment {EMPLOYER} senses you are asking questions.",
+            "costs": { "cbills": 0, "days": 5, "resource": "operational risk: capture-and-interrogate doubles the time on a hostile, blind battlefield", "risk": "An employer who arranged the strike will not pay the unit that proves it — the bounty may evaporate with the truth" }
+          },
+          {
+            "title": "Buy the Full Picture First",
+            "advantages": ["A complete intelligence package from {NPC:intel-source} may reveal the band's true strength and backer before you commit", "Reduces the chance of walking into a steered ambush"],
+            "disadvantages": ["{NPC:intel-source} charges premium for the full file and may be selling it to the band too", "Every day spent buying intelligence is a day the band uses to dig in or flee"],
+            "consequence": "You go in better informed but poorer, and you have handed your only intelligence source proof of exactly what you intend to do.",
+            "costs": { "cbills": 35000, "days": 6, "resource": "trust: the source now knows your full intent and can sell it onward", "risk": "The full picture may itself be the steer — a premium price is no guarantee of premium truth from a broker who serves both sides" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Lead element enters the badlands; chromium fog active, the band's lookouts among the prospector camps mark your arrival within the hour." },
+        { "t": "T+8:00", "event": "The band knows it is hunted; raiders begin staging at the deep adit and rigging the mine's record cache for destruction." },
+        { "t": "T+16:00", "event": "If no employer interference has arrived, the slot-canyon approach to the Adit is in contact; the defending lance fights from the mine mouth." },
+        { "t": "T+24:00", "event": "Record cache destruction completes if the Adit is not taken by now — the evidence of who directed the strike is lost." },
+        { "t": "T+32:00", "event": "The band's hover section attempts to break out the rear adit and scatter into the canyon maze; the chance to corner them whole closes." }
+      ],
+      "hardDeadline": "The deep adit must be entered and its record cache secured by T+24:00. Later than that, the raiders finish destroying it, and the evidence is gone for good, along with any answer about who really ordered the strike on your camp."
+    },
+    "opforSketch": {
+      "composition": "One mixed 'Mech lance (30-55 tons, salvage-built and mismatched) at Green-to-Regular quality, supported by a hover-armor section of 3 to 4 vehicles (Pegasus/Saracen behavior) running on cannibalized parts. Defending a fortified mine mouth on a single-lane approach. Underequipped, under-crewed, fighting from prepared ground because they cannot win in the open.",
+      "behavior": "Survival doctrine, not victory doctrine: the band fights to make the hunt too expensive to finish, holds the Adit's choke as long as it pays, and runs the instant the cost-benefit turns against them. They break contact at 30 percent force damage and have a rehearsed breakout through the rear adit. They will surrender if cornered and offered terms — they fight to live, not to die."
+    },
+    "forks": [
+      {
+        "name": "OPERATION CLEAN BOUNTY",
+        "outcomeGate": "SUCCESS",
+        "trigger": "Band neutralized and the contract closed; the question of who ordered the strike left unasked or unanswered.",
+        "consequence": "{EMPLOYER}, satisfied and relieved, extends the contract — a follow-on pirate-suppression sweep of the system's mining belt that keeps your command paid and conveniently far from the questions you did not ask.",
+        "threat": "MEDIUM",
+        "family": "PIRATE_HUNTING"
+      },
+      {
+        "name": "OPERATION PAPER TRAIL",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Band neutralized, the Adit's records secured, AND proof of {EMPLOYER}'s involvement recovered intact and off-world.",
+        "consequence": "You hold leverage over the man who hired you. The proof becomes the lever for a high-stakes extraction — pulling a witness or a second record set off-world before {EMPLOYER} can bury the evidence and the people who carried it.",
+        "threat": "HIGH",
+        "family": "EXTRACTION_RAID"
+      },
+      {
+        "name": "OPERATION BURNED CONTRACT",
+        "outcomeGate": "FAILURE",
+        "trigger": "Band escapes, the unit is mauled in the slot canyons, or {EMPLOYER} terminates the contract when the unit asks too many questions.",
+        "consequence": "{EMPLOYER} cuts the contract and quietly marks your command a liability. The band — or {EMPLOYER}'s next subcontractors — come for you on the back foot, and your command fights a defensive action with its reputation and its pay both at risk.",
+        "threat": "HIGH",
+        "family": "GARRISON_DUTY"
+      }
+    ],
+    "storyElementSeed": "A captured raider, cornered in the mine mouth with chromium dust glowing on his armor, looks at the merc commander. He says he was paid in Lyran kroner that came through the same bank as the contract. Then he waits to learn whether that fact buys him a seat off the planet or a grave in the tailings.",
+    "voiceSlots": ["command", "intelligence", "logistics", "engineering"],
+    "registerVariants": {
+      "is-steiner": {
+        "objectives.bonus": "If the insurance fraud reaches into a noble house's logistics concern, the proof is worth more than the mine and the band combined — handled correctly, it is a debt the house will pay for years to keep quiet. Recover it; the social ledger here outvalues the bounty."
+      }
+    },
+    "specifics": {
+      "BAND_MECHS": { "min": 3, "max": 5, "unit": "raider 'Mechs in the band" },
+      "BADLANDS_RANGE_M": { "min": 400, "max": 600, "unit": "meters maximum engagement range in chromium fog" },
+      "SLOT_CANYON_WIDTH_M": { "min": 8, "max": 12, "unit": "meters width of the Adit approach canyon" },
+      "INSURANCE_MULTIPLE": { "min": 2, "max": 3, "unit": "times manifest value the burned cargo was insured for" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Buy the Full Picture First", "requires": "treasury-min:35000", "whenLacking": "reprice", "lackingText": "Treasury short of 35,000 C-bills: {NPC:intel-source} will sell only a partial file for 12,000. It confirms the band's position but leaves out their strength and their backer, so you go in still guessing about the two things that matter most." }
+    ],
+    "phases": [
+      {
+        "name": "INGRESS — INTO THE BADLANDS",
+        "lead": "The hunt begins blind, in fluorescing dust, against a band that knows the canyons and a source who knows your wallet. The trail points one way and bends another.",
+        "dataBlock": {
+          "Visibility": "Under 500m in chromium fog; spotlights betray position",
+          "Source reliability": "Each purchase a 1-in-3 chance of a deliberate steer",
+          "Filter penalty": "Two turns at flank forces a heat-venting purge",
+          "Prospector camps": "Independent, for sale to either side, the band's early warning net"
+        },
+        "routes": [
+          { "name": "AMBER — THE SLOT TO THE ADIT", "desc": "The direct single-lane canyon to the fortified mine mouth", "tradeoff": "Fastest to the band; the one ground where a single defending lance can fight you in detail" },
+          { "name": "OCHRE — THE TAILINGS TRAVERSE", "desc": "A longer route over open tailings fields to the Adit's flank", "tradeoff": "Avoids the choke but crosses ground where the hover section can run and harry you in the fog" }
+        ],
+        "protocol": "Reprisal cover-story discipline: the contract is public as pirate-suppression, and the unit keeps it that way on all open nets even after the trail bends toward {EMPLOYER}. Codeword DRY WELL, on the command channel, means the trail has been confirmed as a probable employer steer — at DRY WELL the unit shifts to securing evidence over collecting the bounty.",
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "Reading a double-dealing broker: the tells that separate a true steer from a paid one, and why the most reliable information is often the piece the source did not want to sell." }
+      },
+      {
+        "name": "GROUND — THE ADIT",
+        "lead": "The band fights from the mine mouth to make the hunt too costly to finish. The choice between killing them fast and taking them whole is also the choice between closing the contract and opening the question.",
+        "dataBlock": {
+          "Defensive choke": "Single-lane mine mouth, a lance can hold against three times its number",
+          "Record cache": "Destroyed by T+24:00 if the Adit is not taken — the evidence clock",
+          "Breakout": "Rear adit, hover section scatters into the maze at 30 percent force damage",
+          "Surrender": "The band takes terms if cornered — they fight to live"
+        },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "When the cheap victory is the wrong one: weighing a clean bounty against the cost of never knowing who you actually fought for, and the orders you may get to keep it that way." }
+      },
+      {
+        "name": "EXTRACTION — WHAT LEAVES PANDORA",
+        "lead": "Whatever you carry off {WORLD} — a bounty, a prisoner, a record cache, or a dangerous truth — decides which contract you are really finishing and who your next enemy is.",
+        "dataBlock": {
+          "Bounty closure": "Band confirmed neutralized to {EMPLOYER}'s satisfaction",
+          "Evidence handling": "Records and prisoners moved off-world before {EMPLOYER} can intercept",
+          "Employer order risk": "A destroy-don't-capture order may arrive mid-extraction"
+        },
+        "sidebarKernel": { "voiceSlot": "logistics", "kernel": "Getting a witness and a record cache off a world where your employer controls the spaceport — the quiet logistics of leaving with something the man who hired you wants buried." }
+      }
+    ]
+  },
+  {
+    "seedId": "ARC-05",
+    "family": "EXTRACTION_RAID",
+    "title": "OPERATION PARADE GROUND",
+    "eraFit": ["succession-wars"],
+    "factionFit": ["is-steiner", "is-marik"],
+    "register": "is-steiner",
+    "skeleton": "rescuers must pull non-ambulatory captives from a detention site staged as bait before a humiliation broadcast, where the whole operation is filmed and a failure on camera is a worse defeat than no attempt at all",
+    "inspiration": "the Son Tay raid, 1970 (a daring prison rescue against a site the enemy had effectively prepared, where the political stakes outweighed the bodies recovered)",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.25,
+    "localeFit": { "settlement": ["capital"], "regionRole": ["contested", "border"], "terrain": ["urban"] },
+    "situation": "{WORLD}, {DISTRICT} occupation border, {YEAR}. Two weeks ago a botched probe cost your command four MechWarriors, captured by {TARGET_FACTION}. {NPC:opfor-commander}, the occupying garrison commander, has announced a victory parade in the provincial capital in six days. He plans to march the prisoners through the city square in chains, on camera, to wreck your unit's standing with {EMPLOYER} and the nobility who pay it. {EMPLOYER}, a march-lord whose reputation is tied to yours, wants the prisoners out before the parade. A rescue turns his shame into a triumph, while a parade that goes ahead is a wound that never fully heals. The terrain problem is the city ringbahn: an elevated electric rail loop that circles the old city core on a 12-meter stone viaduct. It is the only route to the central detention barracks that a 'Mech can take without flattening the historic streets the nobility prize. The viaduct carries the rail and blocks movement beneath it, so any approach to the barracks funnels through two arched underpasses, each wide enough for one 'Mech at a time. {NPC:intel-source}, a rail-yard dispatcher feeding the local resistance, reports the prisoners in the barracks' east cell block and the parade staging in the cathedral square 600 meters away. He puts the garrison reaction force at one 'Mech lance plus a wheeled-armor company, quartered at the rail yard. That report is 4 days old. The prisoners are in poor shape: two weeks of interrogation, one with a leg wound that cannot take a march, and none able to pilot a 'Mech out even if one waited. They leave in a vehicle or they do not leave. There is a trap here. {NPC:opfor-commander} expects a rescue and wants one. The parade is partly bait, and the prisoners are deliberately held somewhere a raider can reach, because catching the rescue force on camera is a bigger win for him than the parade alone. The city holds 200,000 residents under occupation. Sullen and watching, they will neither help nor hinder until they see who is winning. Six days to the parade, or fewer if {NPC:opfor-commander} moves it up.",
+    "objectives": {
+      "primary": "Extract all four captured MechWarriors from the city detention barracks and off-world before the victory parade, alive and free.",
+      "secondary": "Withdraw the raiding force without a unit captured or destroyed on camera — a filmed rescue failure is worse for {EMPLOYER} than no attempt at all.",
+      "bonus": "Disrupt or pre-empt the parade itself so visibly that {NPC:opfor-commander}'s intended humiliation rebounds on him in the same news cycle."
+    },
+    "complications": [
+      {
+        "name": "The Rescue Is Expected",
+        "text": "{NPC:opfor-commander} has set the prisoners where a raider can reach them on purpose. The parade is bait; the real prize is a rescue force caught on camera. Every approach that looks obvious is obvious because he wants you to take it.",
+        "mechanicalEffect": "If the raiding force uses the most direct approach to the barracks, the gamemaster deploys a concealed reaction element on its flank that activates on contact; a less obvious approach trades time for avoiding the prepared trap."
+      },
+      {
+        "name": "Prisoners Cannot Walk Out",
+        "text": "Two weeks of interrogation have left all four prisoners unfit to march and one with a leg wound. They require vehicle transport from the cell block to the extraction point; a 'Mech cannot carry four broken people through a firefight, and there is no time to wait for them to recover.",
+        "mechanicalEffect": "The raiding force must include or seize a transport vehicle to move the prisoners; if the transport is destroyed before extraction, the prisoners cannot be moved and the primary objective fails."
+      },
+      {
+        "name": "The Watching City",
+        "text": "Two hundred thousand city residents are watching, and so are {NPC:opfor-commander}'s cameras. A clean rescue swings the city and the news cycle to {EMPLOYER}; a bungled one filmed in the cathedral square is the propaganda victory the parade was meant to be, delivered for free.",
+        "mechanicalEffect": "Any raiding unit destroyed or captured within camera range of the cathedral square voids the secondary objective and shifts the resolution toward the COMPROMISED fork regardless of whether the prisoners are recovered."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Way In",
+        "context": "The detention barracks can only be reached through the Ringbahn's two undercrossings, each one 'Mech wide, both of which {NPC:opfor-commander} has surely covered. You can force the obvious one, find a way the viaduct was not built to allow, or skip the barracks approach entirely and take the prisoners in transit.",
+        "options": [
+          {
+            "title": "Force the East Undercrossing",
+            "advantages": ["Shortest line to the east cell block where the prisoners are held", "A single-file choke cuts both ways — it limits the reaction force's ability to swarm you"],
+            "disadvantages": ["This is the approach {NPC:opfor-commander} expects and has trapped", "A 'Mech stuck in the undercrossing under fire is the parade footage he wants"],
+            "consequence": "You take the fast road into a prepared kill zone; speed buys the cell block but at the price of fighting on his chosen ground.",
+            "costs": { "cbills": 0, "days": null, "resource": "exposure: the lead 'Mech enters the undercrossing in single file, into pre-sited fires", "risk": "A 'Mech down in the arch is the centerpiece of the very propaganda the rescue exists to prevent" }
+          },
+          {
+            "title": "Drop the Viaduct, Make a New Door",
+            "advantages": ["A demolished viaduct span opens an approach the garrison has not covered", "Severs the elevated rail the reaction force uses to shift troops"],
+            "disadvantages": ["Bringing down a 12-meter masonry span in a treasured medieval city enrages the Lyran nobility {EMPLOYER} answers to", "The demolition is loud and starts the reaction clock before the barracks is even reached"],
+            "consequence": "You buy a fresh approach at the cost of the architecture the margrave's peers prize; the rescue may succeed and the social bill may swallow the credit.",
+            "costs": { "cbills": 20000, "days": 3, "resource": "demolition stores and a noble-relations debt for wrecking historic infrastructure", "risk": "The nobility {EMPLOYER} serves may resent a leveled landmark more than they value four rescued pilots" }
+          },
+          {
+            "title": "Take Them at the Parade Marshalling",
+            "advantages": ["The prisoners are out of the fortified barracks when staged for the parade — softer to seize", "A snatch in the staging yard pre-empts the humiliation at its source"],
+            "disadvantages": ["The marshalling yard is yards from the garrison's full assembled strength", "The timing window is minutes wide and tied to {NPC:opfor-commander}'s schedule, which he can change"],
+            "consequence": "You hit them where they are weakest and most watched at once; success is a public triumph, failure is the most public failure possible.",
+            "costs": { "cbills": 0, "days": null, "resource": "timing risk: the snatch window is minutes wide and set by the enemy's clock", "risk": "If {NPC:opfor-commander} moves the parade up or changes the route, the whole plan is built on a schedule that no longer exists" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Raiding force commits to the city core; rail-yard garrison detects the approach and the reaction lance starts engines." },
+        { "t": "T+5:00", "event": "Wheeled-armor company moves to seal the Ringbahn undercrossings; concealed flank element activates if the obvious approach was taken." },
+        { "t": "T+11:00", "event": "Raiding force must be at the east cell block and the prisoners loading by now to clear the city before the garrison concentrates." },
+        { "t": "T+18:00", "event": "Garrison reaction force can fight as a combined arm at the barracks; the cathedral-square cameras are live and rolling." },
+        { "t": "T+26:00", "event": "Full garrison response seals the city core's exits; any raiding force still inside the Ringbahn is trapped on camera." }
+      ],
+      "hardDeadline": "The prisoners must be loaded and the transport moving toward the extraction point by T+11:00. Miss it and the garrison seals the ringbahn underpasses at T+26:00, trapping the rescue force inside the city core and handing {NPC:opfor-commander} an even bigger triumph than the parade."
+    },
+    "opforSketch": {
+      "composition": "One garrison 'Mech lance (40-65 tons) at Regular quality, supported by a wheeled-armor company of 6 to 9 vehicles (Condor/Manticore behavior) quartered at the rail yard, plus a concealed reaction element held specifically to spring on a rescue force. Defending an urban detention site with prepared positions at the Ringbahn undercrossings. Disciplined, camera-conscious, expecting the attempt.",
+      "behavior": "Counter-rescue doctrine: the garrison wants the raiders caught on film, not merely repulsed, so it funnels the approach into covered ground and springs the concealed element only when the rescue force is committed and visible. The wheeled armor screens and seals exits rather than charging. The garrison fights to entrap rather than to destroy, and presses hardest when the cathedral cameras have line of sight; it breaks off only if the prisoners are clearly gone and the propaganda lost."
+    },
+    "forks": [
+      {
+        "name": "OPERATION REVERSED REEL",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "All four prisoners extracted alive AND the parade pre-empted so visibly that {NPC:opfor-commander}'s humiliation rebounds on him.",
+        "consequence": "The propaganda coup is total. {EMPLOYER}, his standing soaring, backs an immediate exploitation — your command leads a follow-on raid to seize a garrison depot the embarrassed {NPC:opfor-commander} has been ordered to defend at all costs.",
+        "threat": "MEDIUM",
+        "family": "OBJECTIVE_RAID"
+      },
+      {
+        "name": "OPERATION QUIET RETURN",
+        "outcomeGate": "SUCCESS",
+        "trigger": "Prisoners extracted and the raiding force withdrawn off-camera, but the parade proceeds for the city's other cameras.",
+        "consequence": "The rescue worked but {NPC:opfor-commander} saves face with the parade's empty pageantry. Stung, he tightens the occupation and your command is pulled into a security posting to shield the local resistance cell that made the rescue possible from his reprisal sweep.",
+        "threat": "MEDIUM",
+        "family": "SECURITY_DUTY"
+      },
+      {
+        "name": "OPERATION FILMED DEFEAT",
+        "outcomeGate": "FAILURE",
+        "trigger": "Rescue fails, a unit is caught on camera, or the prisoners are not recovered.",
+        "consequence": "{NPC:opfor-commander} has his footage and {EMPLOYER} his ruin. With its reputation gutted, your command must run a deep diversionary raid to draw the triumphant garrison off-balance long enough to recover the prisoners by a second, desperate try.",
+        "threat": "HIGH",
+        "family": "DIVERSIONARY_RAID"
+      }
+    ],
+    "storyElementSeed": "A rescued pilot is half-carried into the seized transport. Through the cargo slats he sees the cathedral square's parade banners already strung between the lampposts. He asks the trooper buckling him in whether anyone got the cameras, because who owns the footage will decide whether this was a rescue or a recruiting film for the other side.",
+    "voiceSlots": ["command", "intelligence", "medical", "logistics"],
+    "registerVariants": {
+      "is-marik": {
+        "objectives.primary": "The Captain-General's provinces are watching how the League treats its own. Get all four out and home before the parade — a rescue is the rebuttal, and the rebuttal is owed to the families and the provincial assemblies as much as to {EMPLOYER}."
+      }
+    },
+    "specifics": {
+      "PRISONERS": { "min": 4, "max": 4, "unit": "captured MechWarriors to extract" },
+      "DAYS_TO_PARADE": { "min": 4, "max": 6, "unit": "days until the victory parade" },
+      "GARRISON_VEHICLES": { "min": 6, "max": 9, "unit": "garrison armor vehicles at the rail yard" },
+      "CITY_POPULATION": { "min": 180000, "max": 220000, "unit": "civilians in the provincial capital" }
+    },
+    "assetDetails": [
+      { "ref": "{NPC:rescued-pilot-wounded}", "detail": "Leg wound from interrogation will not bear weight; requires litter transport and cannot self-extract from the cell block to the transport vehicle.", "priority": "high" },
+      { "ref": "{NPC:intel-source}", "detail": "Rail-yard dispatcher feeding the resistance — provides the cell-block location and parade schedule but cannot vouch for whether {NPC:opfor-commander} has moved the parade up since the last report.", "priority": "medium" }
+    ],
+    "phases": [
+      {
+        "name": "INGRESS — THE RINGBAHN",
+        "lead": "The elevated rail loop is wall, road, and trap at once. The raiding force commits to one of the two single-file undercrossings, or to making a third way the garrison has not covered, before it ever reaches the prisoners.",
+        "dataBlock": {
+          "Viaduct": "12m masonry, two undercrossings each one 'Mech wide, the only 'Mech routes into the core",
+          "Cell block": "Barracks east block, 600m from the cathedral-square parade staging",
+          "Reaction force": "1 'Mech lance plus a 6-9 vehicle wheeled company at the rail yard, plus a concealed counter-rescue element",
+          "Transport requirement": "Prisoners move by vehicle or not at all"
+        },
+        "routes": [
+          { "name": "GRAY — EAST UNDERCROSSING", "desc": "The direct single-file arch to the east cell block", "tradeoff": "Shortest to the prisoners; the approach {NPC:opfor-commander} has trapped" },
+          { "name": "SLATE — WEST UNDERCROSSING + STREET LOOP", "desc": "The far arch and a longer loop through the old streets", "tradeoff": "Avoids the prepared trap but adds time and risks building damage in the prized medieval core" }
+        ],
+        "protocol": "Off-camera discipline governs everything: the unit assumes every minute in the core is filmed and plays to that. Codeword DARK LANTERN on the raid net means the cathedral-square cameras have line of sight on a friendly unit — at DARK LANTERN no unit may be left immobilized in the open and the priority shifts to clearing the camera arc even ahead of pace.",
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "Why the prisoners are held somewhere reachable on purpose — reading a bait-rescue, and the difference between an approach that is open and one that is left open." }
+      },
+      {
+        "name": "GROUND — THE CELL BLOCK",
+        "lead": "Four broken pilots, one transport, a counter-rescue element waiting to spring, and a clock tied to a parade the enemy can move. The snatch is the easy part; getting four people who cannot walk into a vehicle under fire is not.",
+        "dataBlock": {
+          "Prisoner state": "All four unfit to march, one litter-bound — vehicle extraction mandatory",
+          "Trap trigger": "Concealed element springs on the obvious approach when the rescue force is committed and visible",
+          "Loading deadline": "Prisoners loaded and transport moving by T+11:00",
+          "Camera arc": "Cathedral square cameras live from T+18:00 — anything lost in frame is lost twice"
+        },
+        "sidebarKernel": { "voiceSlot": "medical", "kernel": "Moving four interrogation casualties under fire — the litter case, the loading order, and why the rescue's tempo is set by the slowest body, not the fastest 'Mech." }
+      },
+      {
+        "name": "EXTRACTION — OFF THE REEL",
+        "lead": "The transport runs for the edge of the ringbahn while the garrison tries to seal the core and the cameras try to catch a loss. What leaves the city, and whose footage it leaves in, decides the whole campaign's next turn.",
+        "dataBlock": {
+          "Seal deadline": "Garrison closes the undercrossings at T+26:00 — be clear of the loop before it shuts",
+          "Camera resolution": "A clean off-camera withdrawal swings the news cycle; a filmed loss hands it back",
+          "Parade pre-emption": "A visible disruption of the staging square converts the rescue into a public triumph"
+        },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "Winning the news cycle as a military objective — why a rescue that nobody films and a rescue that everybody films are two different victories, and which one {EMPLOYER} actually bought." }
+      }
+    ]
+  },
+  {
+    "seedId": "ARC-06",
+    "family": "CADRE_DUTY",
+    "title": "OPERATION BLOODED REMATCH",
+    "eraFit": ["clan-invasion"],
+    "factionFit": ["clan"],
+    "register": "clan",
+    "skeleton": "commander must blood green warriors in the same ritual rematch that decides a contested bloodline's claim, where teaching and fighting are one act and the bid he answers sets whether the untested have any chance at all",
+    "inspiration": "the Roman gladiatorial ludus and the duel of honor's escalation (a contest where a defeated line's right to its name is wagered on a rematch the loser's house demands)",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "MECH_ONLY",
+    "localeFit": { "settlement": ["frontier"], "regionRole": ["interior", "contested"], "terrain": ["mountain"] },
+    "situation": "{WORLD}, {DISTRICT} occupation zone, {YEAR}. One season ago a Trial of Grievance ended with your sibko-mate defeated and a bloodname-bearing 'Mech forfeited to a rival Cluster. The bloodhouse will not let it rest. {NPC:opfor-commander}, a Star Commander of the rival line, has issued a fresh batchall, the formal Clan challenge. He has called a Trial of Refusal, dressed as a training exercise turned into a grievance. Your warriors must answer for the earlier loss on harder terms, with the bid raised and the bloodname's honor at stake again. {EMPLOYER}, your own Star Colonel, has placed you over a Star of newly-blooded warriors, fresh from their Trials of Position. You must drill them and test them against this rematch. Here the teaching and the fighting are one act: the Clans train a warrior by making him face what would kill an untrained one. The terrain problem is the caldera testing range, a Clan exercise ground built in the broken crater of a dead volcano. The only level fighting platforms are basalt benches, split by lava-tube ravines too deep to cross and too narrow to see into. A Star deploys across three benches. A single rock bridge links each pair, and a warrior pushed off a bench has nowhere to fall but the ravine. {NPC:intel-source}, your own Cluster's tech caste, who service both sides' machines, reports that {NPC:opfor-commander} will bid down to a Star of heavy 'Mechs, Veteran quality, hand-picked for the grudge. He means to win cleanly enough to claim the contested bloodname outright. That report is 5 days old and rated reliable. What no batchall says aloud: losing a Trial a second time does not just forfeit a 'Mech. It discredits the bloodline's right to the name. Your green Star carries that weight into a fight it is barely ready for. No civilians are here. The caldera holds only the testing range and the watching warriors of both Clusters, whose witness makes the result binding. The bid is set and the honor is real. The warriors you must blood may not survive the lesson.",
+    "objectives": {
+      "primary": "Win the Trial of Refusal against {NPC:opfor-commander}'s Star, defending the contested bloodname and the honor of your line.",
+      "secondary": "Bring the newly-blooded Star through the Trial as a functioning combat unit — losses are expected, but the Star must emerge tested and cohesive, not shattered.",
+      "bonus": "Defeat {NPC:opfor-commander} personally, in single combat within the larger Trial, settling the grievance so decisively that the rival line cannot re-open it."
+    },
+    "complications": [
+      {
+        "name": "The Bid and the Bloodname",
+        "text": "{NPC:opfor-commander} has bid down to a Star of hand-picked Veteran heavies and means to claim the contested bloodname by winning. A second defeat does not forfeit one machine; it discredits the bloodline's claim to the name itself. The stakes are not equipment but lineage.",
+        "mechanicalEffect": "If the Trial is lost, the bonus and secondary are forfeit and the campaign's reputation track takes a permanent loss; the rival line gains standing that shapes future Clan-register missions toward the FAILURE fork."
+      },
+      {
+        "name": "The Caldera Benches",
+        "text": "The testing range is three basalt benches over lava-tube ravines, each connected by a single rock bridge. A warrior pushed off a bench falls into a ravine too deep to climb out of and too narrow to fight in. Position on the benches is everything; a bridge held is a flank secured.",
+        "mechanicalEffect": "Each rock bridge is a single-'Mech chokepoint; a 'Mech forced off a bench edge by knockdown or push is removed from the engagement. Control of the bridges determines which benches each Star can reinforce."
+      },
+      {
+        "name": "Green Warriors, Veteran Foe",
+        "text": "Your Star is fresh from Trials of Position: skilled, eager, and never tested in a fight meant to kill them. {NPC:opfor-commander}'s warriors were hand-picked for this grudge and want it badly. Trained is not the same as blooded, and this Trial closes that gap the hard way, under real fire.",
+        "mechanicalEffect": "The friendly Star begins at a piloting/gunnery disadvantage versus the Veteran enemy; each turn a green warrior survives in direct combat improves their effective skill by a step, capping at Regular, modeling the blooding under fire."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Answering the Bid",
+        "context": "{NPC:opfor-commander} has bid down to a Star of heavies and named the caldera range. Clan honor permits you to accept the bid, counter-bid to reshape the Trial, or invoke a point of grievance that changes its terms — each choice is read by the watching warriors as a statement about your line's confidence.",
+        "options": [
+          {
+            "title": "Accept the Bid as Stated",
+            "advantages": ["The cleanest honor — meeting the challenge on its stated terms wins maximum standing", "No counter-bid means no concession of weakness before the watching Clusters"],
+            "disadvantages": ["Your green Star fights Veteran heavies with no terms adjusted in its favor", "{NPC:opfor-commander} chose these terms because they favor him"],
+            "consequence": "You fight the Trial he designed, and a win on his own terms is the most decisive answer possible — if your warriors survive to deliver it.",
+            "costs": { "cbills": 0, "days": null, "resource": "honor stake: accepting unadjusted terms wagers the bloodname on a green Star against a chosen one", "risk": "He set these terms to win them — accepting is fighting on the ground of his choosing with the lineage on the scales" }
+          },
+          {
+            "title": "Counter-Bid the Engagement Down",
+            "advantages": ["Bidding to fewer or lighter machines can equalize a green Star against Veterans", "Demonstrates confidence — winning with less is the highest Clan honor"],
+            "disadvantages": ["A failed counter-bid that loses still loses the bloodname, now with less force to win it", "Bidding too low to look bold can hand {NPC:opfor-commander} the Trial outright"],
+            "consequence": "You reshape the Trial toward your warriors' strengths at the cost of fielding less to win it; the watching warriors weigh the boldness against the risk.",
+            "costs": { "cbills": 0, "days": null, "resource": "force committed: a counter-bid that wins honor wins it by fielding fewer machines than the foe", "risk": "Bid too low for honor's sake and a green Star wins nothing because there was never enough of it on the benches" }
+          },
+          {
+            "title": "Invoke a Point of Grievance on the Terms",
+            "advantages": ["A legitimate procedural challenge can force the Trial onto neutral ground or a fairer bid", "Buys the green Star time to drill before the rematch"],
+            "disadvantages": ["Invoking procedure against a batchall reads as reluctance to fight — a stain the watching Clusters remember", "{NPC:opfor-commander} may answer the procedural challenge with a personal one, raising the stakes again"],
+            "consequence": "You improve the Trial's fairness at the cost of your line's reputation for eagerness; among warriors who prize the charge, hesitation is its own defeat.",
+            "costs": { "cbills": 0, "days": 7, "resource": "reputation: a procedural challenge spends the line's name for boldness to buy fairer terms", "risk": "The watching Clusters file the delay as reluctance, and {NPC:opfor-commander} may escalate to a personal grievance that no procedure can soften" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Both Stars deploy across the caldera benches; {NPC:opfor-commander} states the bid in the formal batchall and the watching Clusters fall silent." },
+        { "t": "T+4:00", "event": "First contact across the central bridges; the green Star's blooding begins as the Veterans press for a bench." },
+        { "t": "T+12:00", "event": "Control of at least one central rock bridge must be established by now, or the enemy Star concentrates on a single bench and rolls up the green warriors in detail." },
+        { "t": "T+20:00", "event": "The grievance reaches its crisis — {NPC:opfor-commander} commits to the bench where the contested bloodname's honor is decided; single combat with him is possible from this point." },
+        { "t": "T+28:00", "event": "The Trial resolves by the formal conventions; a Star that has not secured a decisive bench by now has lost the grievance whatever its surviving strength." }
+      ],
+      "hardDeadline": "You must win control of a central bridge by T+12:00. Miss it and {NPC:opfor-commander}'s Veteran Star grinds down the green warriors one bench at a time, and the Trial and the bloodname are both lost by attrition before T+28:00."
+    },
+    "opforSketch": {
+      "composition": "One Clan Star of five heavy 'Mechs (60-85 tons) at Veteran quality, hand-picked from the rival bloodhouse for the grievance, led by {NPC:opfor-commander} in a command assault or heavy. No vehicles — this is a Trial of Refusal fought strictly 'Mech against 'Mech under Clan honor convention, and no Clan warrior would dishonor a bloodname Trial with armor support. Disciplined, aggressive, contemptuous of the green Star.",
+      "behavior": "Trial doctrine: engage in formal Clan style, one warrior seeking one opponent, pressing the bridges to concentrate against the weakest bench. {NPC:opfor-commander} fights to claim the bloodname cleanly and will accept a challenge to single combat as the highest honor — but his Star fights to win the grievance, breaking off only at zellbrigen's conventions or a clear decision, not at a damage threshold."
+    },
+    "forks": [
+      {
+        "name": "OPERATION SETTLED LINE",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Trial won AND {NPC:opfor-commander} defeated in single combat, the grievance settled beyond re-opening.",
+        "consequence": "The bloodname is secured and the green Star blooded into a unit of standing. {EMPLOYER} entrusts your now-proven Star with a true combat command — a follow-on objective raid into Inner Sphere territory to claim isorla worthy of the line's restored honor.",
+        "threat": "MEDIUM",
+        "family": "OBJECTIVE_RAID"
+      },
+      {
+        "name": "OPERATION THIRD GRIEVANCE",
+        "outcomeGate": "SUCCESS",
+        "trigger": "Trial won and the bloodname defended, but {NPC:opfor-commander} survives unbroken.",
+        "consequence": "The bloodname holds but the rival line is not satisfied. {NPC:opfor-commander} will find a third pretext, and your command must garrison the line's holdings against the next manufactured grievance while the green Star hardens into veterans.",
+        "threat": "MEDIUM",
+        "family": "GARRISON_DUTY"
+      },
+      {
+        "name": "OPERATION FORFEIT NAME",
+        "outcomeGate": "FAILURE",
+        "trigger": "Trial lost, or the green Star shattered beyond the line's ability to field it.",
+        "consequence": "The bloodname is discredited and the rival line ascendant. Disgraced, your command is reduced to a solahma posting — a desperate defense against an Inner Sphere counter-push the rival Cluster has left you to absorb alone, the last chance to die with honor restored.",
+        "threat": "EXTREME",
+        "family": "GARRISON_DUTY"
+      }
+    ],
+    "storyElementSeed": "A newly-blooded warrior holds a rock bridge alone, watching a Veteran heavy cross the basalt toward her. She remembers her Star Commander's one instruction before the Trial: she was not brought here to win, but to learn whether she can. The lava tube behind her does not care which.",
+    "voiceSlots": ["command", "intelligence", "engineering"],
+    "registerVariants": {
+      "is-kurita": {
+        "situation": "Observed from the Combine's intelligence desk: a Clan bloodhouse in the occupation zone reopens a Trial of Grievance one season after a contested loss, the rival Star Commander {NPC:opfor-commander} staging a Trial of Refusal to claim a bloodname outright. The caldera range gives three basalt fighting benches over lava-tube ravines, a single rock bridge between each. The Clan honor that binds the result is also the seam an outside observer learns to read."
+      }
+    },
+    "specifics": {
+      "STAR_SIZE": { "min": 5, "max": 5, "unit": "'Mechs per Star in the Trial" },
+      "BENCHES": { "min": 3, "max": 3, "unit": "basalt fighting benches in the caldera" },
+      "BLOODING_TURNS_TO_CAP": { "min": 3, "max": 5, "unit": "turns of survival to harden a green warrior toward Regular" }
+    },
+    "phases": [
+      {
+        "name": "POSTURE — THE BATCHALL",
+        "lead": "The rematch opens with words, not weapons. The bid is answered, the green Star drilled against the terms it will face, and the watching Clusters take the measure of the line before a shot is fired.",
+        "dataBlock": {
+          "The bid": "{NPC:opfor-commander} bids down to five Veteran heavies, the caldera range named",
+          "Your force": "A Star of five newly-blooded warriors, fresh from Trials of Position",
+          "The stake": "Not a 'Mech but the bloodline's claim to the contested name",
+          "Witnesses": "Both Clusters watch; their witness makes the result binding"
+        },
+        "protocol": { "Batchall": "The challenge and bid are stated formally; the answer (accept, counter-bid, or grievance) is given in kind before the Clusters", "Zellbrigen": "The Trial is fought one warrior to one opponent; breaking the dueling convention dishonors the line even in victory", "Bloodname stake": "A second loss discredits the name itself, not merely the forfeited machine" },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "Why a Clan teaches by nearly killing: the logic of blooding green warriors against a chosen enemy, and what a Star Commander accepts as the cost of making warriors." }
+      },
+      {
+        "name": "FLASHPOINT — THE BENCHES",
+        "lead": "The Trial is won and lost on the rock bridges between the basalt benches. The green Star bloods itself in the first exchanges, and control of a central bridge decides whether it fights concentrated or is rolled up in detail.",
+        "dataBlock": {
+          "Bridge control": "Single-'Mech chokepoints; a bench can only be reinforced across a held bridge",
+          "Blooding curve": "Each turn a green warrior survives in combat hardens their skill a step toward Regular",
+          "Fall hazard": "A 'Mech pushed off a bench edge is lost to the ravine",
+          "Concentration deadline": "Hold a central bridge by T+12:00 or be defeated bench by bench"
+        },
+        "sidebarKernel": { "voiceSlot": "engineering", "kernel": "Fighting on basalt benches over lava tubes: the piloting margins on a single-'Mech bridge, and why a knockdown here is not a recoverable mistake." }
+      },
+      {
+        "name": "RESOLUTION — THE GRIEVANCE SETTLED",
+        "lead": "The Trial reaches its formal decision and {NPC:opfor-commander} commits to the bench where the bloodname is decided. A clean win settles the line's honor; a survival that does not break the rival schedules the next grievance.",
+        "dataBlock": {
+          "Single combat": "Defeating {NPC:opfor-commander} personally settles the grievance beyond re-opening",
+          "Formal decision": "The Trial resolves by convention at T+28:00; a Star without a decisive bench has lost",
+          "The blooded Star": "Survivors emerge tested — the secondary objective measures cohesion, not casualty count"
+        },
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "Reading whether a rival bloodline will accept a decision or manufacture a third grievance — the Clan-politics signatures that separate a settled matter from a deferred one." }
+      }
+    ]
+  },
+  {
+    "seedId": "ARC-07",
+    "family": "RELIEF_DUTY",
+    "title": "OPERATION SPITE EMBARGO",
+    "eraFit": ["succession-wars"],
+    "factionFit": ["periphery", "merc"],
+    "register": "periphery",
+    "skeleton": "relief force must break a punitive blockade that exists purely as spite for an earlier defiance, where destroying it too thoroughly provokes the besieger's withheld reserve and a weather-gated chokepoint meters every convoy against a starvation clock",
+    "inspiration": "the Berlin Blockade and airlift, 1948 (a stranglehold imposed as political punishment, where the relief had to outlast the spite rather than win outright)",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.45,
+    "localeFit": { "settlement": ["frontier"], "regionRole": ["border"], "terrain": ["mountain"] },
+    "situation": "{WORLD}, {DISTRICT}, Periphery border, {YEAR}. A mining settlement refused to pay the protection tithe that a regional strongman, {NPC:opfor-commander}, demanded after his last raid was driven off. His answer was not another raid but a blockade: a stranglehold on the one road that feeds the settlement, set up purely to starve the town that humiliated him. {EMPLOYER}, the settlement's mining cooperative, has no C-bills and pays in refined ore. They have hired your command to break the blockade and reopen the road. They also know that breaking it cleanly will only provoke the strongman into squeezing harder. The terrain problem is the defile: a 4-kilometer canyon cut by a seasonal meltwater river. It is the only ground-vehicle route between the settlement and the railhead, where its ore is sold and its food is bought. {NPC:opfor-commander} has dug in a toll and blockade at the defile's narrows, where the canyon pinches to 30 meters. There, the river crossing forces traffic onto a ford that floods too deep to pass for 6 hours after any upland rain. {NPC:intel-source}, a teamster who runs the ore wagons and has been turned back at the toll three times, reports the blockade as one lance of worn 'Mechs plus a mix of tracked and wheeled armor scraped from the strongman's holdings, Green-to-Regular, dug in at the narrows with the high canyon walls covering the ford. That report is 7 days old. The settlement's problem is simple math: 19 days of food left at current rationing, and the ore that pays for resupply cannot move until the road opens. Break the blockade and the food moves. Fail and the town surrenders or starves. What the cooperative would rather not think about: {NPC:opfor-commander} has held back most of his strength, and crushing his blockade is exactly the humiliation that brings the rest of it down on the settlement. The 2,800 miners and their families live here and have nowhere else to go. If it comes to it, they will fight beside you with hunting rifles and mining charges. No help is coming but yours.",
+    "objectives": {
+      "primary": "Break {NPC:opfor-commander}'s blockade at the defile and reopen the road between the settlement and the railhead to ore and food traffic.",
+      "secondary": "Get at least one ore convoy through to the railhead and one food convoy back before the settlement's 19-day reserve runs out.",
+      "bonus": "Damage the blockade force badly enough that {NPC:opfor-commander} cannot quickly re-establish it, buying the settlement a real respite rather than a brief reopening."
+    },
+    "complications": [
+      {
+        "name": "The Flooding Ford",
+        "text": "The ford floods to impassable depth for 6 hours after any upland rain, and the season makes rain a near-daily gamble. The flood blocks the road as surely as the blockade does, and it does not care which side it strands. Timing the convoy to the dry window is half the battle.",
+        "mechanicalEffect": "Roll 1d6 at the start of each operational day: on a 1-2 an upland rain has flooded the ford, closing it to all traffic for 6 hours and stranding any unit caught mid-crossing on the far bank."
+      },
+      {
+        "name": "Payment in Ore",
+        "text": "The cooperative has no C-bills. It pays in refined ore, and that ore only becomes money once it is hauled to the railhead and sold. So any cash cost here is really a cost in ore the blockade is stopping them from selling. The contract pays only if the road opens.",
+        "mechanicalEffect": "Any decision-point option with a C-bill cost is repriced as a deferred ore-payment lien against the reopened road; if the primary objective fails, the unit collects nothing, as the ore cannot move."
+      },
+      {
+        "name": "The Strongman's Reserve",
+        "text": "{NPC:opfor-commander} has committed only part of his strength to the defile. A clean, humiliating defeat of the blockade is the provocation that brings the rest down on the settlement. Winning too well wins the battle and loses the town.",
+        "mechanicalEffect": "If the blockade force is destroyed rather than driven off, the bonus objective inverts: the strongman commits his reserve and the resolution shifts toward the FAILURE-adjacent reprisal fork at elevated threat."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Breaking the Narrows",
+        "context": "The blockade sits where the defile pinches to 30 meters with the ford under the canyon walls' guns. You can force the narrows head-on, find a way around the strongman's chosen ground, or break the blockade by cutting off what sustains it rather than fighting through it.",
+        "options": [
+          {
+            "title": "Force the Narrows Directly",
+            "advantages": ["Fastest reopening of the road if it succeeds", "A 30-meter frontage limits how much the blockade can bring to bear at once"],
+            "disadvantages": ["The canyon walls' guns cover the ford and the narrows is the strongman's prepared killing ground", "A unit caught at the ford when it floods is trapped under those guns"],
+            "consequence": "You take the road by main force, paying in the canyon's prepared fires; the road opens fast or not at all.",
+            "costs": { "cbills": 0, "days": null, "resource": "casualties: a frontal push through the pinched ford under the wall guns is the bloodiest way through", "risk": "A flood roll during the assault strands the lead element on the far bank under the blockade's prepared fire" }
+          },
+          {
+            "title": "Flank Over the Canyon Rim",
+            "advantages": ["A climb to the canyon rim takes the blockade's wall guns from above and behind", "Bypasses the prepared ford killing ground entirely"],
+            "disadvantages": ["The rim route is passable only to lighter 'Mechs and not to the convoy that must follow", "A force divided between rim and floor can be defeated in detail if the timing slips"],
+            "consequence": "You unhinge the blockade from above but split your force to do it, and the convoy still has to come through the floor afterward.",
+            "costs": { "cbills": 0, "days": 2, "resource": "engineering: scouting and marking a 'Mech-passable rim route before the assault", "risk": "A force divided between rim and floor invites defeat in detail if the rim element arrives late or the floor element commits early" }
+          },
+          {
+            "title": "Cut the Blockade's Supply Line",
+            "advantages": ["A scratch blockade force fed from the strongman's holdings folds if its own resupply is severed", "Avoids a direct fight at the prepared narrows"],
+            "disadvantages": ["Strangling the blockade out takes days the settlement's food reserve may not have", "Raiding the strongman's supply route is the kind of provocation that brings his reserve out early"],
+            "consequence": "You break the blockade by attrition rather than assault, trading the settlement's dwindling days for a fight avoided at the narrows.",
+            "costs": { "cbills": 8000, "days": 9, "resource": "time against the 19-day food reserve — a siege of the besiegers the town may not be able to wait out", "risk": "Raiding his supply line provokes the strongman's reserve before the blockade has even folded" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Relief force enters the defile; the blockade's lookouts on the canyon rim signal the narrows and the dug-in force stands to." },
+        { "t": "T+4:00", "event": "Blockade wall guns open on the ford approach; the strongman's armor shifts to cover the narrows; a rim-flank element, if sent, begins its climb." },
+        { "t": "T+10:00", "event": "The narrows must be broken or unhinged by now to push a convoy through inside the day's dry window before a flood roll can close the ford." },
+        { "t": "T+16:00", "event": "If the blockade still holds, {NPC:opfor-commander} is alerted that his position is under serious attack and weighs committing his reserve from the holdings." },
+        { "t": "T+24:00", "event": "The strongman's reserve can reach the defile from this point; a blockade not yet broken becomes a two-sided fight the relief force cannot sustain." }
+      ],
+      "hardDeadline": "The narrows must be broken and a convoy moving by T+16:00. Later than that, {NPC:opfor-commander} commits his reserve from the holdings. The relief force is then caught in the defile between the blockade and its reinforcements, with the road still shut and the settlement still starving."
+    },
+    "opforSketch": {
+      "composition": "One lance of worn 'Mechs (30-55 tons, poorly maintained) at Green-to-Regular quality, supported by a scratch armor mix of 5 to 7 tracked and wheeled vehicles (Scorpion/Pegasus/Goblin behavior) dug in at the canyon narrows with the high walls covering the ford. A blockade, not a field force — emplaced, supply-dependent, holding ground it did not choose for a fight it would rather not have.",
+      "behavior": "Blockade doctrine: hold the narrows and the ford guns, tax or turn back traffic, and avoid a decisive engagement that would consume a force the strongman cannot easily replace. The blockade fights hard from prepared positions but is brittle — it breaks contact and abandons the narrows at 35 percent force damage rather than be destroyed, falling back toward the strongman's holdings to be rebuilt."
+    },
+    "forks": [
+      {
+        "name": "OPERATION OPEN ROAD",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Blockade broken and damaged badly enough that it cannot quickly re-form; an ore convoy out and a food convoy in before the reserve runs out.",
+        "consequence": "The Reach breathes, and {NPC:opfor-commander}, his blockade wrecked and his reserve unwilling to throw good force after bad, sues for an uneasy truce — your command is retained to garrison the reopened road against the day he changes his mind.",
+        "threat": "MEDIUM",
+        "family": "GARRISON_DUTY"
+      },
+      {
+        "name": "OPERATION SECOND SQUEEZE",
+        "outcomeGate": "SUCCESS",
+        "trigger": "Blockade driven off and the road reopened, but the strongman's strength is largely intact.",
+        "consequence": "Humiliated again, {NPC:opfor-commander} brings down the reserve he held back — a heavier blockade or a punitive raid that your command must now break a second time, the embargo escalated into open war over the road.",
+        "threat": "HIGH",
+        "family": "RELIEF_DUTY"
+      },
+      {
+        "name": "OPERATION HUNGRY REACH",
+        "outcomeGate": "FAILURE",
+        "trigger": "Blockade holds, the relief force is mauled in the defile, or the food reserve runs out before the road opens.",
+        "consequence": "The settlement faces capitulation or starvation. {EMPLOYER} begs your command to cover an exodus of the settlement's families to a neighboring holding before the strongman's terms turn punitive — an escort of refugees down a road still under his guns.",
+        "threat": "HIGH",
+        "family": "RELIEF_DUTY"
+      }
+    ],
+    "storyElementSeed": "A teamster sits with the relief commander on the dry stones above the ford. He points at the high-water mark stained on the canyon wall, well above a 'Mech's knee. The river, he explains, has killed more wagons than the strongman ever has, so the only schedule that matters here is the rain's.",
+    "voiceSlots": ["command", "logistics", "intelligence", "engineering"],
+    "registerVariants": {
+      "merc": {
+        "objectives.primary": "Contract pays in refined ore against the road reopening — no road, no payout, and the ore is collateral you can only collect by succeeding. Break the blockade, move the convoys, and the lien clears at the railhead. Read the no-cash-escrow terms before you price a single option."
+      }
+    },
+    "specifics": {
+      "FOOD_RESERVE_DAYS": { "min": 16, "max": 22, "unit": "days of food at current rationing" },
+      "DEFILE_NARROWS_M": { "min": 25, "max": 35, "unit": "meters width at the canyon narrows" },
+      "FORD_FLOOD_HOURS": { "min": 5, "max": 7, "unit": "hours the ford is impassable after upland rain" },
+      "BLOCKADE_VEHICLES": { "min": 5, "max": 7, "unit": "blockade armor vehicles at the narrows" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Cut the Blockade's Supply Line", "requires": "established-base", "whenLacking": "reprice", "lackingText": "No forward base in-system: a supply-line raid must stage from the DropShip. That adds two days of travel each way and pushes the slow strangle past the settlement's food reserve. The option works only if the settlement can stretch its rations further than the brief assumes." }
+    ],
+    "phases": [
+      {
+        "name": "POSTURE — THE CLOSED ROAD",
+        "lead": "The relief force learns the defile before it fights for it — the ford's flood rhythm, the blockade's habits, and the settlement's shrinking larder. The road is the whole campaign in four kilometers of canyon.",
+        "dataBlock": {
+          "The defile": "4km canyon, narrows to 30m at the toll position, one flooding ford",
+          "Blockade": "1 worn 'Mech lance plus 5-7 scratch armor vehicles, dug in under the wall guns",
+          "Settlement clock": "19 days of food at current rationing; ore stockpile frozen until the road opens",
+          "Flood rhythm": "Ford impassable 6 hours after any upland rain — a near-daily gamble this season"
+        },
+        "routes": [
+          { "name": "BRINE — THE FORD APPROACH", "desc": "The direct ground-vehicle road through the narrows and across the ford", "tradeoff": "The only convoy-capable route; runs straight through the prepared killing ground under the wall guns" },
+          { "name": "SCREE — THE CANYON RIM", "desc": "A 'Mech-only climb to the rim above the blockade", "tradeoff": "Takes the wall guns from above but cannot carry the convoy that must follow on the floor" }
+        ],
+        "protocol": "Convoy discipline ties everything to the weather: no convoy enters the defile without a confirmed dry-window forecast from the upland watchers. Codeword HIGH WATER on the relief net means an upland rain has been sighted and the ford will close within the hour — at HIGH WATER any unit on the far bank withdraws or commits before the flood, with no middle option.",
+        "sidebarKernel": { "voiceSlot": "logistics", "kernel": "Relief paid in ore that cannot move until you succeed: the arithmetic of a no-cash contract, and why the food clock and the payout clock are the same clock." }
+      },
+      {
+        "name": "FLASHPOINT — THE NARROWS",
+        "lead": "The blockade is broken head-on, unhinged from the rim, or strangled from behind. Whichever way, the convoy still has to pass the ford, and the river keeps its own schedule.",
+        "dataBlock": {
+          "Break deadline": "Narrows broken and a convoy moving by T+16:00 before the reserve is committed",
+          "Brittleness": "The blockade abandons the narrows at 35 percent damage — driven off, not destroyed, is the cheaper win",
+          "Flood risk": "A flood roll mid-assault strands the far-bank element under the wall guns",
+          "Reserve trigger": "Destroying the blockade outright brings the strongman's reserve down on the settlement"
+        },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "Why driving the blockade off beats destroying it: the provocation arithmetic of a spite-blockade, and the difference between reopening a road and starting a war over it." }
+      },
+      {
+        "name": "RESOLUTION — THE CONVOYS RUN",
+        "lead": "An open road is only as good as what moves on it. The ore goes out, the food comes back, and the question of whether the respite holds depends on how badly the blockade was hurt and how the strongman reads the loss.",
+        "dataBlock": {
+          "Convoy throughput": "At least one ore convoy out and one food convoy in before the reserve runs out",
+          "Respite measure": "A blockade wrecked beyond quick rebuild buys real time; one merely driven off buys days",
+          "Truce or war": "The strongman's reserve, intact or spent, decides whether the road stays open"
+        },
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "Reading a humiliated strongman: the signs that he will cut his losses and treat versus the signs he will throw his reserve after his blockade out of pure spite." }
+      }
+    ]
+  },
+  {
+    "seedId": "ARC-08",
+    "family": "SECURITY_DUTY",
+    "title": "OPERATION SWORN STATEMENT",
+    "eraFit": ["jihad"],
+    "factionFit": ["is-marik", "merc"],
+    "register": "is-marik",
+    "skeleton": "protectors must deliver a fragile witness across a single exposed span to give the testimony that names a reprisal's author, against a fanatical cell that will spend itself entirely for one shot and a deadline that convenes only once",
+    "inspiration": "the witness-protection delivery against an organized contract to silence (the mob-trial pattern of a star witness who must reach the stand alive past a sworn effort to stop them)",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.3,
+    "localeFit": { "settlement": ["capital"], "regionRole": ["interior"], "terrain": ["coastal", "urban"] },
+    "situation": "{WORLD}, {DISTRICT} core, {YEAR}. A Word of Blake reprisal cell razed a border town to punish a parliamentary vote that condemned the Blakist occupation. One witness can name the cell's commander to the Estates General: a surviving municipal records clerk, now sheltering in the provincial assembly town under your command's protection. {EMPLOYER}, a provincial deputy whose vote provoked the reprisal, needs the witness alive and on the assembly floor in 5 days. A named, sworn statement turns a deniable atrocity into a clear cause for war that the wavering provinces cannot ignore. The Blakist cell needs the witness dead before then, and has already tried once. The terrain problem is the causeway span, a 2-kilometer bridge carrying the only hard road from the assembly town's island core to the mainland district where the witness must testify. It crosses a tidal estuary a 'Mech cannot wade. The span is the witness's only route to the assembly floor, and the cell's best chance to kill the convoy carrying them. {NPC:intel-source}, a provincial intelligence liaison, reports the cell as one mixed 'Mech lance plus a strike team backed by hover armor and VTOLs, Veteran quality, willing to die to silence the witness. The liaison rates an all-out attempt on the span during the transit as very likely. That report is 3 days old and rated reliable. The witness is fragile: a records clerk, not a soldier, shaken by the razing and likely to bolt. Guarding the body is only half the task; steadying the nerves is the other half. What the deputy will not say on the assembly floor: the razing was itself an answer to his vote, and a sworn statement naming the cell is the next move in a chain. Win or lose, it will bring a heavier Blakist blow down on the province. The assembly town holds 90,000 residents, packed along the convoy route, and the cell will not hesitate to use them as cover or spend them as casualties. Five days to the testimony. The cell needs only one.",
+    "objectives": {
+      "primary": "Keep the witness alive and deliver them to the Estates General assembly floor in the provincial assembly town to give a sworn statement within the 5-day window.",
+      "secondary": "Defeat or break the Blakist reprisal cell's attempt on the witness so decisively that they cannot mount a second try before the testimony is given.",
+      "bonus": "Capture a member of the cell alive, producing corroborating testimony that makes the witness's statement unimpeachable before the wavering provinces."
+    },
+    "complications": [
+      {
+        "name": "The Fragile Witness",
+        "text": "The witness is a records clerk, not a soldier, and the razing has left them prone to panic and flight. Protecting the body is only half the duty; a witness who bolts at the wrong moment, or refuses to cross the span, fails the mission as surely as a sniper would.",
+        "mechanicalEffect": "At each point of high stress — an attack on the convoy, a near-miss, the span crossing — roll 2d6: on 5 or less the witness panics, halting or scattering the protective formation for one turn unless a command unit is adjacent to steady them."
+      },
+      {
+        "name": "The Crowded Route",
+        "text": "Ninety thousand residents pack the convoy route and the span approaches. The cell will use the crowd as cover for its strike team and as hostages against your fires. Every weapon discharged near the assembly town is a political act the deputy will answer for.",
+        "mechanicalEffect": "Hexes along the convoy route contain concealed civilian crowds; any area-effect fire or collateral damage in them imposes an immediate employer-standing penalty and voids the bonus objective, and the cell may place its strike team within crowd hexes until it fires."
+      },
+      {
+        "name": "Fanatical Resolve",
+        "text": "The reprisal cell will spend itself entirely to silence the witness. They do not break at normal thresholds, do not retreat to preserve force, and will trade their whole strength for one clean shot at the convoy. Stopping them means stopping all of them.",
+        "mechanicalEffect": "The Blakist cell ignores morale and damage-threshold withdrawal entirely; units fight until destroyed or mission-failed, and any cell unit that reaches direct-fire range of the witness's transport gets a guaranteed attack before it can be neutralized."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Crossing the Span",
+        "context": "The witness must cross the causeway span to reach the assembly floor, and the cell knows it. You can run the span fast and exposed, secure it methodically first, or deny the cell its target by moving the witness another way entirely.",
+        "options": [
+          {
+            "title": "Run the Span at Speed",
+            "advantages": ["A fast transit minimizes the window the cell has to strike on the bridge", "Keeps the witness moving toward the deadline without delay"],
+            "disadvantages": ["A convoy at speed on a 2-kilometer span has no cover and no room to maneuver if hit", "A single disabled vehicle blocks the cantilever and traps everything behind it"],
+            "consequence": "You bet the crossing on speed and surprise; if the cell springs its strike mid-span, the convoy fights strung out on a bridge with the estuary on both sides.",
+            "costs": { "cbills": 0, "days": null, "resource": "exposure: a high-speed convoy crosses 2km of open cantilever with no cover and no fallback", "risk": "One disabled vehicle on the span blocks the cantilever and the whole convoy is pinned over open water" }
+          },
+          {
+            "title": "Secure the Span First, Then Cross",
+            "advantages": ["Clearing the span and its approaches before the convoy moves denies the cell its prepared positions", "Lets the protective force fight on its own terms rather than reacting on the bridge"],
+            "disadvantages": ["A deliberate clearance burns hours against a 5-day clock the cell can stretch with feints", "Securing the span signals exactly when and where the convoy will cross"],
+            "consequence": "You trade time and surprise for a cleared route; the cell, denied the span, may strike the staging area instead or wait for the testimony itself.",
+            "costs": { "cbills": 5000, "days": 1, "resource": "time: a deliberate span clearance spends a day of the five against a deadline the cell exploits", "risk": "A telegraphed crossing lets the cell pick a different moment — the staging area or the assembly steps instead of the span" }
+          },
+          {
+            "title": "Move the Witness by Water Instead",
+            "advantages": ["A small boat across the estuary bypasses the span the cell has surely targeted", "Splits the cell's attention if a decoy convoy still runs the bridge"],
+            "disadvantages": ["The estuary crossing exposes the witness to the cell's VTOL support with no 'Mech cover on the water", "A fragile witness on open water in a small craft is one panic away from disaster"],
+            "consequence": "You deny the cell its chosen ground at the cost of putting the witness somewhere your 'Mechs cannot protect them, trusting a decoy to draw the strike.",
+            "costs": { "cbills": 12000, "days": null, "resource": "watercraft and a decoy convoy to sell the span crossing", "risk": "The witness on open water is beyond your 'Mechs' reach — if the cell reads the feint, the VTOLs have an undefended target" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Convoy departs the assembly town island core for the span; cell observers in the crowd mark the movement and signal the strike team." },
+        { "t": "T+4:00", "event": "Convoy reaches the span approach; the cell's hover and VTOL elements move to interdict, the 'Mech lance positioning to block the far end." },
+        { "t": "T+9:00", "event": "The witness must be across the span and onto the mainland district road by now to reach the assembly floor inside the testimony window." },
+        { "t": "T+15:00", "event": "If the convoy is held short of the span or pinned on it, the cell commits its full strength to a decisive attempt before relief can arrive." },
+        { "t": "T+22:00", "event": "League security reinforcements from the assembly garrison can reach the span; a cell not yet broken makes its final fanatical push before they arrive." }
+      ],
+      "hardDeadline": "The witness must be across the causeway span and clear of the bridge by T+9:00. Miss it and the cell pins the convoy on the open span, where your escort has no cover and no room, and presses its all-out attempt. Even if the witness lives, the testimony deadline is lost."
+    },
+    "opforSketch": {
+      "composition": "One mixed Blakist reprisal 'Mech lance (40-70 tons) at Veteran quality, supported by a hover-armor section and VTOL gunships (2 to 4 rotary-wing) and a dismounted strike team that fights as narrative dressing among the crowds. Fielded to interdict a moving convoy on a fixed route. Fanatical, willing to spend the whole force for one clean shot at the witness.",
+      "behavior": "Assassination-interdiction doctrine: the cell does not seek to win a battle but to reach and kill one target, accepting any loss to do it. The hover and VTOL elements probe for a gap while the 'Mech lance blocks the convoy's progress and channels it onto killing ground. The cell ignores damage-threshold withdrawal entirely and presses any unit that gets a line on the witness's transport, spending itself to the last machine."
+    },
+    "forks": [
+      {
+        "name": "OPERATION NAMED HAND",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Witness delivers the sworn statement AND a cell member is captured alive to corroborate it, the atrocity proven beyond deniability.",
+        "consequence": "The testimony swings the wavering provinces and the Estates General authorizes a punitive expedition. {EMPLOYER}, his vote vindicated, secures your command the lead in the follow-on raid to seize the named Blakist cell's forward base before it can disperse.",
+        "threat": "HIGH",
+        "family": "OBJECTIVE_RAID"
+      },
+      {
+        "name": "OPERATION SECOND CELL",
+        "outcomeGate": "SUCCESS",
+        "trigger": "Witness delivered and the statement given, the reprisal cell broken, but no captive secured.",
+        "consequence": "The statement lands but the Blakist command answers the casus belli with a heavier reprisal cell sent to silence the deputy himself. Your command shifts to securing {EMPLOYER} and the assembly against the next, larger attempt.",
+        "threat": "HIGH",
+        "family": "SECURITY_DUTY"
+      },
+      {
+        "name": "OPERATION SILENCED CLERK",
+        "outcomeGate": "FAILURE",
+        "trigger": "Witness killed, the testimony deadline missed, or the convoy destroyed on the span.",
+        "consequence": "With the witness silenced, the atrocity stays deniable and the Blakists ascendant. {EMPLOYER}, exposed and desperate, pulls your command into a covering action as the province's loyalist holdouts withdraw ahead of the reprisal the failed testimony failed to prevent.",
+        "threat": "EXTREME",
+        "family": "RELIEF_DUTY"
+      }
+    ],
+    "storyElementSeed": "The records clerk grips the transport door handle at the foot of the causeway span, staring down two kilometers of empty bridge with the estuary glittering on both sides. The section commander has thirty seconds to decide whether to talk them across or carry them. The assembly floor will not convene twice, and the deadline will not move.",
+    "voiceSlots": ["command", "intelligence", "medical"],
+    "registerVariants": {
+      "comstar": {
+        "situation": "{WORLD}, {YEAR}. A schismatic cell of our own order has answered a parliamentary condemnation with fire, razing a provincial town as reprisal, and the single witness who can name its commander to the Estates General shelters under your protection in the assembly town. The witness must reach the assembly floor across the causeway span in five days; the cell needs only the one crossing to silence them. The Word that razed the town will answer a sworn naming with a heavier hand — information here is both shield and provocation."
+      },
+      "merc": {
+        "objectives.primary": "Contract is body-and-delivery: the witness alive on the assembly floor within 5 days, full payout, no partial credit for a live witness who never testifies. The political fallout is the deputy's problem; the clerk in one piece on the floor is yours. Section 4 prices the failure clause — read it."
+      }
+    },
+    "specifics": {
+      "TESTIMONY_DAYS": { "min": 4, "max": 6, "unit": "days until the assembly testimony window" },
+      "SPAN_LENGTH_KM": { "min": 2, "max": 2, "unit": "kilometers of cantilever span" },
+      "CELL_VTOLS": { "min": 2, "max": 4, "unit": "Blakist VTOL gunships supporting the cell" },
+      "TOWN_POPULATION": { "min": 80000, "max": 100000, "unit": "civilians in the assembly town" }
+    },
+    "assetDetails": [
+      { "ref": "{NPC:protected-witness}", "detail": "Municipal records clerk, not a soldier; traumatized by the razing and prone to panic and flight. Carries the names in memory and on a personal data slate — both must reach the assembly floor.", "priority": "high" },
+      { "ref": "{NPC:intel-source}", "detail": "League MIIO liaison; provides the cell's strength estimate and the high-probability span assessment but cannot confirm whether the cell has placed its strike team in the crowd ahead of the convoy.", "priority": "medium" }
+    ],
+    "phases": [
+      {
+        "name": "POSTURE — THE WATCH OVER THE WITNESS",
+        "lead": "Before the crossing comes the keeping. The protective force learns the convoy route, steadies the witness, and reads the crowd for the cell's observers in the days before the testimony.",
+        "dataBlock": {
+          "The witness": "A records clerk, fragile, who can name the cell commander to the Estates General",
+          "The route": "Island core to the causeway span to the mainland assembly district",
+          "The cell": "1 Veteran 'Mech lance plus hover and 2-4 VTOL gunships, fanatical, already tried once",
+          "The clock": "5 days to the testimony; the cell needs only one crossing"
+        },
+        "protocol": "Witness-protection discipline governs every movement: the convoy route and timing are held to the smallest circle and changed if compromised. Codeword GLASS HOUSE on the security net means the witness's location or route is believed blown — at GLASS HOUSE the convoy reverts to the pre-planned alternate crossing without further order.",
+        "sidebarKernel": { "voiceSlot": "medical", "kernel": "Protecting a will as much as a body: what a traumatized civilian witness needs to stay functional through a combat transit, and the signs they are about to bolt." }
+      },
+      {
+        "name": "FLASHPOINT — THE SPAN",
+        "lead": "The crossing is the cell's one good chance and the convoy's most exposed moment. Fast, deliberate, or by water — the choice decides whether the fight happens on the cantilever or somewhere the cell did not expect.",
+        "dataBlock": {
+          "Span exposure": "2km of open cantilever, no cover, the estuary on both sides, one disabled vehicle blocks all",
+          "Crossing deadline": "Witness across and clear by T+9:00 to reach the floor in the window",
+          "Fanatical press": "The cell ignores withdrawal thresholds; any unit on a line to the transport gets a shot",
+          "Crowd cover": "The strike team hides among 90,000 residents until it fires"
+        },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "Fighting to protect rather than to win: why a fanatical assassination attempt inverts normal tactics, and the discipline of holding a formation around a transport that cannot be allowed to stop." }
+      },
+      {
+        "name": "RESOLUTION — THE STATEMENT",
+        "lead": "A witness on the assembly floor converts an atrocity into a casus belli — and into the next, heavier Blakist answer. The result decides not whether the chain ends but which way it escalates.",
+        "dataBlock": {
+          "Delivery": "Witness on the floor within the window, statement sworn, names entered into the record",
+          "Corroboration": "A captured cell member makes the statement unimpeachable before the wavering provinces",
+          "The next answer": "A sworn naming provokes a heavier reprisal whatever the testimony's success"
+        },
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "Why winning here guarantees a worse fight next: the reprisal logic of a Blakist cell that reads a sworn statement as the opening of a war it intends to finish." }
+      }
+    ]
+  },
+  {
+    "seedId": "ARC-09",
+    "family": "RECON_RAID",
+    "title": "OPERATION KNOWN QUANTITY",
+    "eraFit": ["jihad", "dark-age"],
+    "factionFit": ["comstar", "merc"],
+    "register": "comstar",
+    "skeleton": "recon element must determine whether a massed reprisal force is the feared veteran formation or a feint wearing borrowed banners, from a finite set of one-use silhouette positions, where being seen scouting is itself the intelligence that decides how the enemy commits",
+    "inspiration": "the pre-Kursk reconnaissance problem, 1943 (confirming whether a massed force was the real main effort or a deception, where the act of looking risked revealing one's own uncertainty)",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "MECH_ONLY",
+    "localeFit": { "settlement": ["frontier"], "regionRole": ["contested"], "terrain": ["mountain"] },
+    "situation": "{WORLD}, {DISTRICT}, contested HPG world, {YEAR}. {TARGET_FACTION} has massed a reprisal force in the highlands to answer a raid that cost them a relay station. {EMPLOYER}'s whole response hinges on one question that orbit cannot answer: is this the feared veteran formation its banners claim, or a hasty feint meant to pull {EMPLOYER}'s reserve out of position before the real blow lands somewhere else? Your command is to confirm the force's true makeup and quality up close, then withdraw with the answer before the reprisal moves. The prize is certainty, not ground. The terrain problem is the highland pass: folded ridgelines above the plateau where the enemy is staging. You can see the staging ground from only three overwatch knobs, each a bare rock outcrop with one covered approach and no second way off. A recon 'Mech on a knob can see the staging ground, but it stands exposed against the sky. Once a knob has been used and spotted, it cannot be used safely again. {NPC:intel-source}, a Precentor's deep-cover agent inside the {TARGET_FACTION} supply train, puts the staging force at battalion strength by its banners, but cannot tell whether the 'Mechs behind those banners are first-line machines or a scratch collection wearing borrowed paint. That report is 2 days old, and the source cannot get closer without being caught. The difference decides everything. A real veteran reprisal needs {EMPLOYER}'s full reserve; committing that reserve against a feint leaves the true target undefended. The brief states the danger plainly: the enemy runs its own recon screen, and if it spots your scouts on the knobs, it learns that {EMPLOYER} is unsure. That doubt is itself intelligence, and it shapes how the enemy commits. Looking risks telling them you needed to look. The plateau is war-scarred, its towns long emptied by repeated battles over the HPG compound. Only the ridges, the staging ground, and two recon screens remain, each trying not to be the first one seen.",
+    "objectives": {
+      "primary": "Confirm the true composition and quality of the {TARGET_FACTION} reprisal force in the highlands — veteran first-line or scratch feint — and withdraw with the verified answer.",
+      "secondary": "Complete the reconnaissance without being detected, so the enemy does not learn that {EMPLOYER}'s response hinges on uncertainty.",
+      "bonus": "Identify the reprisal force's intended objective from its staging dispositions, revealing not only what it is but where it means to strike."
+    },
+    "complications": [
+      {
+        "name": "The Silhouette Knobs",
+        "text": "The three overwatch knobs are the only positions that see the staging ground, and each one silhouettes whatever stands on it. A knob once occupied and spotted is burned — the enemy screen watches it thereafter. There are three looks available and no more.",
+        "mechanicalEffect": "Each of the three knobs may be occupied once; occupying a knob grants one composition-assessment roll but risks detection (2d6, detected on 5 or less, modified by movement and time spent). A detected knob cannot be re-used and raises the detection difficulty on the remaining knobs."
+      },
+      {
+        "name": "Banners Can Lie",
+        "text": "The reprisal force flies the banners of a feared veteran formation, but banners are only paint. The 'Mechs behind them may be first-line, or a scratch collection borrowing the colors to look scarier. Counting machines is not enough. You have to judge their quality from how they move, maintain, and screen.",
+        "mechanicalEffect": "A single overwatch look yields machine count and banner identity only; determining true quality (veteran versus scratch) requires either a second corroborating look from a different knob or a close-approach assessment that sharply raises detection risk."
+      },
+      {
+        "name": "Being Seen Reveals Your Doubt",
+        "text": "If the enemy spots your scouts on the knobs, it learns that {EMPLOYER} is unsure enough to send them. That doubt is intelligence the enemy uses to decide how to commit. So being seen costs you more than the recon force. It also gives away that your side is still guessing.",
+        "mechanicalEffect": "If the recon force is detected, the SUCCESS and FULL_SUCCESS forks are unavailable regardless of whether the composition was confirmed; the enemy adjusts its commitment to {EMPLOYER}'s revealed uncertainty and the resolution shifts toward the COMPROMISED branch."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Reading the Force",
+        "context": "Three knobs, three looks, and a question that may need more than one of them to answer. You can confirm composition from distance across multiple knobs, close to confirm quality at higher risk, or hold one knob in reserve against the enemy's own screen — each weighs certainty against exposure.",
+        "options": [
+          {
+            "title": "Distance Assessment Across the Knobs",
+            "advantages": ["Multiple long looks cross-check the count and quality without ever closing the range", "Keeps the recon force out of the enemy screen's effective reach"],
+            "disadvantages": ["Distance reads quality poorly — banners and machine counts, not crew skill", "Using all three knobs to be sure leaves no look in reserve if one read is ambiguous"],
+            "consequence": "You build certainty by accumulation, spending your looks to cross-check; if the reads disagree, there is no fourth knob to break the tie.",
+            "costs": { "cbills": 0, "days": null, "resource": "looks: cross-checking from distance spends multiple of the three available knobs", "risk": "Distance cannot confirm crew quality — you may leave certain of the count and guessing at the threat" }
+          },
+          {
+            "title": "Close to Confirm Quality",
+            "advantages": ["A close approach reads maintenance, drill, and screen discipline — the true marks of quality", "One good close look can answer the whole question definitively"],
+            "disadvantages": ["Closing the range puts the recon force inside the enemy screen's detection envelope", "A detected close approach forfeits the secret and may not survive to report"],
+            "consequence": "You go for the definitive answer at the highest exposure; success ends all doubt, detection ends the mission's deniability and possibly the recon force.",
+            "costs": { "cbills": 0, "days": null, "resource": "exposure: a close approach enters the enemy reconnaissance screen's effective range", "risk": "Detection inside the screen forfeits the secret that {EMPLOYER} was uncertain and may cost the recon force its withdrawal" }
+          },
+          {
+            "title": "Hold a Knob Against the Enemy Screen",
+            "advantages": ["Keeping one knob in reserve lets the recon force watch for the enemy's own scouts", "Detecting the enemy screen first preserves the option of clean withdrawal"],
+            "disadvantages": ["A knob spent watching the screen is a knob not spent reading the force", "Caution may yield a confident answer about the screen and an incomplete one about the force"],
+            "consequence": "You buy security against being seen at the cost of a look at the thing you came to see; the answer may be partial but the withdrawal stays clean.",
+            "costs": { "cbills": 0, "days": null, "resource": "intelligence yield: a knob spent on counter-recon is a look not spent on the staging force", "risk": "A partial answer about the reprisal force may force {EMPLOYER} to decide on incomplete data anyway" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Recon force reaches the first overwatch knob's covered approach; the enemy reconnaissance screen is active across the staging ground's ridgelines." },
+        { "t": "T+5:00", "event": "First overwatch look taken; the detection roll resolves and the recon force decides whether to shift knobs, close, or withdraw on the partial read." },
+        { "t": "T+11:00", "event": "A confirmed composition assessment must be in hand by now to withdraw before the reprisal force completes its own staging and begins to move." },
+        { "t": "T+17:00", "event": "If the recon force is still on the knobs, the enemy screen's sweep pattern reaches the occupied prominences and detection becomes near-certain." },
+        { "t": "T+24:00", "event": "The reprisal force completes staging and commits; a recon force that has not withdrawn with its answer is caught between the screen and the moving column." }
+      ],
+      "hardDeadline": "You must have a verified assessment and be pulling the recon force out by T+11:00. Miss it and the enemy screen's sweep catches your scouts on the knobs at T+17:00, and the reprisal force commits at T+24:00 with {EMPLOYER} still blind to what it faces."
+    },
+    "opforSketch": {
+      "composition": "A staging reprisal force at battalion banner strength — but its true nature is the mission's question: either first-line 'Mechs (mixed weights, 35-85 tons) at Veteran quality, or a scratch collection (worn light and medium machines, 30-55 tons) at Green-to-Regular quality wearing borrowed colors. Backed by a dedicated reconnaissance screen of fast light 'Mechs patrolling the ridgelines. No combat vehicles on the recon-encounter board — if contact occurs it is a fast-'Mech screen action, scout against scout.",
+      "behavior": "Screen doctrine: the enemy reconnaissance element patrols the overwatch approaches to deny observation of the staging ground and to detect any scouting attempt — because a detected enemy scout tells them their opponent is uncertain. The screen does not seek a stand-up fight; it seeks contact long enough to identify and report, then breaks to carry the warning. It pursues a detected recon force only far enough to confirm its presence, not to destroy it."
+    },
+    "forks": [
+      {
+        "name": "OPERATION FULL ANSWER",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Composition and quality confirmed, the recon force undetected, AND the reprisal force's intended objective identified from its dispositions.",
+        "consequence": "{EMPLOYER} knows exactly what it faces and where it will fall. Forewarned, the order positions its reserve precisely and tasks your command to lead the spoiling raid that pre-empts the reprisal at its staging ground before it can launch.",
+        "threat": "MEDIUM",
+        "family": "OBJECTIVE_RAID"
+      },
+      {
+        "name": "OPERATION CLEAR EYES",
+        "outcomeGate": "SUCCESS",
+        "trigger": "Composition and quality confirmed and the recon force withdrawn undetected, the reprisal's objective still unknown.",
+        "consequence": "{EMPLOYER} knows the force's true weight and commits the right reserve to meet it. Your command, the unit that read the threat true, is held as the reserve's spearhead for the garrison defense the confirmed reprisal will fall upon.",
+        "threat": "HIGH",
+        "family": "GARRISON_DUTY"
+      },
+      {
+        "name": "OPERATION BLIND COMMIT",
+        "outcomeGate": "FAILURE",
+        "trigger": "Recon force detected, or the composition left unconfirmed.",
+        "consequence": "Detected, the recon force has told the enemy that {EMPLOYER} is uncertain, and the reprisal commits to exploit that doubt — striking where the reserve is not. Your command races to cover the exposed real target, fighting the reprisal on the worst possible terms.",
+        "threat": "EXTREME",
+        "family": "RELIEF_DUTY"
+      }
+    ],
+    "storyElementSeed": "A scout on the second knob holds her 'Mech dead still on the bare rock, watching the staging ground through a magnification scope. She counts not machines but the small signs that give away a unit's quality: the spacing of the pickets, the discipline of the fuel line, the way the maintenance crews move. Whether she reads it right will decide where an entire reserve goes.",
+    "voiceSlots": ["intelligence", "command", "engineering"],
+    "registerVariants": {
+      "merc": {
+        "objectives.primary": "Contract is a verified intelligence product, paid on delivery of a confirmed assessment: is the staging force first-line or a paint job. A guess does not pay; a sourced, cross-checked answer does. The order's auditors will weigh the confidence, not the effort — read the deliverable clause before you spend a look."
+      },
+      "clan": {
+        "situation": "{WORLD}, {YEAR}. A force has massed in the highlands to answer a raid, flying the banners of a feared formation. You are to learn whether those banners cover true warriors or a feint of lesser machines wearing borrowed honor, and to withdraw with the truth unseen. The three overwatch knobs above the plateau give the only view of the staging ground. Each stands the watcher against the sky, and each may be used only once. If the enemy sees you scouting, he learns you are unsure, and that doubt becomes a weapon in his hand."
+      }
+    },
+    "specifics": {
+      "OVERWATCH_KNOBS": { "min": 3, "max": 3, "unit": "overwatch knobs available for observation" },
+      "STAGING_BANNER_STRENGTH": { "min": 1, "max": 1, "unit": "battalion of banner strength to assess" },
+      "INTEL_AGE_DAYS": { "min": 2, "max": 4, "unit": "days age of the deep-cover source report" }
+    },
+    "phases": [
+      {
+        "name": "INGRESS — TO THE KNOBS",
+        "lead": "The recon force moves to the overwatch ground unseen, choosing which of the three silhouette knobs to spend first against an active enemy screen that is hunting for exactly this.",
+        "dataBlock": {
+          "The knobs": "Three bare prominences, each with one covered approach and no second way off",
+          "The question": "Veteran first-line or scratch feint behind the banners",
+          "The screen": "Fast light 'Mechs patrolling the ridgelines to catch a scout in the act",
+          "The cost of being seen": "Detection reveals {EMPLOYER}'s uncertainty and shapes the enemy's commitment"
+        },
+        "routes": [
+          { "name": "ASH — THE NORTH COVERED APPROACH", "desc": "The sheltered climb to the northern overwatch knob", "tradeoff": "Best line of sight on the staging ground; closest to the enemy screen's patrol arc" },
+          { "name": "SLATE — THE SOUTH RIDGE TRAVERSE", "desc": "A longer covered traverse to the southern knobs", "tradeoff": "Farther from the screen but a poorer angle that reads count more easily than quality" }
+        ],
+        "protocol": { "Transmission window": "A single brief burst window carries the assessment to {EMPLOYER}; data late to the window is worthless", "Silence discipline": "No active sensors on the knobs — emission betrays the watcher to the screen", "Codeword TRUE NORTH": "Sent on the report burst, means the composition is confirmed first-line veteran; FALSE DAWN means scratch feint; HALF LIGHT means unconfirmed" },
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "Reading quality from a ridge: the tells that separate a veteran formation from a scratch one at a kilometer — picket spacing, maintenance tempo, the discipline of a fuel line — and why banners are the least reliable sign of all." }
+      },
+      {
+        "name": "GROUND — THE LOOK",
+        "lead": "Three looks, one question, and a screen waiting for a mistake. The recon force reads the staging force across the knobs or closes for certainty, balancing the answer it needs against the secret it must keep.",
+        "dataBlock": {
+          "Look budget": "Three knobs, each usable once, each a detection risk",
+          "Quality confirmation": "Requires a second corroborating look or a high-risk close approach",
+          "Detection penalty": "A burned knob raises detection difficulty on the rest",
+          "Assessment deadline": "Verified answer in hand and withdrawing by T+11:00"
+        },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "The discipline of looking without being seen: when one more look is worth the risk and when the answer you have is good enough to leave on, and why a recon force's hardest order is to withdraw with a partial read." }
+      },
+      {
+        "name": "EXTRACTION — THE ANSWER OUT",
+        "lead": "The recon force withdraws with its assessment before the screen sweeps the knobs and the reprisal commits. The value of the whole operation is the answer arriving in the burst window, undetected, in time to matter.",
+        "dataBlock": {
+          "Withdrawal deadline": "Off the knobs before the screen sweep at T+17:00 and the commitment at T+24:00",
+          "Burst window": "The single transmission window — late data is worthless",
+          "Clean break": "An undetected withdrawal preserves the secret of {EMPLOYER}'s uncertainty"
+        },
+        "sidebarKernel": { "voiceSlot": "engineering", "kernel": "Getting a recon 'Mech off a silhouette knob unseen: the movement discipline and emission control of a withdrawal where being heard is as costly as being hit." }
+      }
+    ]
+  },
+  {
+    "seedId": "ARC-10",
+    "family": "PLANETARY_ASSAULT",
+    "title": "OPERATION ROOT AND BRANCH",
+    "eraFit": ["star-league", "amaris-civil-war"],
+    "factionFit": ["sldf"],
+    "register": "sldf",
+    "skeleton": "assault must take an elevated plateau by one of four prepared ramps to end a reprisal chain at its source, capturing the infrastructure intact while a cornered garrison's last reflex is to scorch the very prize and the civilians beneath it",
+    "inspiration": "the assault on the Vercors plateau / Monte Cassino's approach roads (taking dominating high ground by a handful of prepared ascents against a defender who would rather destroy than yield)",
+    "threatRange": ["HIGH", "EXTREME"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.35,
+    "localeFit": { "settlement": ["industrial", "port"], "regionRole": ["border"], "terrain": ["mountain"] },
+    "situation": "{WORLD}, {DISTRICT}, periphery march, {YEAR}. This is where the chain began. A {TARGET_FACTION} garrison launched the raid that started the reprisal cycle your command has fought across three systems. {EMPLOYER}, an SLDF division command worn down by trading blow for blow, means to end it at the source: take the world and strip the garrison of its power to raid. Your command leads the assault landing. The terrain problem is the tablelands, a single raised plateau 60 kilometers across. It holds the garrison's DropPort, its 'Mech bays, and the fusion plant that powers both. From the lowland landing zones, only four graded ramp roads climb the tableland's basalt rim. The garrison holds the high ground, the ramps, and the time to wire them for demolition. {NPC:intel-source}, an SLDF Intelligence Command cell that has tracked this garrison across the whole reprisal chain, reports the defenders as a reinforced battalion: mixed 'Mechs and a strong armor regiment, Regular-to-Veteran quality. All four rim ramps are wired to blow, and the garrison commander, {NPC:opfor-commander}, holds a mobile reserve to counter whichever ramp you commit to. That report is 4 days old and rated reliable. The purpose shapes the plan. {EMPLOYER} wants the garrison's raiding power destroyed: its 'Mech bays, its DropPort, its reach off-world. But the plateau also holds the world's only fusion plant and the 40,000 civilians in the DropPort township who depend on it. Ending the raids by burning the world down is an outcome {EMPLOYER}'s conscience will not allow. The brief does not soften the danger: a garrison about to lose its world may lash out one last time, wrecking the plant in a scorched withdrawal and poisoning the victory. Taking the source of the chain may force its worst link. The 40,000 in the township have lived under this garrison for a generation, and the SLDF will not trade their survival for a clean military result. The order is to end it. The brief cannot promise the ending will be clean.",
+    "objectives": {
+      "primary": "Seize the tablelands and destroy the {TARGET_FACTION} garrison's raiding capacity — its 'Mech bays and DropPort facilities — ending its ability to project force off-world.",
+      "secondary": "Capture the tableland's fusion plant intact and prevent a scorched-earth demolition, preserving the 40,000 civilians of the DropPort township who depend on it.",
+      "bonus": "Capture {NPC:opfor-commander} and the garrison's mobile reserve intact, decapitating the reprisal chain rather than merely breaking it and denying the source a martyr."
+    },
+    "complications": [
+      {
+        "name": "The Four Ramps",
+        "text": "Only four graded ramp roads climb the tableland's basalt rim, and the garrison has wired all four for demolition. A blown ramp denies the assault that approach but commits the garrison's prepared charges; an unblown ramp the garrison is saving is one it means to counter-attack down. Which ramp you take is the whole battle's hinge.",
+        "mechanicalEffect": "Each of the four ramps may be demolished by the defender once committed against it; a demolished ramp is impassable to 'Mechs for the remainder of the engagement, and the defender's mobile reserve deploys to counter the ramp the assault commits its main weight to."
+      },
+      {
+        "name": "The Plant and the Township",
+        "text": "The fusion plant powers the garrison and the 40,000-soul township alike, and it sits at the heart of the tableland. The garrison may demolish it as a final reprisal; the assault must not destroy it in the taking. A military victory that darkens the township is the outcome the order forbids.",
+        "mechanicalEffect": "If the fusion plant is destroyed — by defender demolition or assault collateral fire — the secondary objective fails permanently and the resolution shifts toward the FAILURE-adjacent fork regardless of whether the garrison is defeated."
+      },
+      {
+        "name": "A Garrison With Nothing to Lose",
+        "text": "A garrison about to lose its world may spend its last strength on a final reprisal rather than a withdrawal — the plant demolished, the bays cratered, the township punished for sheltering the SLDF. Ending the chain at its source may force its worst link, and a cornered {NPC:opfor-commander} is the most dangerous he has ever been.",
+        "mechanicalEffect": "Once the garrison drops below 40 percent effective strength, the gamemaster rolls each turn for a scorched-withdrawal trigger; if triggered, the defender shifts all remaining effort to demolition objectives (plant, bays, DropPort) rather than defense, racing the assault to ruin what it cannot hold."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Committing the Assault",
+        "context": "The garrison holds the high ground and a reserve poised to counter your chosen ramp. You can mass against one ramp and accept its prepared defenses, feint at one and assault another, or split the assault to take two ramps at once — each commits the garrison's charges and reserve differently and risks the plant differently.",
+        "options": [
+          {
+            "title": "Mass Against One Ramp",
+            "advantages": ["Concentrated force gives the best chance of forcing a single ramp quickly", "A fast lodgement on the tableland gets units to the plant before it can be wired"],
+            "disadvantages": ["The garrison commits its full reserve and its prepared charges against the obvious main effort", "A blown ramp under the massed assault funnels the whole force into a kill zone"],
+            "consequence": "You bet the assault on overwhelming one approach; if the ramp holds or blows, the concentrated force has no second axis to exploit.",
+            "costs": { "cbills": 0, "days": null, "resource": "casualties: a massed assault up a single prepared ramp pays the full price of the garrison's concentrated defense", "risk": "The garrison blows the ramp under your main weight and the assault is funneled into prepared fires with no alternate axis" }
+          },
+          {
+            "title": "Feint One Ramp, Assault Another",
+            "advantages": ["Drawing the garrison's reserve and charges to a feint clears the real assault's path", "A well-sold feint can take a ramp the garrison was saving for its own counter-attack"],
+            "disadvantages": ["The feint force is exposed and may be destroyed selling the deception", "If the garrison reads the feint, both the deception and the real assault arrive piecemeal"],
+            "consequence": "You trade a force to deceive the garrison's commitment; success unhinges the defense, failure spends the feint for nothing and warns the defender.",
+            "costs": { "cbills": 0, "days": null, "resource": "force committed: a feint force exposed to draw the garrison's reserve and charges", "risk": "A garrison that reads the feint commits correctly and both efforts hit prepared defenses understrength" }
+          },
+          {
+            "title": "Split the Assault Across Two Ramps",
+            "advantages": ["Two simultaneous axes force the garrison to divide its reserve and its attention", "If one ramp blows, the other axis still carries the assault onto the tableland"],
+            "disadvantages": ["Neither axis is strong enough to force its ramp alone against a concentrated defense", "Coordinating two assaults up separate ramps under demolition risk is its own battle"],
+            "consequence": "You hedge against a blown ramp by attacking two, accepting that each axis fights understrength and the garrison may yet mass against one and hold both.",
+            "costs": { "cbills": 0, "days": null, "resource": "coordination overhead: two simultaneous ramp assaults straining command across the basalt rim", "risk": "The garrison concentrates against one axis, holds it, and the divided assault lacks the weight to force either ramp" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Assault landing complete in the lowland landing zones; the garrison's rim observers report the SLDF deployment and {NPC:opfor-commander} stands his battalion to." },
+        { "t": "T+6:00", "event": "Assault columns reach the rim ramps; the garrison's mobile reserve shifts toward the assault's apparent main effort and demolition teams stand ready at the ramps." },
+        { "t": "T+14:00", "event": "A lodgement on the tableland must be secured by now to reach the fusion plant before the garrison can complete its wiring for a scorched withdrawal." },
+        { "t": "T+22:00", "event": "If the garrison's effective strength has been driven below 40 percent, the scorched-withdrawal trigger becomes live and demolition of the plant and bays may begin." },
+        { "t": "T+32:00", "event": "The garrison's last organized resistance ends; whatever has been demolished by this point — plant, bays, DropPort — is the chain's final, irreversible reprisal." }
+      ],
+      "hardDeadline": "You must secure a foothold on the tableland and have a force moving on the fusion plant by T+14:00. Miss it and the cornered garrison finishes wiring its charges and answers the loss of its world with a scorched withdrawal. The plant and the township's power are destroyed, the chain's worst link, even as the garrison itself falls."
+    },
+    "opforSketch": {
+      "composition": "A reinforced defending battalion: a mixed 'Mech force (35-85 tons across all weight classes) at Regular-to-Veteran quality and a strong armor regiment of tracked and wheeled vehicles (Manticore/Demolisher/Po behavior) holding the tableland's high ground and the four prepared ramps, with {NPC:opfor-commander}'s mobile reserve held to counter the assault's main axis. Prepared, dug in, holding home ground with demolition charges sited on every approach and on the plant itself.",
+      "behavior": "Plateau-defense doctrine giving way to scorched reprisal: the garrison fights to hold the rim ramps and counter-attack the assault's main effort with its mobile reserve, trading ramps for time. As the defense fails, {NPC:opfor-commander}'s doctrine shifts from holding the world to denying it — below 40 percent strength the garrison abandons defensive cohesion to race the assault to demolition, spending its last force to ruin the plant, the bays, and the DropPort rather than yield them intact."
+    },
+    "forks": [
+      {
+        "name": "OPERATION CLEAN ROOT",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Garrison's raiding capacity destroyed, the fusion plant captured intact, AND {NPC:opfor-commander} and the mobile reserve taken alive — the chain decapitated without a martyr.",
+        "consequence": "The reprisal cycle ends at its source, the township spared and the garrison's leadership in SLDF hands. {EMPLOYER} tasks your command with the cadre duty of standing up a loyal garrison on the pacified world — the chain converted from war into occupation.",
+        "threat": "LOW",
+        "family": "CADRE_DUTY"
+      },
+      {
+        "name": "OPERATION HELD GROUND",
+        "outcomeGate": "SUCCESS",
+        "trigger": "Tableland seized and the raiding capacity destroyed, the plant and township preserved, but {NPC:opfor-commander} or a fragment of the reserve escapes off-world.",
+        "consequence": "The world is taken and its raids ended, but the escaped commander carries the grievance off-world to begin anew. Your command garrisons the won tableland against the remnant's inevitable return — the chain broken here but not yet everywhere.",
+        "threat": "MEDIUM",
+        "family": "GARRISON_DUTY"
+      },
+      {
+        "name": "OPERATION SCORCHED CROWN",
+        "outcomeGate": "FAILURE",
+        "trigger": "Assault fails, the fusion plant is destroyed, or the garrison completes its scorched withdrawal.",
+        "consequence": "The garrison answers its defeat by darkening the world — the plant demolished, the township's power gone, the victory poisoned. {EMPLOYER} commits your command to a desperate relief effort for the 40,000 civilians the failed assault could not protect, the chain's worst link forged at its end.",
+        "threat": "EXTREME",
+        "family": "RELIEF_DUTY"
+      }
+    ],
+    "storyElementSeed": "An assault company commander halts his lance at the foot of the third ramp, looking up sixty meters of graded basalt at the demolition charges he can see set into the rock face. He weighs the order to take the tableland against the plant lights still burning in the township below. He knows the garrison can put those lights out faster than he can climb.",
+    "voiceSlots": ["command", "intelligence", "engineering", "naval", "logistics"],
+    "registerVariants": {
+      "is-davion": {
+        "objectives.primary": "End the raids by taking the base they fly from: bays cratered, DropPort wrecked, the garrison's reach broken. The plant stays standing and the township stays lit. We do not win a world by killing it. Taking the tableland is the harder job, but sparing the plant matters more."
+      },
+      "clan": {
+        "situation": "{WORLD}, {YEAR}. This world launched the raid that began a cycle of reprisal, and {EMPLOYER} has resolved to end the matter at its root by taking the world and unmaking the garrison's capacity to raid. The tablelands hold the DropPort, the 'Mech bays, and the fusion plant, reachable from the lowlands by only four basalt ramp roads. To reduce the plateau by fire is to destroy the prize and the 40,000 who live beneath it; a clean conquest demands the high ground taken intact, the surat commander {NPC:opfor-commander} answered, and the world held rather than ruined."
+      }
+    },
+    "specifics": {
+      "RIM_RAMPS": { "min": 4, "max": 4, "unit": "graded ramp roads up the tableland rim" },
+      "TABLELAND_KM": { "min": 55, "max": 65, "unit": "kilometers across the tablelands" },
+      "TOWNSHIP_POPULATION": { "min": 35000, "max": 45000, "unit": "civilians in the DropPort township" },
+      "SCORCH_THRESHOLD_PCT": { "min": 35, "max": 45, "unit": "percent garrison strength triggering scorched withdrawal" }
+    },
+    "phases": [
+      {
+        "name": "INGRESS — THE RIM RAMPS",
+        "lead": "The assault lands in the lowlands and must climb the basalt rim by one of four prepared ramps to reach the tableland the garrison holds. The choice of ramp commits the garrison's charges and its reserve.",
+        "dataBlock": {
+          "The tableland": "60km elevated plateau holding the DropPort, 'Mech bays, and fusion plant",
+          "The ramps": "Four graded basalt roads, all wired for demolition, the only 'Mech approaches",
+          "The garrison": "Reinforced battalion plus armor regiment, Regular-to-Veteran, mobile reserve held back",
+          "Lodgement deadline": "On the tableland and moving on the plant by T+14:00"
+        },
+        "routes": [
+          { "name": "IRON — THE NORTH RAMP", "desc": "The widest graded ramp, the obvious main-effort approach", "tradeoff": "Best capacity for a massed assault; the ramp the garrison most expects and most heavily prepared" },
+          { "name": "EMBER — THE EAST RAMP", "desc": "A narrower ramp nearer the fusion plant", "tradeoff": "Quickest line to the plant once forced; tight enough that a demolition seals it for good" }
+        ],
+        "protocol": "Conscience-of-fire discipline binds the assault: the fusion plant and the township are protected ground, and no indirect or area fire is authorized within their arc. Codeword GREEN LIGHTS on the assault net means the plant is confirmed intact and the priority is its capture before demolition; SCORCHED, if heard, means the garrison's demolition has begun and the assault races to reach the plant before the charges fire.",
+        "sidebarKernel": { "voiceSlot": "engineering", "kernel": "Assaulting a prepared ramp wired to blow: reading seated demolition charges from the foot of a basalt rim, and the margin between climbing fast and climbing into a crater." }
+      },
+      {
+        "name": "GROUND — THE TABLELAND",
+        "lead": "On the plateau the assault must destroy the garrison's raiding capacity while sparing the plant the garrison would rather destroy than yield. A cornered commander's doctrine shifts from defense to denial.",
+        "dataBlock": {
+          "Objectives on the plateau": "'Mech bays and DropPort to be wrecked; fusion plant to be taken intact",
+          "Reserve counter": "{NPC:opfor-commander}'s mobile reserve counters the assault's committed axis",
+          "Scorch trigger": "Below 40 percent garrison strength, demolition of plant and bays becomes live",
+          "Plant protection": "Any fire that destroys the plant fails the secondary and the township with it"
+        },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "When a defender stops defending and starts destroying: reading the shift from holding ground to scorching it, and the assault tempo needed to reach the plant before a cornered garrison ruins it." }
+      },
+      {
+        "name": "EXTRACTION — THE WORLD HELD OR RUINED",
+        "lead": "The garrison's last resistance ends, but what survives the ending — the plant, the township's power, the commander himself — decides whether the chain is broken clean or forged one link worse at its very source.",
+        "dataBlock": {
+          "Raiding capacity": "Bays and DropPort confirmed destroyed — the garrison's reach ended",
+          "Plant and township": "A plant intact and the township lit is the clean result; its loss poisons the win",
+          "Decapitation": "{NPC:opfor-commander} and the reserve taken alive deny the chain a martyr and a remnant"
+        },
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "Ending a reprisal chain at its root: why capturing the source's commander matters more than killing him, and how a martyr or an escaped remnant re-forges a chain you thought you had broken." }
+      }
+    ]
+  }
+]

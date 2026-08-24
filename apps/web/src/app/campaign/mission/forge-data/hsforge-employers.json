@@ -1,0 +1,1006 @@
+{
+  "_meta": {
+    "file": "hsforge-employers.json",
+    "directive": "HSFORGE-1",
+    "law": "When {ORG} opens a string, the generator sentence-cases the first character after substitution — authors may write sentence-initial {ORG} over lowercase pool values. sideSituation entries are drawn after roles are known and filtered by posture (attack|defend|any); pirate-raid entries additionally carry side (raider|defender|either) across employerPattern, employerDesc, sideSituation, and blurb, with orgPools binding Pirates to the raider side and generic to the defender side. {FACTION_NAME} and {TARGET_FACTION} are attributive-only; {FACTION_NAME_THE} and {TARGET_FACTION_THE} take the article-baked noun form from the per-faction display map. {TARGET_FACTION} in sideSituation fills at dress time with the opposing side's faction, never the global bake. Display-map noun forms are grammatically singular: 'Pirates' → attributive 'pirate', noun 'the pirate band'; 'Mercenary' → 'mercenary' / 'a rival mercenary command'. For sameFaction archetypes the map is overridden — {TARGET_FACTION} fills 'rival' and {TARGET_FACTION_THE} fills 'the rival command' (merc-both) / 'the rival faction' (clan-internal) — never the shared faction name. merc-vs-merc: the generator draws ONE {ORG} shared by both sides (the rival command opposing whichever side the player signs — never two draws), and {EMPLOYER_NAME} for this archetype fills \"the contract's paymaster\", never the org draw. {EMPLOYER_NAME} = the org display with any trailing parenthetical stripped, sentence-cased when it opens a string (same rule as {ORG}); plural-named orgs wrap as 'the {ORG} command' for prose fills; merc-sub fills 'the prime contractor'."
+  },
+  "archetypes": [
+    {
+      "id": "house-military",
+      "weight": 5,
+      "sameFaction": false,
+      "combatFactionRule": "state-pair",
+      "eraGroups": [
+        "all"
+      ],
+      "employerPattern": [
+        "{FACTION_NAME} — {ORG}",
+        "{FACTION_NAME} — {ORG} (military liaison)",
+        "{FACTION_NAME} — {ORG} (border command)",
+        {
+          "posture": "attack",
+          "text": "{FACTION_NAME} — {ORG} (offensive tasking)"
+        },
+        {
+          "posture": "defend",
+          "text": "{FACTION_NAME} — {ORG} (garrison augment)"
+        }
+      ],
+      "employerDesc": [
+        "{ORG} holds this stretch of the border for {FACTION_NAME_THE}, and it is stretched thin. It hires outside commands to cover the ground its own battalions cannot reach in time.",
+        "{ORG} answers to the {FACTION_NAME} high command, and it pays on schedule. It expects results on the same schedule.",
+        "{FACTION_NAME_THE} keeps a standing defense budget for {WORLD}, and {ORG} spends it where trouble comes next. This season, that means hired iron.",
+        "{ORG} is a professional command with a long front and a short roster. What it cannot hold with its own troops, it rents.",
+        "{ORG} runs {FACTION_NAME} military affairs in this district. Its liaisons are formal, its ledgers are exact, and its contracts are honored to the letter.",
+        {
+          "posture": "attack",
+          "text": "{ORG} plans the next {FACTION_NAME} counterstroke in this sector, and doctrine says spend hired iron before regulars. The staff work is finished. What it is buying now is the spearhead."
+        },
+        {
+          "posture": "defend",
+          "text": "{ORG} has held this line since the last war and means to hand it over intact. Its own battalions are pinned in place, so the mobile work goes to contract."
+        },
+        "{ORG} fights by the book because the book is what {FACTION_NAME_THE} audits. Expect written orders, exact rules of engagement, and pay that clears the day the report does."
+      ],
+      "sideSituation": [
+        {
+          "posture": "defend",
+          "text": "{ORG} is buying a mobile reserve for {WORLD}. Your command meets trouble where it lands, holds until the regulars can concentrate, and plugs whichever gap opens first. Hold, and the district stays whole."
+        },
+        {
+          "posture": "any",
+          "text": "{TARGET_FACTION} forces have been probing the approaches to {DISTRICT} for weeks, and the garrison cannot answer every alarm. {ORG} wants a fighting command on the ground before the next alarm is real. That command is yours."
+        },
+        {
+          "posture": "attack",
+          "text": "This is fast work, not a standing post. {ORG} wants a hard, fast blow landed on {TARGET_FACTION} holdings near {DISTRICT}, and your command gone before the response forms. The clock is as much the enemy as the guns."
+        },
+        {
+          "posture": "defend",
+          "text": "{WORLD} matters more than it looks. Lose it, and the supply line for the whole sector bends around the gap. {ORG} is paying for iron on the ground and steady nerves behind it, because {TARGET_FACTION} pressure will come early."
+        },
+        {
+          "posture": "defend",
+          "text": "The fighting line runs through {DISTRICT} now, whatever last year's maps say. {ORG} needs a command that can fight today and still be a fighting command next month. Spend your strength carefully."
+        },
+        {
+          "posture": "attack",
+          "text": "{ORG} has watched {TARGET_FACTION_THE} dig in across from {DISTRICT} all season, and the high command wants the works broken before winter makes them permanent. Hit the position, wreck what cannot be held, and be gone before the counterblow forms."
+        },
+        {
+          "posture": "attack",
+          "text": "Somewhere past {DISTRICT}, {TARGET_FACTION} supply columns feed a buildup the regulars cannot reach. {ORG} can. Your command is the reach — cut the flow, then get back across the line with your strength intact."
+        },
+        {
+          "posture": "any",
+          "text": "{ORG} is honest about the tasking: the front is wide, the reserves are spent, and {WORLD} is where the staff maps say the next blow lands. The pay is state scrip, the support is real, and the liaison has fought before."
+        }
+      ],
+      "blurb": [
+        "The border is burning again, and the regulars cannot be everywhere at once.",
+        "A state paymaster, exact terms, and a stretch of front nobody else can reach in time.",
+        "The high command has a hole in its line and a budget to fill it with hired iron.",
+        "Regular war and honest pay: hold what the regulars cannot, or take what they want.",
+        {
+          "posture": "attack",
+          "text": "The high command has picked its target — hired iron leads the push."
+        },
+        {
+          "posture": "defend",
+          "text": "A line that must hold, a paymaster that audits, and no surprises in the fine print."
+        }
+      ],
+      "orgPools": {
+        "Federated Suns": [
+          "3rd Wexworth Draft Militia",
+          "Deverell Border Rifles (AFFS)",
+          "1st Corbett Light Horse",
+          "AFFS Fifth Deep Patrol",
+          "Halloway March Auxiliary",
+          "Stonarch PDZ Reaction Group",
+          "2nd Maldon Lancers",
+          "AFFS Redfield Line Command"
+        ],
+        "Draconis Combine": [
+          "3rd Hoshina Prefectural Guard",
+          "Okabe District Garrison (DCMS)",
+          "14th Benjiro Border Legion",
+          "Akagane Raiding Command",
+          "2nd Kaminari Strike Group",
+          "DCMS Shirogane Salvage Command",
+          "9th Tetsuyama Line Battalion",
+          "Kurofune Coastal Defense Group"
+        ],
+        "Capellan Confederation": [
+          "4th Jinxiang Home Guard",
+          "Shen-mai Reserve Cavalry (CCAF)",
+          "Qinghe Border Battalion",
+          "Yun-ti Expeditionary Column",
+          "CCAF Zhanshi Vanguard Cadre",
+          "6th Meirong Border Lancers",
+          "CCAF Renshu Protectorate Column"
+        ],
+        "Lyran Commonwealth": [
+          "8th Brandt Markgraf Guards",
+          "Königsfeld Garrison Regiment (LCAF)",
+          "2nd Eichwald Armored Brigade",
+          "Vandermark Border Levy",
+          "LCAF Steinhagen Reaction Command",
+          "11th Falkenrath Fusiliers",
+          "Hohenfels Garrison Lancers"
+        ],
+        "Free Worlds League": [
+          "1st Tormino Free Guard",
+          "Sable Coast Militia (FWLM)",
+          "4th Aquileia Rifles",
+          "Petrucci Provisional Command",
+          "FWLM Bastione Border Watch",
+          "3rd Miravalle Dragoons",
+          "FWLM Ostica Line Regiment"
+        ],
+        "Clan Sea Fox": [
+          "Emerald Wake Cartel Guard",
+          "Tidefall Enclave Watch",
+          "Saltspire Trade Flotilla Security",
+          "The Windward Bazaar Escort",
+          "Coralbrand Enclave Security",
+          "The Riptide Charter Wardens"
+        ],
+        "generic": [
+          "the district garrison command",
+          "the sector reaction force",
+          "the regional military liaison office",
+          "the border muster command",
+          "the planetary garrison staff",
+          "the frontier defense commission",
+          "the theater reserve command"
+        ]
+      }
+    },
+    {
+      "id": "corporate",
+      "weight": 3,
+      "sameFaction": false,
+      "combatFactionRule": "state-pair",
+      "eraGroups": [
+        "all"
+      ],
+      "employerPattern": [
+        "Corporate — {ORG}",
+        "Corporate — {ORG} (board contract)",
+        "Corporate — {ORG} (deniable)",
+        {
+          "posture": "defend",
+          "text": "Corporate — {ORG} (asset protection)"
+        },
+        {
+          "posture": "attack",
+          "text": "Corporate — {ORG} (recovery operation)"
+        }
+      ],
+      "employerDesc": [
+        "{ORG} is a private concern whose holdings on {WORLD} are worth more than the planet's whole tax base. It pays in cash, on time, and it asks few questions.",
+        "{ORG} hires soldiers the way it hires freight: by the job, by the deadline, with penalties in the fine print. Read the fine print.",
+        "The board of {ORG} does not care who governs {WORLD}. It cares whether its assets are still standing at the end of the quarter.",
+        "{ORG} keeps its own name off the paperwork where it can. The money is real; the flag it flies is not the point.",
+        "{ORG} built its position on {WORLD} over decades, and it will not watch that position burn over someone else's politics.",
+        {
+          "posture": "defend",
+          "text": "{ORG} insures what it cannot replace and hires guns for what it cannot insure. On {WORLD}, that second column has grown three quarters running."
+        },
+        {
+          "posture": "attack",
+          "text": "Legal has exhausted its options, so the board of {ORG} has moved the matter to a different department. Your contract is filed under risk mitigation, and the deliverables are precise."
+        },
+        "{ORG} vetted your command the way it vets any supplier: capacity, liability, record. You passed. Meet the deliverables and the relationship will be profitable."
+      ],
+      "sideSituation": [
+        {
+          "posture": "defend",
+          "text": "{ORG} owns an asset on {WORLD} that it cannot afford to lose and cannot defend alone. Your command is the insurance policy. Stand between the asset and whoever comes for it."
+        },
+        {
+          "posture": "attack",
+          "text": "{ORG} wants its property back from {TARGET_FACTION} hands near {DISTRICT} — intact, not avenged. The company pays for recovery, not rubble. Precision is the product."
+        },
+        {
+          "posture": "attack",
+          "text": "A rival interest backed by {TARGET_FACTION} money is squeezing {ORG} out of {DISTRICT}. The company wants the squeeze broken and its operations running again. It is exact about the terms and generous about the pay."
+        },
+        {
+          "posture": "defend",
+          "text": "Everything {ORG} moves on {WORLD} passes through one bottleneck, and someone has decided to close it. Keep the route open. Every day it stays closed costs the company more than your contract does — and the company notices who ended the stoppage."
+        },
+        {
+          "posture": "any",
+          "text": "{ORG} needs deniable iron for work its own name cannot touch. The pay reflects the discretion required. Expect a company liaison close at hand."
+        },
+        {
+          "posture": "defend",
+          "text": "The quarterly report calls {DISTRICT} a stable operating environment, and {ORG} means the next one to say the same. Saboteurs with {TARGET_FACTION} backing disagree. Your command is line-itemed as continuity assurance: keep the plants running and the report honest."
+        },
+        {
+          "posture": "attack",
+          "text": "{ORG} bought the salvage rights to a facility it no longer controls, and {TARGET_FACTION} crews are stripping it while the lawyers argue. The board has priced patience and found it too expensive. Retake the site with the inventory still on the shelves."
+        },
+        {
+          "posture": "any",
+          "text": "Read the contract twice. {ORG} pays a completion bonus most employers would call generous, and it defines completion the way lawyers define everything. The work on {WORLD} is straightforward; the paperwork is the terrain."
+        }
+      ],
+      "blurb": [
+        "The company's money is real, its patience is short, and its problem is exactly your size.",
+        "A boardroom war has come to the surface, and someone is paying cash for professionals.",
+        "Protect the asset, meet the deadline, collect the bonus — the corporation asks nothing else.",
+        "No banners and no glory: corporate work pays in full and on time.",
+        {
+          "posture": "attack",
+          "text": "The lawyers are done — the next line item after litigation is your command."
+        },
+        {
+          "posture": "defend",
+          "text": "The asset must survive the quarter, and the board has budgeted accordingly."
+        }
+      ],
+      "orgPools": {
+        "Federated Suns": [
+          "Karyme Extraction Consortium",
+          "Bellamy & Voss Foundry Group",
+          "Cortland Agri-Combine",
+          "Fairleigh Materials Group",
+          "Sterling Reach Freightways",
+          "Delacourt Orbital Holdings",
+          "Marchward Salvage & Reclamation"
+        ],
+        "Draconis Combine": [
+          "Kurodachi Heavy Industries",
+          "Hoshigawa Transport Keiretsu",
+          "Akashio Chemical Combine",
+          "Mitsurugi Arms Cooperative",
+          "Tanahashi Precision Works",
+          "Kurotori Mercantile House"
+        ],
+        "Capellan Confederation": [
+          "Jinhai State Metalworks",
+          "Songlin Agri-Directorate",
+          "Tianshu Orbital Cartage",
+          "Golden Loom Textile Combine",
+          "Xinmao Freight Directorate",
+          "Lianyu Instrument Works"
+        ],
+        "Lyran Commonwealth": [
+          "Adlerhorst Commercial Bank",
+          "Vogelweide Arms Concern",
+          "Brandtstahl Foundries",
+          "Reinmark Shipping Consortium",
+          "Graustein Chemical Werke",
+          "Nordkap Freight & Bond"
+        ],
+        "Free Worlds League": [
+          "Castellan Freight Alliance",
+          "Oriano Drive Yards",
+          "Silver Anchor Maritime Group",
+          "Vespucci Extraction Combine",
+          "Adriatico Hull & Drive Works",
+          "Perlati Commodity Exchange"
+        ],
+        "Clan Sea Fox": [
+          "Tidewrack Salvage Exchange",
+          "Silver Shoal Trade Mission",
+          "Deepline Cartage Syndicate",
+          "The Foxglove Exchange",
+          "Pearlwake Futures Combine",
+          "The Brineward Trade House"
+        ],
+        "generic": [
+          "Corvane Salt & Mineral Works",
+          "Blue Verge Logistics",
+          "Harrow & Kine Agri-Holdings",
+          "Quintane Pharmaceutical Group",
+          "the orbital cargo exchange consortium",
+          "Meridian Water Reclamation Trust",
+          "Kestrel Gate Freeport Authority"
+        ]
+      }
+    },
+    {
+      "id": "planetary-gov",
+      "weight": 2,
+      "sameFaction": false,
+      "combatFactionRule": "state-pair",
+      "eraGroups": [
+        "all"
+      ],
+      "employerPattern": [
+        "Planetary government — {ORG}",
+        "Planetary government — {ORG} (militia liaison)",
+        "Planetary government — {ORG} (emergency session)",
+        {
+          "posture": "defend",
+          "text": "Planetary government — {ORG} (defense levy)"
+        },
+        {
+          "posture": "attack",
+          "text": "Planetary government — {ORG} (writ of enforcement)"
+        }
+      ],
+      "employerDesc": [
+        "The government of {WORLD} has a militia built for parades and a problem built for professionals. The treasury vote passed. The contract is real.",
+        "{ORG} governs {WORLD} for people who expect the lights to stay on. It hires soldiers so it never has to explain why they went out.",
+        "{ORG} cannot match a House budget, but it pays what it promises and it knows its own ground. Its militia will follow where you lead.",
+        "The capital's patience with off-world protectors has run out. {ORG} wants a hired command that answers to {WORLD} and to no one else.",
+        "{ORG} is small, honest, and worried. What it lacks in scale it makes up in urgency — and in how much of the planetary reserve it is ready to spend.",
+        {
+          "posture": "defend",
+          "text": "{ORG} has published the threat assessment, passed the levy, and told the voters that help was hired. Your command is the promise it now has to keep."
+        },
+        {
+          "posture": "attack",
+          "text": "{ORG} carries a writ its own constables cannot serve, so it is hiring the means. Everything is signed, sealed, and waiting on your countersignature."
+        },
+        "Every credit {ORG} spends is public record, debated in open session. It hired you anyway — which should tell you how bad the closed-session briefing was."
+      ],
+      "sideSituation": [
+        {
+          "posture": "defend",
+          "text": "{WORLD}'s militia can hold a checkpoint, not a front. {ORG} is hiring the front. Your command takes the weight while the locals hold what they can, and the people you defend will watch from their own windows."
+        },
+        {
+          "posture": "defend",
+          "text": "Trouble is coming to {DISTRICT} that the planetary government cannot stop, and the nearest friendly regiment answers to someone else's priorities. {ORG} has stopped waiting for permission. Your command is what it bought instead."
+        },
+        {
+          "posture": "attack",
+          "text": "{ORG} has proof that {TARGET_FACTION} interests are operating on {WORLD} without leave, and no muscle of its own to act on it. The government wants the matter settled and its authority visible again."
+        },
+        {
+          "posture": "defend",
+          "text": "The government of {WORLD} is paying for time — for the harvest, for the evacuation, for help that is coming but not here yet. Buy it that time. The militia will do whatever you show them how to do."
+        },
+        {
+          "posture": "defend",
+          "text": "The capital district pays most of {WORLD}'s taxes and casts most of its votes, and {ORG} means to keep it intact. Expect close ground, civilians near every shot, and a government that reads the damage reports line by line."
+        },
+        {
+          "posture": "attack",
+          "text": "An armed camp with {TARGET_FACTION} backing has taken root in the outlands past {DISTRICT}, taxing the roads as if it were the government. {ORG} has voted to remove it. The militia will hold the cordon; the removing is contracted to you."
+        },
+        {
+          "posture": "attack",
+          "text": "{ORG} knows exactly where {WORLD}'s trouble sleeps and has never had the strength to knock on the door. Now it has yours. Serve the writ, break the operation, and let the government take the credit — that is what the invoice is for."
+        },
+        {
+          "posture": "any",
+          "text": "The contract comes with an audience: council observers, local press, and a militia that will copy whatever your command does. {ORG} is buying competence it hopes will rub off. Fight well and politely — {WORLD} remembers both."
+        }
+      ],
+      "blurb": [
+        "A small world with a real treasury and a problem its parade-ground militia cannot touch.",
+        "The government has stopped waiting for off-world help — it is hiring its own.",
+        "Politics bought the contract; your iron has to make it true.",
+        "Defend a world that will remember your command's name for a generation, one way or the other.",
+        {
+          "posture": "attack",
+          "text": "The council has finally voted to solve the problem instead of debating it."
+        },
+        {
+          "posture": "defend",
+          "text": "A militia that means well, a treasury that pays cash, and trouble already inbound."
+        }
+      ],
+      "orgPools": {
+        "generic": [
+          "the planetary administration",
+          "the Colonial Assembly's defense committee",
+          "the Office of the Planetary Chairman",
+          "the Civil Defense Directorate",
+          "the First Minister's emergency council",
+          "the Provincial Compact Authority",
+          "the Governor's Contingency Office",
+          "the United Townships Defense Board"
+        ]
+      }
+    },
+    {
+      "id": "noble",
+      "weight": 2,
+      "sameFaction": false,
+      "combatFactionRule": "state-pair",
+      "eraGroups": [
+        "all"
+      ],
+      "employerPattern": [
+        "Noble house — {ORG}",
+        "Noble house — {ORG} (private retainer)",
+        "Noble house — {ORG} (landhold contract)",
+        {
+          "posture": "defend",
+          "text": "Noble house — {ORG} (defense of the seat)"
+        },
+        {
+          "posture": "attack",
+          "text": "Noble house — {ORG} (matter of honor)"
+        }
+      ],
+      "employerDesc": [
+        "{ORG} holds land on {WORLD} granted by {FACTION_NAME_THE} and defended, by old custom, at the family's own expense. The family takes that custom seriously.",
+        "{ORG} pays from a private purse, not a state treasury. The purse is deep, the pride is deeper, and both are now on the table.",
+        "The family behind {ORG} has kept its title through three wars by knowing when to hire well. It believes this is one of those times.",
+        "{ORG} answers to {FACTION_NAME_THE} on paper and to its own name in practice. What threatens the landhold threatens the name, and the name does not yield.",
+        "{ORG} treats its retainers well and its enemies formally. Expect exact courtesy, exact pay, and exact expectations.",
+        {
+          "posture": "defend",
+          "text": "{ORG} has buried retainers on this land for nine generations and does not intend to be the one that lost it. The family pays well for those who stand where it stands."
+        },
+        {
+          "posture": "attack",
+          "text": "An insult was given in public, and {ORG} has decided the reply will not be delivered by lawyers. The family is particular about how such matters are conducted; its liaison will explain the courtesies."
+        },
+        "{ORG} keeps two ledgers, money and obligation, and settles both. Serve the family well and the second ledger opens doors the first cannot buy."
+      ],
+      "sideSituation": [
+        {
+          "posture": "defend",
+          "text": "{ORG} holds the {DISTRICT} landhold and everything on it — the estates, the tenants, the revenue. Something is moving against the holding, and the family is hiring iron before it arrives."
+        },
+        {
+          "posture": "any",
+          "text": "A quarrel between {ORG} and a rival holding has gone past the lawyers. Your command is the family's answer on the ground of {WORLD}. Win it in a way the family can repeat in public."
+        },
+        {
+          "posture": "attack",
+          "text": "{ORG} suspects {TARGET_FACTION} money behind its troubles on {WORLD}, and it wants the interference cut off at the root. The family pays for discretion as much as for results."
+        },
+        {
+          "posture": "defend",
+          "text": "The tenants of {DISTRICT} pay {ORG} for protection their liege can no longer provide alone. The family would rather hire help than say that aloud. Guard the holding as if the name on the gate were your own."
+        },
+        {
+          "posture": "any",
+          "text": "An inheritance on {WORLD} is disputed, and both claimants are arming. {ORG} intends to hold the ground in question when the ruling comes down. Possession, the family's lawyers say, is most of the law."
+        },
+        {
+          "posture": "attack",
+          "text": "A rival house has occupied ground that {ORG} holds by charter, betting the family would swallow the loss rather than fight. The family declines. Take the holding back with the boundary stones intact — the point is the charter, not the wreckage."
+        },
+        {
+          "posture": "attack",
+          "text": "The family's heir was turned back at a toll gate on the family's own road through {DISTRICT}, and {TARGET_FACTION} colors were seen among the toll-takers. {ORG} wants the road opened and the insult answered in the same season."
+        },
+        {
+          "posture": "defend",
+          "text": "The wedding of two landed lines will join half of {DISTRICT} under one seat, and someone means to stop it before the seals are set. Guard the estates, the guests, and the ceremony itself. The family will remember who stood the watch."
+        }
+      ],
+      "blurb": [
+        "An old family, a private purse, and a quarrel that has outgrown the courtroom.",
+        "The landhold is threatened, and the family answers threats with hired iron.",
+        "Nobility means never fighting alone when you can pay professionals to stand with you.",
+        "Defend the name, hold the land, and be paid from a purse older than the border.",
+        {
+          "posture": "attack",
+          "text": "An old quarrel goes to the field — formally, and for pay."
+        },
+        {
+          "posture": "defend",
+          "text": "Nine generations built the holding; the family is paying to keep it a tenth."
+        }
+      ],
+      "orgPools": {
+        "Federated Suns": [
+          "House Marlowe-Aster",
+          "the Redhall Barony",
+          "House Quiller of the March",
+          "the Braxton household guard",
+          "House Calloway-Vance",
+          "the Barony of Windmere"
+        ],
+        "Draconis Combine": [
+          "House Okamoto-Shirai",
+          "the Akiyama district lordship",
+          "House Minamori",
+          "the Harugane family seat",
+          "House Takigawa",
+          "the Kanmuri fiefdom"
+        ],
+        "Capellan Confederation": [
+          "House Shen-Larosa",
+          "the Meihua estate lordship",
+          "House Quan-Devers",
+          "the Lianhua estate holding",
+          "House Wen-Sorella",
+          "the Zhulin manor holding"
+        ],
+        "Lyran Commonwealth": [
+          "House Adlersfeld",
+          "the Margraviate of Weissenholm",
+          "House Brandt-Corvela",
+          "the Duchy of Eisenmoor",
+          "House Vogtberg",
+          "the County of Hallenmoor"
+        ],
+        "Free Worlds League": [
+          "House Oriano-Bello",
+          "the Marquisate of Castelverde",
+          "House Tremaine-Adaro",
+          "the Vespry family seat",
+          "House Bellagrande",
+          "the Viscounty of Petralta"
+        ],
+        "generic": [
+          "the local landgrave's household",
+          "the planetary ducal seat",
+          "the old families' compact",
+          "the landholder's private retainer corps",
+          "the dowager countess's household",
+          "the marcher lords' joint levy"
+        ]
+      }
+    },
+    {
+      "id": "merc-sub",
+      "weight": 2,
+      "sameFaction": false,
+      "combatFactionRule": "state-pair",
+      "eraGroups": [
+        "all"
+      ],
+      "employerPattern": [
+        "Mercenary subcontract — {ORG}",
+        "Mercenary subcontract — {ORG} (prime contractor)",
+        "Mercenary subcontract — {ORG} (overflow tasking)",
+        {
+          "posture": "attack",
+          "text": "Mercenary subcontract — {ORG} (spearhead tasking)"
+        },
+        {
+          "posture": "defend",
+          "text": "Mercenary subcontract — {ORG} (rear-area security)"
+        }
+      ],
+      "employerDesc": [
+        "{ORG} is a bigger outfit than yours, holding a contract wider than its roster. It subcontracts the overflow and keeps the difference. That is the trade, and the pay is still real.",
+        "{ORG} has a reputation to protect with its own employer, which makes it a demanding but honest paymaster. Deliver, and more work follows.",
+        "{ORG} signed for more front than it can cover, and it would rather split the fee than lose the contract. Your command is the coverage.",
+        "Subcontract work means two layers of paperwork and one layer of credit. {ORG} handles the employer; you handle the ground it cannot reach.",
+        "{ORG} picked your command off the hiring boards because it needed someone who would not embarrass it. Its liaison will be watching for exactly that.",
+        {
+          "posture": "attack",
+          "text": "{ORG} won its contract promising offense it cannot fully staff. The assault tasking is funded and planned — it needs a command to execute it. The prime keeps the plan; you keep a full share of the bonus."
+        },
+        {
+          "posture": "defend",
+          "text": "{ORG} holds the line work and hates tying down its strike lances to do it. Static security, convoy escort, depot watch: unglamorous, steady, and paid at prime rates minus a finder's fee."
+        },
+        "Two commands, one contract, and a liaison in the middle: {ORG} translates the employer's wishes, and you translate them into results. Keep your copy of every order — subcontracts are remembered selectively."
+      ],
+      "sideSituation": [
+        {
+          "posture": "any",
+          "text": "{ORG} holds the prime contract on {WORLD} and cannot be in two places at once. Your command takes the second place. The tasking is real work, not scraps — that is why the prime is paying for it."
+        },
+        {
+          "posture": "any",
+          "text": "The prime's employer added {DISTRICT} to the contract map, and the roster {ORG} carries did not grow to match. You cover the addition. Do it well, and the prime's name starts opening doors for yours."
+        },
+        {
+          "posture": "any",
+          "text": "{ORG} is committed against {TARGET_FACTION} pressure on the far side of {WORLD} and needs its flank held while it works. That flank is yours. If it folds, both commands' contracts fold with it."
+        },
+        {
+          "posture": "any",
+          "text": "A subcontract has one hard rule: never make the prime look bad. The tasking {ORG} holds for {DISTRICT} is clear, funded, and yours to execute. The employer sees the prime's letterhead; the field sees you."
+        },
+        {
+          "posture": "any",
+          "text": "{ORG} took losses it has not advertised, and it quietly needs a stand-in on {WORLD} while it refits. Your command carries the tasking and the prime keeps the appearance. The pay is better than the billing suggests."
+        },
+        {
+          "posture": "attack",
+          "text": "The prime's push against {TARGET_FACTION} positions past {DISTRICT} needs a second axis, and {ORG} has no lances left to open one. Your command is the second axis. Make your timetable and the push carries; miss it and both commands explain the failure together."
+        },
+        {
+          "posture": "defend",
+          "text": "{ORG} is about to commit everything it has to the front on {WORLD}, and the ground behind it will stand empty: the depots, the repair yards, the landing zone. You are the garrison it cannot spare. If the rear holds, the prime's gamble works."
+        },
+        {
+          "posture": "any",
+          "text": "Half the fee, none of the glory, and a close look at how a bigger command runs its contracts. {ORG} pays net-thirty and means it. For an outfit still building a name, the reference is worth more than the retainer."
+        }
+      ],
+      "blurb": [
+        "A bigger outfit signed for more war than it can cover — the overflow pays your bills.",
+        "Second name on the contract, first boots on the ground.",
+        "The prime keeps the letterhead; you keep the field and a fair cut.",
+        "Work for soldiers, hired by soldiers: no House politics, just the tasking.",
+        {
+          "posture": "attack",
+          "text": "The prime bought an offensive it cannot fully crew — the spearhead slot pays."
+        },
+        {
+          "posture": "defend",
+          "text": "Somebody has to hold the prime's rear while it gambles its roster forward."
+        }
+      ],
+      "orgPools": {
+        "generic": [
+          "the Bright Standard Legion",
+          "the Second Sunrise Company",
+          "Quayle's Heavy Horse",
+          "the Longshore Rifles",
+          "Varga's Vanguard",
+          "the Tallow Point Irregulars",
+          "Coleridge's Company",
+          "the Graywater Lancers",
+          "Okafor's Free Lances",
+          "the Ashfield Regulars",
+          "the Copperline Battalion"
+        ]
+      }
+    },
+    {
+      "id": "merc-vs-merc",
+      "weight": 1,
+      "sameFaction": true,
+      "combatFactionRule": "merc-both",
+      "eraGroups": [
+        "all"
+      ],
+      "employerPattern": [
+        "Mercenary — your command (disputed contract)",
+        "Mercenary vs mercenary — a jumped contract",
+        "Mercenary — your command (contract dispute)",
+        {
+          "posture": "attack",
+          "text": "Mercenary — your command (contract reclamation)"
+        },
+        {
+          "posture": "defend",
+          "text": "Mercenary — your command (holding the paper)"
+        }
+      ],
+      "employerDesc": [
+        "{ORG} is an outfit like yours, with a paymaster like yours — and paperwork that says your contract belongs to them. One set of papers is wrong. The field will decide which.",
+        "There is no House doctrine in this and no liaison to blame. {ORG} fights for its name and its pay, exactly as you do.",
+        "{ORG} has a decent record, a hungry roster, and every reason to believe it is in the right. So does your command. That is the problem.",
+        "Merc against merc is the trade at its most honest: two commands, one prize, and a reputation riding on every move either one makes.",
+        {
+          "posture": "defend",
+          "text": "Your command signed first, deployed first, and holds the ground the contract names. {ORG} arrived with newer paperwork and older friends. Possession is your argument; make it stick."
+        },
+        {
+          "posture": "attack",
+          "text": "{ORG} reached the client's table an hour earlier and walked out with work your command had already signed for. The hiring hall calls that sharp practice, and shrugs. One appeal remains, and it deploys with you."
+        },
+        "No House minders, no cause, no flags worth dying under — just {ORG} across the field, working the same trade for the same pay. Professional courtesy ends at the deployment zone."
+      ],
+      "sideSituation": [
+        {
+          "posture": "any",
+          "text": "Two commands hold signed copies of the same contract for {WORLD}, and the paymaster has gone quiet. The only ruling anyone will get is the field itself. Whichever outfit holds the ground in the end is the outfit that was hired."
+        },
+        {
+          "posture": "any",
+          "text": "{ORG} jumped a contract your command counted as won, and the client will pay whoever controls {DISTRICT} when the ink dries. This is business, not hatred. It is still your business they are taking."
+        },
+        {
+          "posture": "any",
+          "text": "A garrison prize on {WORLD} has two claimants and one field, and the whole world is watching which command keeps its word. Reputation is the real prize here. The retainer matters less than what a clean win does for your name."
+        },
+        {
+          "posture": "any",
+          "text": "The dispute with {ORG} has outrun the lawyers, and both paymasters have agreed to let possession decide. Take the ground, hold the ground, and give the arbiters no excuse. Every dishonorable mark costs more than it wins."
+        },
+        {
+          "posture": "defend",
+          "text": "Your command holds {DISTRICT} under a contract the client now claims was superseded, and {ORG} is inbound to enforce the newer paper. Keep the ground, keep the schedule, and keep every engagement clean enough to read aloud in arbitration."
+        },
+        {
+          "posture": "attack",
+          "text": "{ORG} sits on the {WORLD} garrison your command was promised, and verbal promises pay nothing. The client will honor whichever outfit holds the post on inspection day. Claim it before that day comes, and claim it cleanly."
+        },
+        {
+          "posture": "any",
+          "text": "The paymaster is running both commands against each other and calling it due diligence. Everyone at the table knows it, including {ORG}. Win the field first and renegotiate from strength after — that is the only leverage this trade respects."
+        }
+      ],
+      "blurb": [
+        "Two outfits, one contract, and a field to settle who was really hired.",
+        "A rival command is sitting on your paper — remove them cleanly, in front of witnesses.",
+        "No Houses and no politics: just another outfit between you and your own pay.",
+        "Two signatures on one garrison, and only the field can rule on which one counts.",
+        {
+          "posture": "attack",
+          "text": "Another outfit is wearing your contract — the field will hear the appeal."
+        },
+        {
+          "posture": "defend",
+          "text": "You hold the paper and the post; now hold both against a hungry rival."
+        }
+      ],
+      "orgPools": {
+        "Mercenary": [
+          "the Andiron Company",
+          "Bly's Free Company",
+          "the Cordwain Guards",
+          "Strohm's Standing Order",
+          "the Vantage Point Irregulars",
+          "the Halberd Rose Company",
+          "Dunmore's Company",
+          "the Open Ledger Lances",
+          "the Long Odds Lances",
+          "the Kettleburn Company",
+          "the Silver Surety Guards"
+        ]
+      }
+    },
+    {
+      "id": "pirate-raid",
+      "weight": 2,
+      "sameFaction": false,
+      "combatFactionRule": "pirates-attacker",
+      "eraGroups": [
+        "all"
+      ],
+      "employerPattern": [
+        {
+          "side": "raider",
+          "text": "Pirate band — {ORG}"
+        },
+        {
+          "side": "defender",
+          "text": "Planetary government — {ORG} (raid defense)"
+        },
+        {
+          "side": "defender",
+          "text": "{FACTION_NAME} — {ORG} (anti-piracy retainer)"
+        },
+        {
+          "side": "raider",
+          "text": "Pirate band — {ORG} (no flag, hard currency)"
+        },
+        {
+          "side": "defender",
+          "text": "Frontier defense — {ORG}"
+        }
+      ],
+      "employerDesc": [
+        {
+          "side": "raider",
+          "text": "{ORG} flies no House flag and wants none. It fights for the haul, it has done this before, and it pays its hired guns from what the holds carry home."
+        },
+        {
+          "side": "defender",
+          "text": "Out here, {ORG} is the closest thing {WORLD} has to a navy, an army, and an insurance policy. It is paying because the alternative is watching the raiders carry the world's wealth away."
+        },
+        {
+          "side": "defender",
+          "text": "{ORG} watched three raids in two years go unanswered by distant {FACTION_NAME} garrisons. It has decided to buy its own answer."
+        },
+        {
+          "side": "raider",
+          "text": "The band calling itself {ORG} has raided this border for years; traders whisper the name all the way to the jump point. It rewards competence and abandons failures."
+        },
+        {
+          "side": "raider",
+          "text": "{ORG} pays in hard currency, and it does not ask where your command was last year. The work is dirty, but the math is honest."
+        },
+        {
+          "side": "defender",
+          "text": "{ORG} pooled a season's profits to fund a standing defense, because the House fleet answers distress calls with condolences. The money is modest and completely sincere."
+        },
+        {
+          "side": "defender",
+          "text": "{ORG} has read the raid pattern like a weather chart: the band always comes back to where it fed before. This time the contract is signed before the drive flares show."
+        },
+        {
+          "side": "raider",
+          "text": "{ORG} runs its raids like a business because it is one: quotas, shares, and a schedule. Sentiment is cargo weight. The band pays out the day the holds are tallied."
+        }
+      ],
+      "sideSituation": [
+        {
+          "side": "defender",
+          "posture": "defend",
+          "text": "The raiders have hit {WORLD} before and left when the taking got expensive. {ORG} means to make it expensive early this time. Your command is the cost."
+        },
+        {
+          "side": "defender",
+          "posture": "defend",
+          "text": "The depot stocks, the refinery run, the winter stores — everything {DISTRICT} is worth can be carried off in a week if nobody stands in the road. {ORG} is paying you to stand in it."
+        },
+        {
+          "side": "raider",
+          "posture": "attack",
+          "text": "{ORG} has already picked {WORLD} clean on paper: what to take, what to burn, what to leave. Your command is the muscle between the list and the lift. Get in, load out, and be gone before anything official jumps in-system."
+        },
+        {
+          "side": "raider",
+          "posture": "attack",
+          "text": "The {DISTRICT} yards are fat, the garrison is stretched, and {ORG} has a buyer waiting for everything that can be crated. Speed is the whole plan. A raid that stays too long stops being a raid and starts being a siege."
+        },
+        {
+          "side": "defender",
+          "posture": "defend",
+          "text": "{ORG} cannot say when the raiders come back — only that they will, while the House border keeps every official eye looking the other way. Stand the watch, break the raid, and make the next band choose an easier world."
+        },
+        {
+          "side": "defender",
+          "posture": "attack",
+          "text": "The raiders lifted from {WORLD} twice before, and twice the response arrived to burning pads and empty sky. This time {ORG} wants the pursuit already paid for and standing by. Run the band down before it reaches the lift zone; every hull that escapes comes back next season."
+        },
+        {
+          "side": "raider",
+          "posture": "defend",
+          "text": "The take from {DISTRICT} is loaded and the lift window is set. All {ORG} needs now is time, and time is bought with armor. Hold the loading ground until the last DropShip is up."
+        },
+        {
+          "side": "raider",
+          "posture": "attack",
+          "text": "{ORG} wants one thing off {WORLD} — a specific cargo, in a specific vault, already sold to a buyer who pays on delivery. Everything else on the target list is a distraction the band can burn. Crack the vault, lift the prize, and let the garrison guard the leftovers."
+        },
+        {
+          "side": "defender",
+          "posture": "defend",
+          "text": "{WORLD} has no fleet, no House patron, and one thing the raiders want badly enough to come armed for it. {ORG} spent the reserve on your command instead of on walls. Meet the band at the landing zone and end the season's business there."
+        },
+        {
+          "side": "either",
+          "posture": "any",
+          "text": "Out past {DISTRICT}, the law is whatever lands with the most armor. Raider and defender alike know the arithmetic: the raid pays if it is quick, the defense pays if it is not. Your contract decides which side of that ledger {WORLD} lands on."
+        }
+      ],
+      "blurb": [
+        {
+          "side": "defender",
+          "text": "The raiders are coming back, and this time somebody hired a real answer."
+        },
+        {
+          "side": "raider",
+          "text": "A fat target, a thin garrison, and one week to carry off everything worth taking."
+        },
+        {
+          "side": "defender",
+          "text": "Past the last patrol line, worlds hire their own protection — or lose everything portable."
+        },
+        {
+          "side": "either",
+          "text": "Break the raid or be the raid: the border does not judge, it only pays."
+        },
+        {
+          "side": "either",
+          "text": "The holds decide it — fill them fast, or keep them empty until the law jumps in."
+        },
+        {
+          "side": "defender",
+          "text": "No fleet is coming; the world's whole defense is whoever cashes this contract."
+        }
+      ],
+      "orgPools": {
+        "Pirates": [
+          "the Redwake Corsairs",
+          "Vasska's Wreckers",
+          "the Hollow Crown Band",
+          "Marrow's Jackals",
+          "the Ninth Wave Reavers",
+          "the Cinder Tithe",
+          "Kethra's Cutthroats"
+        ],
+        "generic": [
+          "the port authority's defense fund",
+          "the settlers' mutual defense league",
+          "the freeholders' assembly",
+          "the outbound traders' compact",
+          "the border patrol command",
+          "the landing field wardens",
+          "the miners' defense subscription"
+        ]
+      }
+    },
+    {
+      "id": "clan-internal",
+      "weight": 1,
+      "sameFaction": true,
+      "combatFactionRule": "clan-internal",
+      "eraGroups": [
+        "clan-invasion",
+        "civil-war",
+        "jihad",
+        "dark-age",
+        "ilclan"
+      ],
+      "employerPattern": [
+        "{FACTION_NAME} — {ORG}",
+        "{FACTION_NAME} — {ORG} (Trial sponsor)",
+        "{FACTION_NAME} — {ORG} (Trial contract)",
+        {
+          "posture": "attack",
+          "text": "{FACTION_NAME} — {ORG} (Trial of Possession bid)"
+        },
+        {
+          "posture": "defend",
+          "text": "{FACTION_NAME} — {ORG} (Trial defense)"
+        }
+      ],
+      "employerDesc": [
+        "{ORG} settles its disputes the Clan way — by Trial, with champions, before witnesses. It has chosen to hire its champion rather than spend its own warriors, and the pay reflects the awkwardness of that choice.",
+        "{ORG} speaks for one side of a dispute the Clan's own council could not settle. What the council could not decide, the field will.",
+        "{ORG} deals with outsiders more easily than most Clan institutions. It measures worth by results, pays without ceremony, and expects the honor rules kept to the letter.",
+        "Within the Clan, {ORG} carries weight it did not win in battle — which is exactly the problem. Hired iron will speak where its own warriors cannot.",
+        {
+          "posture": "attack",
+          "text": "{ORG} has issued its challenge and named its stakes. What it lacks is a champion it can afford to lose. The pay is generous precisely because the honor is not transferable."
+        },
+        {
+          "posture": "defend",
+          "text": "{ORG} holds what a rival now covets, and Clan custom lets it meet the challenge with any force it can field — including yours. Refusing the Trial was never an option. Losing it does not have to be one either."
+        },
+        "{ORG} will not explain its politics to outsiders, and you should not ask. It has stated the terms, posted the surety, and named the field. Among the Clans, that is more binding than any House contract."
+      ],
+      "sideSituation": [
+        {
+          "posture": "any",
+          "text": "Two claims, one prize, and a cleared field on {WORLD}: the dispute goes to Trial, and {ORG} has named your command its champion. The Clans watch how a champion fights as closely as whether it wins. Fight clean, or you may take the prize and lose every Clan door on this border."
+        },
+        {
+          "posture": "any",
+          "text": "The rival of {ORG} has hired outside iron, so {ORG} has answered in kind. The Trial ground near {DISTRICT} is set and the witnesses are named. What is really being weighed is not the prize but the standing of the hand that hired you."
+        },
+        {
+          "posture": "any",
+          "text": "The dispute is over goods; the Trial is over standing. Win cleanly on {WORLD} and {ORG} gains both — and a Clan that respects results may open its markets to the command that delivered them."
+        },
+        {
+          "posture": "any",
+          "text": "A bid was made, a bid was refused, and the matter now goes to the circle. {ORG} wants a champion who fights well and yields honorably if beaten. Among these people, how you lose is watched as closely as whether you win."
+        },
+        {
+          "posture": "attack",
+          "text": "{ORG} has bid for what its rival holds near {DISTRICT}, and the circle has accepted your command as its force. The challenge named the ground and the strength; both are now fixed. Take the prize inside the rules, and nothing off {WORLD} can undo the win."
+        },
+        {
+          "posture": "defend",
+          "text": "The rival's challenge names the {DISTRICT} enclave, and {ORG} has chosen to defend it with hired iron — a choice half the Clan calls pragmatic and half calls disgraceful. Hold the ground inside the agreed bounds and let the result answer the critics."
+        },
+        {
+          "posture": "any",
+          "text": "The Trial terms are set: the field on {WORLD}, the forces declared, the witnesses sworn. {ORG} asks only that you fight inside the bid. Break the agreed limits and the prize is forfeit whatever the field says — the one mistake no pay survives."
+        }
+      ],
+      "blurb": [
+        "A Clan dispute, a cleared field, and honor rules that bind every shot.",
+        "Two factors, one prize, and a Trial to settle what the council could not.",
+        "Fight as a hired champion, where how you win matters as much as winning.",
+        "The Clans settle their quarrels in the open — and sometimes they hire the champion.",
+        {
+          "posture": "attack",
+          "text": "The circle is drawn — the challenger fields hired steel as its champion."
+        },
+        {
+          "posture": "defend",
+          "text": "The Clan way says meet the challenge; the pragmatic way says hire the field."
+        }
+      ],
+      "orgPools": {
+        "Clan Sea Fox": [
+          "Factor Deshane's cartel",
+          "Factor Ostrey's trade mission",
+          "the Saltspire enclave council",
+          "the Pearl Current syndicate",
+          "the Windward Bazaar factor house",
+          "the Imara factor house",
+          "the Driftmark enclave assembly"
+        ],
+        "generic": [
+          "the enclave's merchant council",
+          "the garrison Cluster's honor circle",
+          "the Trial circle's convenor",
+          "a bloodnamed sponsor acting through intermediaries",
+          "the enclave's warrior council",
+          "the merchant caste's factor board",
+          "the enclave arbiter's office"
+        ]
+      }
+    }
+  ]
+}

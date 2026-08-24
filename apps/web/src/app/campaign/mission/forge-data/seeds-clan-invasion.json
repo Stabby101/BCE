@@ -1,0 +1,1852 @@
+[
+  {
+    "seedId": "CLN-01",
+    "family": "GARRISON_DUTY",
+    "title": "OPERATION CRANE WARD",
+    "eraFit": ["clan-invasion"],
+    "factionFit": ["is-kurita"],
+    "register": "is-kurita",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "MECH_ONLY",
+    "localeFit": { "settlement": ["industrial"], "regionRole": ["contested"], "terrain": ["wetland"] },
+    "situation": "{WORLD} is safe for now because the invaders won it by a formal challenge, and their own honor code stops them from simply taking it back. A batchall is that challenge: a Clan names the force it will bring and the prize it wants, and both sides fight to the terms. When the {TARGET_FACTION} lost their batchall here in {YEAR}, they gave up the world. {EMPLOYER} now uses it as a workshop. The test sheds in {DISTRICT} rebuild captured Clan machines and test new designs {EMPLOYER} will field on the next world. The {TARGET_FACTION} cannot retake {WORLD} without shaming their Khan's word. But a single Star Colonel can still call a Trial of Possession for a named asset, and they do. {EMPLOYER} has assigned your {FORCE_SIZE} to hold {DISTRICT} through the monsoon quarter. The ground both helps and hurts you. The causeway is the only hard-surface route between the landing flats and the test sheds: a raised ferrocrete road 38 kilometers long and 22 meters wide, strong enough for the heaviest 'Mechs. Everything off the causeway is flooded rice terraces for the whole monsoon quarter. 'Mechs of 55 tons and under cross the paddies at half speed. Heavier machines sink to the hip within 90 meters and must be winched out. When a monsoon cell is overhead, you can see only {monsoonVisibility} meters and thermal sensors lose another 30 percent. Your contact {NPC:intel-source} intercepted a {TARGET_FACTION} bid list naming the sheds as a target. That intercept is 9 days old, so treat it as likely but not certain. It projects a force of {jaguarTrialMechs} OmniMechs and {jaguarElementalPoints} Points of Elementals — armored infantry, five troopers to a Point — under {NPC:opfor-commander}. His record shows two past Trials fought strictly by the dueling code, and one batchall he abandoned in disgust when militia used inferno rockets against him. Honor is a trap for both sides here. The Coordinator's order is blunt: this world matters because it proves the Clans can be beaten by a fair fight. Win by drowning the {TARGET_FACTION} in mud and you keep the sheds but throw away that proof. Lose the sheds and you lose both. The clock is the convoy. The quarter's prototype shipment — {convoyVehicles} sealed transporters — starts crossing the causeway to the hardened bunkers 24 hours after the {TARGET_FACTION} land. It cannot wait: the flood closes the bunker road right behind it.",
+    "objectives": {
+      "primary": "Hold the test sheds and get the prototype shipment into the bunkers undamaged by T+27:10.",
+      "secondary": "End the fight as a formal challenge fought to its stated terms, so {EMPLOYER} can point to it as a fair win or a fair loss — either way, not a mud-brawl.",
+      "bonus": "Disable, do not destroy, at least 1 {TARGET_FACTION} OmniMech inside the agreed dueling ground, so it can be captured and studied."
+    },
+    "complications": [
+      {
+        "name": "Monsoon Cell Rotation",
+        "text": "Storm cells cross the floodlands on a 4-hour cycle and sit overhead for roughly 70 minutes at a time. Under a cell, the paddies and the causeway are equally blind, and VTOL support cannot fly.",
+        "mechanicalEffect": "While a cell is overhead: maximum sensor and visual range equals {monsoonVisibility} meters, no aerial reconnaissance, and indirect fire requires a forward spotter with line of sight."
+      },
+      {
+        "name": "The Rigged Causeway Spans",
+        "text": "During the panic of 3050, engineers wired demolition charges into causeway spans 9 and 23 and never removed them. Blowing a span blocks heavy crossings both ways for the whole season. It also destroys state property. Do that without district approval and the ISF — the employer's secret police — opens a file that outlasts the battle.",
+        "mechanicalEffect": "To blow a span you need approval: spend one full turn at the command post, then wait 2 turns for the answer. The commander can blow it on his own authority instead — but that forces the COMPROMISED outcome at mission end, no matter how the fight goes."
+      },
+      {
+        "name": "Paddy Labor Levy",
+        "text": "1,400 civilian workers are on harvest levy along the south terraces and cannot be cleared in under 12 hours. {TARGET_FACTION} warriors will not deliberately target them, but stray fire that kills levy workers hands {TARGET_FACTION} a grievance claim and the prefecture a scandal.",
+        "mechanicalEffect": "Each incident of stray-fire civilian casualties voids the bonus objective's salvage rights and adds one cumulative penalty step to the post-mission settlement."
+      },
+      {
+        "name": "Elemental Dike Infiltration",
+        "text": "{TARGET_FACTION} Elementals can move along the irrigation dikes submerged to the shoulders, and sensor returns read them as livestock until 120 meters. The dike network reaches within 800 meters of the sheds.",
+        "mechanicalEffect": "{TARGET_FACTION} Elemental Points may deploy under hidden-unit rules in any hex within 4 hexes of a dike hex."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Answer to the Batchall",
+        "context": "{NPC:opfor-commander} declares a Trial of Possession for the test sheds and proposes the engagement circle on the causeway itself, spans 12 through 19 — hard, open ferrocrete, forces as bid. The reply window is 2 hours. District command has, deliberately, left the answer to the garrison commander.",
+        "options": [
+          {
+            "title": "Accept the Circle",
+            "advantages": [
+              "Zellbrigen caps the numbers you face at the declared bid",
+              "Hard ground lets your assault machines fight at full mobility",
+              "A clean win on their terms is the exact legend {WORLD} exists to produce"
+            ],
+            "disadvantages": [
+              "OmniMech for 'Mech, their machines outrange and outgun yours on open ferrocrete",
+              "No terrain assistance, no minefields, no militia support inside the circle"
+            ],
+            "consequence": "The Trial is fought as a set of one-on-one duels on the causeway. The result is clear and public, and the {TARGET_FACTION} honor it for the season.",
+            "costs": { "cbills": 0, "days": null, "resource": "given up inside the dueling ground: minefields, militia support, and the floodland advantage", "risk": "duels on open ferrocrete against OmniMechs that outrange you. If the Trial runs its full course, expect 1,200,000 to 1,800,000 C-bills in armor and actuator repairs." }
+          },
+          {
+            "title": "Counter-Bid the Ground",
+            "advantages": [
+              "Paddy mud negates their tonnage advantage and your pilots drilled the terraces all season",
+              "Monsoon cells shorten engagement ranges to where your refits trade evenly"
+            ],
+            "disadvantages": [
+              "{NPC:opfor-commander} may read the counter-bid as cowardice and add more forces in reply",
+              "In a storm cell, the duel can fall apart into a blind melee no referee can score — so you lose control of the honor result"
+            ],
+            "consequence": "If the {TARGET_FACTION} accept, the Trial is fought in the floodlands during the monsoon. If they refuse, they land with the reserve forces their first bid had held back.",
+            "costs": { "cbills": 0, "days": null, "resource": "winch-recovery teams and tow gear staged at the paddy edges to pull out bogged machines all season", "risk": "if the counter-bid reads as cowardice, {NPC:opfor-commander} adds more forces; in a storm cell the honor result slips out of your control" }
+          },
+          {
+            "title": "Refuse the Trial",
+            "advantages": [
+              "Every weapon becomes lawful: mines, infernos, militia, pre-registered artillery",
+              "Highest raw probability of keeping the sheds intact this quarter"
+            ],
+            "disadvantages": [
+              "Trades away why this world matters — proof the Clans can be beaten fairly — just to save the equipment in it",
+              "The {TARGET_FACTION} are freed from the dueling code: expect them to gang fire, and no formal challenge next time",
+              "The ISF will want to know who decided {EMPLOYER} is afraid of a duel"
+            ],
+            "consequence": "The fight becomes open war in the floodlands. Win or lose, the next {TARGET_FACTION} attack on {WORLD} comes with no warning and no challenge.",
+            "costs": { "cbills": 380000, "days": null, "resource": "the reason this world matters — proof the Clans can be beaten fairly — spent to save the equipment", "risk": "the ISF opens a file on who decided {EMPLOYER} fears a duel; the {TARGET_FACTION} are freed from the dueling code for the season" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Batchall received; {TARGET_FACTION} DropShips announce descent toward the landing flats." },
+        { "t": "T+0:40", "event": "First DropShip lands. The Trial force unloads under the bid's truce; neither side may fire." },
+        { "t": "T+2:00", "event": "Reply window closes. Silence counts as refusing the Trial." },
+        { "t": "T+6:00", "event": "Earliest {TARGET_FACTION} movement to the agreed circle (acceptance) or to assault positions (refusal)." },
+        { "t": "T+24:00", "event": "Prototype convoy departs the sheds for the bunkers. It cannot be recalled once rolling." },
+        { "t": "T+27:10", "event": "Convoy scheduled inside the bunkers; bunker doors seal for the flood season." }
+      ],
+      "hardDeadline": "The consignment is exposed on the causeway from T+24:00 to T+27:10 and the schedule does not move. If any {TARGET_FACTION} unit holds a causeway span at T+24:00, the consignment — and the quarter's work — is forfeit."
+    },
+    "opforSketch": {
+      "composition": "Trial-bid OmniMech force at the top of the band in quality, not quantity: front-line {TARGET_FACTION} OmniMechs in a heavy-leaning mix (1 to 1.5 Stars across the threat band) with 1-3 Points of Elementals. No armor, no artillery, no aerospace inside the bid. If zellbrigen is broken, a Trinary-equivalent reserve becomes available to {TARGET_FACTION} at +48 hours.",
+      "behavior": "Rigid zellbrigen until provoked: single-target engagements, withdrawal honored, no physical attacks. Any break of honor converts the force to concentrated-fire doctrine with Elemental headhunting against the garrison command 'Mech."
+    },
+    "forks": [
+      {
+        "name": "OPERATION LONG HARVEST",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "The Trial is won inside its declared terms and the consignment reaches the bunkers.",
+        "consequence": "District command authorizes a baited repeat: the next consignment is quietly advertised, and the garrison prepares a formal defense with a full season of preparation — under the eyes of a visiting {EMPLOYER} evaluation board.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION GLEANING",
+        "outcomeGate": "FAILURE",
+        "trigger": "The {TARGET_FACTION} take the sheds or the convoy.",
+        "consequence": "The captured prototypes are staged at the landing flats for lift within 72 hours. A scratch force must destroy what {EMPLOYER} cannot recover before the DropShips burn.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION QUIET COURT",
+        "outcomeGate": "COMPROMISED",
+        "trigger": "The garrison won by refusing the batchall or by dropping a causeway span without authorization.",
+        "consequence": "The ISF convenes an inquiry on {WORLD}. The unit holds the district through 30 days of {TARGET_FACTION} honor-raids arriving without declaration while its officers testify, one at a time.",
+        "threat": "MEDIUM"
+      }
+    ],
+    "storyElementSeed": "Between monsoon cells, a maintenance crew sweeps standing water off the causeway deck with long rubber blades ahead of the convoy rehearsal, pausing to let a farm cart pass between the legs of a parked assault 'Mech.",
+    "voiceSlots": ["command", "engineering", "intelligence", "logistics"],
+    "phases": [
+      {
+        "name": "THE BATCHALL",
+        "lead": "The declaration arrives with the {TARGET_FACTION} descent, and the 2-hour reply window belongs to the garrison commander alone. District command has withheld its guidance deliberately; the answer given will be read at the capital either way.",
+        "dataBlock": {
+          "Reply Window": "2 hours from receipt; silence counts as refusing the Trial",
+          "Bid Truce": "Neither side may fire while the Trial force unloads at the landing flats",
+          "Intercepted Bid List": "{jaguarTrialMechs} OmniMechs and {jaguarElementalPoints} Points of Elementals; the intercept is 9 days old, so treat it as likely, not confirmed",
+          "Proposed Dueling Ground": "Causeway spans 12 through 19 — 8 spans of open ferrocrete, 22 meters wide"
+        },
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "The bid list is 9 days old, and {NPC:opfor-commander} once walked away from a batchall in disgust. The list tells you what he planned to bring. It does not tell you what anger will make him bring." }
+      },
+      {
+        "name": "THE TRIAL",
+        "lead": "You fight on whichever ground your answer chose: the ferrocrete dueling ground or the flooded terraces. Monsoon cells roll through on their own schedule and spare no one. Hold to the stated terms exactly, because {EMPLOYER} will publish whatever happens here.",
+        "dataBlock": {
+          "Monsoon Cell Cycle": "4-hour rotation, approximately 70 minutes overhead per cell",
+          "Visibility Under Cell": "{monsoonVisibility} meters; thermal degraded a further 30 percent; no VTOL flight",
+          "Paddy Bogging": "55 tons and under cross at half speed; heavier machines bog to the hip within 90 meters",
+          "Winch Recovery": "Staged at the paddy margins — one bogged assault 'Mech requires 2 recovery vehicles and 40 minutes"
+        },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "The first exchange of fire decides whether the duel holds. One inferno volley from militia in the terraces ends the dueling code for the season, and command will be blamed as if it gave the order." }
+      },
+      {
+        "name": "THE CAUSEWAY RUN",
+        "lead": "From T+24:00 the shipment is on the causeway, and the mission comes down to a 38-kilometer run against the clock. Whatever survived the Trial escorts {convoyVehicles} transporters down a road with no exits and no backup schedule.",
+        "dataBlock": {
+          "Convoy Exposure": "T+24:00 to T+27:10 — 3 hours 10 minutes on elevated ferrocrete, no concealment",
+          "Causeway Rating": "22 meters wide, assault-class traffic, spans numbered 1 through 41",
+          "Charged Spans": "9 and 23 — demolition charges laid in the invasion panic of 3050, never lifted",
+          "Bunker Seal": "the bunker doors close at T+27:10 for the flood season; the schedule does not move"
+        },
+        "protocol": "Blowing a span needs district approval. Send the request from the command post — that costs one full turn — and the answer comes 2 turns later. Either way, the ISF logs who signed off. The commander can blow a span on his own authority, but that triggers the COMPROMISED outcome; weigh that before ordering it. The convoy escort reports in at every fifth span on the engineering net. Two missed reports in a row halt the whole column.",
+        "sidebarKernel": { "voiceSlot": "logistics", "kernel": "The transporters are sealed and the manifests are not the garrison's to read — plan the escort around their weight class and turning radius, which the yardmaster will provide, and ask nothing else." }
+      }
+    ],
+    "registerVariants": {
+      "merc": {
+        "objectives.primary": "Hold the sheds and get the shipment into the bunkers by T+27:10. The contract pays if you hold the ground at the deadline, not for fighting pretty. The honor clauses are the employer's worry — until he adds them to your bond."
+      },
+      "clan": {
+        "objectives.secondary": "Conclude the Trial within zellbrigen. A victory of mud and mines is not a victory; it is a confession."
+      }
+    },
+    "specifics": {
+      "jaguarTrialMechs": { "min": 5, "max": 15, "unit": "OmniMechs" },
+      "jaguarElementalPoints": { "min": 1, "max": 3, "unit": "Elemental Points" },
+      "convoyVehicles": { "min": 6, "max": 10, "unit": "sealed tracked transporters" },
+      "monsoonVisibility": { "min": 150, "max": 400, "unit": "meters" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Refuse the Trial",
+        "requires": "depot-access",
+        "whenLacking": "reprice",
+        "lackingText": "No district depot allotment on hand: mine, inferno, and artillery stocks come through {EMPLOYER} quartermaster channels at 610,000 C-bills, ISF countersignature required."
+      }
+    ]
+  },
+  {
+    "seedId": "CLN-02",
+    "family": "GARRISON_DUTY",
+    "title": "OPERATION COLD LEDGER",
+    "eraFit": ["clan-invasion", "civil-war"],
+    "factionFit": ["merc", "is-steiner"],
+    "register": "merc",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "MECH_ONLY",
+    "localeFit": { "settlement": ["port", "industrial"], "regionRole": ["border"], "terrain": ["ice", "coastal"] },
+    "situation": "{WORLD} sits one jump from the {TARGET_FACTION} occupation zone. That makes it dangerous, and the garrison contract pays a border bonus to match. {EMPLOYER} hired your {FORCE_SIZE} to hold the fjord settlements: the spaceport, the molybdenum works, and 19,000 civilians spread along 60 kilometers of frozen coast. The key term is clause 7(c) — defend only. Fire first across the truce line and you lose your damage coverage and hand the employer grounds to fire you. The {TARGET_FACTION} understand this contract's fine print better than the employer's own lawyers, and they will use it. Your terrain problem is the ice road. From the first hard freeze to the spring melt, the only route between the spaceport and the works is 31 kilometers of plowed lake ice. Engineers rate it for 60 tons standing still and 45 tons moving. Anything heavier breaks through, and the lake is 80 meters deep. Your heavy 'Mechs can defend one end or the other, not both — unless they take the shoulder trail, a single-file detour that costs 9 hours. At -40 degrees your machines shed heat easily, but exposed joints freeze between fights and exposed infantry die in 40 minutes. Two weeks ago a {TARGET_FACTION} fighter flew over the spaceport at 400 meters in clear daylight, weapon racks empty. That was a message, not a scouting run. Then 4 days ago {NPC:intel-source} passed something worse: a {TARGET_FACTION} Star Captain has filed a Trial of Possession — a formal challenge — for your own Clan salvage. That salvage is 2 OmniMech hulls you recovered legally under last contract's salvage clause and stored in the works. This item is only 4 days old but not fully confirmed, so plan on it. The employer's liaison has said it plainly: the salvage is yours, the world is theirs, and if the {TARGET_FACTION} come for your property he would rather the fight not happen at the spaceport, the works, or the ice road that feeds 19,000 people. Nobody is paying extra for that preference. The {TARGET_FACTION} challenge, if it comes, arrives on its own schedule. The ice road closes when the thaw arrives — forecast 11 to 18 days out. Your books have to survive both.",
+    "objectives": {
+      "primary": "Hold the spaceport, the works, and your stored salvage through the contract period without breaking clause 7(c).",
+      "secondary": "Keep the ice road open until the official thaw closure — no spans dropped, no wrecks blocking the route.",
+      "bonus": "Settle any {TARGET_FACTION} challenge in a way the employer can call a lawful, defensive action, so the border bonus survives into the next contract."
+    },
+    "complications": [
+      {
+        "name": "Clause 7(c)",
+        "text": "Defend only. If your unit clearly fires first across the truce line, you lose your damage coverage and the employer can fire you for cause. The {TARGET_FACTION} have seen this kind of contract before and will maneuver in close to bait you into shooting first.",
+        "mechanicalEffect": "If any of your 'Mechs fires before a {TARGET_FACTION} unit fires in that fight, you pay all repair and salvage costs for the mission yourself, and the mission ends on the COMPROMISED outcome."
+      },
+      {
+        "name": "The Ice Road Limit",
+        "text": "The lake route is rated 60 tons static, 45 tons moving. A breakthrough does not just kill the machine — it closes the route and cuts the works' food resupply to airlift only.",
+        "mechanicalEffect": "'Mechs over 45 tons crossing at above walking speed, or over 60 tons at any speed, roll for ice failure each turn on the route; a failure removes the unit from the battle and closes the road for the scenario and all forks."
+      },
+      {
+        "name": "Deep Cold",
+        "text": "Ambient -40 degrees, wind off the fjord. Heat dissipation is excellent until intake icing sets in during lulls.",
+        "mechanicalEffect": "All units dissipate +2 heat per turn; any 'Mech that spends 3 consecutive turns without firing or running takes an actuator-icing critical check on first movement. Conventional infantry cannot deploy outside vehicles or structures for more than 4 turns."
+      },
+      {
+        "name": "The Liaison's Preference",
+        "text": "{NPC:employer-contact} wants any fight moved away from civilian infrastructure and will not put that in writing. Compliance is unpaid; refusal is remembered at renewal.",
+        "mechanicalEffect": "Each objective structure (spaceport, works, road) that takes incidental damage applies a penalty step at contract settlement, separate from combat results."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Salvage Question",
+        "context": "The batchall arrives: a {TARGET_FACTION} Star Captain declares a Trial of Possession for the 2 stored OmniMech chassis, bidding a Star of OmniMechs, and proposes the frozen marsh flats north of the works as the circle. Reply window 72 hours. The employer's counsel observes, unhelpfully, that answering a trial about your own property is probably not a 7(c) violation.",
+        "options": [
+          {
+            "title": "Meet the Trial",
+            "advantages": [
+              "{TARGET_FACTION} honor caps the engagement at the bid — the cheapest fight on offer",
+              "Winning before witnesses raises the unit's rating with Clan and Inner Sphere employers alike",
+              "The circle is away from all three objective structures, which is exactly what the liaison wants"
+            ],
+            "disadvantages": [
+              "A Star of front-line {TARGET_FACTION} OmniMechs is a brutal fight for any lance you can pull off garrison duty",
+              "Losses in a fight you chose may be ruled outside your damage coverage"
+            ],
+            "consequence": "The trial is fought as bid on the marsh flats. Win or lose, {TARGET_FACTION} honor the result and the garrison period continues — minus whatever the fight cost.",
+            "costs": { "cbills": 0, "days": null, "resource": "one lance off the garrison posts for the trial — the spaceport or the works stands thin, and the shoulder trail swap is 9 hours", "risk": "losses in a voluntary engagement may be argued outside loss-and-damage coverage — own-cost repairs against a front-line {TARGET_FACTION} Star" }
+          },
+          {
+            "title": "Refuse and Fortify",
+            "advantages": [
+              "Forces {TARGET_FACTION} to choose between dropping the claim and a truce-violating attack on a defended works",
+              "Every defensive asset — mines, hull-down positions, the works' walls — is in play if they come anyway"
+            ],
+            "disadvantages": [
+              "If they come anyway, the fight happens at the works, among the buildings you must protect and the civilians",
+              "Refusing looks dishonorable to them — dezgra — so expect them to bring everything and give no warning next time"
+            ],
+            "consequence": "The {TARGET_FACTION} either withdraw the claim, with contempt, or attack the works unbid within 8 days — a HIGH-threat engagement on the worst possible ground.",
+            "costs": { "cbills": 120000, "days": null, "resource": "mine stocks and barrier works emplaced at the perimeter", "risk": "an unbid {TARGET_FACTION} attack inside 8 days lands among the objective structures — every structure hit is a penalty step at settlement" }
+          },
+          {
+            "title": "Sell the Claim",
+            "advantages": [
+              "Handing over 2 unrestorable chassis ends the threat at zero combat cost",
+              "The thaw deadline and the road stay unthreatened; the contract period closes quietly"
+            ],
+            "disadvantages": [
+              "The salvage is the unit's only hard asset from the last contract — that is next year's refit budget",
+              "Word travels: a unit that yields property on demand invites the next demand",
+              "The employer notes that {TARGET_FACTION} now believe pressure works on this garrison"
+            ],
+            "consequence": "The chassis leave on a {TARGET_FACTION} DropShip under truce protocol. The unit's ledger takes the loss, the garrison period continues, and the next {TARGET_FACTION} message will be priced accordingly.",
+            "costs": { "cbills": 7500000, "days": null, "resource": "the 2 Clan OmniMech chassis — the unit's only hard asset from the last contract and next year's refit budget", "risk": "word travels: a unit that yields property on demand invites the next demand" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "{TARGET_FACTION} DropShip burn flagged inbound by the spaceport sensor net; batchall transmitted simultaneously." },
+        { "t": "T+1:30", "event": "Garrison stand-to complete; lances committed to either the spaceport or the works cannot swap ends in under 9 hours via the shoulder trail." },
+        { "t": "T+20:00", "event": "Projected {TARGET_FACTION} grounding on the marsh flats if the trial is accepted." },
+        { "t": "T+72:00", "event": "Batchall reply window closes. Silence is refusal." },
+        { "t": "T+8 days", "event": "Latest projected unbid {TARGET_FACTION} action if refused." }
+      ],
+      "hardDeadline": "The thaw closes the ice road on its own schedule — forecast 11 to 18 days out, {thawDay} days in actuality. After closure, the works and its garrison detachment are supplied by air only, and any fight there is fought with whatever was positioned before the melt. Position before the thaw or accept being split."
+    },
+    "opforSketch": {
+      "composition": "One Star of front-line {TARGET_FACTION} OmniMechs at the band's quality ceiling, medium-heavy mix built for mobility on ice and marsh; 1 Point of Elementals riding as trial witnesses and perimeter security. If the trial is refused and {TARGET_FACTION} attack unbid, add a second Star and an aerospace point at +8 days.",
+      "behavior": "Patient and legalistic: {TARGET_FACTION} maneuver to provoke a first shot near the truce line, honor zellbrigen scrupulously inside a declared trial, and fight with massed efficiency the moment the engagement is unbid. They will not deliberately damage civilian infrastructure — and will note for the record every time you do."
+    },
+    "forks": [
+      {
+        "name": "OPERATION GOOD PAPER",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "All three structures intact, salvage retained, no 7(c) breach.",
+        "consequence": "The employer exercises the renewal option at an improved multiplier and asks the unit to host a {EMPLOYER} intelligence team running close observation of the {TARGET_FACTION} border — quiet work that makes the garrison a collection target.",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION THAW DEBT",
+        "outcomeGate": "FAILURE",
+        "trigger": "The salvage is lost by force, or an objective structure is destroyed.",
+        "consequence": "The contract settles at penalty rates and the unit must take an immediate follow-on job — escorting the spring resupply convoy up the just-opened fjord road through ground {TARGET_FACTION} now patrol at leisure.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION PAPER STORM",
+        "outcomeGate": "COMPROMISED",
+        "trigger": "Clause 7(c) was breached or argued breached.",
+        "consequence": "Coverage is suspended pending arbitration. The unit fights the remainder of the garrison period at own-cost repairs while the employer's lawyers and the unit's bondholder fight a colder war than {TARGET_FACTION} ever offered.",
+        "threat": "MEDIUM"
+      }
+    ],
+    "storyElementSeed": "At the ice road checkpoint, a tech with a paint scraper works frost off a 'Mech's knee actuator while two drivers from the food convoy argue quietly about whether the lake creaked or the wind did.",
+    "voiceSlots": ["command", "logistics", "engineering", "intelligence"],
+    "phases": [
+      {
+        "name": "POSTURE",
+        "lead": "This garrison is a placement problem: two strongpoints, one ice road, and heavy 'Mechs that can hold one end or the other but not both. Whatever you position in the first week is what fights in the last, because swapping ends costs 9 hours and the thaw is already on the calendar.",
+        "routes": [
+          { "name": "ICE ROAD", "desc": "31 kilometers of plowed lake ice between the spaceport and the works, rated 60 tons static, 45 tons moving.", "tradeoff": "Fast for anything under the rating; a breakthrough closes the road for the season and puts the works on airlift rations." },
+          { "name": "THE SHOULDER", "desc": "9-hour detour over the fjord shoulder, single-file, all weights.", "tradeoff": "The only route for heavies — and 9 hours is longer than any fight either town is likely to host." }
+        ],
+        "dataBlock": {
+          "Posting Split": "Spaceport, molybdenum works, 19,000 civilians across 60 kilometers of coastline",
+          "Cold Exposure": "-40 degrees ambient; exposed infantry dies in 40 minutes; actuators ice during engagement lulls",
+          "End-Swap Time": "9 hours via the shoulder for anything over the ice rating"
+        },
+        "sidebarKernel": { "voiceSlot": "engineering", "kernel": "Every machine that sits picket gets an icing schedule taped inside the cockpit: 3 turns idle is a frozen actuator, and {TARGET_FACTION} can read a cold-start limp at 2 kilometers." }
+      },
+      {
+        "name": "FLASHPOINT",
+        "lead": "The challenge, if it comes, is as much a legal trap as a fight — the {TARGET_FACTION} wrote it so that every answer costs you something. You get 72 hours to reply, which is just long enough for the employer's lawyers to be no help at all.",
+        "protocol": "Clause 7(c) fire discipline: no 'Mech fires until a {TARGET_FACTION} weapon shows on your gun-camera. Log every contact with a timestamp and its position against the truce line. Within 6 hours of any exchange, the duty officer sends the full log to the employer's liaison. That recording is your insurance — guard it as carefully as ammunition.",
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "The {TARGET_FACTION} will maneuver inside weapons range and wait — the twitch they are fishing for costs this unit its coverage, and they know the clause number as well as we do." }
+      },
+      {
+        "name": "THE THAW LINE",
+        "lead": "The contract ends on a calendar but the mission ends on the melt: forecast 11 to 18 days, {thawDay} in actuality. Whatever is on the wrong side of the lake when the ice goes stays there, and the resolution — trial, attack, or quiet — happens with the pieces already placed.",
+        "dataBlock": {
+          "Thaw Forecast": "11-18 days to closure; after closure the works resupplies by air only",
+          "Airlift Capacity": "UNCONFIRMED — basis: the spaceport manifest shows 2 civilian cargo VTOLs under charter",
+          "Salvage Mass": "2 OmniMech chassis at the works — any relocation is an ice-road weight problem before it is anything else"
+        },
+        "sidebarKernel": { "voiceSlot": "logistics", "kernel": "Position the spares and the food before the melt, not the week of it — the thaw does not send a batchall." }
+      }
+    ],
+    "assetDetails": [
+      { "ref": "stored Clan salvage (2 OmniMech chassis, the works)", "detail": "Chassis 1 masses 47 tons stripped, chassis 2 masses 33 tons; either one on a flatbed exceeds the ice road's 45-ton moving limit, so any relocation to the spaceport is a static-speed crossing or a 9-hour shoulder haul. Storage is legal under last contract's salvage clause and the paperwork is clean — {TARGET_FACTION} are not disputing the law, they are disputing the ownership.", "priority": "HIGH" },
+      { "ref": "{NPC:employer-contact}", "detail": "Briefs verbally, never in writing, and has twice referred to the unit's salvage as 'the complication' in front of staff. Expect renewal arithmetic to weigh how the trial question was handled at least as heavily as how the world was held.", "priority": "MEDIUM" }
+    ],
+    "registerVariants": {
+      "is-steiner": {
+        "objectives.primary": "Preserve the economic corridor — spaceport, works, and road — through the reporting period. The Commonwealth measures this garrison in export tonnage and insurance posture, in that order."
+      },
+      "clan": {
+        "decisionPoints[0].context": "A Star Captain of Clan Wolf has petitioned honorably for that which mercenaries hold as inventory. The trial offer is generosity. The reply will reveal whether these soldiers-for-coin understand what is being offered."
+      }
+    },
+    "specifics": {
+      "thawDay": { "min": 11, "max": 18, "unit": "days until ice road closure" },
+      "wolfTrialStar": { "min": 5, "max": 5, "unit": "OmniMechs in the declared bid" },
+      "garrisonCivilians": { "min": 17000, "max": 21000, "unit": "civilians in the corridor" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Refuse and Fortify",
+        "requires": "depot-access",
+        "whenLacking": "reprice",
+        "lackingText": "No depot stocks on {WORLD}: mine and barrier materiel through the spaceport chandlers at 320,000 C-bills, delivery in 4 days — and the thaw clock does not wait for it."
+      }
+    ]
+  },
+  {
+    "seedId": "CLN-03",
+    "family": "OBJECTIVE_RAID",
+    "title": "OPERATION TALON TITHE",
+    "eraFit": ["clan-invasion"],
+    "factionFit": ["clan-jade-falcon", "clan"],
+    "register": "clan",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.35,
+    "localeFit": { "settlement": ["frontier", "agrarian"], "regionRole": ["border"], "terrain": ["desert"] },
+    "situation": "The Khan's schedule gives this Cluster 11 days on its own before it must rejoin the advance. The Galaxy Commander has approved a Trial of Possession — a formal raid to seize a target — against the {TARGET_FACTION} depot on {WORLD}. Aerospace scouts have confirmed the target: a grounded Overlord-class DropShip loading {targetMechCount} rebuilt BattleMechs and {targetSupplyTons} tons of supplies for the enemy front. That intelligence is 6 days old and solid; the loading schedule inside it is 13 days old, so treat its timing as rough. Take those machines and they become isorla — war spoils won for the Clan, and a real blow to the enemy's next campaign. Destroy them instead and they are only wreckage with {EMPLOYER}'s name on it. That difference matters, and you will be judged on it. You won the bid to lead this. The defenders are assessed at 2 companies of BattleMechs in mixed repair, 1 armor company, and a battalion of foot soldiers with {infernoCarrierCount} missile carriers loaded with inferno rockets — fire weapons, favored by people who fight dirty. That assessment is 6 days old, so treat it as likely, not certain. {NPC:opfor-commander} commands the depot. The enemy's fighter wing at the airstrip can be airborne in 20 minutes. The ground is badlands: eroded rock mesas walling in the depot basin on the north and east. One ravine — the locals call it the choke — lets 'Mechs through single file for 2.1 kilometers under 40-meter walls. The other way in is 60 kilometers of open wheat from the west, flat and exposed, the whole distance under the depot's guns. There is no third route on the ground, and that is the whole tactical problem. Your DropShips cannot land closer than 38 kilometers without taking artillery fire on the way down. The batchall — your formal declaration of the raid — transmits the moment you commit to landing. Inner Sphere garrisons answer a batchall with silence, with lies, or with massed fire. Expect that, and let it change nothing about how you fight. Whatever you bid away before landing is your choice, and you carry the results. The recall is fixed: your DropShips lift 14 hours after landing, with the isorla or without it. The Khan's schedule does not bend for a Star Colonel's pride, quiaff?",
+    "objectives": {
+      "primary": "Capture the grounded Overlord's cargo: the rebuilt BattleMechs, undamaged, as war spoils.",
+      "secondary": "Wreck the depot's remaining supplies so the enemy front cannot use them — without spending your bid forces on low-value targets.",
+      "bonus": "Take worthy captives — MechWarriors or senior technicians, held as bondsmen — without delaying the lift."
+    },
+    "complications": [
+      {
+        "name": "The Inferno Carriers",
+        "text": "The garrison's missile carriers fire inferno rockets and gang them onto one target at a time to swamp it with heat. It is dishonorable by Clan law — dezgra — and it works. Holding to one-on-one dueling against an enemy who burns you this way is keeping a rule he does not share.",
+        "mechanicalEffect": "Inferno volleys stack heat: any OmniMech hit by 2 or more carriers in one turn takes their combined heat. Declaring the carriers dezgra frees all your warriors from one-on-one dueling rules, but only against vehicles."
+      },
+      {
+        "name": "Wheat Fires",
+        "text": "The western plain is dry-season wheat. Energy weapons and burning wrecks start crop fires that walk with the wind at 15 kilometers per hour, throwing smoke walls across the basin.",
+        "mechanicalEffect": "Each energy-weapon hit on a plain hex has a chance to ignite it; fire and smoke spread downwind 1 hex per turn, blocking line of sight and adding heat to occupying units."
+      },
+      {
+        "name": "Alert Wing at the Airstrip",
+        "text": "Enemy conventional fighters hold 20-minute strip alert, 270 kilometers south. They will not engage OmniMechs in the choke's walls but the open plain and the grounded DropShips are within their doctrine.",
+        "mechanicalEffect": "From T+0:20 after the batchall, air strikes arrive on the plain and the LZ every 4-6 turns unless the bid included aerospace cover or the strip is suppressed."
+      },
+      {
+        "name": "Loading In Progress",
+        "text": "The Overlord is loading right now. Every hour you delay puts 2 to 3 more target 'Mechs and their crews inside a ship that can seal its doors, lift off, and end the raid with the prize aboard.",
+        "mechanicalEffect": "At T+8:00 the Overlord can seal and try to lift. Each hour before then moves 2 to 3 of the target 'Mechs off the depot pads and into the ship."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Bid",
+        "context": "Before you commit to landing, your Star Captains must finish bidding — competing to win the fight with the smallest force, the Clan way. The Cluster has available: 2 Trinaries of OmniMechs (about 30 'Mechs), 1 Supernova of Elementals (armored infantry), and 2 Points of fighters. The Galaxy Commander records what you bid, what you won with, and how lean the bid was. A Star Captain's reputation is built on exactly that math.",
+        "options": [
+          {
+            "title": "Bid Deep",
+            "advantages": [
+              "One Trinary and no fighters: a bare-bones bid people will retell. Winning at this weight builds reputations and strengthens future Bloodname claims — a warrior's right to a heritage name",
+              "Fewer DropShips on the ground means a faster, cleaner lift at recall"
+            ],
+            "disadvantages": [
+              "Nothing answers the fighter wing except your speed and the cover of the choke's walls",
+              "If the 6-day-old count of 2 enemy 'Mech companies is too low, the bid is too weak — and asking for the reserves you gave up is itself a disgrace"
+            ],
+            "consequence": "You fight with about 15 OmniMechs against the whole depot garrison. The glory and the risk are equal, and both go on the record.",
+            "costs": { "cbills": null, "days": null, "resource": "given up: one full Trinary, the Elemental Supernova, and both fighter Points — about 15 OmniMechs face the depot alone", "risk": "if the 6-day-old count is too low, the bid is too weak, and calling for the reserves you gave up is a disgrace" }
+          },
+          {
+            "title": "Bid Sound",
+            "advantages": [
+              "Both Trinaries with Elemental support: enough force to take the choke and the loading pads at the same time, before the Overlord seals",
+              "A safety margin against stale intelligence and Inner Sphere surprises"
+            ],
+            "disadvantages": [
+              "Still no fighters in the bid, so the plain and the landing zone stay open to the enemy wing",
+              "A safe bid wins no glory; it is merely enough, and the Galaxy Commander's record will say so"
+            ],
+            "consequence": "You fight with force to spare and nothing to brag about. You will likely take the prize, earn modest honor, and leave a plain line in the record.",
+            "costs": { "cbills": null, "days": null, "resource": "given up: both fighter Points — the enemy wing flies unopposed over the plain and the landing zone", "risk": "the bid is merely adequate; the Galaxy Commander's record will say so, and no Bloodname claim is strengthened by it" }
+          },
+          {
+            "title": "Bid the Sky",
+            "advantages": [
+              "Both fighter Points included: they suppress the airstrip and take away the enemy's air power entirely",
+              "They protect the grounded DropShips, so nothing from the air can threaten your recall"
+            ],
+            "disadvantages": [
+              "Bidding fighters against a mere garrison depot will be called timid by every Star Captain who lost the bid",
+              "The fighters spent here are gone from the Cluster's strength for the next wave assault, where they will be missed"
+            ],
+            "consequence": "You get total force superiority — and a rumor that follows you to the next council that you bought certainty with the Khan's assets.",
+            "costs": { "cbills": null, "days": null, "resource": "committed: both fighter Points, subtracted from the Cluster's strength for the next wave assault where they will be missed", "risk": "every Star Captain who lost the bid will call it timid, and the rumor follows the winner to the next council" }
+          }
+        ]
+      },
+      {
+        "name": "When They Burn",
+        "context": "The garrison will most likely ignore your batchall and answer your assault with massed inferno fire and concentrated artillery. The first time you meet these dishonorable — dezgra — tactics, the senior warrior on the ground must decide for the whole force, on the move, with the recall clock running.",
+        "options": [
+          {
+            "title": "Hold Zellbrigen",
+            "advantages": [
+              "Your honor stays intact no matter what the enemy does — the cleanest possible entry in the record",
+              "One-on-one discipline keeps your fire lanes clear in the choke, where a chaotic melee would be suicide"
+            ],
+            "disadvantages": [
+              "Fighting one target each while they gang inferno fire on you trades your warriors' lives for principle at a bad rate",
+              "It is slow: dueling your way through a whole garrison battalion may take longer than the lift window allows"
+            ],
+            "consequence": "Casualties run high, but clean. Whatever you win, you win with no asterisk, and the Remembrance will keep the story.",
+            "costs": { "cbills": null, "days": null, "resource": "warriors and machines lost to the inferno carriers while you hold to one-on-one dueling", "risk": "dueling through a garrison battalion may run past the T+14:00 lift, and the isorla seals inside the Overlord while you keep the forms" }
+          },
+          {
+            "title": "Declare Them Dezgra",
+            "advantages": [
+              "Frees your force to concentrate fire against an enemy who is already massing theirs",
+              "The fastest way through the garrison to the loading pads before the Overlord seals"
+            ],
+            "disadvantages": [
+              "The call is yours and will be reviewed; a rushed one shames the whole Cluster, not just you",
+              "Once you let discipline go, it is hard to restore for the next Trial"
+            ],
+            "consequence": "The assault gets efficient and the record gets disputable. The Galaxy Commander decides later, with witnesses, whether the call was right.",
+            "costs": { "cbills": null, "days": null, "resource": "honor: the dueling code set aside in your name, against vehicles only, before witnesses", "risk": "a disputed call shames the Cluster and can bring a Trial of Grievance — a formal challenge — against you" }
+          },
+          {
+            "title": "Withdraw and Re-Bid",
+            "advantages": [
+              "If the garrison is stronger than your bid can beat, pulling out before defeat saves the force for an honest second bid",
+              "No warrior spends his honor on a Trial that bad intelligence set up to fail"
+            ],
+            "disadvantages": [
+              "The recall schedule almost certainly rules out a second landing, so withdrawing likely ends the Trial with no fight at all",
+              "A Cluster that lifts off a garrison world empty-handed will hear about it from every other Cluster in the Galaxy"
+            ],
+            "consequence": "The force lifts off whole but empty. The isorla goes to feed the enemy front instead, and the bid winner owes the Galaxy Commander an explanation.",
+            "costs": { "cbills": null, "days": null, "resource": "the isorla given up — the recall schedule almost certainly rules out a second landing", "risk": "a Cluster that lifts off a garrison world empty-handed answers for it to every other Cluster in the Galaxy" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Batchall transmitted at descent commit; enemy depot goes to alarm regardless of reply." },
+        { "t": "T+0:20", "event": "the airstrip alert wing airborne; first strike window on the plain and LZ opens." },
+        { "t": "T+0:45", "event": "DropShips ground 38 kilometers out; advance begins toward the choke or the plain." },
+        { "t": "T+3:30", "event": "Earliest contact at the choke's south mouth at OmniMech cruise speed." },
+        { "t": "T+8:00", "event": "Overlord can complete sealing and attempt lift under battery cover." },
+        { "t": "T+14:00", "event": "Recall: all DropShips lift for the wave rendezvous." }
+      ],
+      "hardDeadline": "All DropShips lift at T+14:00 from grounding, carrying the isorla or leaving it. This deadline is absolute: a Star Colonel who wins the depot but misses the Galaxy's wave rendezvous has failed the mission, because the captured machines mean nothing if they are not aboard when the ships burn. Unlike the bid forces, the lift time cannot be reduced, extended, or renegotiated — plan the entire operation to finish inside the 14 hours, with recovery and loading time counted in, not added on at the end."
+    },
+    "opforSketch": {
+      "composition": "Garrison-grade Inner Sphere defense scaled across the band: 2 companies of mixed-repair BattleMechs (medium-heavy, Regular, 10-25 percent understrength), 1 armor company including inferno-equipped missile carriers, dug-in conventional infantry with the depot's fixed batteries, and conventional air support on 20-minute alert. No Clan-grade equipment.",
+      "behavior": "Static defense in depth around the pads, massed fire by doctrine, infernos against anything Clan, and no batchall reply. The commander will trade ground for time, because time is the Overlord sealing and the raiders' recall both."
+    },
+    "forks": [
+      {
+        "name": "OPERATION SHRIKE LARDER",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "The objective 'Mechs are lifted as isorla within the recall window.",
+        "consequence": "The Galaxy Commander assigns the Cluster the honor of first descent on the next wave world, with the captured machines issued to solahma trials — and the enemy's truce-ward front, short its resupply, grows desperate and unpredictable.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION EMPTY TALON",
+        "outcomeGate": "FAILURE",
+        "trigger": "The Overlord lifts, seals, or burns with its cargo unclaimed.",
+        "consequence": "The bid winner must answer for the ratio before the Galaxy Commander. The Cluster is assigned rearguard escort for the wave — garrison work — until a Trial of redemption can be petitioned and fought at a cutdown bid.",
+        "threat": "EXTREME"
+      },
+      {
+        "name": "OPERATION GRIEVANCE CIRCLE",
+        "outcomeGate": "COMPROMISED",
+        "trigger": "A dezgra declaration was made and is contested in review.",
+        "consequence": "A rival Star Captain petitions a Trial of Grievance against the declaring warrior. The circle is fought unaugmented before the Cluster, and its result, not the depot's, is what the Remembrance keeps.",
+        "threat": "MEDIUM"
+      }
+    ],
+    "storyElementSeed": "In the DropShip bay before descent, a technician kneels at an OmniMech's foot re-torquing a single bolt to specification, wipes the head clean, and chalks a tally mark beside 11 others on the armor.",
+    "voiceSlots": ["command", "engineering", "intelligence", "naval"],
+    "phases": [
+      {
+        "name": "THE BID",
+        "lead": "The bidding closes before you commit to landing, and whatever you bid away is gone for good — there is no honorable way to take it back. The Galaxy Commander records what you bid, what you won with, and how lean the bid was. A Star Captain's reputation is built on exactly that.",
+        "dataBlock": {
+          "Forces Available": "2 Trinaries of OmniMechs, 1 Supernova of Elementals, 2 Points of fighters",
+          "Bid Record": "Sent to the Galaxy Commander when bidding closes; adding force after landing is a disgrace, not an option",
+          "Intelligence Age": "The defense estimate is 6 days old and the loading schedule 13 days old — both likely, neither confirmed"
+        },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "Bid against the depot that is really there, not the one the intercepts describe. A broken bid is answered for in front of the Clusters, and 'the intelligence was stale' is no excuse the Grand Council has ever accepted." }
+      },
+      {
+        "name": "BATCHALL AND DESCENT",
+        "lead": "The batchall transmits at descent commit and the enemy goes to alarm regardless of reply — Spheroid garrisons answer with silence, with lies, or with massed fire. The DropShips ground 38 kilometers out, beyond the batteries, and the approach begins under the recall clock.",
+        "dataBlock": {
+          "Grounding Distance": "38 kilometers from the depot — closer accepts battery fire on descent",
+          "Alert Wing": "the airstrip, 270 kilometers south, airborne at T+0:20",
+          "Overlord Seal Threshold": "T+8:00 — after which the hull can close and attempt lift under battery cover",
+          "Loading Rate": "2-3 objective 'Mechs move from the pads into the hull per elapsed hour"
+        },
+        "routes": [
+          { "name": "THE CHOKE", "desc": "2.1 kilometers of single-file draw under 40-meter badland walls, the only covered approach from the north and east.", "tradeoff": "The walls deny the alert wing its strafing geometry — and a column in single file fights with one machine at a time if the head of the draw is held." },
+          { "name": "THE WHEAT ROAD", "desc": "60 kilometers of open dry-season wheat from the west, flat and honest, under the depot's registered artillery arcs the entire way.", "tradeoff": "Speed and formation width, purchased under artillery and air attack across ground that burns and walks its smoke downwind at 15 kilometers per hour." }
+        ],
+        "sidebarKernel": { "voiceSlot": "naval", "kernel": "The DropShips are the recall made physical: grounded 38 kilometers out, lift at T+14:00, and no battle result alters the burn window to the wave rendezvous." }
+      },
+      {
+        "name": "THE TRIAL GROUND",
+        "lead": "The depot is taken at the pads, against a garrison that masses fire without shame and counts the Overlord's sealing as victory. What the warriors hold to in the face of inferno volleys is theirs to rule and theirs to wear afterward.",
+        "protocol": "A dezgra declaration is made once, by the senior warrior on the ground, transmitted in the open on the Trial frequency before witnesses, and names vehicle units only. It is not repeated, it is not delegated, and it is reviewed by the Galaxy Commander with the gun-camera record beside it.",
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "Count the pads before you commit the Elementals. If loading has run faster than the 13-day-old schedule assumed, the isorla is already inside the ship and taking it means boarding, not raiding." }
+      },
+      {
+        "name": "THE LIFT",
+        "lead": "Recall is T+14:00 from grounding, with the isorla or without it. A Star Colonel who misses the wave rendezvous has explained nothing by winning here; the lift order is the one element of this Trial that was never bid.",
+        "dataBlock": {
+          "Lift Time": "T+14:00 — all DropShips burn for the wave rendezvous",
+          "Isorla Loading": "Captured 'Mechs walk aboard under their own power or are stricken from the count; the schedule carries no winch time",
+          "Bondsman Boarding": "Bondsmen board bound and escorted, 1 Elemental per 3, processed in transit"
+        },
+        "sidebarKernel": { "voiceSlot": "engineering", "kernel": "Powering a captured Spheroid 'Mech for the walk aboard takes a technician 20 minutes per machine if the crews left them cold — the lift schedule pays for that time, the Trial does not." }
+      }
+    ],
+    "registerVariants": {
+      "is-davion": {
+        "situation.defenderNote": "Depot garrison brief, other side of the hill: you have 2 understrength companies, a wing of conventional fighters, and a loading schedule the enemy has apparently read. The Overlord seals at hour 8. Everything before that is a delaying action with your name on it."
+      }
+    },
+    "specifics": {
+      "targetMechCount": { "min": 18, "max": 24, "unit": "rebuilt BattleMechs aboard or loading" },
+      "targetSupplyTons": { "min": 600, "max": 1100, "unit": "tons of depot materiel" },
+      "infernoCarrierCount": { "min": 4, "max": 8, "unit": "inferno-equipped missile carriers" }
+    }
+  },
+  {
+    "seedId": "CLN-04",
+    "family": "OBJECTIVE_RAID",
+    "title": "OPERATION HOLLOW QUIVER",
+    "eraFit": ["clan-invasion"],
+    "factionFit": ["is-davion", "is-steiner", "merc"],
+    "register": "is-davion",
+    "threatRange": ["HIGH"],
+    "armsMix": "MECH_ONLY",
+    "localeFit": { "settlement": ["frontier"], "regionRole": ["border"], "terrain": ["ice"] },
+    "situation": "This mission is a trade: their supplies for a few hours of your risk. For the past 5 months, every {TARGET_FACTION} probe across the truce line has launched from one place — a forward supply depot dug into the rubble ridge at the foot of the icefield on {WORLD}, 9 kilometers from the {TARGET_FACTION} main camp. {NPC:intel-source} reports {depotAmmoTons} tons of Clan autocannon and missile ammunition, {depotArmorTons} tons of armor plate, and a 6-bay OmniMech repair line inside it. That report is 16 days old, so treat it as likely, not certain. Destroy the depot and their probes on your side of the line slow down for an estimated 2 to 3 months while they rebuild their supply line. This trade only pays once, because afterward they will rebuild the depot with a full garrison Trinary sitting on it. {EMPLOYER} is paying for that one trade with your {FORCE_SIZE}. The way in is the hard part. The depot's back is against the icefield, and the icefield is the one route the {TARGET_FACTION} treat as an obstacle instead of an open road. It is 31 kilometers of glacier, crossed by 2 marked routes that dodge the crevasses. You move at walking speed, single file, no jump jets — buried seismic sensors line the ridge, and a jump-jet landing hits the ice hard enough for them to hear it. The sensor map is 16 days old, and the routes were marked by a survey 3 years ago; the glacier drifts 40 meters a year, so the marks may be off. Downhill glacier winds ground all VTOLs — yours and theirs — from 1400 to 1700 local every day. The depot garrison is 1 solahma Star of OmniMechs, plus 2 Points of Elementals on the perimeter. Solahma are old warriors on second-line machines, posted here to die usefully; that report is also 16 days old. The front-line Trinary 9 kilometers east answers any alarm. Do not plan on duels. Solahma fight to die well, which means they all come at you at once. One order from the employer, in writing for once: prisoners the {TARGET_FACTION} take become bondsmen — captives bound into service — and a captured MechWarrior who knows our truce-line positions is a serious loss. So recovering downed pilots ranks equal with blowing the depot. Nobody gets left on the ice.",
+    "objectives": {
+      "primary": "Destroy the annex's munitions stock, armor stock, and refit line beyond field repair.",
+      "secondary": "Recover every member of the raid force, walking or carried. Zero personnel left within the {TARGET_FACTION} occupation zone.",
+      "bonus": "Haul out up to {haulTons} tons of Clan armor plate or weapons salvage on the exit sleds — only if doing so does not slow the escape."
+    },
+    "complications": [
+      {
+        "name": "The Glacier Clock",
+        "text": "Both marked routes are walking-speed, single-file, and 3 years out of date against a glacier that drifts 40 meters a year. An unmarked crevasse drops a 'Mech to the hip or worse, and pulling it out takes hours you do not have once the alarm goes.",
+        "mechanicalEffect": "Movement on the icefield is capped at walking speed in column; any deviation from the flagged route triggers a crevasse check per hex. Jump jet use anywhere on the ice or moraine triggers the seismic net and starts the reaction timeline immediately."
+      },
+      {
+        "name": "Katabatic Window",
+        "text": "Glacier outflow winds ground all rotary and VTOL aircraft from 1400 to 1700 local daily. This is the only guaranteed period in which the {TARGET_FACTION} cantonment cannot put eyes or Elemental-carrier lift over the icefield.",
+        "mechanicalEffect": "Between 1400 and 1700 local, neither side may operate VTOL or aerospace assets below 3,000 meters. Outside that window, {TARGET_FACTION} aerial reconnaissance sweeps the ice every 90 minutes."
+      },
+      {
+        "name": "Solahma Garrison",
+        "text": "The annex Star is old warriors on second-line machines, posted here to die usefully. They will not duel, they will not withdraw, and they will mass fire on the first target that breaches the wire.",
+        "mechanicalEffect": "Garrison units ignore zellbrigen, never check morale, and fight to destruction. Treat all garrison fire as concentrated by doctrine."
+      },
+      {
+        "name": "Cook-Off Radius",
+        "text": "{depotAmmoTons} tons of Clan ammunition goes off all at once when it burns. The demolition plan has to allow for a blast that reaches the repair line, the perimeter fence, and any raider still inside it.",
+        "mechanicalEffect": "Once charges are set, detonation produces a 4-hex destruction radius and an 8-hex damage radius; any unit inside at T-0 takes the corresponding damage. Timed fuses are fixed at 10 minutes once armed."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "How It Burns",
+        "context": "The annex can be destroyed three ways, and the choice sets the egress clock. The demolition officer wants a decision before the force leaves the ice, not at the wire.",
+        "options": [
+          {
+            "title": "Charges and a Sweep",
+            "advantages": [
+              "Total destruction, confirmed by eyes-on: munitions, armor stock, and refit line in one engineered demolition",
+              "The 10-minute fuse window doubles as the egress head start"
+            ],
+            "disadvantages": [
+              "Requires holding the annex interior for an estimated 25-35 minutes against the solahma garrison",
+              "Every minute inside the wire is a minute the cantonment Trinary closes the 9 kilometers"
+            ],
+            "consequence": "Maximum certainty, maximum exposure. The raid succeeds or fails inside the wire, and the fight there is to the garrison's last machine.",
+            "costs": { "cbills": 85000, "days": null, "resource": "engineered demolition sets for the munitions stock, armor stock, and refit line, hand-placed on the fixed 10-minute fuses", "risk": "25-35 minutes inside the wire against a garrison that fights to destruction, with the cantonment Trinary 9 kilometers out" }
+          },
+          {
+            "title": "Stand-Off Bombardment",
+            "advantages": [
+              "LRM and PPC fire from the moraine crest never enters the wire at all",
+              "Engagement can begin and end inside the katabatic window with no aerial response possible"
+            ],
+            "disadvantages": [
+              "No proof of the kill: hardened bays shrug off indirect fire, and the repair line may survive behind the ridge berm",
+              "You spend a lot of ammunition for a likely partial result — and the trade stops being worth it"
+            ],
+            "consequence": "Low risk, but you cannot confirm the result. Orbital assessment comes back in 4 days, and a PARTIAL grade is the likeliest outcome.",
+            "costs": { "cbills": 210000, "days": null, "resource": "the raid force's full LRM and PPC ammunition allocation, fired from the moraine crest for a probable partial", "risk": "no confirmation until orbital assessment in 4 days — hardened bays shrug indirect fire and the refit line may survive" }
+          },
+          {
+            "title": "Take the Refit Line First",
+            "advantages": [
+              "Holding the 6-bay repair line intact for 40 minutes lets the techs strip {haulTons} tons of Clan parts before the charges go in",
+              "That salvage pays for the raid twice over, and the employer's quartermasters get Clan spares"
+            ],
+            "disadvantages": [
+              "Those 40 extra minutes inside the fence run past the enemy Trinary's arrival, so a running fight on the way out is certain, not just possible",
+              "Loaded exit sleds cut your speed on the ice routes by a third"
+            ],
+            "consequence": "The raid becomes a full assault with a salvage stage. Everything still burns, but you pay for the bonus in armor and maybe pilots.",
+            "costs": { "cbills": 0, "days": null, "resource": "40 additional minutes inside the wire and a third off ice-route speed on loaded egress sleds", "risk": "fighting withdrawal guaranteed past the cantonment Trinary's arrival window — a captured pilot is a bondsman, not a line item" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Alarm — seismic trip, wire contact, or first shot, whichever comes first. Annex garrison stands to in place." },
+        { "t": "T+0:06", "event": "Cantonment QRF — 1 OmniMech Star — rolls from the east at flank speed." },
+        { "t": "T+0:22", "event": "QRF Star reaches the annex perimeter via the moraine road." },
+        { "t": "T+0:40", "event": "Full cantonment Trinary committed; Elemental carriers lift if outside the katabatic window." },
+        { "t": "T+1:30", "event": "{TARGET_FACTION} aerospace overflies the icefield routes if outside the katabatic window; egress columns on the ice are naked to it." }
+      ],
+      "hardDeadline": "The raid force must be off the icefield and scattered into the ridge canyons by T+4:00 from the alarm, before the next aerial sweep can pin down the escape route. After T+4:00, every remaining choice costs you pilots to gain distance."
+    },
+    "opforSketch": {
+      "composition": "At the annex: 1 solahma Star of second-line OmniMechs plus 2 Points of Elementals on fixed defenses, scaled to the band by equipment age rather than numbers. Response echelon: 1 front-line OmniMech Star at T+0:22, building to a full Trinary with Elemental support by T+0:40, aerospace outside the katabatic window.",
+      "behavior": "The garrison masses fire and dies in place without honor rules. The response echelon fights front-line Clan doctrine — fast, direct, contemptuous of a raider's rearguard — and will pursue onto the ice exactly as far as their own crevasse maps allow, which is farther than yours."
+    },
+    "forks": [
+      {
+        "name": "OPERATION SECOND INVOICE",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Annex destroyed with confirmation and zero personnel lost to capture.",
+        "consequence": "The probe tempo collapses as projected, and the employer commits to the follow-on: a matched raid against the replacement depot while its garrison is still pouring concrete — smaller target, angrier {TARGET_FACTION}.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION COLD RECEIPT",
+        "outcomeGate": "FAILURE",
+        "trigger": "Any raid personnel captured, or the annex left functionally intact.",
+        "consequence": "Captured pilots enter bondsman processing at the cantonment, with transfer off-world estimated in 10-14 days. The recovery operation goes onto the board immediately, against a target that now expects exactly that.",
+        "threat": "EXTREME"
+      },
+      {
+        "name": "OPERATION QUIVER AUDIT",
+        "outcomeGate": "PARTIAL",
+        "trigger": "Stand-off bombardment chosen or demolition unconfirmed.",
+        "consequence": "Orbital assessment in 4 days grades the damage. If the refit line survived, the employer offers the books-balancing option: go back in across the same ice, against a garrison that has re-strung the sensor net.",
+        "threat": "HIGH"
+      }
+    ],
+    "storyElementSeed": "On the night ice, the column halts while a tech on foot probes the snow ahead of the lead 'Mech with a 3-meter pole, planting a green flag every 20 paces, breath freezing on the inside of the face mask.",
+    "voiceSlots": ["command", "intelligence", "engineering", "logistics", "medical"],
+    "phases": [
+      {
+        "name": "INGRESS — THE ICE",
+        "lead": "31 kilometers of glacier at walking speed, single file, following route markers a survey planted 3 years ago. The glacier has drifted 40 meters a year since, so the markers could be off by up to 120 meters. Plan on checking every one before you trust it.",
+        "routes": [
+          { "name": "ROUTE CAIRN", "desc": "The northern flagged line: 31 kilometers, 14 hours at column walking speed, ending in the moraine canyons 6 kilometers from the annex wire.", "tradeoff": "Shorter final approach; crosses 2 known crevasse fields where the 3-year drift is worst." },
+          { "name": "ROUTE FERRIER", "desc": "The southern flagged line: 36 kilometers, 16 hours, tracking the icefield's stable spine to a canyon mouth 9 kilometers from the wire.", "tradeoff": "Better ice, longer ground exposure — 3 additional kilometers inside the seismic net's outer ring." }
+        ],
+        "dataBlock": {
+          "Movement Discipline": "Walking speed, single file, no jump jets on ice or ridge — a jump-jet landing hits hard enough for their seismic sensors to hear",
+          "Wind Window": "1400-1700 local daily: all VTOLs grounded on both sides; outside it, {TARGET_FACTION} aerial sweeps run every 90 minutes",
+          "Crevasse Procedure": "The lead element probes and re-marks the route; a 'Mech through the crust takes hours you do not have once the alarm goes"
+        },
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "The sensor map is 16 days old at MEDIUM — assume the moraine net has been re-strung at least once since, and treat any 200-meter gap in it as bait until walked." }
+      },
+      {
+        "name": "GROUND — THE ANNEX",
+        "lead": "The wire is held by old warriors posted here to die usefully, and they will all fight at once. However it burns, the demolition decision was made back on the ice — the ground phase just pays for it.",
+        "dataBlock": {
+          "Garrison": "1 solahma Star plus 2 Points of Elementals on fixed defenses (intelligence 16 days old — treat as likely, not certain)",
+          "Cantonment Response": "QRF Star rolls at T+0:06 from alarm, at the wire by T+0:22; full Trinary committed by T+0:40",
+          "Demolition Geometry": "4-hex destruction radius, 8-hex damage radius, fuses fixed at 10 minutes once armed",
+          "Time Inside the Wire": "25-35 minutes for charges and sweep; +40 minutes if the refit line is stripped first"
+        },
+        "sidebarKernel": { "voiceSlot": "engineering", "kernel": "The fuses do not renegotiate: 10 minutes from arming, and the 8-hex damage radius includes the wire, the breach point, and anybody still arguing about sled loads." }
+      },
+      {
+        "name": "EXTRACTION — OFF THE ICE",
+        "lead": "Everything off the icefield and dispersed into the moraine canyons by T+4:00 from alarm, before the next aerial sweep can fix the egress route. The recovery priority is written into the objectives, so the rearguard plan is a casualty plan first and a fighting plan second.",
+        "protocol": "Pilot-down drill: the column halts for no single machine — the designated winch pair (2 'Mechs, tow gear staged) breaks off, the rest keep walking. A pilot who cannot ride rides a sled; a sled that slows the column below schedule drops salvage, not people. Egress confirmation by short-burst only, 2 clicks at each route flag, no voice traffic on the ice.",
+        "sidebarKernel": { "voiceSlot": "medical", "kernel": "Cold injuries on the egress will outnumber gunshot wounds 3 to 1 — every casualty goes onto a sled warmed, splinted, and moving within 40 minutes, because the ice does {TARGET_FACTION}'s work for free." }
+      }
+    ],
+    "registerVariants": {
+      "merc": {
+        "objectives.secondary": "Everybody comes home. Read the contract's capture clause before you plan the rearguard: bondsman status is not a recoverable line item, and the employer's repatriation rider lapses at the truce line."
+      },
+      "is-kurita": {
+        "objectives.secondary": "No warrior of the Dragon is left to become another Clan's property. Recovery of the fallen is not a sentiment; it is the difference between a raid and a disgrace."
+      }
+    },
+    "specifics": {
+      "depotAmmoTons": { "min": 180, "max": 320, "unit": "tons of Clan munitions" },
+      "depotArmorTons": { "min": 90, "max": 150, "unit": "tons of ferro-fibrous stock" },
+      "haulTons": { "min": 8, "max": 20, "unit": "tons of recoverable Clan salvage" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Take the Refit Line First",
+        "requires": "dropship",
+        "whenLacking": "lock",
+        "lackingText": "No owned DropShip tonnage at the recovery point: the employer's charter lifts personnel only, and {haulTons} tons of Clan salvage has nowhere to go."
+      },
+      {
+        "appliesTo": "Stand-Off Bombardment",
+        "requires": "treasury-min:250000",
+        "whenLacking": "lock",
+        "lackingText": "The unit cannot replace the LRM and PPC stocks this fire plan consumes; below a 250,000 C-bill reserve the bombardment is off the board."
+      }
+    ]
+  },
+  {
+    "seedId": "CLN-05",
+    "family": "RECON_RAID",
+    "title": "OPERATION VESPER AUDIT",
+    "eraFit": ["clan-invasion"],
+    "factionFit": ["comstar", "merc"],
+    "register": "comstar",
+    "threatRange": ["LOW", "MEDIUM"],
+    "armsMix": "MECH_ONLY",
+    "localeFit": { "settlement": ["industrial"], "regionRole": ["contested"], "terrain": ["mountain"] },
+    "situation": "A count you verify is worth something; a count you only repeat is worth nothing. ComStar — the Blessed Order — runs the civil side of {WORLD} for its {TARGET_FACTION} occupiers under a formal deal called the Terms: the census, food distribution, and the HPG relay station. In return, the {TARGET_FACTION} report their garrison strength to our administrators, and the Precentor Martial's staff no longer believes those numbers. They claim 1 Cluster, spread out. But the tithe records, the smelter district's power bills, and the grain orders all point to more than that — a force gathering to move. Where the paperwork disagrees, someone has to go and count in person. {EMPLOYER} needs a physical count of 3 sites: the {TARGET_FACTION} camp at the mine head, the DropShip landing yard on the slag plain, and the rail switching yard. The site data is 12 days old and reliable, but the camp figure comes from a single worker's tally taken 26 days ago — treat that one as a rough guess. What you must bring back: OmniMechs counted by weight class, DropShips by hull class, and Elemental strength to the nearest Point, each backed by a photo or a sensor log. Your {FORCE_SIZE} travels under ComStar civil cover. The transit passes are real, issued by {NPC:employer-contact}, who has no idea what they are for and must never find out — for the Order's safety and his own. The terrain both hides you and traps you. The smelter district's waste terraces step down the valley in 14 shelves, each 40 meters high, linked by switchback ramps one vehicle wide. The shelves throw hard radar shadow over everything below the working rim, and the ore conveyors jam magnetic sensors within 2 kilometers of any running line. But in the dry season the terrace dust holds tracks for 6 days, and a hot machine glows on a shelf wall from 8 kilometers off. You can hide the machines in the shadows; you cannot hide their footprints. The {TARGET_FACTION} run sibko patrols — cadet trainees, still children by their reckoning — through the district on no fixed schedule, and you cannot tell a training sweep from a real one until it turns toward you. One rule is absolute: if the {TARGET_FACTION} capture ComStar people or passes while they are armed, the Terms collapse on {WORLD} and the Order loses its role on 11 worlds with them. The count must be true and the counters must stay deniable. So the whole order is three words: be invisible, be exact, be gone.",
+    "objectives": {
+      "primary": "Deliver backed-up counts — OmniMechs by weight class, DropShips by hull, Elementals by Point — for all 3 sites to the HPG station before the scheduled transmission window.",
+      "secondary": "Leave no trace: no fighting, no captured military gear, and no witness who can tie armed people to ComStar passes.",
+      "bonus": "Grab a power or fuel record from inside the camp that shows when the {TARGET_FACTION} will be ready to launch."
+    },
+    "complications": [
+      {
+        "name": "Dust Ledger",
+        "text": "The terrace dust records every track for 6 days in dry season. The benches hide a machine from radar and eyes; they cannot hide where it has walked. A sibko patrol that crosses your trace will follow it as a lesson in tracking.",
+        "mechanicalEffect": "Every hex traversed by vehicle or 'Mech leaves a trace marker persisting the whole mission; any {TARGET_FACTION} patrol crossing a trace follows it toward its source. Foot movement leaves no marker on ramp and bench hexes."
+      },
+      {
+        "name": "Conveyor Interference",
+        "text": "Active ore conveyors blind magnetic-anomaly detection within 2 kilometers — both sides' detection. The conveyors run on the smelter schedule, not yours, and a line that halts mid-shift is itself an anomaly the pit office will report.",
+        "mechanicalEffect": "Within 2 kilometers of an active conveyor, all magnetic and seismic sensors are inoperative for all units. If a conveyor is stopped by any player action, the pit office alerts the cantonment within 30 minutes."
+      },
+      {
+        "name": "Sibko Sweeps",
+        "text": "Training patrols of sibko cadets under a single instructor cross the district on no fixed schedule. They are unblooded, eager, and graded on initiative. An instructor who confirms contact will not wait for the cantonment.",
+        "mechanicalEffect": "Roll each mission day for 1-2 patrol crossings (3-5 light OmniMechs or 2 Elemental Points each). Patrols that gain a contact attack immediately and transmit position; the reaction timeline starts on their transmission."
+      },
+      {
+        "name": "The Passes",
+        "text": "The transit passes are genuine and traceable to {NPC:employer-contact}. Used at a checkpoint, they work; recovered from a corpse or a captured vehicle, they unravel the Order's standing on {WORLD} and 10 worlds beside it.",
+        "mechanicalEffect": "Any scenario result that leaves personnel, vehicles, or documents in {TARGET_FACTION} custody forces the COMPROMISED gate regardless of data delivered."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Manner of Counting",
+        "context": "Three sites, one transmission window, and three doctrines of audit on the table. The cell leader must commit the method before insertion; the sites are too far apart to improvise twice.",
+        "options": [
+          {
+            "title": "Eyes and Glass",
+            "advantages": [
+              "Pure observation from the bench shadows: no emissions, no entry, nothing to recover if it fails",
+              "Foot teams on the terraces leave no dust trace"
+            ],
+            "disadvantages": [
+              "Counts from 800-meter standoff cannot resolve DropShip hull classes through slag haze with confidence above MEDIUM",
+              "Three sites by foot infiltration consumes 5 of the 6 days before the transmission window"
+            ],
+            "consequence": "Deliverables arrive deniable but graded MEDIUM confidence — sufficient for the audit, insufficient to overrule {TARGET_FACTION}'s own declaration if challenged.",
+            "costs": { "cbills": 0, "days": 5, "resource": null, "risk": "three sites by foot consume 5 of the 6 days before the window — one missed march and the data misses the transmission entirely" }
+          },
+          {
+            "title": "Seed the Benches",
+            "advantages": [
+              "Remote sensor packages on benches 4, 9, and 12 count everything that moves for the rest of the occupation, not just this week",
+              "Emplacement takes 2 nights; the cell is gone before the data is even interesting"
+            ],
+            "disadvantages": [
+              "The packages are manufactured items with no administrative cover story if found",
+              "Conveyor interference gaps the coverage; the count will have holes a careful analyst must flag"
+            ],
+            "consequence": "A standing intelligence asset is created and a standing piece of evidence with it. The audit succeeds unless and until a sibko exercise digs in the wrong bench.",
+            "costs": { "cbills": 0, "days": 2, "resource": "3 remote sensor packages — manufactured items with no administrative cover story if found", "risk": "each package is standing evidence against the Order for the remainder of the occupation" }
+          },
+          {
+            "title": "Borrow the Census",
+            "advantages": [
+              "The Order's own civil administration database, accessed from inside the compound, already holds fuel, food, and labor allocations that imply exact garrison strength",
+              "No one approaches a {TARGET_FACTION} site at all; HIGH confidence by triangulation"
+            ],
+            "disadvantages": [
+              "Using the Order's own civil records for spying is exactly what the Terms forbid — if it comes out, it splits the compound from within, not just angers the enemy outside",
+              "{NPC:employer-contact} or his staff may spot the database queries within days"
+            ],
+            "consequence": "The count is exact, but the wrong done is the Order's own. The data goes out, and so does the question of what this cost the Order's neutrality — left for better heads to answer, or worse ones.",
+            "costs": { "cbills": 0, "days": null, "resource": "the Order's neutrality: consecrated administrative records turned to military intelligence", "risk": "the query trail may surface under {NPC:employer-contact}'s staff within days — discovery means schism inside the compound" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Contact transmitted — by patrol, pit office, or checkpoint. Cantonment duty Star stands to." },
+        { "t": "T+0:15", "event": "First OmniMech Point reaches the nearest terrace ramp; ramps are the only vehicle descent, and they know it." },
+        { "t": "T+0:40", "event": "Elemental Points begin bench-by-bench descent on foot lines — the route a machine cannot watch." },
+        { "t": "T+2:00", "event": "District cordon complete; all switchback ramps held." },
+        { "t": "T+54:00", "event": "Scheduled HPG transmission window — duration 11 minutes." }
+      ],
+      "hardDeadline": "The audit data can only leave the world during the scheduled HPG transmission window, which opens at T+54:00 from insertion and lasts just 11 minutes. There is no second chance this mission: the next available window is 9 days later, after the Precentor Martial's compilation date has already passed. Counts that miss the window cannot be sent in time to matter, so the mission fails even if every site was counted perfectly. Plan every march backward from that 11-minute window — it is the one deadline nothing else can flex around."
+    },
+    "opforSketch": {
+      "composition": "Garrison presence scaled to the band: sibko training patrols of 3-5 light OmniMechs or 2 Elemental Points as roving contacts; a duty Star of mixed OmniMechs as the cantonment reaction echelon; Elemental Points for terrain the machines cannot reach. No artillery, no aerospace below orbital tasking — {TARGET_FACTION} do not believe anything on {WORLD} warrants it.",
+      "behavior": "Contemptuous and procedural until contact is confirmed, then fast and total. Sibko patrols overpursue by doctrine and by youth. The cantonment treats any armed contact as a possible Inner Sphere raid and cordons the terraces rather than chasing through them."
+    },
+    "forks": [
+      {
+        "name": "OPERATION COMPLINE",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "All 3 counts delivered corroborated, no evidence left, window met.",
+        "consequence": "The audit changes the Precentor Martial's arithmetic for the coming trial of arms. The cell is retasked to courier the consolidated annex through {TARGET_FACTION}-administered space to a collection point 2 jumps out — quiet work carrying loud cargo.",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION LENTEN HOUSE",
+        "outcomeGate": "FAILURE",
+        "trigger": "The window is missed or the counts arrive uncorroborated.",
+        "consequence": "The Order must hold the question open 9 more days on a world that may be staging for lift. The cell winters in place under administrative cover with ROM counter-audit teams inbound to find out what went wrong — starting with everyone the passes touched.",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION BROKEN SEAL",
+        "outcomeGate": "COMPROMISED",
+        "trigger": "Personnel, equipment, or passes left in {TARGET_FACTION} custody.",
+        "consequence": "The Terms are in question on 11 worlds. The cell must be extracted off {WORLD} by unregistered lift before {TARGET_FACTION} finish connecting the passes to the compound — and before the Order decides denial is cheaper than rescue.",
+        "threat": "HIGH"
+      }
+    ],
+    "storyElementSeed": "In the bench shadow at dawn, an observer cleans slag dust from a camera lens with a prayer-cloth, logs the seventh DropShip silhouette of the shift, and underlines the count twice before believing it.",
+    "voiceSlots": ["intelligence", "command", "comms", "logistics"],
+    "phases": [
+      {
+        "name": "ENTRY IN COVER",
+        "lead": "The passes are real and the cover is civilian, and losing either is paid for by 11 worlds. Enter the way the Order travels everywhere: on schedule, on paper, and completely ordinary.",
+        "protocol": "Carry the transit passes on your body; never stash them, never copy them. At checkpoints: present the pass, answer in the clerk's own routine language, and volunteer nothing. If any team member is held longer than 40 minutes, the rest walk the abort route and the count is rescheduled. Never leave a pass in a vehicle, a shelter, or a grave.",
+        "sidebarKernel": { "voiceSlot": "comms", "kernel": "Every checkpoint logs your passes against the compound's records within 24 hours. The cover is not that you are invisible — it is that you are boring, and a boring record has to stay consistent to hold." }
+      },
+      {
+        "name": "THE COUNT",
+        "lead": "Three sites, and each count needs backup or it is just rumor. A count you verify is worth something; anything you only estimate, mark clearly as an estimate and say what it is based on.",
+        "dataBlock": {
+          "Site 1 — Camp": "OmniMech count by weight class; compare against the declared 45 (the worker's tally is 26 days old — treat as a rough guess)",
+          "Site 2 — Slag Plain Annex": "DropShip count by hull class; slag haze degrades standoff identification beyond 800 meters",
+          "Site 3 — Rail Yard": "Elemental strength to the nearest Point; rail tonnage flow as corroboration",
+          "Terrace Geometry": "14 benches at 40 meters, switchback ramps one vehicle wide; dust holds tracks 6 days; thermal blooms visible at 8 kilometers"
+        },
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "The ledgers say 60 to 90 machines where 45 are declared — the audit's purpose is not to find the truth, it is to make the truth provable to a Precentor Martial who will stake worlds on it." }
+      },
+      {
+        "name": "THE WINDOW",
+        "lead": "The transmission window opens at T+54:00 and lasts 11 minutes, and the next one is not for another 9 days. Data that misses this window cannot reach the Precentor Martial in time to be acted on, so a missed window means the whole audit fails regardless of how good the counts are.",
+        "protocol": "Deliverables travel to the HPG compound as registry corrections in the civil format, hand-carried, checksummed against the courier's memorized digest. Transmission rides the scheduled traffic — no priority flag, no added length, nothing a {TARGET_FACTION} traffic analyst would tithe a second look. If the window is missed, the material is sealed into the registry archive and the cell disperses to administrative postings until the next compilation date.",
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "Plan every march backward from the last minute of the 11-minute window. That deadline cannot move, so every other deadline has to bend around it." }
+      }
+    ],
+    "assetDetails": [
+      { "ref": "{NPC:employer-contact}", "detail": "Issued the transit passes as routine administrative instruments and must never learn their use; their staff reconciles pass logs monthly, so every checkpoint presentation must match a plausible registry errand on the compound's own books.", "priority": "HIGH" },
+      { "ref": "caste-laborer tally source (cantonment count)", "detail": "Counted machines through a mess-hall window over 6 shifts, 26 days ago, and has not been re-contacted since — the Order's rules forbid re-approach during an active audit. The count is the audit's weakest figure and its only inside one.", "priority": "MEDIUM" }
+    ],
+    "registerVariants": {
+      "merc": {
+        "objectives.secondary": "Deniability is the deliverable. The employer's passes work until they are found on you, at which point the contract's existence becomes a theological question and your bond becomes a rounding error."
+      },
+      "is-davion": {
+        "situation.tasking": "MIIO would phrase it shorter: the Jaguars are lying about their strength on {WORLD}, the ledgers prove it indirectly, and someone has to stand on a terrace and count the actual iron."
+      }
+    },
+    "specifics": {
+      "declaredGarrison": { "min": 45, "max": 45, "unit": "OmniMechs declared by the Jaguars" },
+      "suspectedActual": { "min": 60, "max": 90, "unit": "OmniMechs implied by the ledgers" },
+      "dropShipCount": { "min": 5, "max": 9, "unit": "DropShips on the slag plain annex" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Seed the Benches",
+        "requires": "depot-access",
+        "whenLacking": "reprice",
+        "lackingText": "No quartermaster issue available off-compound: equivalent sensor packages procured through gray-market channels at 135,000 C-bills, with a purchase trail the audit itself would flag."
+      }
+    ]
+  },
+  {
+    "seedId": "CLN-06",
+    "family": "RECON_RAID",
+    "title": "OPERATION SILENT TALLY",
+    "eraFit": ["clan-invasion", "civil-war"],
+    "factionFit": ["merc"],
+    "register": "merc",
+    "threatRange": ["LOW", "MEDIUM"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.2,
+    "localeFit": { "settlement": ["frontier"], "regionRole": ["contested"], "terrain": ["wetland"] },
+    "situation": "The contract is 9 pages; the mission is one sentence: find out whether the {TARGET_FACTION} are massing on {WORLD} to push across the truce line. {EMPLOYER} is a purchasing office that has never purchased anything, working through {NPC:employer-contact}, a broker who bills from 3 different addresses. They want DropShip counts at the spaceport, supply-tonnage estimates at the rail depot, and photos of both. What they are really buying is a number to set against the number the diplomats have been given, because the two do not match. The diplomats' figure is 40 days old, and by the broker's own admission, worthless. Read clause 11 before you pack. This contract does not officially exist; the employer will deny it; and capture voids your recovery clause completely. A merc caught under arms in the occupation zone is a truce violation with your face on it, and for once both governments will quickly agree you were freelancing. The pay runs the other way from the risk: verified hull-class counts pay triple your base rate, and a clean exit with no contact pays a bonus on top. They are not paying you to fight. They are paying you to be a rumor. The ground is glacial ridge country — parallel gravel ridges 15 to 30 meters high, spaced 600 to 1,100 meters apart, with marsh and stunted birch between them, running northwest to southeast. Move along the ridges and they hide you all the way to the overlook — but the ridge lines squeeze together at 4 river fords where the patrol routes cross, and the {TARGET_FACTION} know those chokepoints. Move across the ridges instead and you show your silhouette at every crest, every 800 meters. The garrison is 1 second-line {TARGET_FACTION} Cluster, stiffened with solahma — old warriors — and, per the broker's local contacts, sibko trainees on their first posting. That intelligence is 21 days old, so treat it as likely, not certain. Second-line does not mean slow; it means they have something to prove and a Khan who is not watching closely. The local civilians are friendly, talkative, and infiltrated. Assume one informer per village and treat every barn you shelter in as a risk. Pickup is a chartered coastal boat at the coastal landing: one pass, 40 minutes at the dock, 72 hours after you insert. The captain has been paid to think he is carrying fish, and he will wait exactly as long as a man carrying fish would wait.",
+    "objectives": {
+      "primary": "Deliver verified DropShip counts by hull class at the spaceport and tonnage-flow estimates at the rail depot, with imagery, to the extraction point by T+72:00.",
+      "secondary": "Zero contact: no engagement with {TARGET_FACTION} forces, no sensor lock held longer than 10 seconds, no physical evidence of the unit's presence in the zone.",
+      "bonus": "Work out whether the rail depot's stockpile looks like preparation to attack (bridging units, fuel pushed forward of the railhead) or just a routine garrison swap — the one question the employer actually cares about."
+    },
+    "complications": [
+      {
+        "name": "Esker Grain",
+        "text": "The ridges shelter movement along their axis and betray it across. The route plan is a geometry problem with 4 mandatory fords where {TARGET_FACTION} patrol tracks cross the ridge lines, and the marsh between ridges swallows wheeled vehicles whole.",
+        "mechanicalEffect": "Movement along ridge-shadow hexes is concealed from ground sensors; any cross-grain movement skylines the unit for 1 turn per ridge crossed, visible to 4 kilometers. Wheeled vehicles bog in marsh hexes on anything but frozen ground."
+      },
+      {
+        "name": "First-Posting Patrols",
+        "text": "Sibko trainees ride the patrol circuits under solahma instructors. The trainees overpursue; the instructors let them, because that is the lesson. A contact that should cost you 10 minutes can become a 30-kilometer chase with a teaching staff grading it.",
+        "mechanicalEffect": "{TARGET_FACTION} patrol units never break off pursuit voluntarily; each patrol contact rolls to escalate, adding 1 additional patrol to the search pattern for the rest of the mission."
+      },
+      {
+        "name": "One Informer Per Settlement",
+        "text": "The local population hates the occupation and feeds it anyway — labor scrip buys food, and a tip buys scrip. Shelter, directions, or a borrowed truck are all available and all priced in risk.",
+        "mechanicalEffect": "Each interaction with a settlement rolls for an informer report reaching the garrison in 6-12 hours, adding patrol density along the unit's last reported axis."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Way In",
+        "context": "Three insertion plans survived the planning weekend. The broker priced all three and declined, in writing, to recommend any. The choice fixes the extraction geometry too — the hauler waits at the coastal landing regardless.",
+        "options": [
+          {
+            "title": "Manifest Cover",
+            "advantages": [
+              "Riding a ComStar-chartered grain freighter into the spaceport civil field puts the team 11 kilometers from the first objective with paperwork that survives a checkpoint glance",
+              "No burn signature, no coastal sensor line, nothing to explain"
+            ],
+            "disadvantages": [
+              "No weapons heavier than sidearms clear the cargo inspection — the recon is done naked",
+              "If the cover breaks, it breaks ComStar's charter too, and clause 11 starts applying to people who never signed it"
+            ],
+            "consequence": "The team operates inside the occupation's own logistics with nothing but glass, wits, and the silence premium riding on every checkpoint.",
+            "costs": { "cbills": 18000, "days": null, "resource": "all weapons heavier than sidearms left behind — the recon is done naked", "risk": "a broken cover breaks ComStar's charter with it, and clause 11 starts applying to people who never signed" }
+          },
+          {
+            "title": "Polar Cache Walk",
+            "advantages": [
+              "Insertion by long-dwell skiff onto the tundra cap, then 140 kilometers south on muscle and stored fuel from a pre-occupation survey cache the broker swears is intact",
+              "Approach axis no patrol circuit covers; full equipment comes along"
+            ],
+            "disadvantages": [
+              "5 days of transit eats the timeline to the bone — the T+72:00 clock starts at insertion, not at the cache",
+              "If the cache is stripped, the plan dies 140 kilometers from anywhere, quietly"
+            ],
+            "consequence": "Maximum equipment and maximum margin against contact, purchased with the entire schedule reserve. Everything after the cache must run on rails.",
+            "costs": { "cbills": 0, "days": 5, "resource": "the pre-occupation survey cache's stored fuel — the entire schedule reserve rides on a 3-year-old inventory the broker swears by", "risk": "if the cache is stripped, the plan dies 140 kilometers from anywhere, quietly" }
+          },
+          {
+            "title": "Pirate-Point Sprint",
+            "advantages": [
+              "In fast, out fast: skiff down from a calculated point, 30 hours on the ground, the hauler pickup becomes a backup instead of a lifeline",
+              "Shortest exposure window of the three by a factor of 2"
+            ],
+            "disadvantages": [
+              "The descent plume is a sensor event; the garrison may not identify it but will log it and seed the patrol schedule with suspicion",
+              "Pirate-point arithmetic over an occupied world: a transit mishap is not a delay, it is a headline"
+            ],
+            "consequence": "Speed buys safety from the ground threat and spends it on the descent. The mission runs against an alerted patrol pattern from hour zero.",
+            "costs": { "cbills": 0, "days": null, "resource": "the descent plume — a sensor event the garrison logs and seeds the patrol schedule with", "risk": "pirate-point arithmetic over an occupied world: a transit mishap is not a delay, it is a headline" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Contact event — patrol sighting, informer report actioned, or sensor lock held past 10 seconds." },
+        { "t": "T+0:10", "event": "Nearest patrol vectors in; sibko elements accelerate ahead of their instructor's plan." },
+        { "t": "T+1:00", "event": "Garrison duty Star augments the search; ford crossings picketed." },
+        { "t": "T+6:00", "event": "Search pattern matures: ridge-line overwatch points manned, settlement sweeps begin." },
+        { "t": "T+72:00", "event": "Hauler at the coastal landing. Dwell 40 minutes. One pass." }
+      ],
+      "hardDeadline": "The boat leaves the coastal landing at T+72:40 with or without you, and there is no second charter — the broker's note makes that very clear. Miss it and the unit has to walk out of an occupied zone on foot, with the data going stale in its pockets."
+    },
+    "opforSketch": {
+      "composition": "Second-line {TARGET_FACTION} garrison force scaled to the band: patrol elements of 2-3 OmniMechs or hover vehicles with sibko riders, a duty Star of mixed second-line OmniMechs, Elemental Points at the spaceport and depot proper. No aerospace patrol below high cover; {TARGET_FACTION} do not advertise what the spaceport holds either.",
+      "behavior": "Patrols hunt enthusiastically and report late, trying to bag the contact themselves. The duty Star fights with {TARGET_FACTION} precision and no honor pageantry against an unannounced intruder — a spy is dezgra by definition and gets the efficient version."
+    },
+    "forks": [
+      {
+        "name": "OPERATION TRIPLE RATE",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Counts and imagery delivered, zero contact, hauler made.",
+        "consequence": "The numbers do not match the diplomatic figure, exactly as feared. The employer exercises the option clause: a return engagement to watch the same ground across the thaw, at triple rate, because now both sides of the line know someone counted.",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION QUIET INVOICE",
+        "outcomeGate": "FAILURE",
+        "trigger": "Personnel captured or evidence of the unit left in the zone.",
+        "consequence": "Clause 11 executes: disavowal in 48 hours, recovery rider void. The captured are paraded as truce-breakers on {TARGET_FACTION} broadcasts. Whatever rescue happens is private, unpaid, and planned by whoever is left.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION STALE BREAD",
+        "outcomeGate": "PARTIAL",
+        "trigger": "Data delivered late or below verification standard.",
+        "consequence": "Base rate only, silence premium void, and the broker's next call offers the gap-filling job: a closer look at the rail depot specifically, on a compressed clock, against the patrol density the first visit created.",
+        "threat": "MEDIUM"
+      }
+    ],
+    "storyElementSeed": "In a birch stand between ridges, two crew members count rail cars through a spotting scope in whispered turns, marking tallies on the inside of a forearm because paper rattles in the wind.",
+    "voiceSlots": ["intelligence", "command", "logistics", "comms"],
+    "phases": [
+      {
+        "name": "INSERTION",
+        "lead": "Three ways in, all priced, none recommended — in writing. Whatever the choice, the T+72:00 clock starts at insertion, and every hour of it spent traveling is an hour not spent counting.",
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "Pick the insertion for the extraction it leaves behind: the hauler waits at the coastal landing for everybody, and 2 of the 3 ways in put the team on the wrong side of 4 patrolled fords when it is time to walk out." }
+      },
+      {
+        "name": "THE OVERLOOK",
+        "lead": "The esker country moves you or betrays you, nothing in between. Work the grain northwest to the overlook, count, photograph, and spend sensor time like it bills by the second — because per the contract, it does.",
+        "routes": [
+          { "name": "RIDGE SHADOW", "desc": "Along-grain movement in the esker shadows, 600 to 1,100 meters of marsh and birch between ridges, funneling through 4 fords where {TARGET_FACTION} patrol circuits cross.", "tradeoff": "Concealed the whole way; the fords are the whole risk, and {TARGET_FACTION} know their own funnels." },
+          { "name": "CROSS GRAIN", "desc": "Direct lines toward the spaceport or the rail depot, skylining every 800 meters at each ridge crest.", "tradeoff": "Hours saved against a silhouette visible to 4 kilometers — a target drone on a rail, per the planning notes." }
+        ],
+        "dataBlock": {
+          "Deliverable 1": "the spaceport DropShip count by hull class, with imagery",
+          "Deliverable 2": "the rail depot tonnage flow estimate against the {viborgTonnageDaily} tons-per-day band, with imagery",
+          "Sensor Discipline": "No active emission; no sensor lock held longer than 10 seconds",
+          "Settlement Pricing": "Assume 1 informer per settlement; any contact reaches the garrison in 6-12 hours"
+        },
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "The bonus question is the real contract: bridging units and fuel forward of the railhead mean they are preparing to attack; ordinary garrison stores mean a routine swap. Count the hulls, but photograph what is stacked on the loading docks." }
+      },
+      {
+        "name": "THE HAULER",
+        "lead": "One pass, 40 minutes of dwell, T+72:00 at the coastal landing. The captain has been paid for fish and will wait exactly like a man paid for fish.",
+        "protocol": "Recognition: the hauler shows deck working lights and a single amber masthead repeat — board only if the amber is lit; a white masthead means stand off, the captain has company. Team signal is 2 long flashes from the south breakwater at H-10 minutes. No radio between team and hauler at any point; the charter's only codeword, GULLCATCH, is for cancellation, passes through the broker, and means swim or winter over.",
+        "sidebarKernel": { "voiceSlot": "logistics", "kernel": "The dwell is 40 minutes including the tide turn — gear that cannot be carried down the breakwater at a jog in 2 trips should have been buried with the rest of the evidence." }
+      }
+    ],
+    "assetDetails": [
+      { "ref": "{NPC:employer-contact}", "detail": "Bills from 3 addresses, declined in writing to recommend an insertion plan, and holds the only channel for the GULLCATCH cancellation — which means the broker can end the mission and the unit cannot. Price that asymmetry into every report sent back.", "priority": "MEDIUM" },
+      { "ref": "hauler captain (the coastal landing charter)", "detail": "Paid for fish, asks only fish questions, and owns the only hull on the coast that makes the pickup deniable. If the team boards hot, his ignorance stops being plausible and the silence premium stops being payable — the recovery rider does not cover witnesses who change their minds at sea.", "priority": "HIGH" }
+    ],
+    "registerVariants": {
+      "is-steiner": {
+        "objectives.bonus": "The Commonwealth's analysts require the staging-versus-rotation determination above all: bridging assets and forward fuel are the signature of intent, and intent is what the Archon's council is actually purchasing."
+      },
+      "comstar": {
+        "objectives.secondary": "Let nothing be written in the world that was not first written in the plan. An unobserved auditor is the only honest one."
+      }
+    },
+    "specifics": {
+      "holmgardDropShips": { "min": 3, "max": 12, "unit": "DropShips at the spaceport" },
+      "viborgTonnageDaily": { "min": 200, "max": 900, "unit": "tons per day through the rail depot" },
+      "patrolCircuits": { "min": 3, "max": 5, "unit": "active Wolf patrol circuits in the esker country" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Polar Cache Walk",
+        "requires": "dropship",
+        "whenLacking": "reprice",
+        "lackingText": "No organic small craft: the broker's long-dwell skiff charter adds 45,000 C-bills and fixes the insertion date to the charter's schedule, not yours."
+      },
+      {
+        "appliesTo": "Pirate-Point Sprint",
+        "requires": "jumpship",
+        "whenLacking": "reprice",
+        "lackingText": "No owned JumpShip: the broker's pirate-point charter quotes 290,000 C-bills, half in advance, captain unnamed — and the silence premium now has a witness."
+      }
+    ]
+  },
+  {
+    "seedId": "CLN-07",
+    "family": "EXTRACTION_RAID",
+    "title": "OPERATION SACRED FREIGHT",
+    "eraFit": ["clan-invasion"],
+    "factionFit": ["clan-wolf", "clan"],
+    "register": "clan",
+    "threatRange": ["HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.3,
+    "localeFit": { "settlement": ["frontier"], "regionRole": ["contested"], "terrain": ["wetland"] },
+    "situation": "The ilKhan is dead over {WORLD}, and the invasion has halted while the Clans choose his successor. The Galaxy lifts for the homeward jump in 60 hours. But a debt remains on the ground. During the pullback to orbit, the BattleMech of {NPC:fallen-warrior} — a Bloodnamed, twice-honored warrior carrying a name held since the Clan's founding — went down in the marshes with its pilot dead in the cockpit. The recovery team was ambushed at the wreck by a battalion of {TARGET_FACTION} regulars who never accepted their government's surrender and feel bound by nothing signed in a city they have abandoned. They have winched the 'Mech onto a rail flatcar at the rail yard, with the body still aboard. We know where it is going: the hardened research complex under the mountain, where Inner Sphere technicians will cut open both the machine and the warrior to learn what they can. That intelligence is 3 days old and solid, taken from intercepted rail traffic; the train leaves sometime within a 30-hour window. Understand what is on that flatcar. The machine is only salvage — we have won and lost machines since the Exodus, and it means little. The giftake means everything. The giftake is the dead warrior's genetic legacy, and it belongs to the Clan, to the sacred bloodline, to future Trials of Bloodright not yet fought. Leaving it to be dissected in an Inner Sphere lab is not a defeat — it is a desecration, and every warrior in the Galaxy knows it is out there. The Loremaster has set the bid at 1 Star of OmniMechs and 1 Point of Elementals — armored infantry. This is a recovery, not a conquest, and the election recall does not slow down for grief. The ground favors the dead. The marshes are frozen-crust peat: 'Mechs of 60 tons and under cross at walking speed, but heavier machines break through into 1.5 meters of black water and stay stuck until winched out. The rail causeway is the only heavy-rated line through the marsh — single track, 7 meters above the bog on driven pilings, with the armored train on it now. The {TARGET_FACTION} fight in the shadow of their own martyr: the pilot who rammed the ilKhan's flagship and killed a Khan with a fighter's hull. They believe dying well is winning. They are not entirely wrong, and that is what makes them dangerous, quiaff?",
+    "objectives": {
+      "primary": "Recover the giftake and the remains of {NPC:fallen-warrior} before the train reaches the complex.",
+      "secondary": "Recover the 'Mech's codex core — its warrior's record — intact. Keep the chassis from the enemy: recover it if you can, destroy it if you cannot.",
+      "bonus": "Finish the recovery without firing on the train's civilian rail crew — conscripted track workers, not soldiers, per the intercepts."
+    },
+    "complications": [
+      {
+        "name": "Crust Weight Limit",
+        "text": "The fen crust carries 60 tons at a walk and nothing more. The bid Star's composition was chosen before this fact was fully mapped; any heavy OmniMech in the Star is confined to the causeway approaches and the yard itself.",
+        "mechanicalEffect": "'Mechs over 60 tons entering fen hexes break through: immobilized until winched (3 turns, one adjacent unit assisting). 'Mechs at 60 tons or under move at walking speed only in fen hexes; running triggers a breakthrough check."
+      },
+      {
+        "name": "The Armored Train",
+        "text": "Two gun wagons bracket the flatcar — turreted autocannon and a mast-mounted searchlight battery — with an armored locomotive at each end. On the causeway it cannot maneuver, but it cannot be flanked from the bog by anything heavy enough to stop it.",
+        "mechanicalEffect": "The train moves on the causeway at fixed speed each turn while either locomotive lives. Gun wagons fire as fixed turrets. Derailment or locomotive kills stop the train but risk toppling the flatcar — roll for cargo damage to the objective."
+      },
+      {
+        "name": "Martyr Doctrine",
+        "text": "The remnant battalion has stopped counting odds. Expect satchel-charge infantry rushes against OmniMech legs, inferno fire from the trestle shadows, and zero response to any demonstration of force meant to encourage surrender.",
+        "mechanicalEffect": "Remnant units never check morale and never withdraw. Infantry in trestle and bog hexes deploy hidden and may attempt leg attacks with satchel charges."
+      },
+      {
+        "name": "The Recall",
+        "text": "The Galaxy lifts for the election in 60 hours and the bid cannot be augmented — every other Star is committed to embarkation security. Whatever happens in the fens happens with what was bid.",
+        "mechanicalEffect": "No reinforcement is available under any condition. At T+60:00 from mission start, all surviving forces must be at the extraction LZ regardless of objective state."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "What Is Owed to Looters",
+        "context": "Before the force commits, the Star Captain must decide: what honor, if any, is owed to a battalion that ambushed a funeral detail and is now hauling a Bloodnamed warrior to a dissection table? The decision shapes the whole engagement, and it will be read aloud later before the Grand Council.",
+        "options": [
+          {
+            "title": "Full Batchall",
+            "advantages": [
+              "The forms are kept perfectly: a declared Trial of Possession for the cargo, forces named, ground proposed — no warrior can question the recovery's honor",
+              "A declared engagement zone on the causeway prevents the running fight that risks the flatcar"
+            ],
+            "disadvantages": [
+              "Warning the enemy of the objective invites them to destroy or accelerate the cargo — the dispatch window shows they can advance departure by 11 hours",
+              "These are not warriors who answer batchall; the declaration spends surprise and buys probably nothing"
+            ],
+            "consequence": "The recovery is conducted in full honor against an enemy who will use the warning. The train departs early; the engagement happens at speed, on the causeway, at night.",
+            "costs": { "cbills": null, "days": null, "resource": "surprise, bid away by declaration — the dispatch intercepts show the enemy can advance departure by 11 hours", "risk": "the warned enemy may destroy or accelerate the cargo rather than yield it" }
+          },
+          {
+            "title": "No Quarter Asked",
+            "advantages": [
+              "Corpse-takers merit no declaration — a defensible reading of the honor code that every solahma in the Galaxy would endorse",
+              "Surprise at the rail yard before departure is the cleanest tactical solution available"
+            ],
+            "disadvantages": [
+              "Defensible is not the same as beyond question: a rival Bloodhouse may argue the battalion was never given the chance to hand over a prize it may not have understood it held",
+              "A surprise night assault into a rail yard endangers the civilian crew, and the bonus objective with them"
+            ],
+            "consequence": "The strike goes in silent and total. The recovery is judged afterward not by its forms but by its result — and by what the searchlights catch on gun-camera.",
+            "costs": { "cbills": null, "days": null, "resource": "honor: a ruling that is defensible, not unquestionable, judged afterward by result alone", "risk": "a rival Bloodhouse may argue the looters were never offered the chance to yield; the civilian rail crew and the bonus objective ride on the night assault" }
+          },
+          {
+            "title": "Offer Hegira",
+            "advantages": [
+              "Surround the yard and offer hegira — a free, armed withdrawal — in exchange for the flatcar. It is the rarest honor, offered to a lesser foe, and it is recorded forever",
+              "If they accept, you recover the giftake without a shot, and the Remembrance gains a verse no other Clan can claim"
+            ],
+            "disadvantages": [
+              "Offering hegira to men the Clan calls bandits may look like weakness or mockery; they will probably refuse, and the offer warns them of the attack to come",
+              "The encirclement alone eats 8 of your 60 hours and sends the Elementals across the bog in the dark"
+            ],
+            "consequence": "The offer is made before witnesses. If they accept, this ends without blood. If they refuse, it becomes an assault against an enemy now warned, dug in, and sure of what the cargo is worth.",
+            "costs": { "cbills": null, "days": null, "resource": "time: 8 of your 60 recall hours spent on the encirclement, with the Elementals crossing the bog in darkness", "risk": "hegira offered to a lesser foe and refused warns them of the assault, and may be read as weakness or mockery" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Force commits — first contact, declaration, or detected approach at the rail yard." },
+        { "t": "T+0:20", "event": "Train can raise steam and begin moving toward the causeway under gun-wagon cover." },
+        { "t": "T+1:00", "event": "Remnant reserve company — light vehicles and infantry — reaches the yard from the fen villages." },
+        { "t": "T+19:00", "event": "Train, once moving, reaches the tunnel mouth at line speed with stops." },
+        { "t": "T+60:00", "event": "Galaxy embarkation closes. The DropShip lifts from the fen-edge LZ." }
+      ],
+      "hardDeadline": "Two deadlines run at once, and neither can be moved. First, the train reaches the massif at T+19:00 from the moment it starts moving; once the cargo is inside the hardened complex, the small bid force cannot get it back, because digging it out would take a full siege the Loremaster did not bid for. The objective is then lost for good — there is no second attempt. Second, the Galaxy lifts for the election at T+60:00; the recovery force must be at the extraction LZ by then or it is left behind and counted as lost. Losing the giftake into the mountain is the one outcome that cannot be fixed afterward."
+    },
+    "opforSketch": {
+      "composition": "Inner Sphere remnant battalion scaled to the band: 1 understrength company of mixed {TARGET_FACTION} BattleMechs (light-medium, worn, Veteran crews), the armored train with 2 gun wagons, 2 platoons of satchel-equipped infantry in the trestles and bog, light vehicles at the yard. No air, no resupply, no line of retreat they intend to use.",
+      "behavior": "Defense of the train above all; the battalion fights from the bog and the trestle shadows where tonnage cannot follow, masses fire without shame, and attempts to keep the train moving toward the massif under any circumstances. Expect deliberate self-destruction of the cargo before surrender of it."
+    },
+    "forks": [
+      {
+        "name": "OPERATION HONORED EARTH",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Giftake and remains recovered before the tunnel; force extracted by recall.",
+        "consequence": "The legacy returns to the sacred ward and the Bloodname Trial proceeds on schedule. The Star Captain's ruling on the looters becomes Clan precedent, cited in councils — and the unit is named escort of honor for the homeward jump.",
+        "threat": "LOW"
+      },
+      {
+        "name": "OPERATION MOUNTAIN DEBT",
+        "outcomeGate": "FAILURE",
+        "trigger": "The train enters the complex with the cargo.",
+        "consequence": "The debt compounds. A Trial of Possession against the massif itself is petitioned for the invasion's resumption — a deliberate assault on a hardened underground complex, fought by whoever bears the shame of this day, at whatever bid the Loremaster allows.",
+        "threat": "EXTREME"
+      },
+      {
+        "name": "OPERATION ASH VERSE",
+        "outcomeGate": "PARTIAL",
+        "trigger": "The chassis or codex is recovered but the giftake is lost or destroyed.",
+        "consequence": "The Bloodhouse convenes without its legacy. The unit must carry the codex home and stand witness at the accounting, where the question of the chosen ruling — batchall, silence, or hegira — is asked once per Bloodnamed warrior present.",
+        "threat": "MEDIUM"
+      }
+    ],
+    "storyElementSeed": "On the fen edge at dusk, an Elemental kneels at the funeral detail's abandoned ground, rights a toppled marker pole with one gauntleted hand, and stands a moment with the helmet sealed before walking on.",
+    "voiceSlots": ["command", "intelligence", "engineering", "medical"],
+    "phases": [
+      {
+        "name": "THE RULING",
+        "lead": "Before the force commits, the Star Captain decides what is owed to men who looted a funeral detail: a full formal challenge, a silent strike, or hegira — an offered free withdrawal. The decision shapes every hour that follows and will be read aloud before the Grand Council by warriors who were never in the marsh.",
+        "dataBlock": {
+          "The Bid": "1 Star of OmniMechs, 1 Point of Elementals — set by the Loremaster; you cannot add more under any condition",
+          "Departure Window": "The train leaves within {departureWindow} hours (from intercepts 3 days old, treated as reliable); a warned enemy can move that up by 11 hours",
+          "The Recall": "Galaxy boarding closes at T+60:00; the DropShip lifts from the marsh-edge LZ with the force aboard or counts it as lost"
+        },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "Rule once and rule whole: a ruling amended at the wire reads, in the record, as a warrior who did not know what was owed until the enemy told him." }
+      },
+      {
+        "name": "THE TAKING",
+        "lead": "The flatcar is taken at the rail yard before steam, or on the causeway at speed — and the ground decides which fight it is. The remnant battalion fights from the bog and the trestle shadows, where tonnage cannot follow and dying well counts as winning.",
+        "routes": [
+          { "name": "THE CAUSEWAY", "desc": "The single heavy-rated rail line, 7 meters above the bog on pile-driven trestles, with the armored train and its 2 gun wagons on it.", "tradeoff": "The only footing for anything over 60 tons — a straight corridor where the train's fixed turrets fire down prepared lanes and the trestle shadows hold satchel infantry." },
+          { "name": "THE FEN CRUST", "desc": "Frozen peat carrying 60 tons and under at a walk; 1.5 meters of black water beneath.", "tradeoff": "The flanking approach the train cannot answer — at walking speed, with breakthrough checks, and a winch debt of 3 turns for every machine that misjudges the crust." }
+        ],
+        "dataBlock": {
+          "Train Composition": "Armored locomotive at each end, 2 turreted gun wagons bracketing the flatcar, searchlight mast",
+          "Tunnel Clock": "T+19:00 from first movement to the tunnel mouth at line speed with stops",
+          "Yard Reserve": "Remnant reserve company — light vehicles and infantry — arrives from the fen villages at T+1:00"
+        },
+        "sidebarKernel": { "voiceSlot": "engineering", "kernel": "Stopping the train is a geometry problem before it is a gunnery problem: a locomotive killed on a trestle span risks toppling the flatcar 7 meters into the bog, and the objective does not float." }
+      },
+      {
+        "name": "THE RETURN",
+        "lead": "What is recovered is carried home in the manner it deserves. The machine is salvage; the giftake and the warrior are the Clan's, and the difference governs every hand that touches the flatcar.",
+        "protocol": "Custody of the remains: the senior Elemental Point takes guard the moment the flatcar is secured; the giftake canister and remains travel sealed, witnessed by 2 warriors at every transfer, and are logged to the Loremaster's record by name at the LZ. The codex core is pulled by 1 technician under the same witness. No gun-camera imagery of the remains is taken or kept; the Remembrance does not require photographs.",
+        "sidebarKernel": { "voiceSlot": "medical", "kernel": "The giftake is viable if the cockpit has held seal integrity through the winching and the cold — handle the canister transfer as surgery, not as cargo, because in every way that matters to the Clan, it is." }
+      }
+    ],
+    "assetDetails": [
+      { "ref": "{NPC:fallen-warrior}", "detail": "Bloodnamed, twice-honored, dead in the cockpit since the withdrawal ambush. The giftake must be recovered with the remains unviolated; any evidence of Spheroid instrumentation on the body converts the recovery's verse into a grievance the Bloodhouse will pursue for a generation.", "priority": "CRITICAL" },
+      { "ref": "civilian rail crew (conscripted track workers)", "detail": "9 crew across the 2 locomotives, per the dispatch intercepts — conscripted, unarmed, and riding because the remnant battalion cannot run the line without them. They are no part of any Trial; fire that reaches them is waste wearing the Clan's name, and the bonus objective prices exactly that.", "priority": "MEDIUM" }
+    ],
+    "registerVariants": {
+      "is-kurita": {
+        "situation.framing": "Were this the Dragon's dead, no order would be necessary. The remains of a named warrior carried to an enemy's cutting table is a stain no clock outranks. The Clans, in this one matter, are not alien at all."
+      },
+      "merc": {
+        "objectives.bonus": "The rail crew are conscripted civilians per the intercepts. Whatever the cargo is worth to the employer's culture, dead track workers are what ends up in the broadsheets — keep the lanes clean."
+      }
+    },
+    "specifics": {
+      "departureWindow": { "min": 6, "max": 30, "unit": "hours until train departure" },
+      "remnantMechCount": { "min": 7, "max": 10, "unit": "remnant BattleMechs" },
+      "trestleInfantryPlatoons": { "min": 2, "max": 3, "unit": "hidden infantry platoons" }
+    }
+  },
+  {
+    "seedId": "CLN-08",
+    "family": "GUERRILLA_WARFARE",
+    "title": "OPERATION STONE GARDEN",
+    "eraFit": ["clan-invasion"],
+    "factionFit": ["is-kurita"],
+    "register": "is-kurita",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "MECH_ONLY",
+    "localeFit": { "settlement": ["frontier"], "regionRole": ["contested"], "terrain": ["mountain"] },
+    "situation": "{WORLD} fell in 19 days. {EMPLOYER}'s flag came down at the spaceport, but not in the karst. Your {FORCE_SIZE} is what is left of the planetary garrison, scattered into the limestone country under {EMPLOYER}'s standing stay-behind orders: 3,000 square kilometers of sinkholes, collapsed caverns, and cave systems deep enough to hide a 'Mech's heat signature completely. {EMPLOYER}, speaking through {NPC:quest-giver} on a courier run that reaches you 4 times a year, has confirmed the mission: stay, watch, bleed the occupation, and keep a force alive for the day {EMPLOYER} comes back. Resistance on a {TARGET_FACTION} world starts with the price of defiance. Every officer here knows what the {TARGET_FACTION} did to that city, and so does every civilian who shelters you. The {TARGET_FACTION} keep few troops here — they consider the world beneath serious effort — but their reprisals are the real occupying force. If they trace an operation to a town, they destroy the town. So the standing rule, in every order this command issues: every strike must look like an accident, a bandit raid, or a Clan mistake. Nothing claimed. Nothing proud. This year, {EMPLOYER}'s honor is patience. The terrain runs the whole campaign. Moving faster than 40 kilometers per hour on the surface cracks the karst crust and leaves a scar. A {TARGET_FACTION} spy satellite passes over the district every 4 hours and 17 minutes, and the blind gap between passes is 47 minutes at the cave mouths. Machines move cave to cave inside that gap or they get photographed — and a photograph is a death warrant for whatever town they blame. Current {TARGET_FACTION} forces: 1 garrison Trinary at the spaceport, 1 Star forward at the rail junction, and Elemental sweep teams working the karst on a 9-day cycle. That posture is 2 days old and reliable; the sweep pattern comes from 40 days of logs, so trust its timing loosely. Targets this season: the fuel pipeline feeding the spaceport tank farm, the forward depot, and the rail spur moving {TARGET_FACTION} supplies toward their next wave. One offer you did not ask for: {NPC:smuggler-captain} will sell you ammunition at fair rates, and some of the crates carry ISF seals that are 2 years out of date. Decide what that means before the first crate opens. The hard limit is winter. The karst caves flood when the wet season starts in 9 weeks, so every machine must be moved to the high galleries before the water rises. That move leaves the whole force stuck in place for 6 days, and it cannot wait.",
+    "objectives": {
+      "primary": "Cut {TARGET_FACTION} supply through the corridor this season — pipeline flow, depot stocks, or rail tonnage — by a total of 30 percent, with every strike deniable.",
+      "secondary": "Keep the force alive and hidden: end the season with at least 80 percent of your combat strength and the cave network undiscovered.",
+      "bonus": "Work out the {TARGET_FACTION} launch schedule from the rail traffic you observe, and send it out on the next courier run for {EMPLOYER} to plan around."
+    },
+    "complications": [
+      {
+        "name": "The Reprisal Precedent",
+        "text": "Any strike the {TARGET_FACTION} trace to a town, they answer against the town, not the soldiers. Their real weapon is the certainty that they will hit back far harder than the strike itself, and 60,000 civilians in the karst live under that threat.",
+        "mechanicalEffect": "Each strike accrues attribution risk based on method and evidence left; when accumulated attribution crosses the campaign threshold, a named settlement is forfeit and the FAILURE-gated fork triggers immediately, overriding other outcomes."
+      },
+      {
+        "name": "The 47-Minute Gap",
+        "text": "Satellite passes bracket every surface movement. The blind window at the cave mouths is 47 minutes; a 'Mech that is still in the open at re-acquisition is a photograph, and a photograph is attribution.",
+        "mechanicalEffect": "All 'Mech-scale surface movement must complete within 47-minute windows occurring every 4 hours 17 minutes. Units caught in the open at window close add a full attribution step."
+      },
+      {
+        "name": "Sweep Cycle",
+        "text": "{TARGET_FACTION} Elemental teams walk the karst on a 9-day cycle, randomized within sectors. They are thorough, bored, and equipped with seismic listening gear that hears generator plants through 20 meters of limestone.",
+        "mechanicalEffect": "Each cycle, roll one cave sector for a sweep; any sector containing an active power plant or recent vehicle traffic risks discovery. A discovered cave costs its stores and forces relocation during the next satellite gap."
+      },
+      {
+        "name": "Crates With Old Seals",
+        "text": "{NPC:smuggler-captain}'s resupply is real and the price is fair, which is itself information. ISF seals 2 years stale mean the cargo passed through hands that answer to an agenda this command cannot see from a cave.",
+        "mechanicalEffect": "Accepting resupply restores ammunition and stores but adds a hidden loyalty thread: one future scenario complication (informant, tracker beacon, or genuine windfall) is rolled secretly when the crates open."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Season's First Cut",
+        "context": "The force can run one major strike before the flood forces the 6-day move to the high galleries. Three targets, each leaving a different trail — and so far the enemy has nothing to trace back to you. {NPC:quest-giver}'s last courier note said only: {EMPLOYER} counts what comes back, not what burns.",
+        "options": [
+          {
+            "title": "The Pipeline",
+            "advantages": [
+              "Rupturing it at the karst crossing looks like the ground simply sinking — the hardest strike of the three to blame on you",
+              "Starving the tank farm slows every {TARGET_FACTION} movement for 3 to 5 weeks, sweep cycle included"
+            ],
+            "disadvantages": [
+              "It does the least damage of the three, so you will need 2 more strikes to reach the 30 percent goal",
+              "Repair crews bring escort Stars into the karst edges for a month"
+            ],
+            "consequence": "The occupation slows and can prove nothing. The campaign keeps its pace, and you still need everything left on the target list.",
+            "costs": { "cbills": 0, "days": null, "resource": "one engineered charge set from the cave reserves — the most deniable stock the force holds", "risk": "repair escorts bring Stars into the karst edges for a month, and you still need 2 more strikes to reach 30 percent" }
+          },
+          {
+            "title": "The Forward Depot",
+            "advantages": [
+              "One strike can take 40 percent of forward stocks in a single fire — the objective in one night",
+              "The depot's conscripted labor shift changes at 0300; a strike then minimizes civilian presence to 11 night-watch workers"
+            ],
+            "disadvantages": [
+              "No accident burns a guarded depot, so they will almost certainly know it was you",
+              "The forward Star is 4 minutes away at alert, and your escape window to the caves is a fixed 47 minutes"
+            ],
+            "consequence": "You hit the season's goal in one stroke, but the enemy is now nearly certain who did it. Their answer lands within days, somewhere.",
+            "costs": { "cbills": 0, "days": null, "resource": "the season's fire and breaching charges, spent in one night", "risk": "they will almost certainly trace it to you, and their reprisal doctrine pays that back against a town" }
+          },
+          {
+            "title": "The Rail Spur",
+            "advantages": [
+              "Cumulative track sabotage — culvert collapses, bed subsidence, switch failures — bleeds tonnage 8-12 percent per week and looks like the karst doing what karst does",
+              "Distributed small actions train the civilian network in tradecraft the campaign will need for years"
+            ],
+            "disadvantages": [
+              "Slow: the 30 percent objective arrives in week 7 of 9, with no margin for a failed action",
+              "Every civilian cell involved is one more person who can be swept up and questioned"
+            ],
+            "consequence": "The campaign becomes a long ledger of small deniable cuts. The risk distributes across the network — which is to say, across the people the reprisal precedent prices.",
+            "costs": { "cbills": 0, "days": 49, "resource": "the civilian network — every cell involved is one more person who can be swept up and questioned", "risk": "the 30 percent objective arrives in week 7 of 9 with no margin for a single failed action" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Strike detected — alarm at the target or anomaly flagged in {TARGET_FACTION} telemetry." },
+        { "t": "T+0:04", "event": "Forward Star at the rail junction moves at alert speed toward the strike site." },
+        { "t": "T+0:11", "event": "Aerospace point overflies from the spaceport strip; thermal sweep of approach routes begins." },
+        { "t": "T+0:47", "event": "Satellite re-acquisition over the karst. Anything in the open is photographed." },
+        { "t": "T+9 weeks", "event": "Wet season begins; cave flooding starts in the lower galleries." }
+      ],
+      "hardDeadline": "Strike elements must be underground before satellite re-acquisition at T+0:47 — the gap does not stretch. And the entire force must complete the 6-day relocation to the high galleries before wet season at week 9; a force caught mid-move by a sweep cycle is a force found."
+    },
+    "opforSketch": {
+      "composition": "Occupation force scaled to the band: 1 second-line Trinary at the spaceport, 1 forward Star (mixed OmniMechs, alert posture) at the rail junction, Elemental sweep teams of 1-2 Points in the karst, 1 aerospace point on strip alert, and the surveillance satellite. Reinforcement above this level requires {TARGET_FACTION} to admit a resistance exists, which they will not do until the evidence is public.",
+      "behavior": "Contempt at the strategic level, precision at the tactical: sweeps are methodical, responses to confirmed contact are fast and overwhelming, and reprisal targeting is bureaucratic — a settlement is selected, announced, and made an example, exactly once per proven incident."
+    },
+    "forks": [
+      {
+        "name": "OPERATION KARST CHORUS",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Season objective met, force preserved, attribution below threshold.",
+        "consequence": "The courier circuit returns with {EMPLOYER} tasking: the network's intelligence has been graded strategic, and the next season's mission adds target designation for an off-world strike — guiding {EMPLOYER}'s hand from inside the cage.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION HOLLOW BELL",
+        "outcomeGate": "FAILURE",
+        "trigger": "Attribution crosses threshold; a settlement is named for reprisal.",
+        "consequence": "The {TARGET_FACTION} announce the reprisal 72 hours ahead, because terror needs an audience. The force has to evacuate a town of {settlementPopulation} through the karst, under the satellite — and do it without proving, by the rescue itself, that the resistance they are punishing is real.",
+        "threat": "EXTREME"
+      },
+      {
+        "name": "OPERATION DRY CISTERN",
+        "outcomeGate": "COMPROMISED",
+        "trigger": "A cave sector is discovered or the smuggler thread resolves against the force.",
+        "consequence": "The network is partially rolled up. Survivors consolidate in the flood-margin galleries with 60 percent of stores lost, and the season's remaining operations are conducted by a force that now knows it is being hunted by name.",
+        "threat": "HIGH"
+      }
+    ],
+    "storyElementSeed": "In a cave gallery lit by two work lamps, a pilot brushes condensation off a tarped 'Mech's foot and re-checks the wheel chocks while, farther in, the cooking fire is being fed only wood dry enough to make no smoke.",
+    "voiceSlots": ["command", "intelligence", "logistics", "engineering", "medical"],
+    "phases": [
+      {
+        "name": "THE BEDDING",
+        "lead": "The campaign is won or lost in posture before a single charge is laid: machines bedded in the deep galleries, generators silenced against seismic ears, movement disciplined to the satellite's arithmetic. Patience is {EMPLOYER}'s honor this year, and patience has procedures.",
+        "dataBlock": {
+          "Satellite Period": "4 hours 17 minutes per pass; usable blind gap at the cave mouths: 47 minutes",
+          "Sweep Cycle": "{TARGET_FACTION} Elemental teams, 9-day cycle, randomized within sectors, seismic gear hears generators through 20 meters of limestone",
+          "Surface Speed Limit": "40 kilometers per hour — above it, karst crust shatters and the scar is a photograph waiting for the next pass",
+          "Courier Circuit": "4 contacts per year; the next departure carries whatever the bonus objective has assembled"
+        },
+        "protocol": "Movement order: no 'Mech leaves a cave mouth except inside a declared 47-minute window, logged against the pass schedule by the watch officer; generator hours rotate between sectors so no gallery runs power 2 sweep-cycles in a row; nothing written leaves the caves, and the courier's material is memorized or microfilmed, never both.",
+        "sidebarKernel": { "voiceSlot": "intelligence", "kernel": "The sweep pattern is built from 40 days of logs at MEDIUM confidence — trust the cycle's length, never its order, and move the watch posts the day any sweep arrives early." }
+      },
+      {
+        "name": "THE CUT",
+        "lead": "One major strike before the flood move, chosen against the attribution ledger as much as the target list. The courier's note stands as the season's whole doctrine: {EMPLOYER} counts what returns, not what burns.",
+        "dataBlock": {
+          "Attribution Risk": "Starts at zero; reaches the limit at {attributionThreshold} steps, and crossing it costs a town under their reprisal doctrine",
+          "Egress Arithmetic": "Forward Star at the rail junction: 4 minutes at alert; satellite re-acquisition: T+0:47, fixed",
+          "Target Board": "Pipeline (deniable, slow), forward depot (decisive, attributable), rail spur (cumulative, distributed)"
+        },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "Plan every strike twice — once as the operation, once as the story {TARGET_FACTION} will reconstruct from its residue — and cancel any strike whose second version has a town's name in it." }
+      },
+      {
+        "name": "THE RELOCATION",
+        "lead": "At week 9 the water rises and the entire force moves to the high galleries: 6 days immobile, machines on cribbing, stores on backs, the campaign's whole existence in transit under the sweep cycle. Nothing this season is allowed to schedule against those 6 days.",
+        "dataBlock": {
+          "Move Duration": "6 days, force immobile throughout; the move cannot wait and cannot be split",
+          "Flood Onset": "Wet season begins week 9; lower galleries flood first",
+          "Exposure": "A force caught mid-move by a sweep is a force found — the relocation is the campaign's single largest attribution risk"
+        },
+        "sidebarKernel": { "voiceSlot": "logistics", "kernel": "Stage the high galleries now: rations, dry wood, and cribbing placed before week 7, because in week 9 every hand is under a 'Mech and the satellite does not observe a harvest holiday." }
+      }
+    ],
+    "assetDetails": [
+      { "ref": "{NPC:smuggler-captain}", "detail": "The resupply offer is real, the rates are tolerable, and the ISF seals on the manifest crates are 2 years out of date — which means the cargo passed through hands that answer to an agenda invisible from a cave. Decide what the seals mean before the first crate opens; the decision cannot be unmade after.", "priority": "HIGH" },
+      { "ref": "{NPC:quest-giver}", "detail": "Speaks for {EMPLOYER} on a courier circuit that arrives 4 times a year and cannot be queried between contacts. Orders are standing doctrine, not conversation — any situation the last courier did not anticipate is the commander's alone until the next one grounds.", "priority": "MEDIUM" }
+    ],
+    "registerVariants": {
+      "merc": {
+        "situation.framing": "No contract covers this. Stay-behind work is what happens when the employer's flag leaves orbit faster than the employees — read the force-preservation objective as the only clause still paying."
+      },
+      "clan": {
+        "opforSketch.behavior": "The bandits in the stones are beneath the honor of declaration. They will be swept as vermin are swept, and the dwellings that shelter them are part of the infestation. This is not war. War is owed to warriors."
+      }
+    },
+    "specifics": {
+      "settlementPopulation": { "min": 3000, "max": 9000, "unit": "civilians in the named settlement" },
+      "forceStartingMechs": { "min": 8, "max": 14, "unit": "operational BattleMechs in the dispersal force" },
+      "attributionThreshold": { "min": 3, "max": 5, "unit": "attribution steps before reprisal" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "The Forward Depot",
+        "requires": "depot-access",
+        "whenLacking": "reprice",
+        "lackingText": "Cave stores cannot cover the strike load: {NPC:smuggler-captain} prices the munitions at 90,000 C-bills in trade goods — delivered in crates whose ISF seals are 2 years out of date."
+      }
+    ]
+  },
+  {
+    "seedId": "CLN-09",
+    "family": "PLANETARY_ASSAULT",
+    "title": "OPERATION PATIENT TIDE",
+    "eraFit": ["clan-invasion"],
+    "factionFit": ["clan-ghost-bear", "clan"],
+    "register": "clan",
+    "threatRange": ["HIGH", "EXTREME"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.35,
+    "localeFit": { "settlement": ["capital"], "regionRole": ["contested"], "terrain": ["wetland", "coastal"] },
+    "situation": "{WORLD} is not a raid target. It is a future home, though the {TARGET_FACTION} do not yet know it will be ours. The Khans have marked this world for the Clan to settle — its shipyards, its arcologies, its winters that feel right — and you take a home differently than you take a trophy. The Galaxy Commander's order is plain: what we break here, we repair here, as its new residents. Bid and fight with that in mind. The {TARGET_FACTION} answered our batchall with defiance, which was expected and is respected. Their defense of the capital sits on the mudflats: 14 kilometers of tidal plain in front of the arcology district, flooding to 2.2 meters on a 5-hour-40-minute cycle. At low water the flats carry any weight on a hard sand crust for 4 hours and 10 minutes; then the tide comes back faster than a damaged 'Mech can crawl clear. The only route open at all tides is the forest corridor to the north — 9 kilometers of planted pine on firm ground, with every {TARGET_FACTION} artillery battery already ranged in on it. That fire plan comes from a prisoner questioned 5 days ago, so treat it as likely, not certain. The defenders are {defenderRegiments} regiments of mixed regulars and militia with conscript fill under {NPC:opfor-commander}, dug in with their backs to their own homes; that intelligence is 5 days old and reliable. These are not some lesser Clan's cannon fodder. They are heirs of the pilot who rammed an ilKhan out of the sky over a neighboring world, and since that day their pilots have learned to make their deaths count. Expect ramming. Expect demolition charges in buildings their own grandparents built. Expect, in the same hour, white flags from conscript companies whose officers are already dead — and honor every one, because this world will remember its first week under us for a century. Two rules bind the assault from above. First: the ComStar compound and its HPG relay sit inside the arcology district and are off-limits under the Khans' agreement. No fire plan touches its map square, no matter what shelters behind it. Second: the bid. The Galaxy Commander has bid away all naval bombardment and heavy artillery — you do not soften a home from orbit — and the Star Colonels have set the ground force at {bidClusters} Clusters with Elemental support and matching aerospace, nothing held back that was not named. The assault clock is the tide table. You must take the arcology power district before tide cycle 4 closes at T+22:40. Miss it and the flats reset, the garrison rebuilds its line, and this clean assault becomes a 9-day street-by-street grind through the city we mean to live in, quiaff?",
+    "objectives": {
+      "primary": "Seize the arcology power district intact before tide cycle 4 closes at T+22:40.",
+      "secondary": "Break the garrison's organized resistance on the line while accepting every surrender offered and processing it by Clan law.",
+      "bonus": "Take the yard-control facilities undamaged — the infrastructure of the home, not the spoils of the trophy."
+    },
+    "complications": [
+      {
+        "name": "The Tide Table",
+        "text": "The flats open for 4 hours 10 minutes per cycle and drown to 2.2 meters between. An assault echelon that mistimes its crossing fights the second half of its battle in rising water, and a disabled machine on the flats is a lost machine, crew and all, unless pulled before the water wins.",
+        "mechanicalEffect": "Flats hexes are passable to all units during the low-water window and become depth-2 water on a fixed turn schedule thereafter. Immobilized units in flooding hexes must be towed out within the schedule or are eliminated; crews may eject."
+      },
+      {
+        "name": "Pre-Registered Forest",
+        "text": "The forest corridor is the only all-tide approach and the garrison has had a year to register its batteries on every firebreak and bend. The trees do not hide anything; they merely decide where the wreckage stacks.",
+        "mechanicalEffect": "All hexes in the corridor are pre-registered: defending artillery fires without spotting penalty there, every turn, until counter-battery silences each named battery position."
+      },
+      {
+        "name": "Endings That Mean Something",
+        "text": "{TARGET_FACTION} aerospace and armor crews attempt ramming and point-blank demolition when crippled. Since that day, this is not desperation; it is doctrine with a martyr's name on it.",
+        "mechanicalEffect": "Any crippled defender unit in contact range may attempt a ramming or self-destruction attack instead of withdrawing or surrendering; roll per unit at the moment it becomes crippled."
+      },
+      {
+        "name": "Surrenders in Mid-Battle",
+        "text": "Conscript companies break and yield in formed bodies, in the open, mid-engagement, while their neighbors fight on. Each acceptance is law, and each costs combat power to escort and process while the tide clock runs.",
+        "mechanicalEffect": "Each accepted surrender removes one defending unit from play and commits one attacking unit (or Elemental Point) to escort duty for 2 turns. Refusing or firing on a surrender forces the COMPROMISED gate."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Garrison's Petition",
+        "context": "At T+9:00, with the line bending, {NPC:opfor-commander} transmits in the open: a request for hegira — free withdrawal under arms for the garrison's remnant, the civil government, and the military academy's cadets, in exchange for the city unmined and the power district intact. The transmission is addressed correctly, in passable Clan form. Someone over there has been studying. The reply belongs to the assault commander, and the tide does not pause for deliberation.",
+        "options": [
+          {
+            "title": "Grant Hegira",
+            "advantages": [
+              "The city, the power district, and the yards come over intact — the home undamaged, the primary and bonus objectives effectively conceded",
+              "Granting the first hegira of the invasion to a worthy foe is a verse the Remembrance will keep, and a precedent that makes the next world's garrison likelier to ask than to burn"
+            ],
+            "disadvantages": [
+              "The garrison's remnant — and a full class of academy cadets — withdraws to fight the Clan again on the next world, trained now by this defeat",
+              "Warriors who bid for glory on the flats are paid in an administrative occupation; the bidding chiefs will remember who ended their Trial with paperwork"
+            ],
+            "consequence": "The withdrawal is honored and watched to the horizon. {WORLD} is taken whole, and every soldier permitted to leave is a future engagement deferred at interest.",
+            "costs": { "cbills": null, "days": null, "resource": "the bid's glory — warriors who bid for the flats are paid in an administrative occupation, and the bidding chiefs will remember", "risk": "the garrison remnant and a full academy class withdraw to fight the Clan again, trained by this defeat" }
+          },
+          {
+            "title": "Demand Surrender Instead",
+            "advantages": [
+              "An unconditional surrender turns the garrison into the Clan's own future — abtakha, captives absorbed into the Clan as laborers and eventually kin; a home needs people more than prisoners",
+              "No armed force withdraws to reinforce the next defensive line in the corridor"
+            ],
+            "disadvantages": [
+              "The counter-offer insults a foe who asked correctly; the probable answer is demolition charges in the power district and a last stand among the homes",
+              "Negotiation consumes the remainder of tide cycle 3 — if it fails, the assault resumes with one window left"
+            ],
+            "consequence": "The reply is honor of a harder kind. If they yield, the Clan gains a population; if they refuse, the assault must take by storm, in one tide, what the petition offered for nothing.",
+            "costs": { "cbills": null, "days": null, "resource": "time: the remainder of tide cycle 3 consumed by negotiation — one assault window left if it fails", "risk": "the counter-offer insults a foe who asked correctly; the probable answer is demolition charges in the power district" }
+          },
+          {
+            "title": "Press the Assault",
+            "advantages": [
+              "No pause, no risk of a feint: the line is bending now and tide cycle 3 favors the attack for 2 more hours",
+              "The bidding chiefs are answered — the Trial is completed as bid, by arms, and no one before the Grand Council can call the victory negotiated"
+            ],
+            "disadvantages": [
+              "Refusing a correctly made petition without answer is within the law and beneath the Clan's better story of itself — this world will remember it",
+              "A garrison denied hegira fights like those pilots flew; expect the power district wired before the flats clear"
+            ],
+            "consequence": "The petition goes unanswered and the assault rolls through it. Whatever is taken is taken by strength alone, priced accordingly, and remembered accordingly — on both sides.",
+            "costs": { "cbills": null, "days": null, "resource": "honor: a correctly made petition refused without answer — within the law, beneath the Clan's better story of itself", "risk": "a garrison denied hegira fights like those pilots flew; expect the power district wired before the flats clear" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "First assault echelon crosses the flats line at low water; tide cycle 1 opens." },
+        { "t": "T+4:10", "event": "Tide cycle 1 closes; the flats drown. Forces ashore hold the bridgehead unsupported until cycle 2." },
+        { "t": "T+9:00", "event": "Projected garrison petition window; the line bends or breaks by this hour." },
+        { "t": "T+17:00", "event": "Tide cycle 4 opens — the final crossing window for the power district push." },
+        { "t": "T+22:40", "event": "Tide cycle 4 closes. The assault has succeeded by now or it has become a siege." }
+      ],
+      "hardDeadline": "The power district falls before T+22:40 or the operation converts to a 9-day urban reduction of the city the Clan intends to inhabit — a failure measured not in honor but in everything the word home was bid to mean."
+    },
+    "opforSketch": {
+      "composition": "Planetary defense scaled to the band: {defenderRegiments} regiments of {TARGET_FACTION} regulars and militia (Regular quality with Veteran cadre, conscript fill at 20-30 percent), dug-in armor on the arcology line, tube artillery registered on the forest corridor, and a reduced aerospace wing that has already chosen how it wishes to be remembered.",
+      "behavior": "Static defense anchored on the tide table, artillery doctrine in the forest, counterattacks timed to flood windows. Crippled units seek endings of consequence; intact conscript formations seek endings of survival. The commander husbands the regulars for the arcology line and will trade the militia for time."
+    },
+    "forks": [
+      {
+        "name": "OPERATION HEARTH RIGHT",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Power district taken intact within the tide deadline.",
+        "consequence": "The Clan's claim on {WORLD} becomes administration within a season. The unit is granted first-settlement honors — and tasked with the occupation's first true test: integrating {abtakhaCount} prisoners and a sullen arcology population into a Clan world without becoming tyrants.",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION LONG WINTER",
+        "outcomeGate": "FAILURE",
+        "trigger": "Tide cycle 4 closes with the power district untaken or destroyed.",
+        "consequence": "The siege begins. Nine days of street reduction through a wired city, with the Khans' attention acquired and the bid's honor spent. The follow-on mission is the assault's own wreckage: take by attrition what was bid to be taken by skill.",
+        "threat": "EXTREME"
+      },
+      {
+        "name": "OPERATION COLD ACCOUNT",
+        "outcomeGate": "COMPROMISED",
+        "trigger": "A surrender was refused or fired upon, or the ComStar grid square was struck.",
+        "consequence": "The violation travels — to the Khans, to ComStar's adepts, to the {TARGET_FACTION} communes who now know what the new neighbors do to white flags. The occupation inherits an insurgency before it inherits a city, and the responsible commander answers a summons to a circle of a different kind.",
+        "threat": "HIGH"
+      }
+    ],
+    "storyElementSeed": "On the re-hardening flats between tides, a recovery crew works chain hooks under a mired 'Mech's knee while a kilometer out the water stands in a gray line, neither advancing nor pretending it will wait.",
+    "voiceSlots": ["command", "naval", "engineering", "logistics", "medical"],
+    "phases": [
+      {
+        "name": "THE CROSSING",
+        "lead": "Tide cycle 1 opens and the first echelon crosses 14 kilometers of hard sand against the clock that commands both armies. A home is not softened from orbit; it is walked into, at low water, by warriors who have read the tide table.",
+        "routes": [
+          { "name": "THE MUDFLATS", "desc": "14 kilometers of tidal plain, hard crust carrying any tonnage for 4 hours 10 minutes per cycle, flooding to 2.2 meters between.", "tradeoff": "The broad front and the fast approach — purchased against a clock that drowns the slow, the damaged, and the mistimed without regard for honor." },
+          { "name": "THE FOREST CORRIDOR", "desc": "9 kilometers of planted pine on firm ground, the only route open at all tides.", "tradeoff": "No tide clock — but every firebreak and bend is already ranged in by every battery the garrison owns, per a prisoner questioned 5 days ago (likely, not certain)." }
+        ],
+        "dataBlock": {
+          "Tide Cycle": "5 hours 40 minutes full cycle; low-water window 4 hours 10 minutes; flood depth 2.2 meters",
+          "Bridgehead Gap": "Forces ashore at cycle close hold unsupported until the next window opens",
+          "Recovery Rule": "A disabled machine on the flats is pulled before the water wins or it is lost with its crew"
+        },
+        "sidebarKernel": { "voiceSlot": "naval", "kernel": "The tide table is the operation's true commander: every echelon, every tow line, and every casualty plan is timed from the water, and the water has never granted hegira to anyone." }
+      },
+      {
+        "name": "THE LINE",
+        "lead": "The line is held by heirs of that martyr who fight in front of their own homes, and the same hour will bring ramming attacks and white flags from conscript companies whose officers are dead. Every surrender is honored and processed by Clan law; this world will remember its first week of us for a century.",
+        "protocol": "Surrender processing: each accepted formation is escorted by 1 attacking unit or Elemental Point for 2 turns to the rear collection line, logged by formation and hour, weapons grounded and untouched until the collection details arrive. The ComStar compound's grid square is inviolate under the Khans' arrangement: no fire plan touches it, whatever displaces behind it, and every targeting log is retained for the adepts' inspection.",
+        "sidebarKernel": { "voiceSlot": "medical", "kernel": "Prisoner and casualty flows arrive together and double at every surrender — stage the processing line for {abtakhaCount} before cycle 2, because a home's first census must not begin with the wounded lying unsorted on a beach." }
+      },
+      {
+        "name": "THE PETITION",
+        "lead": "At T+9:00 the garrison commander transmits in the open, in passable Clan form, asking hegira. Someone over there has been studying; the reply belongs to the assault commander, and the tide does not pause for deliberation.",
+        "dataBlock": {
+          "Petition Terms": "Free withdrawal under arms for the garrison remnant, civil government, and academy cadets, against the city unmined and the power district intact",
+          "Negotiation Cost": "A counter-offer consumes the remainder of tide cycle 3 — one assault window remains if it fails",
+          "Form": "The transmission is correctly addressed; the law permits grant, counter-demand, or silence, and each is answered for afterward"
+        },
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "Weigh the petition as the founding document of the occupation it precedes: whichever answer is given, it will be quoted on this world longer than any battle honor won on the flats." }
+      },
+      {
+        "name": "THE POWER DISTRICT",
+        "lead": "Tide cycle 4 opens at T+17:00 and closes at T+22:40, and inside that window the power district is taken intact or the operation becomes a 9-day reduction of the city the Clan intends to inhabit. What is broken here is repaired here, by residents.",
+        "dataBlock": {
+          "Final Window": "T+17:00 to T+22:40 — the last crossing the assault schedule recognizes",
+          "Intact Requirement": "The district's generation halls are the objective in working order; demolition charges are the probable answer to a refused petition",
+          "After the Window": "The flats reset, the garrison re-seats its line, and the deliberate assault becomes siege"
+        },
+        "sidebarKernel": { "voiceSlot": "engineering", "kernel": "Send the breach teams in with the disarming kits, not behind them — a generation hall taken 11 minutes after its charges fire is a trophy, and this Clan did not cross the void for trophies." }
+      }
+    ],
+    "registerVariants": {
+      "is-davion": {
+        "situation.defenderNote": "From the garrison's map table: the flats buy 4-hour battles, the forest costs them batteries, and the only question that matters is whether the invader's patience outlasts the tide table. Everything AFFC observers learn here gets paid for in the defenders' blood first."
+      },
+      "comstar": {
+        "complications[3].text": "The compound's inviolability is the single thread of the Khans' arrangement that touches ground on {WORLD}. Both armies will test whether the other believes in it; the Order's task is to make belief cheaper than the alternative."
+      }
+    },
+    "specifics": {
+      "defenderRegiments": { "min": 2, "max": 3, "unit": "defending regiments" },
+      "bidClusters": { "min": 2, "max": 3, "unit": "Clusters in the final bid" },
+      "abtakhaCount": { "min": 200, "max": 600, "unit": "prisoners taken into Clan custody" }
+    }
+  },
+  {
+    "seedId": "CLN-10",
+    "family": "PLANETARY_ASSAULT",
+    "title": "OPERATION ASH CURTAIN",
+    "eraFit": ["clan-invasion"],
+    "factionFit": ["clan-jade-falcon", "clan"],
+    "register": "clan",
+    "threatRange": ["HIGH", "EXTREME"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.3,
+    "localeFit": { "settlement": ["capital"], "regionRole": ["contested"], "terrain": ["desert", "mountain"] },
+    "situation": "{WORLD} is an open wound this Galaxy still carries. In the great rift, a single Inner Sphere trap wiped out an entire {EMPLOYER} Guards Cluster — not beaten, wiped out — with buried explosives set by a commander who fought like a surveyor with a map, not a warrior in a circle. The Inner Sphere still holds the world, garrisoned by {defenderBattalions} battalions of {TARGET_FACTION} troops proud of the one victory of its kind they own. That garrison estimate is 8 days old and likely; their patrol schedule was confirmed by an aerospace pass 2 days ago and is reliable. The Khan wants the world back. The Loremaster wants something harder: it must be won in a way that heals the shame, not just avenges it. The batchall has been sent, and {NPC:opfor-commander} answered with a politeness that is itself an insult — he thanked the Clan for warning him. On {WORLD} the ground decides everything, because the wind owns the ground. Between the landing zones and the capital lies the dust plain: 70 kilometers of hardpan swept by the diabolis — rolling dust storms that cut sight and sensors to between 90 and 300 meters, ground all aerospace below 4,000 meters, and scour exposed seals on a 6-hour cycle. The storm season is forecast to hold for {stormWindowHours} more hours, then break clear for 5 days; that forecast is reliable, drawn from the Clan's own occupation-era records. Inside the storm you cannot keep zellbrigen — the one-on-one dueling code — because no warrior can call out a target the dust has not yet shown at 200 meters. The enemy knows it, and since the rift their doctrine is massed short-range fire from hidden dug-in nests: anonymous, dishonorable, and effective. There are two other routes. The great rift itself is 40 kilometers of canyon highway through the mountains — fast, sheltered from the dust, and the exact ground where the Guards died. Engineering puts it at 60 percent that the garrison has mined it again, but that is a low-confidence guess from watching cargo move. Or the salt flats south of the mountains: open, storm-free, unmined, undefended — but 31 hours longer, which burns the storm window and lands the assault on open ground under the enemy's full sensors. The garrison's DropShips sit fueled at the capital field. When the storm breaks, the enemy can lift off — and a Trial that ends with the enemy escaping in good order wins back the world but not the honor. By the Khan's direct order, the rebuilt {EMPLOYER} Guards Cluster is in the bid. They are not here to take part. They are here to be seen winning, quiaff?",
+    "objectives": {
+      "primary": "Take the capital and its DropShip field before the storm break at {stormWindowHours} hours grounds the garrison's option to extract.",
+      "secondary": "Destroy or compel the surrender of the garrison's BattleMech battalions — the world returned with its defenders accounted for, not escaped.",
+      "bonus": "The reconstituted {EMPLOYER} Guards take a named, witnessed objective — gate, field, or garrison standard — with their own bid and no assistance."
+    },
+    "complications": [
+      {
+        "name": "The Diabolis",
+        "text": "Dust vortices walk the dust plain on no schedule a fire plan can use. Sensor and visual range falls to 90-300 meters inside a curtain, aerospace is grounded below 4,000 meters, and a formation that loses cohesion in the dust re-forms by luck or not at all.",
+        "mechanicalEffect": "On the plain, roll each turn for curtain coverage by sector: affected hexes cap all detection at {curtainVisibility} meters, prohibit indirect fire without a same-sector spotter, and ground all air support. Formations moving faster than walking speed in a curtain risk separation."
+      },
+      {
+        "name": "The Seeded Rift",
+        "text": "Engineering puts it at 60 percent that the canyon is mined again, based on 8-day-old cargo sightings and a memory of the rift no one needs reminding of. Sweeping all 40 kilometers takes 9 hours; sweeping only the chokepoints takes 3 hours but leaves the rest unchecked.",
+        "mechanicalEffect": "If the rift axis is chosen, the seeding probability resolves secretly at mission start. Unswept canyon hexes may contain command-detonated fields; a triggered field attacks every unit in a 3-hex column section simultaneously."
+      },
+      {
+        "name": "Nests in the Dust",
+        "text": "The garrison's anti-Clan doctrine is hull-down anonymity: dug-in 'Mechs and armor holding fire to 200 meters, volleying massed autocannon and missiles, displacing under the curtain to the next nest. No declarations, no duels, no shame in their book at all.",
+        "mechanicalEffect": "Defender nests deploy hidden on the plain and in the approaches; each fires as a massed volley on first reveal. Zellbrigen cannot be maintained inside curtain sectors — honor outcomes are scored only on engagements outside the dust."
+      },
+      {
+        "name": "Fueled DropShips",
+        "text": "The garrison's lift sits ready at the capital field. The moment the storm breaks, extraction is a 4-hour operation under their remaining air cover. Every hour of assault delay is an hour of their countdown banked.",
+        "mechanicalEffect": "At storm break, a 4-hour evacuation clock starts: each elapsed hour thereafter removes one defending battalion (and its accounting toward the secondary objective) from the world."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Axis of the Wound",
+        "context": "Three axes to the capital, and the choice is not tactical only — every warrior of {EMPLOYER} from the Khan down will read it as the Clan's answer to the rift. The bidding chiefs are split. The storm window is not.",
+        "options": [
+          {
+            "title": "Through the rift",
+            "advantages": [
+              "The fastest axis by 14 hours, sheltered from the diabolis, with the assault arriving inside the storm window at full strength",
+              "Retaking the exact ground of the humiliation, swept and conquered, closes the wound in the only language the Remembrance respects"
+            ],
+            "disadvantages": [
+              "A 60 percent seeding assessment at LOW confidence is a coin flipped over a mass grave",
+              "The garrison wants the rift chosen — whatever waits there was prepared with this exact pride in mind"
+            ],
+            "consequence": "The canyon is swept at the chokepoints and forced. The wound closes or reopens in the same 40 kilometers, before witnesses, with the {EMPLOYER} Guards in the column.",
+            "costs": { "cbills": null, "days": null, "resource": "sweep time: 3 hours at the chokepoints against 9 for the full canyon — the axis's 14-hour advantage is spent in proportion to certainty", "risk": "a 60 percent seeding assessment at LOW confidence, resolved over the {EMPLOYER} Guards' grave, before witnesses" }
+          },
+          {
+            "title": "Into the Curtains",
+            "advantages": [
+              "The storm blinds the enemy's sensors and grounds their aircraft as fully as it does the Clan's — and at 200 meters, Clan guns and Clan armor win the close-range fight",
+              "No mines, no canyon, no script: the route the garrison can least prepare for"
+            ],
+            "disadvantages": [
+              "Zellbrigen dissolves in the dust — the Trial becomes anonymous mass combat, exactly the warfare the Clans crossed the void to end",
+              "Navigation losses, seal abrasion, and formation separation tax the assault before the first nest fires"
+            ],
+            "consequence": "The assault advances inside the diabolis, trading honor's forms for the storm's cover. Victory will be real and unbeautiful, and the Loremaster's record will say both.",
+            "costs": { "cbills": null, "days": null, "resource": "honor: zellbrigen dissolves in the dust — the Trial fought as anonymous mass combat; seal abrasion taxes every machine on the 6-hour cycle", "risk": "navigation losses and formation separation on the plain before the first nest fires; contact at the capital no earlier than T+26:00" }
+          },
+          {
+            "title": "The Salt Flank",
+            "advantages": [
+              "Unmined, stormless, undefended ground — the approach itself is nearly free of risk",
+              "Full sensor and air superiority once clear of the storm shadow: the Clan fights its preferred battle in the open"
+            ],
+            "disadvantages": [
+              "31 additional hours spends the storm window; the assault arrives as the garrison's evacuation clock starts running",
+              "The axis concedes that the Clan went around — around the rift, around the dust, around the wound. The enemy's broadcasts will say so within the day"
+            ],
+            "consequence": "The approach is clean and the deadline is mortgaged. The assault opens against a garrison free to choose between a parting fight and a punctual extraction.",
+            "costs": { "cbills": null, "days": null, "resource": "time: 31 additional hours — the storm window mortgaged in transit, with contact at T+43:00", "risk": "the assault opens as the garrison's 4-hour lift clock runs, and the enemy's broadcasts will say the Clan went around the wound" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Landing zones secured at the storm's edge; the garrison's sensor net registers the descent regardless of dust." },
+        { "t": "T+2:00", "event": "Garrison covering forces displace to forward nests; demolition and mine watch teams man the rift overlooks." },
+        { "t": "T+12:00", "event": "Earliest assault contact at the capital's outer line via the rift axis; T+26:00 via the Plain; T+43:00 via the salt flats." },
+        { "t": "T+{stormWindowHours}:00", "event": "Forecast storm break. Garrison evacuation option opens; their 4-hour lift clock can start." },
+        { "t": "T+{stormWindowHours}+4:00", "event": "First garrison battalion can be off-world." }
+      ],
+      "hardDeadline": "The capital field must be taken before the storm breaks at T+{stormWindowHours}:00. If it has not fallen by then, the garrison's fueled DropShips begin lifting off — one enemy battalion per hour — and there is nothing the Clan can do about it from whatever ground its chosen axis reached. Every battalion that escapes is one the secondary objective can no longer account for, and an enemy that gets away in good order means the operation has not achieved its purpose: the world is returned, but the defenders who must be beaten or captured are simply gone."
+    },
+    "opforSketch": {
+      "composition": "{TARGET_FACTION} garrison scaled to the band: {defenderBattalions} BattleMech battalions (Regular-Veteran, anti-Clan doctrine conversions), supporting armor in hull-down nests, conventional air held for the storm break, engineer units with command-detonated fields, and fueled DropShip lift at the capital. Quality concentrated in 1 veteran battalion blooded in the original fighting here.",
+      "behavior": "Defense by denial and anonymity: hidden nests, massed volleys at minimum range, displacement under dust cover, no formal engagement accepted anywhere. The commander fights the clock, not the Clan — every action is priced against the evacuation option, and the rift is held cheap precisely because they hope it will be chosen."
+    },
+    "forks": [
+      {
+        "name": "OPERATION CLOSED CIRCLE",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "the capital taken inside the storm window with the garrison accounted for.",
+        "consequence": "The wound is closed and the Remembrance gains its verse — with the {EMPLOYER} Guards' part scored separately, as the Khan intended. The Galaxy rolls forward on the wave schedule with its reputation repaired and every rival Clan's eyes on what it does next.",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION GASH ECHO",
+        "outcomeGate": "FAILURE",
+        "trigger": "The assault is broken, or the garrison extracts in good order.",
+        "consequence": "{WORLD} is held or half-held and the wound is now a legend with a sequel. The Khan strips the bidding chiefs' honors, and the follow-on assault is fought by warriors bidding double against each other for the right to redeem what this one spent.",
+        "threat": "EXTREME"
+      },
+      {
+        "name": "OPERATION DUST LEDGER",
+        "outcomeGate": "PARTIAL",
+        "trigger": "the capital taken after storm break, with garrison elements escaped.",
+        "consequence": "The world is returned; the defenders' cadre is not. The escaped battalions reappear behind the truce line as the Inner Sphere's anti-Clan instructors, and the Clan's next three worlds are defended by students of this exact battle.",
+        "threat": "HIGH"
+      }
+    ],
+    "storyElementSeed": "At the storm's edge, a warrior runs a gloved thumb along the fresh abrasion grooves in a 'Mech's shin armor, checks the seal tape on the knee actuator a second time, and says nothing to the technician who already knows.",
+    "voiceSlots": ["command", "intelligence", "engineering", "naval"],
+    "phases": [
+      {
+        "name": "THE BID AND THE AXIS",
+        "lead": "The bidding chiefs are split and the storm window is not. The axis chosen will be read from the Khan down as the Clan's answer to the rift — the decision is strategic, ceremonial, and meteorological in the same breath, and it is made once.",
+        "routes": [
+          { "name": "THE RIFT", "desc": "40 kilometers of canyon highway through the mountains: the fastest route by 14 hours, sheltered from the diabolis — and the exact ground where the {EMPLOYER} Guards died.", "tradeoff": "Sweeping the chokepoints takes 3 hours, the full canyon 9; the 60 percent chance it is mined again is only a low-confidence guess, and you are betting lives on it." },
+          { "name": "THE DUST PLAIN", "desc": "70 kilometers of hardpan walked by the diabolis, sensor and visual range 90 to 300 meters inside a curtain, all aerospace grounded below 4,000 meters.", "tradeoff": "The storm blinds the enemy net as thoroughly as the Clan's own — and zellbrigen dissolves in dust that reveals no target to declare." },
+          { "name": "THE SALT FLANK", "desc": "The salt flats south of the mountains: open, stormless, unmined, undefended.", "tradeoff": "31 additional hours that mortgage the storm window — and an axis that concedes, on every enemy broadcast, that the Clan went around the wound." }
+        ],
+        "sidebarKernel": { "voiceSlot": "command", "kernel": "Bid the axis, not only the force: each road to the capital carries its own honor price, and the Khan's word has already placed the {EMPLOYER} Guards in the column wherever it marches." }
+      },
+      {
+        "name": "THE ADVANCE",
+        "lead": "Whatever axis was chosen, the advance is a race against the forecast: contact at the capital's outer line at T+12:00 by the rift, T+26:00 by the Plain, T+43:00 by the salt. The garrison fights the clock, not the Clan, and holds the rift cheap precisely because it hopes the rift is chosen.",
+        "dataBlock": {
+          "Storm Window": "{stormWindowHours} hours until the forecast break, then 5 clear days — a reliable forecast, from the Clan's own occupation-era records",
+          "Abrasion Cycle": "Exposed seals scour on a 6-hour cycle inside the storm; seal checks are a formation halt, 20 minutes per Star",
+          "Nest Doctrine": "Hull-down volleys at 200 meters, displacement under the curtain — anonymous, undeclarable, effective"
+        },
+        "protocol": "Recognition inside the curtains: friendly machines carry a 3-pulse transponder cadence on the Trial frequency, repeated at 90-second intervals; any contact at under 300 meters without the cadence is engaged without declaration, by standing order — the dust has already taken the declarations away, and fratricide is the only dishonor left to add.",
+        "sidebarKernel": { "voiceSlot": "engineering", "kernel": "The 6-hour abrasion cycle is not advisory: a knee seal that misses 2 checks fails in the third curtain, and a 'Mech down for seal failure on the Plain is recovered at the storm's convenience, not ours." }
+      },
+      {
+        "name": "THE CAPITAL FIELD",
+        "lead": "The field is taken before the storm break or the secondary objective begins lifting off the world at a battalion every hour while the Clan watches. The {EMPLOYER} Guards take their named objective with their own bid and no assistance — they are not here to participate; they are here to be seen winning.",
+        "dataBlock": {
+          "Evacuation Clock": "4 hours from storm break to first garrison battalion off-world; 1 additional battalion per hour after",
+          "Fueled Lift": "Garrison DropShips stand ready at the field under their remaining air cover",
+          "Witnessed Objective": "Gate, field, or garrison standard — named in the bid, taken before witnesses, scored separately as the Khan intended"
+        },
+        "sidebarKernel": { "voiceSlot": "naval", "kernel": "Watch the field's fuel lines, not its gates. A garrison disconnecting and capping its DropShip fuel hoses has chosen to stand and fight; one that leaves them hooked up is already counting down to the storm break and a fast escape." }
+      }
+    ],
+    "assetDetails": [
+      { "ref": "reconstituted {EMPLOYER} Guards Cluster", "detail": "In the bid by the Khan's explicit word, carrying the rift on every roster. Their warriors will overbid and overreach to erase it; assign their named objective where boldness is an asset and a second demolition trap is not, and place witnesses where the Remembrance needs them — the Khan requires them seen winning, not avenged twice.", "priority": "HIGH" }
+    ],
+    "registerVariants": {
+      "is-davion": {
+        "situation.defenderNote": "Garrison side of the hill: you beat them here once with geology and patience, they have announced they are coming back, and the only winning move is to make them buy every axis while the DropShips stay fueled. Pride is their supply line. Cut it."
+      },
+      "merc": {
+        "opforSketch.behavior": "Translation for professionals: the defenders fight like a unit that read the Clan rulebook and burned it. Hull-down, massed fire, no radio chatter, and a paid-up extraction plan. It is the most rational army on the planet and it is not yours."
+      }
+    },
+    "specifics": {
+      "stormWindowHours": { "min": 49, "max": 61, "unit": "hours until storm break" },
+      "defenderBattalions": { "min": 2, "max": 4, "unit": "garrison BattleMech battalions" },
+      "curtainVisibility": { "min": 90, "max": 300, "unit": "meters of detection inside a dust curtain" }
+    }
+  }
+]

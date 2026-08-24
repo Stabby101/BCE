@@ -1,0 +1,113 @@
+@if (vm(); as v) {
+<div class="pd-overlay" (click)="onClose()">
+    <div class="pd" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <div class="pd-head">
+            <div class="pd-id">
+                @if (editingId()) {
+                    <!-- D-070: full edit — name + G/P, nothing greyed; persists to the Pilot record (DATA-002) -->
+                    <input class="pd-name-in" [value]="nameDraft()" (input)="nameDraft.set($any($event.target).value)" aria-label="Pilot name" maxlength="40" />
+                    <span class="pd-skill-edit">G <input type="number" class="pd-sk" min="0" max="8" [value]="gunDraft()" (input)="gunDraft.set(+$any($event.target).value)" aria-label="Gunnery" />
+                        · P <input type="number" class="pd-sk" min="0" max="9" [value]="pilDraft()" (input)="pilDraft.set(+$any($event.target).value)" aria-label="Piloting" />
+                        <button type="button" class="lnk" (click)="saveId()">save</button><button type="button" class="lnk" (click)="cancelId()">cancel</button>
+                    </span>
+                } @else {
+                    <span class="pd-name">{{ v.p.name }}@if (v.p.callsign) { <span class="pd-call">“{{ v.p.callsign }}”</span> }</span>
+                    <span class="pd-skill">G{{ v.p.gunnery }} · P{{ v.p.piloting }} <span class="pd-rating r-{{ v.rating }}">{{ v.rating.toUpperCase() }}</span>
+                        @if (v.p.status !== 'KIA') { <button type="button" class="lnk pd-editid" (click)="startEditId()">edit</button> }
+                    </span>
+                }
+            </div>
+            <button type="button" class="pd-x" (click)="onClose()" aria-label="Close">✕</button>
+        </div>
+
+        @if (v.p.status === 'KIA') {
+            <!-- the memorial — the table will care; nothing here edits the dead back -->
+            <div class="memorial">
+                <div class="mem-line">KILLED IN ACTION{{ v.kiaDateText ? ' — ' + v.kiaDateText : '' }}</div>
+                <div class="mem-sub">{{ v.p.missionCount ?? 0 }} mission{{ (v.p.missionCount ?? 0) === 1 ? '' : 's' }} on the record. The roster carries the name.</div>
+            </div>
+        } @else if (v.p.status === 'Injured') {
+            <div class="inf-line"><b>INFIRMARY</b> — {{ v.p.hits ?? '—' }} hit{{ v.p.hits === 1 ? '' : 's' }} · recovery ETA <b>{{ v.p.recoveryDays ?? '—' }}</b> campaign days (ticks with the clock)</div>
+        } @else {
+            <div class="ok-line">READY — {{ v.assignment }}</div>
+        }
+
+        <div class="pd-sec">Bio</div>
+        @if (editingBio()) {
+            <textarea class="pd-ta" rows="4" [value]="bioDraft()" (input)="bioDraft.set($any($event.target).value)"></textarea>
+            <div class="pd-row"><button type="button" class="lnk" (click)="saveBio()">save</button><button type="button" class="lnk" (click)="editingBio.set(false)">cancel</button></div>
+        } @else {
+            <p class="pd-bio">{{ v.p.bio || '— no bio on record —' }}</p>
+            @if (v.p.status !== 'KIA') { <button type="button" class="lnk" (click)="startBio()">edit bio</button> }
+        }
+
+        <div class="pd-sec">Service record</div>
+        <div class="pd-kv">
+            <div><span class="k">Missions</span><span class="vv">{{ v.p.missionCount ?? 0 }}</span></div>
+            @if (v.recordsBegin) { <div><span class="k">Records begin</span><span class="vv">{{ v.recordsBegin }}</span></div> }
+            <div><span class="k">Assignment</span><span class="vv">{{ v.assignment }}</span></div>
+            @if (v.p.note) { <div><span class="k">Kin</span><span class="vv">{{ v.p.note }}</span></div> }
+        </div>
+
+        <div class="pd-sec">Special pilot abilities <span class="pd-gov">{{ v.held.length }}/{{ v.slots }} slots · {{ v.pointsUsed }}/{{ v.pointCap }} pts · {{ v.fwLine }}</span></div>
+        @for (a of v.held; track a.id) {
+            <div class="perk">
+                <div class="perk-hd"><b>{{ a.name }}</b> <span class="pts">{{ a.points }} pt{{ a.points === 1 ? '' : 's' }}</span>
+                    @if (v.p.status !== 'KIA') { <button type="button" class="lnk danger" (click)="askRevoke(a)">revoke</button> }
+                </div>
+                <p class="perk-rules">{{ a.rulesText }}</p>
+                @if (a.restrictions) { <p class="perk-restr">Restrictions: {{ a.restrictions }}</p> }
+                @if (a.note) { <p class="perk-restr">Note: {{ a.note }}</p> }
+                <div class="perk-cite">{{ a.sourcePage }}</div>
+            </div>
+        } @empty {
+            <p class="pd-dim">No abilities on record.</p>
+        }
+
+        @if (v.p.status !== 'KIA') {
+            <!-- D-070: the skill/force-wide cap is now ADVISORY (a hint), not a hard gate — any ability is
+                 grantable; the gate reason shows below as guidance. Only an already-held ability is non-grantable. -->
+            <div class="pd-sec">Grant an ability <span class="pd-gov">cap is advisory — any ability grantable; the table adjudicates</span></div>
+            <div class="grant-list">
+                @for (g of grantRows(); track g.ability.id) {
+                    <div class="grant" [class.blocked]="g.gate === 'already held'">
+                        <div class="g-main">
+                            <span class="g-name">{{ g.ability.name }}</span>
+                            <span class="pts">{{ g.ability.points }} pt{{ g.ability.points === 1 ? '' : 's' }}</span>
+                            <button type="button" class="gbtn" [disabled]="g.gate === 'already held'" [attr.title]="g.gate" (click)="askGrant(g.ability)">GRANT</button>
+                        </div>
+                        @if (g.gate && g.gate !== 'already held') { <div class="g-gate">over the recommended cap — {{ g.gate }} (advisory)</div> }
+                        @if (g.gate === 'already held') { <div class="g-gate held">HELD</div> }
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="pd-sec">GM notes</div>
+        <textarea class="pd-ta" rows="3" placeholder="Table notes on this pilot…" [value]="notesValue()" (input)="notesDraft.set($any($event.target).value)"></textarea>
+        <div class="pd-row">@if (notesDraft() !== null) { <button type="button" class="lnk" (click)="saveNotes()">save notes</button> }</div>
+
+        <!-- DIRECTIVE-125 — the Hot Spots Campaign Pilot Card (named pilots only; Traditional shows nothing). -->
+        @if (showCampaignCard()) { <bce-campaign-pilot-card [pilotId]="pilotId()" /> }
+    </div>
+</div>
+
+@if (confirmGrant(); as a) {
+    <div class="cmodal" (click)="cancelConfirms()">
+        <div class="cbox" (click)="$event.stopPropagation()">
+            <div class="pd-sec flat">Grant {{ a.name }}?</div>
+            <p class="cmsg">{{ a.points }}-point ability, {{ a.sourcePage }}. Rides the warrior, not the machine; the table adjudicates its effects.</p>
+            <div class="cbtns"><button type="button" class="cbtn" (click)="cancelConfirms()">Cancel</button><button type="button" class="cbtn go" (click)="doGrant()">Grant »</button></div>
+        </div>
+    </div>
+}
+@if (confirmRevoke(); as a) {
+    <div class="cmodal" (click)="cancelConfirms()">
+        <div class="cbox" (click)="$event.stopPropagation()">
+            <div class="pd-sec flat">Revoke {{ a.name }}?</div>
+            <p class="cmsg">The ability comes off the record. Points free up; the force-wide count updates if this was the pilot's last.</p>
+            <div class="cbtns"><button type="button" class="cbtn" (click)="cancelConfirms()">Cancel</button><button type="button" class="cbtn go" (click)="doRevoke()">Revoke »</button></div>
+        </div>
+    </div>
+}
+}

@@ -1,0 +1,450 @@
+<!-- FORKED FROM campaign/dashboard/dashboard.html @ 6cc5dae — DIRECTIVE-ODM-1 Phase 1 (a DRIFT SURFACE:
+     fixes to the original may need mirroring here). Strips: the contract layer (market/negotiation/employer/pay,
+     house orders, the 3 contract modals) + every HS (chaos/warchest/SP) and Quick mount. Classic KEEP surfaces verbatim. -->
+<main class="sheet">
+    <div class="classbar">{{ classbar() }}</div>
+
+    <div class="head">
+        <div>
+            <span class="bce">BATTLETECH CAMPAIGN ENGINE</span>
+            <div class="cmd">{{ commandName() }}</div>
+        </div>
+        <div class="clock">
+            <div><b>CAMPAIGN</b> {{ dateText() }}</div>
+            <div><b>ERA</b> {{ eraText() }} &middot; <b>WK</b> 1</div>
+        </div>
+    </div>
+
+    <!-- DEPLOY-009: the guest recovery-code banner (amber, distinct from the player-join QR). Settings keeps a copy. -->
+    @if (showRecoveryBanner()) {
+        <div class="rec-banner">
+            <div class="rec-ico">🔑</div>
+            <div class="rec-body">
+                <div class="rec-code">{{ recoveryCode() }}</div>
+                <div class="rec-msg">is your recovery code — <b>write it down</b>. It's the only way back to your campaigns if you switch devices or clear your browser. (Also in <b>Settings</b>.)</div>
+            </div>
+            <div class="rec-acts">
+                <button type="button" class="rec-copy" (click)="copyCode()">{{ copied() ? 'Copied' : 'Copy' }}</button>
+                <button type="button" class="rec-ack" (click)="ackBanner()">I've saved it</button>
+            </div>
+        </div>
+    }
+
+    <!-- DIRECTIVE-119 P2 — the Hot Spots top-of-sheet PROCESS RAIL (above the tab bar). Reuses the flow engine in
+         'rail' mode; HS-only (Traditional keeps its full tab bar + advisory Flow-tab rail). -->
+    <!-- ODM-1 FORK: HS process rail STRIPPED -->
+
+    <div class="tabs" role="tablist">
+        @for (t of tabs(); track t.id) {
+            <button type="button" class="tab" role="tab" [class.active]="activeTab() === t.id"
+                [attr.data-t]="t.id" [attr.aria-selected]="activeTab() === t.id" (click)="select(t.id)">{{ t.label }}</button>
+        }
+        <div class="tab-actions">
+            <!-- D-053: the autosave note — specific + bold (campaign · Day N · M missions), never a datestamp.
+                 It autosaves to the host record and stays in Load even after you Create a new campaign.
+                 D-067: a Quick Mission is EPHEMERAL — no autosave note / Save (it never writes a campaign record). -->
+            @if (!quickMission()) {
+                <span class="save-note" title="This campaign autosaves to the host record — it stays in Load even if you Create a new one">
+                    <span class="sn-k">AUTOSAVE</span><b class="sn-v">{{ commandName() }} &middot; {{ saveProgress() }}</b>
+                </span>
+                <button type="button" class="tab-action" (click)="openSave()">Save</button>
+            } @else {
+                <span class="save-note"><span class="sn-k">QUICK MISSION</span><b class="sn-v">one-shot &middot; not saved</b></span>
+            }
+            <button type="button" class="tab-action" (click)="exitToMain()">Exit to Main</button>
+            <button type="button" class="tab-action danger" (click)="exit()">Exit</button>
+        </div>
+    </div>
+
+    <!-- OVERVIEW (the opening panel) -->
+    <section class="panel" [class.active]="activeTab() === 'overview'">
+        <div class="ph">Command overview</div>
+        @if (mercFraming(); as mf) {
+            <div class="framing">
+                <span class="ftag">{{ mf }}</span>
+                @if (rating(); as r) { <span class="frat">Rating &middot; {{ r }}</span> }
+            </div>
+        } @else if (formationFraming(); as ff) {
+            <div class="framing">
+                <span class="ftag">{{ ff }}</span>
+            </div>
+        }
+        <!-- D-108/108b — read-only Campaign System badge (reuses the framing chip styling: .ftag = system,
+             .frat = the chosen Hot Spot campaign). `.csys-badge` is a hook class only (no CSS of its own). -->
+        <div class="framing csys-badge">
+            <span class="ftag">{{ campaignSystemLabel() }}</span>
+            @if (hotSpotCampaignName(); as hn) { <span class="frat">{{ hn }}</span> }
+        </div>
+        <div class="clockbar">
+            <div class="cdate"><span class="cdl">Campaign date</span><span class="cdv">{{ dateText() }}</span></div>
+            <div class="cadv">
+                <span class="cadvl">Advance</span>
+                @for (s of spans; track s.id) {
+                    <button type="button" class="cadvb" (click)="advance(s.id)">{{ s.label }}</button>
+                }
+            </div>
+        </div>
+        <div class="stats">
+            <div class="stat"><div class="l">Treasury</div><div class="v">{{ treasuryShort() }}</div><div class="s">C-bills &middot; {{ treasuryTier() }}</div></div>
+            <div class="stat"><div class="l">Force</div><div class="v">{{ forceCount() }}</div><div class="s">’Mechs &middot; {{ forceCount() }} ready</div></div>
+            <div class="stat"><div class="l">Pilots</div><div class="v">{{ forceCount() }}</div><div class="s">0 in infirmary</div></div>
+            <div class="stat warn"><div class="l">Threat</div><div class="v">MOD</div><div class="s">Initial assessment</div></div>
+            <div class="stat"><div class="l">Transport</div><div class="v">{{ transport().value }}</div><div class="s">{{ transport().sub }}</div></div>
+        </div>
+
+        <!-- DIRECTIVE-079 — Star Map Phase 1: current location line + GM setter (extracted → current-location.ts). -->
+        <bce-current-location />
+
+        <!-- DIRECTIVE-074 — the monthly economy summary (reuses the D-058 ledger → same numbers as the inventory
+             tab, single source) + a transaction log of recent money in/out (date · what · ±amount · balance). -->
+        <div class="econ">
+            <div class="econ-led" data-testid="overview-ledger">
+                <div class="ph flat">Monthly economy</div>
+                <div class="el-row"><span class="el-l">Treasury</span><span class="el-v" data-econ="treasury">{{ money(ledger().treasury) }} C-bills</span></div>
+                <div class="el-row"><span class="el-l">Income / mo</span><span class="el-v pos" data-econ="income">@if (ledger().income) { +{{ money(ledger().income) }} } @else { — }</span></div>
+                <div class="el-row"><span class="el-l">Burn · payroll / mo</span><span class="el-v neg" data-econ="burn">−{{ money(ledger().payroll) }}</span></div>
+                <div class="el-row"><span class="el-l">Unit maintenance / mo</span><span class="el-v neg" data-econ="maintenance">−{{ money(ledger().maintenance) }}</span></div>
+                <div class="el-row net" [class.black]="ledger().net >= 0" [class.red]="ledger().net < 0">
+                    <span class="el-l">Net / month</span>
+                    <span class="el-v" data-econ="net">{{ ledger().net >= 0 ? 'IN THE BLACK +' : 'IN THE RED −' }}{{ money(absVal(ledger().net)) }}@if (ledger().runway != null) { · ~{{ ledger().runway }} mo runway }</span>
+                </div>
+                <!-- D-075 — the monthly payroll cue (visible, not silent) + the next-month pre-warning + the shortfall flag -->
+                @if (lastPayroll(); as lp) {
+                    <div class="el-cue" data-testid="payroll-cue">Last payroll −{{ money(lp.amount) }} · {{ lp.date }}</div>
+                }
+                @if (costsAtRisk()) {
+                    <div class="el-warn" data-testid="payroll-prewarn">⚠ monthly costs (payroll + maintenance) not covered next month — sell stock, take a contract, cut staff, or mothball units to Cold storage before the month turns.</div>
+                }
+                @if (payrollShortfall(); as ps) {
+                    <div class="el-short" data-testid="payroll-shortfall">⚠ Unpaid obligations — {{ money(ps.total) }} ({{ ps.kinds }})@if (ps.count > 1) { · {{ ps.count }} entries } @else { · {{ ps.lastMonth }} }. Staff/upkeep went unpaid (turnover risk).</div>
+                }
+            </div>
+            <div class="econ-log" data-testid="overview-txnlog">
+                <div class="ph flat">Transactions <span class="scaf">recent · {{ txnLog().length }}</span></div>
+                @if (txnLog().length) {
+                    <div class="tx-scroll">
+                        @for (t of txnLog(); track $index) {
+                            <div class="tx" [class.neg]="(t.amount ?? 0) < 0" [class.pos]="(t.amount ?? 0) >= 0" [attr.data-amt]="t.amount">
+                                <span class="tx-d">{{ txnDate(t.date) }}</span>
+                                <span class="tx-t">{{ t.text }}</span>
+                                <span class="tx-a">{{ (t.amount ?? 0) >= 0 ? '+' : '−' }}{{ money(absVal(t.amount ?? 0)) }}</span>
+                                <span class="tx-b">{{ money(t.balance ?? 0) }}</span>
+                            </div>
+                        }
+                    </div>
+                } @else {
+                    <p class="note thin">No money events yet — shop buy/sell, payroll, contract income, hiring and salvage land here as they happen.</p>
+                }
+            </div>
+        </div>
+
+        <div class="grid2">
+            <div class="box">
+                <!-- ODM-1 FORK: overview contract/orders status box STRIPPED (the contract layer / HS never comes along) -->
+            </div>
+            <div class="box">
+                <div class="ph flat">Campaign log</div>
+                <div class="log">
+                    @for (e of log(); track $index) {
+                        <div><span class="t">{{ e.t }}</span> — {{ e.text }}</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- UNIT ROSTER -->
+    <section class="panel" [class.active]="activeTab() === 'roster'">
+        <bce-odm-roster />
+    </section>
+
+    <!-- INVENTORY (D-056) — the rolled stockpile, by category, collapsible -->
+    <section class="panel" [class.active]="activeTab() === 'inventory'">
+        @if (activeTab() === 'inventory') { <bce-inventory-tab /> }
+    </section>
+
+    <!-- BARRACKS (D-020; people depth D-036) -->
+    <section class="panel" [class.active]="activeTab() === 'barracks'">
+        @if (hasBarracks()) {
+            <div class="ph">Barracks <span class="scaf">{{ barracksCount().total }} personnel</span></div>
+            <p class="note">Your command's <b>MechWarriors</b> — every card explodes to the full file: <b>bio</b>, <b>service record</b>, <b>special pilot abilities</b> (GM-granted under the CamOps p.72 caps), injuries and recovery. Assignment mirrors the <b>Unit Roster</b> pull-down.</p>
+            <div class="bk-sum">
+                <span><b>{{ barracksCount().assigned }}</b> assigned</span>
+                <span><b>{{ barracksCount().spares }}</b> spare</span>
+                @if (barracksCount().kia) { <span><b>{{ barracksCount().kia }}</b> fallen</span> }
+            </div>
+            <!-- HF-016: the combat-pilot group is collapsible + STARTS COLLAPSED (header + count, expand on click). -->
+            <button type="button" class="bk-grouphd" (click)="pilotsOpen.set(!pilotsOpen())" [attr.aria-expanded]="pilotsOpen()">
+                <span class="caret" [class.open]="pilotsOpen()">▸</span> MechWarriors <span class="scaf">{{ pilotRoster().length }}</span>
+            </button>
+            @if (pilotsOpen()) {
+            <div class="bk-grid">
+                @for (p of pilotRoster(); track p.id) {
+                    <button type="button" class="bk-card" [class.spare]="!p.assigned" [class.cmdr]="p.commander" (click)="openPilot(p.id)">
+                        <div class="bk-top">
+                            <div class="bk-name">{{ p.name }}@if (p.callsign) { <span class="bk-call">“{{ p.callsign }}”</span> }</div>
+                            <span class="bk-chips">
+                                @if (p.perks) { <span class="bk-perk" title="special pilot abilities">★{{ p.perks }}</span> }
+                                @if (p.commander) { <span class="bk-badge" title="Commanding officer">★&nbsp;CO</span> }
+                            </span>
+                        </div>
+                        <div class="bk-skills"><span class="bk-gp">{{ p.skills }}</span><span class="bk-gplbl">G / P</span><span class="bk-msn">{{ p.missions }} msn</span></div>
+                        <div class="bk-foot">
+                            <span class="bk-assign" [class.bk-bench]="!p.assigned">{{ p.assignment }}</span>
+                            <span class="bk-status" [class.inj]="p.injured">{{ p.status }}</span>
+                        </div>
+                    </button>
+                }
+            </div>
+            }
+
+            <!-- D-036 INFIRMARY — the D-031 injuries + the clock tick, surfaced at last -->
+            @if (infirmary().length) {
+                <div class="ph flat" style="margin-top:18px">Infirmary <span class="scaf">{{ infirmary().length }}</span></div>
+                <div class="inf-rows">
+                    @for (w of infirmary(); track w.id) {
+                        <button type="button" class="inf-row" (click)="openPilot(w.id)">
+                            <span class="ir-name">{{ w.name }}@if (w.callsign) { <span class="bk-call">“{{ w.callsign }}”</span> }</span>
+                            <span class="ir-hits">{{ w.hits ?? '—' }} hit{{ w.hits === 1 ? '' : 's' }}</span>
+                            <span class="ir-eta">recovery ETA <b>{{ w.recoveryDays }}</b> campaign days</span>
+                        </button>
+                    }
+                </div>
+            }
+
+            <!-- D-036 the roll of the fallen — dead stays dead; the table will care -->
+            @if (fallen().length) {
+                <div class="ph flat" style="margin-top:18px">Roll of the fallen <span class="scaf">{{ fallen().length }}</span></div>
+                <div class="inf-rows">
+                    @for (k of fallen(); track k.id) {
+                        <button type="button" class="mem-row" (click)="openPilot(k.id)">
+                            <span class="ir-name">{{ k.name }}@if (k.callsign) { <span class="bk-call">“{{ k.callsign }}”</span> }</span>
+                            <span class="mr-line">KILLED IN ACTION{{ k.date ? ' — ' + k.date : '' }} · {{ k.missions }} mission{{ k.missions === 1 ? '' : 's' }} on the record</span>
+                        </button>
+                    }
+                </div>
+            }
+
+            @if (detailPilot()) {
+                <bce-pilot-detail [pilotId]="detailPilot()!" (close)="detailPilot.set(null)" />
+            }
+        } @else {
+            <div class="ph">Barracks</div>
+            <p class="note">Pilots &amp; crew — skills, callsigns, injuries, and infirmary recovery.</p>
+            <div class="bk-empty">
+                <div class="bk-empty-h">No MechWarriors on the roster yet</div>
+                <p class="note">A build-your-own command musters pilots as you acquire 'Mechs. Support staff — techs, admins, medics — hire from the Hiring Hall below.</p>
+            </div>
+        }
+
+        <!-- HOTFIX-023 (2): support staff + the D-059 hiring hall render for ALL commands incl. custom / no-starting-force — the support-hire path is independent of the pilot roster (was previously inside the hasBarracks() guard → custom commands had a blank hall). -->
+        <bce-support-personnel />
+        <bce-hiring-hall />
+    </section>
+
+    <!-- MISSIONS -->
+    <!-- ODM-2 — the mission-packet briefing surface (GM-only container; opfor sub-tab labeled + gated inside) -->
+    <section class="panel" [class.active]="activeTab() === 'briefing'">
+        @if (activeTab() === 'briefing') { <bce-odm-briefing /> }
+    </section>
+
+    <section class="panel" [class.active]="activeTab() === 'missions'">
+        @if (activeTab() === 'missions') {
+        <!-- D-072: Missions is the mission-lifecycle HUB — Brief → Force Preview (deploy) → Claims (play) → AAR (resolve).
+             D-114: this panel DOUBLE-DUTIES the HS Contracts tab — the Chaos contract layer renders on top, the hub below.
+             Traditional (isHotspots false) is unaffected: the new clause + contract block are false, so it renders as before. -->
+        <!-- ODM-1 FORK: HS chaos-contracts mount STRIPPED (the contract layer / HS never comes along) -->
+        <div class="msub" role="tablist">
+            <button type="button" class="msub-b" [class.on]="missionsSub() === 'brief'" (click)="selectMissionSub('brief')">Contract / Brief</button>
+            <button type="button" class="msub-b" [class.on]="missionsSub() === 'force'" (click)="selectMissionSub('force')">Force Preview</button>
+            <!-- HOTFIX-029 — Claims moved to the Lobby tab (join QR + roster + claim board together). -->
+            <button type="button" class="msub-b" [class.on]="missionsSub() === 'aar'" (click)="selectMissionSub('aar')">AAR</button>
+        </div>
+        @if (missionsSub() === 'brief') {
+        <!-- ODM-1 FORK: missions-tab contract/brief + house-orders layer STRIPPED (the contract layer / HS never comes along) -->
+
+        <!-- SHARED operation zones (D-032) — a merc active contract OR an acknowledged House order; the IDENTICAL D-025/26 pipeline -->
+        @if (accepted()) {
+            @if (walkPending()) {
+                <!-- D-110b — the C-bill field walk (salvage/strip) is Traditional; Hot Spots salvage is SP (estimated at resolve; SP walk is D-110c). -->
+                <div class="walk-banner">
+                    <span class="wb-t">⚠ Field walk pending</span>
+                    <span class="wb-s">A resolved engagement awaits dispositions — recover, salvage, claim prizes off the live end-state.</span>
+                    <button type="button" class="gobtn" (click)="openWalk()">Walk the field &raquo;</button>
+                </div>
+            }
+
+            <!-- ZONE 1 — ACTIVE MISSION -->
+            @if (activeBranch(); as ab) {
+                <div class="ph flat" style="margin-top:18px">Active mission — {{ ab.name }}@if (genericMission()) { <span class="scaf" style="border-color:var(--warn);color:var(--warn)">GENERIC</span> }@else if (hasPackage()) { <span class="scaf" style="border-color:var(--ok);color:var(--ok)">FORGE PACKAGE</span> }</div>
+                @if (odmIsAuthored(ab.branchId)) {
+                    <!-- ODM-3 addendum A — the AUTHORED operation zone: no forge, no rolled spec. The briefing
+                         packet IS the mission document; deploy + play + resolve ride the Classic machinery. -->
+                    <div class="brief">
+                        <div class="bsec"><div class="bsl">Operation</div><p class="bp">{{ nodeSystem(ab.branchId) }} · THREAT {{ ab.threat }} — hand-authored engagement; the briefing packet is the mission document. OpFor runs from the OPFOR packet (GM).</p></div>
+                        <div class="bsec"><div class="bsl">Deploy to this operation</div><bce-deploy-roster /></div>
+                        <div class="msn-actions">
+                            <button type="button" class="gobtn primary" [disabled]="!deployedCount()" (click)="playMission()">&#9654; Play mission &raquo;</button>
+                            <button type="button" class="gobtn" [disabled]="!deployedCount()" (click)="prepareDeploy()">Prepare &amp; deploy &raquo;</button>
+                            @if (activeNodePacket()) { <button type="button" class="gobtn" data-testid="view-briefing" (click)="viewBriefing()">View briefing &raquo;</button> }
+                            <button type="button" class="gobtn" (click)="res.askResolve()">Resolve operation &raquo;</button>
+                        </div>
+                        @if (!deployedCount()) { <div class="gate-note">no deployed units — set conditions on the roster to take the field in <b>Force Preview</b></div> }
+                    </div>
+                } @else if (briefing(); as b) {
+                    <div class="brief">
+                        <div class="bsec"><div class="bsl">Situation</div><p class="bp">{{ b.situation }}</p></div>
+                        <div class="bsec"><div class="bsl">Objectives</div><ul class="bobj">@for (o of b.objectives; track $index) { <li>{{ o }}</li> }</ul></div>
+                        @if (missionSpec(); as m) {
+                            <div class="bsec"><div class="bsl">OpFor</div><div class="ofsum">{{ m.opforForce.length }} ’Mechs &middot; {{ m.opforBv }} BV (vs your {{ m.playerBv }} BV) &middot; {{ m.terrain.biome }}</div></div>
+                        }
+                        <!-- D-118 — inline deploy roster: check units to deploy them to THIS track right here (no Roster hop). -->
+                        <div class="bsec"><div class="bsl">Deploy to this track</div><bce-deploy-roster /></div>
+                        <!-- IMPORT-3 P2 — hire special personnel for Support Points BEFORE the battle (book track-setup order); self-hides when the hot spot offers none. -->
+                        <div class="msn-actions">
+                            <button type="button" class="gobtn primary" [disabled]="!deployedCount()" (click)="playMission()">&#9654; Play mission &raquo;</button>
+                            <button type="button" class="gobtn" [disabled]="!deployedCount()" (click)="prepareDeploy()">Prepare &amp; deploy &raquo;</button>
+                            @if (hasPackage()) { <button type="button" class="gobtn" (click)="openPackage()">Open full package &raquo;</button> }
+                            @if (activeNodePacket()) { <button type="button" class="gobtn" data-testid="view-briefing" (click)="viewBriefing()">View briefing &raquo;</button> }
+                            <button type="button" class="gobtn" (click)="res.askResolve()">Resolve mission &raquo;</button>
+                            <!-- ODM-3 addendum A: Reroll (a Forge affordance) STRIPPED from the odm fork -->
+                        </div>
+                        @if (!deployedCount()) { <div class="gate-note">no deployed units — set conditions on the roster to take the field in <b>Force Preview</b></div> }
+                    </div>
+                }
+            } @else {
+                <div class="ph flat" style="margin-top:18px">Active mission</div>
+                <!-- ODM-9b — reworded from Classic: ODM operations BEGIN (nothing is ever rolled here); the Forge verb was wrong advice. Classic's dashboard.html keeps its original sentence. -->
+                <p class="note">No mission in progress. Choose an operation from the calendar below and begin it — its outcome will unlock the next branches.</p>
+            }
+
+            <!-- ZONE 2 — OPERATIONS BOARD -->
+            <!-- ODM-5 Part D (James ruling) — the TIME-AXIS TREE replaces the operations board: the ODM-4 flow
+                 fork remounts HERE; BEGIN OPERATION ▸ + View briefing live on the node drawers; the mission
+                 state & gates rail rides inside the component, below the tree. The Flow tab is gone. -->
+            <div class="ph flat" style="margin-top:18px">Operations — the campaign calendar</div>
+            <bce-odm-flow [odmTree]="odmTreeData()" (begin)="beginFromTree($event)" (briefing)="briefingFromTree($event)"
+                          (openPackage)="openPackage()" (navigate)="goToStep($event)" (advancePhase)="advancePhase()"></bce-odm-flow>
+
+            <!-- ZONE 3 — MISSION HISTORY -->
+            @if (historyBranches().length) {
+                <div class="ph flat" style="margin-top:18px">Mission history <span class="scaf">{{ historyBranches().length }}</span></div>
+                <div class="branches">
+                    @for (br of historyBranches(); track br.branchId) {
+                        <div class="branch hist" [class.retired]="br.state === 'RETIRED'">
+                            <div class="bn">{{ br.name }} <span class="bbadge" [class.fail]="br.resolution?.outcomeTier === 'FAILURE'" [class.ret]="br.state === 'RETIRED'">{{ br.state === 'RETIRED' ? 'RETIRED' : br.resolution?.outcomeTier }}</span></div>
+                            @if (br.resolution?.notes) { <div class="bctx">{{ br.resolution?.notes }}</div> }
+                        </div>
+                    }
+                </div>
+            }
+        }
+
+        <!-- ODM-1 FORK: report-orders modal STRIPPED -->
+        }
+        <!-- D-072: the relocated lifecycle surfaces (unchanged behavior, just folded under Missions in order) -->
+        @if (missionsSub() === 'force') { <bce-odm-battle-view /> }
+        <!-- HOTFIX-029: Claims moved to the Lobby tab. -->
+        @if (missionsSub() === 'aar') { <bce-aar-tab /> }
+        }
+    </section>
+
+    <!-- ODM-9b FORK STRIP: the QUICK MISSION hub (DIRECTIVE-067, a Forge affordance — a BV-matched rolled OpFor)
+         removed. It was unreachable here (no tab, emitter or deep-link ever minted 'quickmission' in this fork),
+         but its path — acceptQuickMissionContract() + the mission roller — would have overwritten the ODM-9
+         carrier's authored roll wholesale. A fork strips what it does not need (BOUNDARY-1 Class-1). -->
+
+
+    <!-- D-072: the MekBay (Force Preview) panel was folded into the Missions/Quick-Mission hubs above. -->
+
+    <!-- LOBBY (D-048 + HOTFIX-029) — the join QR + live roster, and the Claims board (its natural home: the
+         claim board is where players who joined here pick their units). Both share ClaimRealtimeService; the
+         second ensure() is idempotent (single socket, single room-join). -->
+    <section class="panel" [class.active]="activeTab() === 'lobby'">
+        @if (activeTab() === 'lobby') {
+            <bce-lobby-panel (viewTrack)="viewTrack()" (resolveMission)="res.askResolve()" />
+            <bce-odm-claims-panel />
+        }
+    </section>
+
+    <!-- AAR (D-034) — the after-action archive: resolved missions render classified documents FROM stored records.
+         D-072: ALSO reachable inside Missions (dual-placed); the front-row AAR tab stays for now. -->
+    <section class="panel" [class.active]="activeTab() === 'aar'">
+        <bce-aar-tab />
+    </section>
+
+    <!-- INTEL (D-034, T-031 slice 1) — contacts met through play + the campaign notebook -->
+    <section class="panel" [class.active]="activeTab() === 'intel'">
+        <bce-intel-tab />
+    </section>
+
+    <!-- FLOW (D-028) — the native branching-tree view -->
+    <!-- ODM-5 Part D: the standalone Flow panel REMOVED (the tree lives in Missions) -->
+
+    <!-- STAR MAP (DIRECTIVE-104) — 762-system contour-smoothed faction territories; lazy-mounted (heavy d3 render) -->
+    <section class="panel" [class.active]="activeTab() === 'starmap'">
+        @if (activeTab() === 'starmap') { <bce-star-map-tab /> }
+    </section>
+
+    <!-- WARCHEST (DIRECTIVE-109) — the Hot Spots (Chaos Campaign) SP economy home: summary + Contract Record Sheet.
+         Only in the HOTSPOTS_TABS set (stands in for Overview); lazy-mounted like the other rich tabs. -->
+    <section class="panel" [class.active]="activeTab() === 'warchest'">
+        <!-- ODM-1 FORK: HS warchest panel STRIPPED (the contract layer / HS never comes along) -->
+    </section>
+
+    <!-- CONTRACTS (DIRECTIVE-110) — D-114: the Chaos contract layer (<bce-chaos-contracts>) now double-duties inside the
+         Missions panel above (the HS 'chaos-contracts' tab renders it on top + the track hub below). No standalone panel. -->
+
+    <!-- REPAIR & REFIT (DIRECTIVE-111) — the Chaos economy tab: SP repair/rearm/heal. Hot Spots tab set only. -->
+    <section class="panel" [class.active]="activeTab() === 'chaos-repair'">
+        <!-- ODM-1 FORK: HS chaos-repair panel STRIPPED (the contract layer / HS never comes along) -->
+    </section>
+
+    <!-- MARKET (DIRECTIVE-112) — the Chaos "acquire" tab: buy/sell units + hire MechWarriors for SP. Hot Spots only.
+         D-114 — Hiring folded in here (its standalone tab/panel removed); both spend SP. -->
+    <section class="panel" [class.active]="activeTab() === 'chaos-market'">
+        <!-- ODM-1 FORK: HS chaos-market panel STRIPPED (the contract layer / HS never comes along) -->
+    </section>
+
+    <!-- SETTINGS (D-038) — the narrator controls (OFF/LOCAL), TEST CONNECTION, toggles, SPA-cap knob -->
+    <section class="panel" [class.active]="activeTab() === 'settings'">
+        <bce-settings-tab />
+    </section>
+
+    <!-- REPAIR & SALVAGE (D-033) — the canon-timed bays: queue, assignment, clock-driven burn, prize refit -->
+    <section class="panel" [class.active]="activeTab() === 'repair'">
+        <bce-repair-bays />
+    </section>
+
+    <footer>
+        <!-- D-038: the narrator console strip lives in the footer deadspace; renders ONLY when mode is on
+             (OFF → the clean dossier footer, nothing). Height-safe (occupies the existing footer line). -->
+        <bce-narrator-console />
+        <div class="meta">BCE v0.1 · campaign dashboard · field-dossier theme</div>
+        <!-- COMPLIANCE-3 — the legal notice attached to the dashboard chrome (mirrors Classic dashboard.html;
+             the root fixed bar suppresses itself while this inline mount lives). -->
+        <bce-legal-footer [inline]="true" />
+    </footer>
+
+    @if (confirmAction() && !saveOpen()) {
+        <bce-exit-confirm [actionLabel]="confirmLabel()"
+            (saveAs)="exitSaveAs()" (quickSave)="exitQuickSave()" (proceed)="doExit()" (cancel)="onCancel()"></bce-exit-confirm>
+    }
+    @if (saveOpen()) {
+        <bce-save-dialog (saved)="onSaved()" (cancel)="onSaveCancel()"></bce-save-dialog>
+    }
+    @if (walkOpen()) {
+        <bce-field-walk (close)="walkOpen.set(false)"></bce-field-walk>
+    }
+    <!-- ODM-1 FORK: accept-contract modal STRIPPED (the contract layer / HS never comes along) -->
+    <!-- ODM-1 FORK: renegotiate modal STRIPPED (the contract layer / HS never comes along) -->
+    <!-- ODM-1 FORK: complete-contract modal STRIPPED (the contract layer / HS never comes along) -->
+    <!-- ODM-9b FORK STRIP: the Reroll confirm modal removed (dead markup — its opener button was stripped in
+         ODM-3 addendum A; a confirm would have re-rolled the ACTIVE branch over the authored carrier). -->
+    <!-- DIRECTIVE-HARDEN-4 — the resolve modal → resolve-modal.ts (dashboard-provided ResolveService). -->
+    <bce-odm-resolve-modal />
+    <!-- DIRECTIVE-139 — the SP transaction toast (HS-only; Traditional never calls warchest.post so it stays silent). -->
+</main>
+@if (packageOpen()) {
+    <bce-odm-mission-package (close)="closePackage()"></bce-odm-mission-package>
+}

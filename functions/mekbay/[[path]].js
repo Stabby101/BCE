@@ -1,0 +1,85 @@
+/*
+ * Cloudflare Pages Function — the edge router for ALL MekBay assets under /mekbay/* (DEPLOY-004 → 007).
+ *
+ * GOAL (DEPLOY-007): db.mekbay.com is a BUILD-TIME source only and is NEVER contacted by a live user. The
+ * hosted web build resolves REMOTE_HOST to `<origin>/mekbay`, so every MekBay fetch lands here. We serve:
+ *   1) SAME-ORIGIN STATIC (Pages output) — the per-era slices (/mekbay/slim/*) and the build-mirrored full
+ *      catalog JSON (/mekbay/equipment2.json, quirks.json, factions.json, eras.json, units_sources.json —
+ *      units.json is DEPLOY-012 R2-served, see below). A catch-all Function intercepts /mekbay/* BEFORE
+ *      static-asset fallback, so these must be served explicitly via env.ASSETS (HOTFIX-006 learned this the hard way).
+ *   2) R2 — the heavy tree: record-sheet SVGs (/mekbay/sheets/*) and unit fluff images (/mekbay/images/fluff/*),
+ *      ~12k files / ~2 GB, served from a bound R2 bucket (binding name MEKBAY). Bind it in the Pages project:
+ *      Settings → Functions → R2 bindings → Variable name `MEKBAY` → the bucket. Until it's bound + populated,
+ *      these fall through to (3), so deploying this is SAFE before R2 exists.
+ *   3) LEGACY LAST-RESORT — proxy db.mekbay.com. Once the mirror is complete this is NEVER hit at runtime
+ *      (the DoD network trace proves zero db.mekbay.com requests); it remains only as a cold-start safety net.
+ *
+ * No licensed data lives in this file — it is a routing/caching rule (REF-001 clean). Deploy: place `functions/`
+ * at the Pages project root; Pages auto-wires functions/mekbay/[[path]].js to /mekbay/*.
+ */
+const UPSTREAM = 'https://db.mekbay.com';
+const R2_PREFIXES = ['sheets/', 'images/fluff/'];
+// DEPLOY-012 — top-level catalog JSON that OUTGREW the Pages 25 MiB per-file asset limit (units.json: 25.3 MiB on
+// 2026-08-16 — every deploy since 24ab244 failed asset validation for a month) is NOT shipped in the Pages output
+// (tools/pages-output-guard.mjs strips it for Pages-bound builds); it is mirrored to R2 by the build
+// (apps/web/scripts/mirror-catalog.mjs, key = the file name) and served from tier (2). Any top-level *.json missing
+// from static tries R2 before the db.mekbay.com last-resort, so the fallback chain is static → R2 → upstream.
+const R2_TOPLEVEL_JSON = /^[^/]+\.json$/;
+const isTopLevelJson = (p) => R2_TOPLEVEL_JSON.test(p);
+
+export async function onRequest(context) {
+    const { request, env } = context;
+    const url = new URL(request.url);
+    const subpath = url.pathname.replace(/^\/mekbay\//, '');
+
+    // 1) SAME-ORIGIN STATIC — per-era slices + the mirrored full catalog JSON + the DIRECTIVE-127 MUL ilClan
+    //    allow-list (mul-ilclan/, build-emitted from content-forge). Fall through to (3) if the asset is absent
+    //    (a build where the mirror didn't emit it / SPA-fallback HTML) so a JSON surface never hard-breaks.
+    if (subpath.startsWith('slim/') || subpath.startsWith('mul-ilclan/') || /^[^/]+\.json$/.test(subpath)) {
+        if (!env || !env.ASSETS) return context.next();
+        const a = await env.ASSETS.fetch(request);
+        if (a.ok && !(a.headers.get('content-type') || '').includes('text/html')) {
+            const r = new Response(a.body, a);
+            r.headers.set('x-bce-asset-origin', 'static'); // DoD probe: which tier served this (never db-mekbay-proxy once mirrored)
+            return r;
+        }
+        // else: asset missing → fall through to the db.mekbay.com last-resort
+    }
+
+    const cache = caches.default;
+    const cacheKey = new Request(url.toString(), { method: 'GET' });
+    const hit = await cache.match(cacheKey);
+    if (hit) return hit;
+
+    // 2) R2 — record sheets + fluff images (immutable, edge-cached 30d) + DEPLOY-012 the oversize catalog JSON
+    //    (revalidating: it changes when the build re-mirrors upstream growth). R2 miss → fall through to (3).
+    const r2Json = isTopLevelJson(subpath);
+    if (env && env.MEKBAY && (r2Json || R2_PREFIXES.some((p) => subpath.startsWith(p)))) {
+        const obj = await env.MEKBAY.get(subpath);
+        if (obj) {
+            const headers = new Headers();
+            obj.writeHttpMetadata(headers);
+            if (r2Json) {
+                headers.set('content-type', 'application/json; charset=utf-8');
+                headers.set('Cache-Control', 'public, max-age=3600, s-maxage=86400'); // the client also IndexedDB-caches the catalog
+                if (obj.httpEtag) headers.set('ETag', obj.httpEtag);
+            } else {
+                headers.set('Cache-Control', 'public, max-age=86400, s-maxage=2592000, immutable');
+                if (!headers.has('content-type')) headers.set('content-type', subpath.endsWith('.svg') ? 'image/svg+xml' : 'application/octet-stream');
+            }
+            headers.set('x-bce-asset-origin', 'r2');
+            const resp = new Response(obj.body, { headers });
+            if (request.method === 'GET') context.waitUntil(cache.put(cacheKey, resp.clone()));
+            return resp;
+        }
+    }
+
+    // 3) LEGACY LAST-RESORT — proxy db.mekbay.com (never hit once the mirror is complete).
+    const upstream = await fetch(`${UPSTREAM}/${subpath}${url.search}`, { cf: { cacheEverything: true, cacheTtl: 86400 } });
+    const resp = new Response(upstream.body, upstream);
+    resp.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=2592000, immutable');
+    resp.headers.set('x-bce-asset-origin', 'db-mekbay-proxy'); // DoD: a trace finding THIS header = a surface still hitting db.mekbay.com
+    resp.headers.delete('set-cookie');
+    if (request.method === 'GET' && upstream.ok) context.waitUntil(cache.put(cacheKey, resp.clone()));
+    return resp;
+}

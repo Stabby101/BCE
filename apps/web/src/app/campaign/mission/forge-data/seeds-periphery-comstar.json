@@ -1,0 +1,783 @@
+[
+  {
+    "seedId": "PER-01",
+    "family": "OBJECTIVE_RAID",
+    "title": "OPERATION THIN HARVEST",
+    "eraFit": ["late-succession-wars"],
+    "factionFit": ["periphery", "pirate"],
+    "register": "periphery/pirate",
+    "threatRange": ["LOW", "MEDIUM", "HIGH"],
+    "skeleton": "raider band must fill a fixed winter-shortfall ledger in a fixed number of strikes while every target stripped bare this year feeds no one next year — the raid plan is also a herd-management plan",
+    "inspiration": "Viking autumn raiding economics and the danegeld decision — sack once or tax forever",
+    "situation": "The Hold is a pirate band of 1,840 people on a world too small for {TARGET_FACTION}'s mapmakers to name. Every winter lasts 210 days, and the Hold survives it on whatever the raiding season brings home. This season brought home almost nothing: a salvage dispute, a wrecked DropShip drive bell, and only 60 percent of what the Hold needs. Its quartermaster, {NPC:quartermaster-broker}, keeps the tally in chalk on the mess-hall wall, and the autumn count shows three shortfalls. The Hold is 312 tons short of food. It is 41 winters-of-spares short for its machines — one winter-of-spares is the filters, seals, and actuator fluid one 'Mech or vehicle burns through in a single winter, and the Hold fields 14 'Mechs and 9 combat vehicles. And it has no jump charges to spare: the band's one JumpShip, a Merchant-class, has maybe 5 jumps left before its sail control ring fails, and no replacement part exists within 4 jumps. Treat that as likely but not certain — it is the chief tech's reading, run twice but unconfirmed. The hard deadline is the weather at home. The Hold calls it the Glaze. When deep frost sets in, the mesa landing field freezes into solid ice, and no loaded DropShip can lift off it until the spring thaw. That is about 31 days out, give or take 6, based on 40 years of the Hold's own records. So every raid this season must launch, fight, load, and land back home before the Glaze closes the field. The travel time allows two strikes, or a risky third flown with no margin. Two targets are scouted. The first is the farming belt on {WORLD}, one jump out: nine grain-rich settlements defended by a militia of six armored vehicles, with a {TARGET_FACTION} garrison lance stationed 60 kilometers away at {DISTRICT}. The Hold knows which silos hold this year's surplus and which hold next year's seed grain: it bought the storage schedule from {NPC:intel-source}, a port clerk paid in medicine. That intel is 16 days old, so trust it but expect some stock to have moved. The second target is the garrison's own resupply depot at {DISTRICT}, rich in exactly the spares the Hold needs and the only source of them in reach — but defended by a 'Mech lance and a reinforced infantry company. That reading is weaker: 23 days old, from a single discharged teamster, so treat the depot's defenses as a floor, not a ceiling. {NPC:opfor-commander} runs the garrison lean and strictly by the book, and the book says protect the grain hubs first. But the band has a rule of its own, in the quartermaster's chalk: any silo you strip bare this winter has nothing to give next winter. The Hold has raided this belt for nine years and means to raid it for ten more. That long game is on the wall too.",
+    "objectives": {
+      "primary": "Land 312 tons of food and 41 winters-of-spares on the mesa field before the Glaze closes it. Trade goods count if they convert to that value at the Hold's rates.",
+      "secondary": "Keep total band losses under 2 'Mechs and 30 people. The Hold cannot lose more and still man the walls until the thaw.",
+      "bonus": "Leave the belt able to plant: keep the seed grain in all 9 settlements untouched, and verify it before you go."
+    },
+    "complications": [
+      {
+        "name": "The Glaze Comes Early",
+        "text": "Eleven days into the season the Hold's weather station detects a polar wind shift that will bring the frost sooner. The Glaze forecast shrinks from 31 days to a window of 19 to 24. The third strike was always going to be tight on time; now the second strike is too.",
+        "mechanicalEffect": "Roll the glazeOnsetDays value at the low end of its range. Every strike after the first requires a turnaround check; a failed check uses up 3 days of the remaining window before the field freezes."
+      },
+      {
+        "name": "Seed and Surplus Look Alike",
+        "text": "The silo schedule from {NPC:intel-source} is 16 days old, and the settlements rotate stock after harvest. Two of the marked surplus clusters now hold seed grain. Loading crews working by floodlight at gunpoint cannot tell treated seed stock from milling stock without 20 minutes per silo and a working assay kit.",
+        "mechanicalEffect": "Each silo cluster looted without the 20-minute assay has a 1-in-3 chance of being seed grain — the bonus objective fails silently and next season's target list shrinks by one settlement."
+      },
+      {
+        "name": "The Teamster Talked Twice",
+        "text": "The discharged teamster who sold the depot layout also sold the fact that he sold it. {NPC:opfor-commander} has moved the spares stock between warehouse bays and seeded the old bay with thermal trip flares.",
+        "mechanicalEffect": "If the depot strike is flown, the first bay entered is empty; locating the live bay costs 25 minutes on the reaction clock and the trip flares advance the timeline one entry."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "What the Silos Are Worth",
+        "context": "The first strike hits the farming belt. The lances are loaded and the haulers are fueled. What the band does in its first hour on the ground sets the price of every winter after this one. How hard you strip the belt now decides how much it can grow back for next year.",
+        "options": [
+          {
+            "title": "Strip the Belt",
+            "advantages": ["Highest single-strike yield: 380 to 420 tons, Ledger closed in one raid", "No second strike needed — the Glaze margin stops mattering"],
+            "disadvantages": ["Seed grain goes into the haulers with everything else — the belt plants nothing in spring", "9 settlements with nothing left to lose start talking to the garrison for bounty pay"],
+            "consequence": "This winter's shortfall is covered, but every winter after gets harder: the stripped belt cannot be raided again for at least 3 years, so the Hold's next season has to start one jump deeper into patrolled space to find a new target.",
+            "costs": { "cbills": 0, "days": null, "resource": "the belt itself — next season's nearest target, used up for at least 3 years", "risk": "settlements left with nothing turn informer for the garrison" }
+          },
+          {
+            "title": "Take the Tithe",
+            "advantages": ["40 percent of surplus from each cluster, seed grain untouched — the belt survives and re-grows", "Settlement councils that keep 60 percent and their seed do not die for the remainder; resistance projection drops to scattered small-arms fire"],
+            "disadvantages": ["Yield is 170 to 200 tons — the Ledger stays open and a second strike is mandatory", "Standing in 9 settlement squares to weigh grain takes 11 hours; the band's faces, machines, and methods are witnessed in detail"],
+            "consequence": "The belt survives to be raided again, but the band pays in secrecy. Standing in nine settlements for hours means the garrison learns exactly who raids here. Next season the band is a named, documented enemy instead of an anonymous one.",
+            "costs": { "cbills": 0, "days": 2, "resource": "a second strike now forced, against the closing Glaze window", "risk": "the band trades its anonymity for a renewable target" }
+          },
+          {
+            "title": "Hit the Depot Instead",
+            "advantages": ["The only source of winters-of-spares in reach — 60-plus sets if the live bay is found", "No civilian cost: the belt is untouched and the band's standing with the settlements survives"],
+            "disadvantages": ["A defended objective on 23-day-old LOW-confidence intelligence", "Spares do not feed anyone — the food shortfall remains whole and must come from a second strike regardless"],
+            "consequence": "Win or lose, the garrison reports the attack up the chain, and a raid on a {TARGET_FACTION} military depot is treated as a military matter. Next season the response will be a dedicated hunter-killer force sent to destroy the band, not just a local militia call-up.",
+            "costs": { "cbills": 0, "days": null, "resource": "projected losses: 1 'Mech disabled and 8-15 personnel (the band's own staff estimate)", "risk": "the band is upgraded from a nuisance to a military target" }
+          }
+        ]
+      },
+      {
+        "name": "The Short Column",
+        "context": "The haul is counted on the mesa with the Glaze only a handful of days away, and the Hold is still 20 to 30 percent short of what it needs for winter. The council meets in the mess hall, under the chalkboard.",
+        "options": [
+          {
+            "title": "Ration Through",
+            "advantages": ["No jump spent, no machine risked, the band winters at full defensive strength", "The Hold has survived short winters before and the protocols exist"],
+            "disadvantages": ["The Hold's own medic projects 31 to 60 dead of 1,840 — the old, the sick, the youngest first", "Work output collapses by midwinter; spring planting and machine maintenance both slip"],
+            "consequence": "The Hold survives, but the community is damaged: when the thaw comes, requests to emigrate triple, and the band's only recruiting pool — the Hold's own children — will remember that the council chose to let people die this winter.",
+            "costs": { "cbills": 0, "days": null, "resource": "a projected 31-60 dead out of 1,840 people", "risk": "the real reserve being spent is the Hold's loyalty to the band" }
+          },
+          {
+            "title": "The Third Jump",
+            "advantages": ["One more strike can close the Ledger entirely", "The JumpShip and DropShips winter at the freeport if the Glaze beats them home — machines survive even if the timing fails"],
+            "disadvantages": ["Flown against the Glaze margin: a 3-day weather slip strands the cargo offworld until thaw, which is the same as losing it", "The Hold stands undefended-by-'Mechs for the strike's 9-to-12-day round trip"],
+            "consequence": "If the timing holds, the Hold winters well-fed. If it does not, the Hold endures the starvation winter anyway — and has also burned the fuel, the spares, and one of the sail ring's last few jumps for nothing.",
+            "costs": { "cbills": 0, "days": 12, "resource": "1 of the 5 remaining jumps on a failing sail control ring", "risk": "a 3-day weather slip strands the entire cargo off-world until the thaw — the same as losing it" }
+          },
+          {
+            "title": "Sell the Iron",
+            "advantages": ["The Hold's heaviest 'Mech brings 280,000 to 320,000 C-bills at the freeport through {NPC:fixer} — the shortfall closed with cash at market rates, guaranteed", "No combat, no weather risk: a commercial transaction with a delivery date"],
+            "disadvantages": ["The band's line of battle drops by its single heaviest unit — 25 percent of its real combat power", "Every buyer at the freeport learns the Hold is selling its guns to eat, and that news travels to every rival band by spring"],
+            "consequence": "The winter is paid for, but the band is now visibly weaker: its next negotiation with a rival band, a settlement, or an employer starts from a position everyone knows is diminished.",
+            "costs": { "cbills": -300000, "days": 8, "resource": "25 percent of the band's frontline combat power, gone permanently", "risk": "the band's weakness is advertised to every rival within the freeport's gossip range" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Belt settlement triggers flare net; militia duty post radios {DISTRICT} garrison. Alarm is assumed at first hauler engine-start, not first shot." },
+        { "t": "T+0:20", "event": "Militia armor (6 vehicles, Green) mounts and moves from the central settlement; they will harass loading sites, not assault them." },
+        { "t": "T+1:10", "event": "Garrison VTOL spotter pair overhead the belt; loading sites are now mapped and counted in real time." },
+        { "t": "T+2:00", "event": "{NPC:opfor-commander}'s medium lance departs {DISTRICT} by road, 60 kilometers at convoy speed with infantry carriers." },
+        { "t": "T+3:00", "event": "Garrison lance reaches the belt's edge and begins moving cluster to cluster along the silo road." },
+        { "t": "T+3:40", "event": "Garrison interposes between remaining loading sites and the DropShip ground line if the ship's position has been fixed." }
+      ],
+      "hardDeadline": "The loaded haulers must be off the silo road and the DropShip must lift by T+2:40. At T+3:00 the garrison lance reaches the belt, and a grounded DropShip with its cargo doors open cannot fight or flee — it is the Hold's entire winter supply sitting helpless in front of four enemy 'Mechs."
+    },
+    "opforSketch": {
+      "composition": "Belt: militia armor section (6 light vehicles, Green) and settlement small arms. Garrison: 1 medium 'Mech lance (Regular), 1 reinforced infantry company with carriers, 2 VTOL spotters. Depot option adds prepared positions and the warehouse trap. Generator should weight mobility and spotting over tonnage.",
+      "behavior": "Doctrine prioritizes grain transport nodes and fixing the raiders for the lance — militia harasses and reports, garrison moves deliberately and will not pursue beyond the belt at night. {NPC:opfor-commander} would rather own the raiders' timetable than their wreckage."
+    },
+    "forks": [
+      {
+        "name": "OPERATION STANDING TITHE",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Ledger closed with the belt's seed grain intact and the tithe arrangement witnessed by settlement councils.",
+        "consequence": "Three settlement councils send word through {NPC:fixer}: they will pay the tithe on schedule without a raid — if the band keeps two rival outfits out of the belt. The band has accidentally become a protection service, and next season opens with patrol obligations.",
+        "family": "GARRISON_DUTY",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION EMPTY BOWL",
+        "outcomeGate": "FAILURE",
+        "trigger": "Ledger short by 25 percent or more at the Glaze, or the ration winter chosen and the projected deaths begun.",
+        "consequence": "Nine band members desert mid-winter with 2 'Mechs and the small DropShip, raiding the near settlements under the Hold's old colors. The Hold must hunt its own across the thaw — they know every cache, every code, and every face on the walls.",
+        "family": "PIRATE_HUNTING",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION GLAZE ROAD",
+        "outcomeGate": "PARTIAL",
+        "trigger": "Third strike cargo landed at the alternate field 600 kilometers out after the mesa iced.",
+        "consequence": "The winter's food sits at a derelict strip across 600 kilometers of frozen scrubland. The band must run ground convoys through the freeze — 6 round trips, weather permitting, with every rival and refugee on the rock aware of what is moving and where.",
+        "family": "RELIEF_DUTY",
+        "threat": "MEDIUM"
+      }
+    ],
+    "storyElementSeed": "In the Hold's mess the evening line files past a chalkboard with two numbers rewritten each night, tons left and days left, and a child at the rail works out how little that leaves per day, out loud, before anyone can stop her.",
+    "voiceSlots": ["logistics", "command", "engineering"],
+    "registerVariants": {
+      "merc": {
+        "objectives.primary": "Contract object: 312 tons food equivalents and 41 spares-sets delivered to the client's field before seasonal closure. Note clause 4: cargo stranded offworld by weather is deemed undelivered. Read it twice."
+      }
+    },
+    "specifics": {
+      "glazeOnsetDays": { "min": 19, "max": 37, "unit": "days" },
+      "strikesBeforeGlaze": { "min": 2, "max": 3, "unit": "strikes" },
+      "ledgerShortfallTons": { "min": 280, "max": 340, "unit": "tons" },
+      "sparesShortfall": { "min": 35, "max": 47, "unit": "winters-of-spares" },
+      "rationDeadProjection": { "min": 31, "max": 60, "unit": "deaths" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Sell the Iron",
+        "requires": "treasury-min:120000",
+        "whenLacking": "reprice",
+        "lackingText": "Below 120,000 C-bills treasury the freeport broker advances against the sale: the 'Mech goes at 60 percent of book and the difference is made up in mortgaged salvage rights on next season's raids — the broker now owns a share of every fight the band picks."
+      },
+      {
+        "appliesTo": "The Third Jump",
+        "requires": "dropship",
+        "whenLacking": "lock",
+        "lackingText": "No hull, no third strike: with the band's DropShip down or wintering offworld, the option renders struck through, with the chalk note 'the margin belongs to people who own ships.'"
+      }
+    ]
+  },
+  {
+    "seedId": "PER-02",
+    "family": "GARRISON_DUTY",
+    "title": "OPERATION DEAR GROUND",
+    "eraFit": ["early-succession-wars", "late-succession-wars"],
+    "factionFit": ["periphery"],
+    "register": "periphery/pirate",
+    "threatRange": ["MEDIUM", "HIGH", "EXTREME"],
+    "skeleton": "outmatched defender must sell ground at a price-per-week calculated to break the invader's political budget before the militia's own break-point arrives, and only the defender's books know which ledger empties first",
+    "inspiration": "the Winter War, 1939-40 — a small state pricing itself out of conquest",
+    "situation": "{TARGET_FACTION} calls this a police action — the word a House uses when it will not admit it is paying for a war. The force that landed at the {WORLD} lowland port 12 days ago is one BattleMech regiment of 86 machines, two infantry regiments, and an armor group. The local observatory's amateur signals club intercepted and decrypted the invader's staff traffic, and it shows the one fact that shapes everything: their transport charter expires in 120 days. That intercept is 12 days old, so trust the deadline but not every detail. {NPC:intel-source}, an exiled clerk from the House's provincial treasury now on a militia pension, puts the expedition's budget near 38 million C-bills, with a political ceiling around 60 million. The provincial duke sold his court on a short, cheap show of force. So every week the campaign runs past schedule costs him about 4.1 million C-bills, and a loss of face he cares about even more. Against this stands the {WORLD} Territorial Militia: one regiment on paper, but in reality 14 working BattleMechs of mixed salvage, 31 armored vehicles, 4,100 riflemen and reservists, and only 9 engagement-loads of ammunition. That is 9 days of real fighting, total, no matter how long the war lasts, because resupply does not exist. The militia cannot win a battle the invader wants to fight. What it can do is make every battle the invader is forced to fight cost him a full week. The terrain makes that possible. It is the Corduroy: 90 kilometers of peat moor between the lowland port and the upland capital, crossed by exactly three causeway roads built of log and gravel. The autumn rains are falling now, and anything over 40 tons that leaves a causeway sinks to its knee actuators and is stuck. So the invader's 86 machines can only advance single file, one causeway-width at a time, with flanks no armor can protect. {NPC:opfor-commander} commands the expedition, a competent professional under two pressures at once: the charter clock and an auditor. The auditor is real — a House fiscal officer travels with the staff, per the same intercepts. The militia has its own clocks running down. Reservist desertion runs 2 percent for every week of fighting. The upland granaries hold a single winter's seed grain, which the militia cannot spend without starving the world it is defending. And the capital's water system fails after 40 days under siege. The question the militia staff will not write down is the whole war: which side runs out first, the militia or the duke?",
+    "objectives": {
+      "primary": "Keep the militia above its break-point of 60 percent effective strength until the charter expires on day 120. Along the way, add at least 14 million C-bills in delay-costs to the expedition's books.",
+      "secondary": "Keep the upland seed-grain reserve and the capital's water system intact through the campaign. The world must still be alive in spring.",
+      "bonus": "Force one engagement costly enough to be documented in the duke's court record over the auditor's signature — 4 or more 'Mechs lost in a single action."
+    },
+    "complications": [
+      {
+        "name": "The Auditor Is Good At His Job",
+        "text": "The House fiscal officer recommends cost-cutting that is tactically ugly and fiscally sound: infantry clears the causeways while 'Mechs sit in reserve, burning days instead of C-bills. The expedition slows down and gets cheaper per week.",
+        "mechanicalEffect": "Invader tempo drops one step, but the rate at which delay-costs pile up is cut in half. The militia now needs far more fighting to reach the same 14-million-C-bill target."
+      },
+      {
+        "name": "Nine Loads",
+        "text": "Ammunition does not care about strategy. Every militia engagement, won or lost, spends part of a load, and resupply does not exist — the world's one munitions workshop turns out small-arms rounds and improvised mines only.",
+        "mechanicalEffect": "Track engagement-loads as a campaign resource starting at 9. At 3 remaining, militia 'Mechs fight under withhold-fire doctrine: alpha strikes prohibited, engagement ranges forced close."
+      },
+      {
+        "name": "The Port Mayors",
+        "text": "Four lowland towns under occupation are governed gently on purpose: full markets, paid labor, no requisitions. Their mayors petition the militia to stand down before the uplands burn. The invader's cheapest weapon is the comparison.",
+        "mechanicalEffect": "Each week after day 60, roll against reservist desertion: the 2 percent weekly rate doubles for units recruited from lowland families."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Capital Question",
+        "context": "On day 31 the expedition's lead battalion clears the second causeway. Beyond it lies the upland capital — 96,000 people, the machine shops, the water plant, and the seat of government — across 30 kilometers of open farmland. The militia staff meets in the observatory, because the assembly hall has no blackout curtains.",
+        "options": [
+          {
+            "title": "Open City",
+            "advantages": ["96,000 people, the machine shops, and the water plant survive whatever else happens", "The militia keeps its full remaining strength in the field instead of rubble"],
+            "disadvantages": ["The invader gains an intact logistics base and the photograph of his flag on the assembly hall — his costs drop and his court's patience refills", "Reservist desertion spikes: projected 8 to 15 percent in the week after the flag goes up"],
+            "consequence": "The war becomes a mobile fight with no fixed point to defend — still winnable on the charter clock alone, but fought by a militia that just watched its capital handed over and is now asking what it is fighting for.",
+            "costs": { "cbills": 0, "days": null, "resource": "militia cohesion: 8-15 percent desertion projected within 7 days", "risk": "the invader's budget pressure eases just as it was starting to hurt" }
+          },
+          {
+            "title": "Price the Approaches",
+            "advantages": ["A two-week defense of the farmland approaches adds roughly 8.2 million C-bills to the duke's books — the single largest line-item available", "Withdrawal is pre-planned: the militia chooses when to stop paying"],
+            "disadvantages": ["Costs 3 of the remaining engagement-loads and the staff's casualty projection is 2 'Mechs and 300-450 personnel", "The approaches are farmland: the fighting happens in the standing harvest of 11 villages"],
+            "consequence": "These are the duke's most expensive two weeks of the war and the militia's bloodiest two weeks, at the same time. By day 45 both staffs are counting the same thing: how much they have left. The duke counts C-bills; the militia counts men and ammunition.",
+            "costs": { "cbills": 0, "days": 14, "resource": "3 of 9 engagement-loads; 11 villages' standing harvest", "risk": "2 'Mechs and 300-450 personnel projected against a 14-day return" }
+          },
+          {
+            "title": "Stand Siege",
+            "advantages": ["A wired city is the most expensive object in war: assault costs the invader machines, siege costs him the entire charter clock", "The government stays seated and the symbol stands — desertion projection actually reverses while the walls hold"],
+            "disadvantages": ["The capital's water system fails at 40 siege-days; the militia would be wiring the machine shops and power plant it exists to protect", "If the charter is extended even once, the city starves under the militia's own flag"],
+            "consequence": "Everything rides on the duke's spending ceiling being real. If {NPC:intel-source}'s 60-million estimate is right, the invader cannot afford the siege the militia is inviting him into. If the estimate is wrong, the militia has sealed its own people and its seed grain inside a city with a 40-day water supply.",
+            "costs": { "cbills": 0, "days": 40, "resource": "capital water-days: 40 total; machine shops wired with the militia's own demolition stock", "risk": "the entire strategy rests on one exiled clerk's estimate of another man's patience" }
+          }
+        ]
+      },
+      {
+        "name": "The Day-70 Terms",
+        "context": "On day 70, with the expedition behind schedule and over budget, {NPC:opfor-commander} transmits terms in the clear so the whole world hears them: autonomy under House protection, the militia retained as a House territorial formation, one garrison battalion in the lowland port, taxation at the lowland mayors' published rates.",
+        "options": [
+          {
+            "title": "Accept the Terms",
+            "advantages": ["The seed grain is never spent, the water never fails, and nobody else's children go on the rolls of the fallen", "Autonomy-with-garrison is, on paper, more self-rule than half the duke's own provinces enjoy"],
+            "disadvantages": ["A garrison battalion is a fact and paper is paper — enforcement of every clause now depends on the signer's successor", "The militia that priced itself into these terms is disbanded into a House formation that can be posted anywhere"],
+            "consequence": "The world survives intact and governed, and learns over the following years what every tributary learns: the day-70 terms were the best deal it would ever get, and the negotiation never truly ends.",
+            "costs": { "cbills": 0, "days": null, "resource": "the militia itself, converted into the garrison's auxiliaries", "risk": "each clause lasts only as long as the current duke does" }
+          },
+          {
+            "title": "Refuse in the Open",
+            "advantages": ["Refusal broadcast on the same channel is worth 2 engagement-loads of morale: desertion halts, the uplands harden", "The duke's court hears its cheap war refused by farmers, with 50 charter-days left and the line not yet broken"],
+            "disadvantages": ["{NPC:opfor-commander} is released from restraint: the gentle-occupation policy ends and the lowland towns pay for the uplands' answer", "There is no second offer — the war now ends only at the charter or at the militia's break-point"],
+            "consequence": "The war's final 50 days are its worst: the invader is now spending reputation instead of money, the militia is spending its last ammunition loads, and whichever side runs out first this time runs out completely.",
+            "costs": { "cbills": 0, "days": null, "resource": "the lowland towns' gentle occupation, revoked on the militia's behalf without their vote", "risk": "no negotiated exit exists after this broadcast" }
+          },
+          {
+            "title": "Stall the Table",
+            "advantages": ["A negotiation in progress freezes offensive operations by custom — every talking day is a charter day spent at full cost and zero risk", "The militia rests, repairs, and re-lays the Corduroy mines while the staffs exchange drafts"],
+            "disadvantages": ["{NPC:opfor-commander} has read the same books: he will demand verifiable concessions (a causeway opened, an inspection) as the price of each week at the table", "If the stall is called out, the broadcast writes itself: the militia bargained in bad faith while its towns stood occupied"],
+            "consequence": "The militia can buy roughly three weeks at the negotiating table, at the cost of looking like exactly what it is — a force stalling for time. And the duke's auditor, who counts every talking day at 4.1 million C-bills, becomes the militia's unwitting ally.",
+            "costs": { "cbills": 0, "days": 21, "resource": "one verifiable concession per week at the table, each one real", "risk": "exposure of the stall converts the world's moral position into the invader's broadcast" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Militia ambush initiates on the second causeway: cratering charges drop the lead element's roadbed, fire opens from the moor hummocks." },
+        { "t": "T+0:04", "event": "Expedition air cover (2 conventional fighters on rotating station) vectors to the causeway; militia positions begin displacing by pre-cut plank paths." },
+        { "t": "T+0:25", "event": "Invader flank battalion begins bog-edge envelopment on foot, moving for the militia's plank-path exits." },
+        { "t": "T+0:50", "event": "Engineering vehicles reach the crater; bridging operations begin under smoke." },
+        { "t": "T+1:30", "event": "Causeway bypass open to light traffic; lead 'Mech company resumes movement. Envelopment infantry reaches the first plank-path junction." },
+        { "t": "T+2:10", "event": "Invader holds both ends of the engagement area and begins methodical moor-sweep with infantry and VTOL thermal cover." }
+      ],
+      "hardDeadline": "All militia elements break contact by T+1:10, before the envelopment infantry reaches the plank-path junctions. The militia regenerates nothing: a platoon caught on the moor is not a casualty figure, it is a permanent subtraction from the only army the world will ever have."
+    },
+    "opforSketch": {
+      "composition": "House expeditionary force: 1 'Mech regiment at 86 machines (Regular, medium-heavy weighted, organized for open-field operations a moor refuses to provide), 2 infantry regiments (Regular), armor group, 2-fighter air rotation, no aerospace superiority concerns. Generator should present company-strength elements canalized on causeways with infantry screens.",
+      "behavior": "Deliberate, charter-conscious, casualty-averse in machines and increasingly cost-averse in everything: {NPC:opfor-commander} fights like a man whose real enemy is a column of figures. Expect engineering-led advances, infantry clearing, and pressure applied through occupation policy as often as through fire."
+    },
+    "forks": [
+      {
+        "name": "OPERATION RETURN RECEIPT",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Charter expires at day 120 with militia cohesion above break-point; the expedition lifts.",
+        "consequence": "The duke's court ate a 61-million-C-bill demonstration of nothing. The withdrawal is called a redeployment, and House staff planning begins for a return in 2 to 3 years — with 3 regiments, a purchased charter with no expiry, and no auditor invited. The world has those years to become too expensive again, permanently.",
+        "family": "PLANETARY_ASSAULT",
+        "threat": "EXTREME"
+      },
+      {
+        "name": "OPERATION BOG LANTERN",
+        "outcomeGate": "FAILURE",
+        "trigger": "Militia cohesion breaks before day 120, or the capital falls by assault.",
+        "consequence": "The Territorial Militia ceases to exist as a formation. What remains — 6 to 9 'Mechs, the mine stocks, the plank-path maps, and the people who refuse the terms — goes into the Corduroy. The moor war begins, fought from the hummocks against a garrison that now owns the causeways and the towns.",
+        "family": "GUERRILLA_WARFARE",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION PAPER CROWN",
+        "outcomeGate": "PARTIAL",
+        "trigger": "The day-70 terms (or any negotiated variant) accepted.",
+        "consequence": "Autonomy-with-garrison arrives, and with it the tax assessors. Within a year the lowland rates rise to House standard, the first requisition notices post, and the crowds outside the assembly hall are the militia's own people — whom the militia, now a House territorial formation, is ordered to disperse.",
+        "family": "RIOT_DUTY",
+        "threat": "MEDIUM"
+      }
+    ],
+    "storyElementSeed": "A quartermaster's clerk pastes the week's ammunition count over last week's in the logbook so the column always reads as one number, and the page under the paste-overs is now thicker than the cover.",
+    "voiceSlots": ["command", "logistics", "intelligence"],
+    "registerVariants": {
+      "is-davion": {
+        "situation": "Appended assessment, professional exchange-officer style: the defenders' plan is sound NCO arithmetic — they cannot beat the regiment, so they are beating the budget. Watch the ammunition line, not the map. Nine loads is the whole war."
+      }
+    },
+    "specifics": {
+      "charterDays": { "min": 110, "max": 130, "unit": "days" },
+      "engagementLoads": { "min": 8, "max": 10, "unit": "loads" },
+      "weeklyDelayCost": { "min": 3500000, "max": 4800000, "unit": "C-bills per week" },
+      "siegeWaterDays": { "min": 35, "max": 45, "unit": "water-days" },
+      "militiaMechs": { "min": 12, "max": 16, "unit": "BattleMechs" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Stand Siege",
+        "requires": "established-base",
+        "whenLacking": "lock",
+        "lackingText": "Without prepared upland depots the siege option renders struck through: a city cannot be wired and provisioned from a column of trucks, and the brief prints the line 'a siege you improvise is a surrender with extra steps.'"
+      }
+    ]
+  },
+  {
+    "seedId": "PER-03",
+    "family": "SECURITY_DUTY",
+    "title": "OPERATION COLD SHEARS",
+    "eraFit": ["succession-wars"],
+    "factionFit": ["periphery"],
+    "register": "periphery/pirate",
+    "threatRange": ["LOW", "MEDIUM"],
+    "skeleton": "two claimants fight a season-long fight over a shared extraction ground beneath a mutual escalation ceiling, where the first lethal shot drives off the third party both sides need to survive",
+    "inspiration": "the Cod Wars — a resource conflict fought with rammings and cable cutters because escalation kills the prize",
+    "situation": "Two kinds of war are being fought on {WORLD}, and the Carriers' Compact — the merchant treaty that governs conduct here — only outlaws one of them. The world is a dust bowl with a single asset: the south polar ice cap, whose glacier calves into harvest fields that two settlements have cut ice from for 60 years. Your charge is Kell's Bore, population 8,200, with a water reserve of 290 water-days and falling. One water-day is a full day's water ration for the whole settlement. The rival is Marston Shelf, population 11,400, backed since last year by an off-world mineral combine with deep pockets and patience. The harvest season lasts 70 days. After that, the katabatic winds — the heavy cold air that pours downhill off the ice cap — ground the crawler convoys until next year. To survive, Kell's Bore must make 9 convoy runs of 11,000 tons of ice each, banking 1,260 water-days plus a margin. Those nine runs are the settlement's entire year. Its equipment: 6 ice crawlers, 2 IndustrialMechs (a LoaderMech and a ConstructionMech fitted with a rock-saw), 1 armed scout truck, and 19 harvest crews who also serve as the volunteer fire brigade and the school board. Marston Shelf fields 8 crawlers, 4 IndustrialMechs, and a 14-man off-world 'salvage assistance' contingent whose IndustrialMechs carry weapon mounting points that no quarry supplier ships. That last part is drover gossip from the fuel pump, 8 days old, but three drovers told it the same way, so treat it as solid. Above all of this sits the Compact itself. Its merchant JumpShip circuit calls twice a year, and it is the only market for the settlements' wool, the only source of parts, and the only reason either settlement exists. The Compact's posted Tariff of Conduct is one page, and clause 9 is the whole point of it: any death involving chartered cargo, chartered crews, or the Compact's factor gets the entire system struck from the circuit for 5 years. Five years off the circuit is not a fine. It is a death sentence with paperwork, for both settlements equally. So the war is fought with the tools the Tariff does not cover: ramming crawlers, cutting tow cables, stealing route stakes, fouling fuel. The terrain referees everything. The Shear is a crevasse belt 14 kilometers across, lying between the calving fields and the haul road, crossed by only two surveyed routes that must be re-staked every week as the ice slowly shifts. Whoever controls the survey controls the season. Last week, someone moved Kell's Bore's route stakes 40 meters — toward the crevasses. Nobody knows who. The only certainty is that it was not the wind.",
+    "objectives": {
+      "primary": "Complete 9 convoy runs across the Shear (11,000 tons each) inside the 70-day season, with no deaths that clause 9 can pin on Kell's Bore.",
+      "secondary": "Keep control of the weekly route survey: run every Kell's Bore convoy on stakes its own survey team has checked within the last 72 hours.",
+      "bonus": "Put one documented Tariff violation by Marston Shelf or its contractors in front of the Compact factor before the season-end circuit call."
+    },
+    "complications": [
+      {
+        "name": "Hardpoints Become Hardware",
+        "text": "In week 3 the off-world contingent's IndustrialMechs appear on the harvest fields mounting industrial lasers — quarry-legal cutting tools, nominally. A cutting tool does not stop being a weapon because the invoice says otherwise, and everyone on the ice knows it.",
+        "mechanicalEffect": "Marston Shelf units gain ranged capability that is deniable under the Tariff. Any Kell's Bore response in kind raises the stakes of every subsequent contact one threat step."
+      },
+      {
+        "name": "The Factor Counts Everything",
+        "text": "The Compact factor's monitor drone flies the Shear twice daily on an irregular schedule. Its imagery is the evidence base for any Tariff ruling — for both sides. Incidents staged for the drone are a known art form.",
+        "mechanicalEffect": "Any engagement has a 1-in-3 chance of occurring under drone observation. What the drone records is treated as fact at season's end regardless of what actually happened."
+      },
+      {
+        "name": "Creep Year",
+        "text": "The glacier is moving 30 percent faster than the 10-year average. Route surveys now age out in 4 days instead of 7, and the settlement's surveyor expects the southern of the two routes to close entirely by about day 50 — a solid estimate, but not a certainty.",
+        "mechanicalEffect": "From day 50, both settlements' full convoy traffic shares one route. Every crossing is a potential contact, and convoy scheduling becomes a contested resource."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Arming Question",
+        "context": "The hardpoints report is confirmed. The Bore's council meets in the pump house. On the table: the settlement's response to sharing 70 days of ice with machines that can cut steel at 300 meters.",
+        "options": [
+          {
+            "title": "Mount the Salvage Guns",
+            "advantages": ["Two crated machine guns and a salvaged SRM-2 exist in the Bore's storehouse — fitted to the IndustrialMechs, they are real deterrence by week's end", "Marston's contractors are paid to intimidate, not to die; visible weapons change their invoice math"],
+            "disadvantages": ["A mounted weapon is one bad afternoon away from a clause-9 death: the same guns that deter Marston can also trigger the 5-year ban", "The factor's drone will photograph the mounts within days, putting Kell's Bore on record as the side that armed first"],
+            "consequence": "The ice stays quieter and the season feels safer — right up until the day it does not. If that day comes, the factor's drone footage shows that Kell's Bore armed first, and clause 9 assigns blame to whoever escalated.",
+            "costs": { "cbills": 4000, "days": 6, "resource": "the Bore's entire reserve munitions stock, committed to the ice", "risk": "one panicked gunner turns a shoving match into a 5-year ban off the circuit" }
+          },
+          {
+            "title": "Fight With the Tariff's Own Tools",
+            "advantages": ["Rams, cable cuts, stake-craft, and recovery denial are the local arts and the Bore's crews are better at them — 60 years of practice against Marston's hired newcomers", "Nothing in this doctrine can trigger clause 9 by accident; the ceiling holds because the Bore never approaches it"],
+            "disadvantages": ["Rams and cable-cuts lose to industrial lasers on any afternoon the contractors decide to shoot", "The Bore has 6 crawlers and the season needs nearly all of them; Marston can lose 2 and still make quota"],
+            "consequence": "The season becomes a grinding contest of crawler-handling on the ice — one the Bore wins on skill but slowly loses on spare parts, because every week's repair bill is paid in harvest hours the quota never gives back.",
+            "costs": { "cbills": 0, "days": null, "resource": "crawler availability: each contested week costs a projected half-hull-week of repair downtime", "risk": "skill loses to better hardware on any single bad day, and the Bore has no spare crawlers" }
+          },
+          {
+            "title": "Hire Through the Cutout",
+            "advantages": ["{NPC:fixer} at the circuit's freeport can deliver a 4-man 'technical advisory team' with 2 genuinely armed light 'Mechs inside 3 weeks, contract papered as glacier survey", "Marston's combine respects exactly one thing — a counterparty with the same options it has"],
+            "disadvantages": ["90,000 C-bills retainer plus 1,400 per advisor-day: the Bore's cash reserve dies this season either way", "A cutout is a story, and stories on a world this small last about a month; if the factor unwinds the paper, the Bore armed first and lied about it"],
+            "consequence": "The balance of intimidation evens out and the season probably ends quietly — paid for with the settlement's entire emergency fund and a lie aimed straight at the Compact, the one institution whose goodwill the whole water supply depends on.",
+            "costs": { "cbills": 90000, "days": 21, "resource": "the settlement's full cash contingency fund", "risk": "if the cover story unravels, the Bore is now on record as having armed first and lied about it to the factor" }
+          }
+        ]
+      },
+      {
+        "name": "Nineteen Souls in the Blue",
+        "context": "Day 41. Marston Shelf's lead crawler — overloaded, running an unsurveyed shortcut to beat the Bore's convoy slot — breaks through a snow bridge into a crevasse. It hangs on its outriggers 9 meters down, 19 crew alive inside, Marston's recovery rigs 11 hours away across the Shear. The Bore's convoy, with the only heavy tow gear on this route, is 40 minutes out.",
+        "options": [
+          {
+            "title": "Pull Them Out",
+            "advantages": ["Nineteen people live, and 19 families at Marston Shelf know exactly whose cables did it", "Witnessed by the drone or not, rescue is the one act the factor, the Compact, and both settlements' churches all score the same way"],
+            "disadvantages": ["The recovery spends 4 harvest days: the convoy misses its slot, and the quota math now requires running the closing southern route in week 9", "The contractors' lasers cover the rescue the entire time — the Bore's whole convoy stands in the open under instruments that cut steel"],
+            "consequence": "The season's quota math goes from tight to nearly impossible, but in exchange the war cools down: drovers who pulled each other out of the crevasse find it harder to go back to cutting each other's cables — though the combine and its paid contractors feel none of that.",
+            "costs": { "cbills": 0, "days": 4, "resource": "1 convoy slot forfeited; quota now requires the closing southern route", "risk": "the entire convoy exposed under the contractors' cutting lasers for the rescue's duration" }
+          },
+          {
+            "title": "Let the Ice Decide",
+            "advantages": ["The convoy makes its slot, the quota stays on schedule, and not one Bore crew member stands under a laser", "Marston's rigs are 11 hours out and the crawler may hold — the deaths, if they come, are billed to the shortcut, the overload, and the combine's schedule"],
+            "disadvantages": ["The outriggers are creaking on imaged ice that the Bore's own surveyor rates 'hours, not days'", "Every drover on the route saw who passed within cable range; the Tariff has no clause for this, but the ice country does"],
+            "consequence": "If the crawler holds, nothing happened. If it drops, 19 deaths heat the war up the other way: grief makes Marston's drovers stop caring about clause 9 at exactly the moment the contractors are being paid to push them toward that.",
+            "costs": { "cbills": 0, "days": 0, "resource": "the Bore's standing under the ice country's unwritten code, spent in a single pass", "risk": "19 deaths the route's gossip will blame on the Bore no matter what the Tariff says" }
+          },
+          {
+            "title": "Price the Cable",
+            "advantages": ["Rescue rendered, lives saved, and the bill presented: Marston cedes its claim to the day-50 route schedule as consideration", "Coercion this soft has no clause in the Tariff, and the route concession solves the Bore's week-9 problem entirely"],
+            "disadvantages": ["Negotiating over 19 lives hanging in a crevasse, by radio, on a channel the factor's drone relay may log", "Marston's council may agree under duress and repudiate at season's end — paper signed over the blue ice has a known shelf life"],
+            "consequence": "The Bore gets the route and the rescue both, and hands the combine the single most useful artifact of the season: a recording of Kell's Bore setting a price on drowning men, ready for the factor's desk at the circuit call.",
+            "costs": { "cbills": 0, "days": 4, "resource": "same 4 harvest days as the rescue, plus the Bore's name attached to a ransom transcript", "risk": "the recording surfaces at the season-end Tariff review with the combine's framing" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Contact on the shared route: crawler collision, both sides' crews dismounted and shouting. Alarm is the moment a tow cable comes off its drum for any reason but towing." },
+        { "t": "T+0:30", "event": "Marston escort IndustrialMechs (2, laser-fitted) arrive from the calving face at crawler-escort speed." },
+        { "t": "T+0:45", "event": "Bore scout truck on scene; both settlements' channels jam with claims. The contractors' team leader begins recording on a handheld imager." },
+        { "t": "T+2:00", "event": "Compact factor's monitor drone pass (irregular schedule; 2:00 is the median). Everything in frame becomes season-end evidence." },
+        { "t": "T+12:00", "event": "Both settlement councils in session; the factor's office receives the first written complaints." }
+      ],
+      "hardDeadline": "Every engaged crew untangled, every machine moving, and every cable stowed before the drone pass at T+2:00. The drone's frame is the season's law: whatever it sees, that is what happened — and the Bore's case at the circuit call is built entirely from afternoons like this one."
+    },
+    "opforSketch": {
+      "composition": "Marston Shelf harvest fleet: 8 crawlers, 4 IndustrialMechs (laser-fitted from week 3), 14-man off-world contractor contingent (Veteran equivalent, disciplined, contract-bounded), settlement crews (Green, local-skilled). No true BattleMechs unless the contractors' combine escalates. Generator should present industrial units with improvised capability and one professional core element.",
+      "behavior": "Contractors apply pressure to the exact letter of their contract: intimidate, obstruct, deny recovery, never kill on camera. Settlement crews are angrier and less precise. The combine's doctrine is to win the season on attrition of the Bore's 6 hulls without ever handing the factor a clause-9 ruling."
+    },
+    "forks": [
+      {
+        "name": "OPERATION WARM WELCOME",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Quota banked, zero attributable lethal incidents, and the combine's season judged a failure in its own books.",
+        "consequence": "The combine writes off subtlety as tested and failed. Next season's 'salvage assistance' is a genuine pirate band on retainer, staged from an unmarked depot one jump out — and the Compact's Tariff means Kell's Bore must deal with them off the books and off the ice.",
+        "family": "PIRATE_HUNTING",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION DRY WINTER",
+        "outcomeGate": "FAILURE",
+        "trigger": "Season closes below 7 of 9 convoy runs banked.",
+        "consequence": "Kell's Bore enters the wind season at under 1,000 water-days. Rationing protocols begin at day 200. The only supplement is the old north bore field — 1,100 kilometers out, abandoned for a reason, reachable only by escorted convoy through the wind months.",
+        "family": "RELIEF_DUTY",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION STRUCK FLAG",
+        "outcomeGate": "COMPROMISED",
+        "trigger": "A lethal incident attributed to Kell's Bore under clause 9; the system struck from the circuit.",
+        "consequence": "Five years, no circuit, no parts, no market. The arithmetic of survival now runs through Marston Shelf's combine-stocked warehouses, and the Bore's council quietly re-files the harvest crews' rosters under a different heading: people who know the Shear well enough to take what the settlement can no longer buy.",
+        "family": "OBJECTIVE_RAID",
+        "threat": "MEDIUM"
+      }
+    ],
+    "storyElementSeed": "Two crawler crews from opposite settlements wait out a whiteout in the same survey hut, sharing a stove by the unwritten rule, and nobody mentions the coiled tow cable by the door that still has the other side's shackle pin on it.",
+    "voiceSlots": ["engineering", "logistics", "command"],
+    "registerVariants": {
+      "merc": {
+        "objectives.primary": "Contract object: 9 escorted convoy crossings, season-complete, with a conduct rider that voids all payment on any clause-9 ruling. The client is not buying firepower; it is buying restraint with firepower behind it. Bill accordingly."
+      }
+    },
+    "specifics": {
+      "seasonDays": { "min": 64, "max": 76, "unit": "days" },
+      "convoyRunsRequired": { "min": 8, "max": 10, "unit": "runs" },
+      "waterReserveAtStart": { "min": 260, "max": 320, "unit": "water-days" },
+      "surveyShelfLife": { "min": 4, "max": 7, "unit": "days" },
+      "contractorStrength": { "min": 12, "max": 16, "unit": "personnel" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Hire Through the Cutout",
+        "requires": "treasury-min:90000",
+        "whenLacking": "lock",
+        "lackingText": "The Bore's books cannot cover the retainer: the option renders struck through with the note 'deterrence is a cash market, and the settlement is paying for water this year.'"
+      }
+    ]
+  },
+  {
+    "seedId": "PER-04",
+    "family": "PIRATE_HUNTING",
+    "title": "OPERATION DROPPED ANCHOR",
+    "eraFit": ["late-succession-wars"],
+    "factionFit": ["periphery", "pirate"],
+    "register": "periphery/pirate",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "skeleton": "a raider band turned ruler must defend its prize from its own former trade using doctrine the attackers wrote, while every asset it strips to pay for defense un-makes the home it is defending",
+    "inspiration": "the Norse settlement of Normandy — raiders granted the coast on condition they keep other raiders off it",
+    "situation": "Eleven weeks ago the band took {WORLD} the way it has taken 30 cargo terminals before: fast, loud, and expecting to be gone inside 40 hours. It is still here because of what the survey teams found under the tarps at the Hollow: a mothballed Star League-era repair facility with two working gantry bays, a parts inventory nobody has counted in 150 years, and a fusion plant at 60 percent output that a season's work could push to 90. The world that comes with the prize: 61,000 people in six towns, one harvest a year, and a single DropShip-grade landing zone. That zone is the Bottleneck, a caldera port whose rim road is the only route anything heavy uses to get in or out. The band's real strength, counted honestly by its own quartermaster: 19 BattleMechs (only 11 fully working), 3 DropShips, 1 JumpShip, and 740 people. Of those, 410 are fighters; the rest are families, technicians, and people who followed the ships because staying behind was worse. The problem is the band's own reputation. {WORLD} was scouted under the Accord, a loose charter of five bands that share anchorage, fencing contacts, and scouting reports. Accord custom demands the founder's tithe: any conquest made using shared scouting owes 15 percent of the first year's take to the chartered bands. {NPC:opfor-commander}, captain of the largest Accord band, has sent word through {NPC:fixer} that the tithe on a whole world is not 15 percent of cargo. It is anchorage rights, exclusive fencing rights, and a permanent seat at the Hollow's gantries. If the band refuses, the alternative arrives with the next favorable jump alignment, in roughly 70 to 90 days. That timing comes from a fence who profits either way and is 12 days old, so trust the window but plan for slop. The band knows exactly how {WORLD} falls to a raid, because the band wrote the plan and ran it 11 weeks ago: seize the Bottleneck rim at dawn, use the rim guns to pin the defenders' ships on the ground, and the world below has to negotiate. Holding the rim properly needs three times the garrison the band can spare from the towns it barely controls. The towns are the other war: 61,000 people who have not yet decided whether the band is a government or just bad weather, and whose cooperation runs only as deep as the harvest the band chose not to seize. Every defense decision shares one cost. The band can strip the Hollow's inventory and sell it fast through {NPC:fixer} for serious money — but every crate sold is a piece of the only reason to stay on this world at all.",
+    "objectives": {
+      "primary": "Hold {WORLD} — specifically the Bottleneck rim and the Hollow — against the Accord band's arrival window, defeating or deterring the assault.",
+      "secondary": "Keep the 6 towns governable: zero requisition riots, harvest delivered, the band's conduct code enforced on its own people in public.",
+      "bonus": "End the season with the Accord question settled in writing — tithe renegotiated, bought out, or formally defied with at least 2 of the 4 other bands declaring neutrality."
+    },
+    "complications": [
+      {
+        "name": "The Plan Works Both Ways",
+        "text": "The Accord band's approach will be the band's own playbook because its author — the band's former sailing master — left in the split 2 years ago and now runs {NPC:opfor-commander}'s assault element. Every strength of the dawn-rim plan is known to the attacker; so is every shortcut the band took when it executed it.",
+        "mechanicalEffect": "The OPFOR begins with accurate knowledge of the rim defenses' designed layout. Only deviations made after week 11 — new positions, false works, relocated guns — are unknown to the attacker."
+      },
+      {
+        "name": "Sixty-One Thousand Opinions",
+        "text": "The towns watch the defense preparations and draw conclusions. Trench-digging labor, watch rosters, and food stocks all run through town councils that are deciding, week by week, whether to bet on the band or on the Accord treating new management as a fresh start.",
+        "mechanicalEffect": "Town cooperation is a tracked resource. Each requisition without payment drops it one step; each public enforcement of the band's code on its own fighters raises it one. Below the second step, the rim's labor force halves and the attacker gains an informer net."
+      },
+      {
+        "name": "The Inventory Has Legs",
+        "text": "The Hollow's unaudited stores are being audited informally by everyone with a crowbar. Band fighters who signed on for shares of plunder watch crates they consider theirs being declared 'strategic reserve' by a quartermaster they used to outrank.",
+        "mechanicalEffect": "Each week, unaudited inventory shrinks by 1 to 3 percent through pilferage. Posting guards on the Hollow costs garrison strength; not posting them costs the treasury and, eventually, the precedent that the band's property rules bind the band."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "What the Hollow Is For",
+        "context": "The gantry bays work. The question that decides the world's economy — and the defense budget — is what they build, and it has to be decided now, because every option needs the full season the band may not get.",
+        "options": [
+          {
+            "title": "Strip and Sell",
+            "advantages": ["{NPC:fixer} values the salable inventory and the second gantry's cranes at 1.9 to 2.3 million C-bills, deliverable in 3 shipments — enough to hire 2 lances of seasonal guns and still bank 2 winters of operating funds", "Cash is the one defense asset the former sailing master cannot have mapped"],
+            "disadvantages": ["A stripped Hollow is a warehouse with good lighting: the strategic reason to hold {WORLD} leaves on the first shipment", "The towns see the band selling the future it claims to be defending; cooperation drops and the Accord's 'fresh start' offer starts sounding like governance"],
+            "consequence": "The band wins the immediate fight by selling off the very thing the fight was about, and by spring it is back to what it was before — a band with ships and money but no world that has to take it in.",
+            "costs": { "cbills": -2100000, "days": 30, "resource": "the Hollow's strategic value, sold in 3 shipments", "risk": "town cooperation drops 2 steps when the first crane leaves the caldera" }
+          },
+          {
+            "title": "Open the Freeport",
+            "advantages": ["Gantry time sold to anyone with C-bills and no questions — projected 90,000 to 140,000 C-bills per month once word reaches the circuit, a permanent economy instead of a one-time sale", "Paying customers become stakeholders: bands that fix their ships at the Hollow have reasons to want it standing"],
+            "disadvantages": ["Every customer surveys the defenses from inside the caldera; the Bottleneck's geometry stops being a secret in the first quarter", "Freeport law must be enforced on armed customers with the same 11 operational 'Mechs that hold the rim"],
+            "consequence": "The world gains an income, a reputation, and a steady stream of armed visitors who all now know exactly where the rim guns are — the band is running the kind of port it used to scout as a target.",
+            "costs": { "cbills": 25000, "days": 60, "resource": "defensive secrecy of the Bottleneck, spent permanently", "risk": "every paying customer is a future assault planner with a receipt" }
+          },
+          {
+            "title": "Seal the Gates",
+            "advantages": ["The Hollow works for the band alone: 11 operational 'Mechs becomes 15 by the arrival window per the chief tech's gantry schedule", "Nothing is sold, nothing is surveyed, and the inventory pilferage problem gets one gate to guard instead of a market's worth of excuses"],
+            "disadvantages": ["Zero income against a defense budget that is all expenditure: the treasury's 9-month runway becomes the entire economy", "The towns get nothing from the Hollow either — no work, no trade, no stake in the band's victory beyond the absence of a sack"],
+            "consequence": "The band maximizes the only currency the arrival window respects — operational 'Mechs — and bets that a won battle buys the time to figure out an economy later, with a population that watched the gates close.",
+            "costs": { "cbills": 0, "days": null, "resource": "treasury runway: 9 months of operating funds with zero income against it", "risk": "the towns' stake in the band's survival stays at zero through the battle that decides theirs" }
+          }
+        ]
+      },
+      {
+        "name": "The Envoy at the Rim",
+        "context": "Day 40. The Accord envoy's DropShip requests landing — customary safe conduct, observed by everyone because the alternative unravels the only law the bands have. The offer on the table: the founder's tithe, payable as anchorage rights, fencing exclusivity through Accord channels, and 2 gantry-bay slots per season, in perpetuity.",
+        "options": [
+          {
+            "title": "Pay the Tithe",
+            "advantages": ["The arrival window closes unfought: the Accord's custom binds {NPC:opfor-commander} once the tithe is accepted, and the other 4 bands witness it", "Accord anchorage traffic brings the freeport economy without the band having to advertise"],
+            "disadvantages": ["Perpetuity is a long word: the band's home now carries a permanent lien held by people whose business model is leverage", "Fencing exclusivity hands the Accord the band's entire revenue pipeline — the tithe compounds every season the Hollow earns"],
+            "consequence": "Peace, bought by becoming the Accord's tenant on the band's own world. And every season the rent gets renegotiated under the same threat of an arrival window — while the band sinks deeper roots here and its option to simply leave becomes worth less and less.",
+            "costs": { "cbills": 0, "days": null, "resource": "fencing exclusivity and 2 gantry slots per season, in perpetuity", "risk": "the lien compounds: every future negotiation starts from tenancy" }
+          },
+          {
+            "title": "Refuse Before Witnesses",
+            "advantages": ["A public refusal under safe conduct is the founding act of a state: the towns, the other bands, and the band's own fighters all hear that {WORLD} is not Accord property", "The 70-to-90-day window is real and the rim works are 40 days along — the band fights on ground it chose, improved, and re-keyed since the sailing master left"],
+            "disadvantages": ["The assault comes, written by the one person who knows the original plan's bones", "Defiance forecloses the middle outcomes: a lost battle now ends with the band's ships taken at the Bottleneck, not with a renegotiated tithe"],
+            "consequence": "The question of what the band is — a tenant, a member, or a nation — gets settled by 19 'Mechs fighting at the caldera rim at dawn. Whatever answer survives, the Accord's other captains are already deciding what it is worth to them.",
+            "costs": { "cbills": 0, "days": null, "resource": "the negotiated exits, all of them, foreclosed", "risk": "the battle arrives authored by the band's own former planner" }
+          },
+          {
+            "title": "Counter With a Chair",
+            "advantages": ["Offering the Accord a charter seat for {WORLD} — port privileges in exchange for mutual defense — converts the tithe demand into a membership negotiation among nominal equals", "The other 4 bands gain a stake in the port staying independent of {NPC:opfor-commander} specifically; the Accord's own politics become the rim's first line of defense"],
+            "disadvantages": ["A seat means Accord eyes inside every ledger and Accord votes on the Hollow's gantry schedule — sovereignty diluted by contract instead of taken by force", "{NPC:opfor-commander} may read the counter as weakness wearing a flag, and press the window anyway with 2 bands instead of 1"],
+            "consequence": "The band bets that pirates with a stake in the port make better neighbors than pirates with a grievance — and learns over the following seasons that a charter among predators only holds as long as its hungriest member lets it.",
+            "costs": { "cbills": 0, "days": 14, "resource": "ledger transparency and a gantry-schedule vote ceded to the Accord", "risk": "the counter read as weakness invites a 2-band assault inside the same window" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Orbital watch detects assault DropShips on Bottleneck approach vector; rim alarm sounds. Alarm assumed at burn-flare detection, 40 to 70 minutes before grounding." },
+        { "t": "T+0:10", "event": "Rim batteries crewed; the band's 11 operational 'Mechs move to dispersal positions keyed since week 11 — the only positions the attacker has not seen on paper." },
+        { "t": "T+0:40", "event": "Earliest grounding window opens: attacker's plan (the band's own) calls for simultaneous rim-road seizure and a feint at the southern scree slope." },
+        { "t": "T+1:20", "event": "If the rim road is lost, attacker's vehicles ascend; rim guns fall silent or change hands. The Hollow's gate garrison stands alone." },
+        { "t": "T+2:30", "event": "Town councils act on whatever the rim's situation looks like: gates barred, neutrality declared, or labor levies marching to whichever side is winning." },
+        { "t": "T+4:00", "event": "Attacker consolidated on the rim if unchecked; the world below begins negotiating, exactly as it did 11 weeks ago." }
+      ],
+      "hardDeadline": "The rim road must be denied through T+1:20. The band's own after-action report from 11 weeks ago is unambiguous: once vehicles crest the rim, the caldera port is indefensible and everything after is terms. The plan's author is on the other side, checking his watch against the same paragraph."
+    },
+    "opforSketch": {
+      "composition": "Accord assault echelon: 1 reinforced 'Mech company (14 to 18 machines, Regular-Veteran mix, raid-optimized light-medium), 2 assault DropShips, vehicle-borne boarding parties. A second band may reinforce them; this is unconfirmed, drawn only from fence traffic analysis, so plan for it but do not count on it. Generator should weight speed and combined-arms rim assault over endurance.",
+      "behavior": "Executes the defender's own captured doctrine with one professional improvement per phase. {NPC:opfor-commander} wants the port working, not burning: expect precision against defenders, theater for the towns, and an open channel offering terms from the first minute — the assault is also a recruitment pitch aimed at the band's unhappy share-holders."
+    },
+    "forks": [
+      {
+        "name": "OPERATION HARBOR LAW",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Arrival window closed — assault defeated or deterred — with the Hollow intact and town cooperation at second step or better.",
+        "consequence": "{WORLD} is, functionally, a state with a navy of 3 DropShips, and states get visitors: a {TARGET_FACTION} border lord's 'trade mission' arrives to assess whether the new port is a market, a threat, or an acquisition. The band must run a head-of-state visit with 740 ex-pirates and a straight face.",
+        "family": "GARRISON_DUTY",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION SPLIT SHARES",
+        "outcomeGate": "FAILURE",
+        "trigger": "Rim lost, or town cooperation collapsed below second step before the window.",
+        "consequence": "The band's unhappy faction — 130 fighters and 4 'Mechs who signed for plunder, not citizenship — takes the small DropShip and the Accord's amnesty offer. They know the rim works, the treasury caches, and the harvest schedule. The band must hunt its own deserters before they finish selling the world they left.",
+        "family": "PIRATE_HUNTING",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION QUIET STREETS",
+        "outcomeGate": "PARTIAL",
+        "trigger": "Assault repelled but with requisition riots, town casualties, or the harvest spent on the defense.",
+        "consequence": "The band held the rim and lost the towns: 3 of 6 councils stop delivering grain and the mining town bars its gates. The band must restore its government — with patrols, negotiation, and food it has to find — before hunger does what the Accord could not.",
+        "family": "RIOT_DUTY",
+        "threat": "MEDIUM"
+      }
+    ],
+    "storyElementSeed": "In the caldera port a work crew paints over a hull's old raid tally — 30 small marks — and the painter leaves one mark showing, on the argument that a town should know what its government used to do for a living.",
+    "voiceSlots": ["command", "logistics", "engineering", "intelligence"],
+    "registerVariants": {
+      "merc": {
+        "objectives.primary": "Contract object (seasonal defense retainer): deny the Bottleneck rim through the stated window. Note who the client is and was. They will grade your work by the standards of people who have done your job from the other side."
+      }
+    },
+    "specifics": {
+      "arrivalWindowDays": { "min": 70, "max": 90, "unit": "days" },
+      "operationalMechs": { "min": 10, "max": 13, "unit": "BattleMechs" },
+      "treasuryRunwayMonths": { "min": 7, "max": 11, "unit": "months" },
+      "townCooperationSteps": { "min": 0, "max": 4, "unit": "steps" },
+      "hollowSaleValue": { "min": 1900000, "max": 2300000, "unit": "C-bills" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Strip and Sell",
+        "requires": "jumpship",
+        "whenLacking": "reprice",
+        "lackingText": "No jump capacity of your own: {NPC:fixer} arranges Accord-affiliated carriage at 30 percent of gross — the buyer of last resort is the rival's own logistics, and the shipment manifest is intelligence delivered to {NPC:opfor-commander} free of charge."
+      },
+      {
+        "appliesTo": "Open the Freeport",
+        "requires": "established-base",
+        "whenLacking": "lock",
+        "lackingText": "A freeport needs working gantries, posted law, and a garrison to enforce it. Until the Hollow is operational and the rim watch standing, the option renders struck through: 'you cannot sell harbor you do not hold.'"
+      }
+    ]
+  },
+  {
+    "seedId": "PER-05",
+    "family": "RECON_RAID",
+    "title": "OPERATION SEALED CLAIM",
+    "eraFit": ["succession-wars", "late-succession-wars"],
+    "factionFit": ["periphery", "merc"],
+    "register": "periphery/pirate",
+    "threatRange": ["LOW", "MEDIUM", "HIGH"],
+    "skeleton": "escort paid in shares must move a strike's coordinates home through ports that read every hull, where the cargo is a secret that loses all value the moment anyone else learns it — including to the crew carrying it",
+    "inspiration": "gold-rush claim registration races — the strike is worthless until filed, and every assayer, barkeep, and deckhand is a leak",
+    "situation": "The expedition found it on day 214: a system 4 jumps beyond the last charted point of the {WORLD} reach. The brokered survey notes list it as a dead binary. It is nothing of the kind. The find, sealed in the master surveyor's annex as Site TANTALUS, is a debris field and an intact ground installation of Star League origin. The survey skiff's instruments read refined germanium in the hundreds of tons and at least one sealed structure still under power. Nobody landed, so this is 9 hours of instrument readings only: the power signature is near-certain, the exact contents are a strong guess. Your lance is along as escort under the expedition's charter, paid a 1/16th share that pays out only when the claim is registered. That payment clause is the whole mission. Under the {EMPLOYER} charter registry — the only registry the salvage combines, the freeport banks, and the border Houses all recognize — a deep-space find belongs to whoever files verified coordinates and survey data first. Not whoever found it. Whoever files first. Home is 5 jumps away. The first two recharges are at uncharted points the expedition surveyed on the way out. The last three are inhabited stops along the trade lane, each with a port authority that logs every hull, a fuel market that reads every manifest, and taprooms where survey crews talk too much. Beneath that problem is the ship. The Lodestone is a 40-year-old Merchant-class JumpShip that came out of the trip damaged. Her port collector array is patched, her recharge times run 11 days instead of the normal 8, and her engineer puts the patched array at a 4-in-5 chance of surviving each further charge cycle — his own figure, written and initialed in the log. Beneath that is the crew. There are 31 expedition staff plus the escort lance's 9, and every one of them roughly understands what a 1/16th share of TANTALUS is worth. At least one of them made an unlogged 6-minute transmission from the skiff's backup radio during the final instrument pass — the master surveyor's quiet word to your lance commander. It was reported 19 days after the fact and cannot be proven, because the set's log was wiped, which is itself the tell. And back at the freeport where the expedition staged, everyone knows a salvage combine pays a standing bounty for usable deep-reach coordinates: 50,000 C-bills, no questions asked, payable to anyone. The core problem is the route home. The Gap — the two-recharge uncharted stretch — has no help and no witnesses, but the failing array makes every charge cycle there a gamble. The trade lane is the opposite: the ship can be repaired, but the secret cannot survive the trip.",
+    "objectives": {
+      "primary": "Deliver the sealed survey annex and verified coordinates to the {EMPLOYER} charter registry with the claim filed before any rival filing on Site TANTALUS.",
+      "secondary": "Bring the Lodestone and all 40 souls home intact — the share structure dies with the ship, and so does everyone's year.",
+      "bonus": "Identify the source of the unlogged transmission before the final jump, with evidence the charter court will accept."
+    },
+    "complications": [
+      {
+        "name": "The Array Keeps Its Own Schedule",
+        "text": "The patched collector array degrades with each charge cycle. The engineer's projection holds to the second recharge; past that, every cycle's failure chance worsens, and a failed array in the Gap means 6 weeks of jury-rig under way — or a distress call on open frequencies with the annex aboard.",
+        "mechanicalEffect": "Each recharge after the second adds one step to array-failure risk. A failure in the Gap costs 40 days; a failure on the lane costs 9 days and a yard visit that logs the hull's condition and recent vector."
+      },
+      {
+        "name": "Everyone Can Do the Math",
+        "text": "Thirty-one civilians spent 7 months earning a share of something enormous, and the transit home is the first time they have had nothing to do but think about it. Share-fraction arguments, side deals, and 2 quiet engagements-to-be-married have already restructured the crew's loyalties in ways the manifest does not show.",
+        "mechanicalEffect": "Crew cohesion is a tracked resource starting at the third of five steps. Each port call, lockdown order, or discovered side deal moves it; below the second step, an uncontrolled leak occurs at the next inhabited stop."
+      },
+      {
+        "name": "The Bounty Has Friends",
+        "text": "At the first lane stop, a hull matching a known combine spotter — a Buccaneer-class with a falsified registry — holds station 2 berths down and departs 4 hours after the Lodestone, on the same heading. This is solid: the crew bought the port log for 200 C-bills to confirm it.",
+        "mechanicalEffect": "The spotter shadows the route from stop two onward. Any array failure, extended port stay, or crew leak gives the combine a boarding or claim-race opportunity; losing the shadow requires a deviation that costs 6 to 11 days."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Route Home",
+        "context": "At the second uncharted recharge point — the last place the ship can choose — the master surveyor, the captain, and the escort commander hold the only vote that matters. Three ways home from here.",
+        "options": [
+          {
+            "title": "Run the Gap Again",
+            "advantages": ["A reverse transit of the expedition's own uncharted chain: zero ports, zero logs, zero taprooms — the secret arrives exactly as sealed as it left", "The combine spotter cannot follow where there are no published points; the shadow problem dies at the first jump"],
+            "disadvantages": ["Two more charge cycles on an array the engineer rates 4-in-5 per cycle: run both and the odds of getting through are only about two in three", "A failure in the Gap means 40 days of drift-rig at minimum, with consumables for only 60, and the claim race lost by default"],
+            "consequence": "The secret is perfectly protected by the same isolation that makes any mechanical failure fatal — the ship stakes all 40 lives and the claim on two more cycles of a worn-out array, in exchange for the certainty that no rival is in the race when it arrives home.",
+            "costs": { "cbills": 0, "days": 26, "resource": "2 charge cycles on the failing array at 4-in-5 each", "risk": "array failure in the Gap: 40-day drift against 60 days of consumables, claim lost regardless" }
+          },
+          {
+            "title": "Take the Lane",
+            "advantages": ["Three serviced stops: the array repaired properly at the second, the recharge times back to 8 days, the mechanical wager off the table entirely", "If the race comes down to days, the lane is faster than the Gap by 9 to 15 days — assuming nothing at the stops goes wrong"],
+            "disadvantages": ["Three port authorities log the hull; the spotter shadows every leg; 40 people get 3 chances each to say one word too loud in a fuel queue", "A yard crew that opens the collector housing also opens the question of where a hull this tired has been burning charge cycles"],
+            "consequence": "The ship arrives healthy and on the fastest schedule, but carrying a secret that has passed through three ports, one repair yard, and every conversation 40 tired people had along the way — so the claim race becomes a race to keep the secret, run on a transit schedule.",
+            "costs": { "cbills": 18000, "days": null, "resource": "hull movements logged at 3 port authorities with the spotter in trail", "risk": "one taproom sentence prices the bounty at 50,000 C-bills against any of 40 mouths" }
+          },
+          {
+            "title": "Split the Cargo",
+            "advantages": ["A duplicate annex rides a hired courier from the first lane stop by a different routing — 2 chances to file, and the Lodestone stops being the single point of failure", "The courier contract through {NPC:smuggler-captain} is bonded, priced, and used to carrying things that must not be read: 30,000 C-bills flat"],
+            "disadvantages": ["The duplicate is the secret, in a stranger's hold: the bond pays 100,000 C-bills on breach, and the claim is worth 4 orders of magnitude more — the math invites exactly the betrayal it insures against", "The charter court treats a first filing by an unlisted bearer as contestable: if the courier files for a third party, the expedition's remedy is litigation measured in years"],
+            "consequence": "The mission becomes two missions sharing one secret, and the expedition only finds out at the registry whether it bought a safe backup or handed the race away — and the courier has every incentive to betray it, an incentive that only grows the farther away the courier gets.",
+            "costs": { "cbills": 30000, "days": 3, "resource": "a duplicate annex outside the expedition's control, permanently", "risk": "the bond pays 100,000 against a claim worth orders of magnitude more — the insurance is the temptation" }
+          }
+        ]
+      },
+      {
+        "name": "The Wiped Log",
+        "context": "Two days out from the final jump, the comms tech reconstructs 40 seconds of the unlogged transmission's carrier data: directional, tight-beam, aimed in-system — at the freeport. Someone aboard sold something 19 days ago. The lance commander, the captain, and the master surveyor meet in the chart room with the door dogged.",
+        "options": [
+          {
+            "title": "Lock the Ship Down",
+            "advantages": ["All transmitters sealed, all personal sets pooled under escort guard: whatever was sold, nothing further leaves the hull before filing", "The seller, whoever it is, learns the command group knows — which may freeze any arrangement that requires a second transmission to complete"],
+            "disadvantages": ["Forty people learn officially that one of them is a traitor, 2 days before the payout of their lives: crew cohesion drops hard and stays down", "A lockdown tells the seller exactly how much the command group knows, and a frightened seller with one chance left takes it at the port, in person, where no lockdown reaches"],
+            "consequence": "The ship goes silent and arrives carrying 40 people who no longer trust each other. It arrives at a port, and there the seller's last move is a 10-minute walk to a buyer. Nobody can stop that walk without holding the whole crew prisoner at the registry door.",
+            "costs": { "cbills": 0, "days": null, "resource": "crew cohesion: 2 steps, unrecoverable before filing", "risk": "the seller's endgame moves from radio to a face-to-face the lockdown cannot prevent" }
+          },
+          {
+            "title": "Feed the Leak",
+            "advantages": ["A false coordinate set — plausible, 2 jumps off true, pre-built by the master surveyor for exactly this case — is left where only an active seller would find and transmit it", "If the combine moves on the false site, the expedition gains 20-plus days of race margin and courtroom-grade evidence of the theft attempt"],
+            "disadvantages": ["The gambit requires letting the seller transmit again — a live, monitored act of betrayal aboard a ship 2 days from filing, against the chance the seller transmits something else entirely", "If the seller is smarter than the bait — or if there are 2 sellers — the expedition has spent its tactical knowledge of the leak for nothing"],
+            "consequence": "The last two days of the race become a counterintelligence operation run by exhausted surveyors and escort officers. Success means the combine's assault tug ends up two jumps away from the real TANTALUS; failure means the expedition watched the secret walk out the door and called it a plan.",
+            "costs": { "cbills": 0, "days": 0, "resource": "the bait coordinates, usable exactly once", "risk": "a second seller, or a careful one, defeats the gambit silently" }
+          },
+          {
+            "title": "Buy the Whole Room",
+            "advantages": ["The captain announces a restructure: every crew share upgraded one fraction-class out of the charter-holders' own portion, payable on filing — the price of betrayal rises for the seller, and for anyone tempted to follow", "It is the only option that raises crew cohesion instead of spending it, 2 days before the most dangerous port call of the voyage"],
+            "disadvantages": ["The charter-holders' portion drops by 9 percent overall, and that includes the escort's 1/16th. The charter permits diluting the lance's share without asking; the lance's own contract never saw it coming", "The seller already transmitted 19 days ago. Generosity changes the future, not the past. Whatever was sold stays sold"],
+            "consequence": "The ship arrives unified and motivated, the betrayal already in motion is unaffected, and the escort lance discovers its own pay was the tool used to fix a problem it was hired to prevent — a clause to remember at the next charter signing.",
+            "costs": { "cbills": 0, "days": 0, "resource": "9 percent aggregate share dilution, escort's fraction included", "risk": "the 19-day-old transmission is already downrange; this buys the future only" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Alarm: the combine's intent confirmed — spotter hull breaks station and burns hard for the jump point ahead of the Lodestone, or an armed tug undocks on intercept at the final lane stop." },
+        { "t": "T+0:30", "event": "Lodestone's escort DropShip casts off and takes blocking station; the Lodestone begins emergency charge-cycle completion (11 days nominal, 6 remaining at typical alarm)." },
+        { "t": "T+6:00", "event": "Combine tug's intercept solution closes to boarding-threat range if unblocked; on open frequency, a salvage-rights claim against the Lodestone's 'distressed hull' status is broadcast for the port record." },
+        { "t": "T+24:00", "event": "Port authority's response window: a contested-boarding incident inside controlled space draws an inspection cutter in 1 day — every hour of fighting is logged by instruments neither side controls." },
+        { "t": "T+72:00", "event": "If the combine has the coordinates, its fast packet jumps for the registry: the claim race becomes literal, measured in recharge schedules." }
+      ],
+      "hardDeadline": "The Lodestone must complete charge and jump before the combine's packet can file: the registry's clock is the only one that counts, and it stamps to the hour. A won boarding action and a lost filing is a total mission failure with extra funerals."
+    },
+    "opforSketch": {
+      "composition": "Salvage combine assets: 1 spotter (converted Buccaneer, sensor-fitted, unarmed), 1 armed salvage tug with boarding complement (24, Veteran, cutting gear and zero-g training), 1 fast packet for the claim race, and at the freeport a retained light lance (Regular) for ground-side pressure. Generator should weight boarding actions, sensor play, and timeline pressure over line combat.",
+      "behavior": "Commercial predation under legal coloration: every aggressive act arrives wearing a salvage-rights or distress-response claim. The combine fights for the coordinates and the filing, not the hull — it disengages from any fight that costs more than the bounty and pivots to the registry race."
+    },
+    "forks": [
+      {
+        "name": "OPERATION ASSAY OFFICE",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "Claim filed first, ship and annex intact.",
+        "consequence": "The expedition owns the registered claim to TANTALUS — 4 jumps past the last help, with standing power in a sealed structure nobody has opened. The development consortium wants an armed survey on-site inside 90 days, before squatters, the combine's appeal, or whatever is drawing that power gets there first.",
+        "family": "RECON_RAID",
+        "threat": "MEDIUM"
+      },
+      {
+        "name": "OPERATION JUMPED STAKE",
+        "outcomeGate": "FAILURE",
+        "trigger": "Rival filing lands first, or the annex is lost or copied.",
+        "consequence": "The combine's filing stands and its armed survey ships for TANTALUS within the month. The expedition's remedy is the charter court — years — or the older registry of possession: reach the site first, dig in, and make the combine's lawyers argue with an occupied claim.",
+        "family": "PLANETARY_ASSAULT",
+        "threat": "HIGH"
+      },
+      {
+        "name": "OPERATION BONDED PAPER",
+        "outcomeGate": "COMPROMISED",
+        "trigger": "The split-cargo courier fails to arrive, or files for a third party.",
+        "consequence": "{NPC:smuggler-captain}'s bonded courier is 12 days overdue and a shell consortium has lodged a provisional filing with survey data only the duplicate annex could source. The bond pays 100,000 C-bills. The claim is worth more. Find the courier, the buyer, and the chain between them before the provisional filing matures at day 60.",
+        "family": "EXTRACTION_RAID",
+        "threat": "MEDIUM"
+      }
+    ],
+    "storyElementSeed": "In the wardroom, a junior surveyor practices saying 'routine mineral survey, thin results' to a shaving mirror, over and over, until the sentence sounds bored enough to be true.",
+    "voiceSlots": ["naval", "engineering", "intelligence", "command"],
+    "registerVariants": {
+      "comstar": {
+        "situation": "Annotation, Precentor's hand, margin of the acquired copy: the Order notes that a claim registry is a church of records. Whoever keeps the ledger keeps the world. The expedition understands this better than its House contemporaries; watch where it files, and with whom."
+      }
+    },
+    "specifics": {
+      "rechargeDaysNominal": { "min": 10, "max": 12, "unit": "days" },
+      "arrayCycleReliability": { "min": 75, "max": 85, "unit": "percent per cycle" },
+      "crewTotal": { "min": 38, "max": 42, "unit": "souls" },
+      "bountyOnCoordinates": { "min": 40000, "max": 60000, "unit": "C-bills" },
+      "consumablesDays": { "min": 55, "max": 65, "unit": "days" }
+    },
+    "resourceGates": [
+      {
+        "appliesTo": "Take the Lane",
+        "requires": "treasury-min:18000",
+        "whenLacking": "reprice",
+        "lackingText": "Below 18,000 C-bills the yard work goes on the expedition's account against the claim: the repair contract itself becomes a registered document naming the hull, the route, and the charter — filed where the combine's clerks read everything."
+      },
+      {
+        "appliesTo": "Split the Cargo",
+        "requires": "depot-access",
+        "whenLacking": "lock",
+        "lackingText": "No standing relationship with a bonded courier network: the option renders struck through with the note 'a secret handed to a stranger is not split, it is donated.'"
+      }
+    ]
+  }
+]

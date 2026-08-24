@@ -1,0 +1,97 @@
+:host {
+    height: fit-content;
+    min-height: 100%;
+    width: 100%;
+    container-type: inline-size;
+}
+
+.tab-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.tab-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 4px;
+    position: sticky;
+    gap: 4px;
+    bottom: 0;
+    z-index: 1;
+    border-top: 1px solid var(--border-color);
+    margin-top: auto;
+}
+
+.sort-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sort-select {
+    height: 32px;
+    padding: 0 8px;
+    font-size: 13px;
+}
+
+.sort-select option {
+    background-color: #222;
+    color: #fff;
+}
+
+.sort-direction-btn {
+    height: 32px;
+    width: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #bbb;
+    cursor: pointer;
+}
+
+.sort-direction-btn:hover {
+    color: white;
+}
+
+.sort-direction-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.view-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.view-toggle-btn svg {
+    flex-shrink: 0;
+}
+
+.variants-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.variants-list unit-card-expanded {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.variants-list unit-card-expanded:hover {
+    background-color: var(--hover-highlight-transparent);
+}
+
+.variants-list.compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 8px;
+}

@@ -1,0 +1,639 @@
+{
+  "_meta": {
+    "title": "Hot Spots — The Draconis March: CAPSTONES (endgame-only 'end boss' hotspots)",
+    "era": "ilclan",
+    "region": "draconis-march",
+    "packNote": "CAPSTONE POOL. Every record carries capstone:true and is dealt ONLY as the campaign's final contract(s) — richer synopsis, tougher OpFor (boss skill 2/3), a signature antagonist. NOT YET WIRED to the D-124 loader manifest: leaving it unwired keeps these out of the live offer board. The future capstone-gate directive wires this pack + adds the endgame gate (offer board filters capstone:true out of normal deals; deals from here once the campaign reaches its finale; reroll OFF on the capstone deal).",
+    "authoredBy": "PM (Opus) — direct-authored",
+    "ipPosture": "System stats + mechanics are FACTS, cited (Hot Spots: Draconis Reach world profiles; Sarna for non-book worlds). Situations, characters, and prose are ORIGINAL BCE writing.",
+    "writingBar": "FORGE-BRIEF v3, capstone tier — 3-4 para synopsis, 2-3 para/track, Scale 3, a named boss at Gunnery 2 / Piloting 3.",
+    "status": "2 of a planned 3-4 capstones authored (cap-01 Mallory's World, cap-02 New Ivaarsen). Target 3-4; a duel-of-champions and/or a Combine-heartland strike remain.",
+    "roster": [
+      "cap-01 Mallory's World — The Reckoning of the Reach",
+      "cap-02 New Ivaarsen — The Last Arsenal"
+    ]
+  },
+  "hotspots": [
+    {
+      "id": "hs-drm-cap-01",
+      "title": "The Reckoning of the Reach",
+      "world": "Mallory's World",
+      "employer": "Federated Suns — AFFS Draconis March high command (the final commitment)",
+      "type": "Capstone / Decisive engagement",
+      "sides": {
+        "a": {
+          "key": "a",
+          "role": "attacker",
+          "employer": "Federated Suns — AFFS Draconis March high command (the final commitment)",
+          "faction": "Mercenary",
+          "contract": {
+            "scale": 3,
+            "intensity": 3,
+            "lengthMonths": 4,
+            "steps": {
+              "basePay": 9,
+              "support": 8,
+              "transport": 8,
+              "salvage": 6,
+              "command": 5
+            },
+            "enemyFaction": "Draconis Combine",
+            "constraints": "Command House (the March's high command commits you to the decisive point). Salvage decent — the Reach's dead machines are the March's to claim. The campaign's FINAL contract; there is no work after it.",
+            "additionalRequirements": "Track Scale 3; minimum fielded force 7,000 BV / 280 PV. Bring your best — this is the reckoning.",
+            "bonus": "Win the Reckoning — take Mallory's World across all three tracks and the March grants +2 Reputation, full battle-loss compensation, and the campaign's decisive-victory settlement (the war's end tallied in your favor)."
+          },
+          "blurb": "Stand at the center of the March's last line on the Oregon plain — beat the Dragon and the Warlord who has run the whole offensive since Le Blanc, and the Reach holds for the Suns with your command's name on the battle that saved it.",
+          "situation": "Every reserve the March has left is on Mallory's World, and across the Oregon plain stands the Warlord who has run the whole offensive from its first jump — in person, with the best the Dragon still owns. Your command holds the decisive point of the last battle. Win, and the Reach holds; lose, and the campaign was the road to losing it."
+        },
+        "b": {
+          "key": "b",
+          "role": "defender",
+          "employer": "Draconis Combine — Tai-shu Genji Ishara's command (the Warlord in person, the last offensive)",
+          "faction": "Draconis Combine",
+          "contract": {
+            "scale": 3,
+            "intensity": 3,
+            "lengthMonths": 4,
+            "steps": {
+              "basePay": 9,
+              "support": 8,
+              "transport": 7,
+              "salvage": 6,
+              "command": 5
+            },
+            "enemyFaction": "Mercenary",
+            "constraints": "Command House (you fight under the Warlord's own banner at the decisive point). Salvage decent — the Dragon claims the field it takes. The campaign's FINAL contract; there is no work after it.",
+            "additionalRequirements": "Track Scale 3; minimum fielded force 7,000 BV / 280 PV. Bring your best — the Warlord accepts nothing less.",
+            "bonus": "Take the Reach — break the March on the Oregon plain across all three tracks and the Combine grants +2 Reputation, full battle-loss compensation, and the campaign's decisive-victory settlement: the war won for the Dragon on the last field."
+          },
+          "blurb": "Ride with Tai-shu Ishara for the storm's last blow — break the March's final host on the Oregon plain and take the Reach the Warlord has spent the whole campaign reaching for.",
+          "situation": "The maneuvering is over. The March has spent its last reserves on the Oregon plain, and Tai-shu Ishara has come in person to break them — one field, one day, the whole Reach as the stake. Ride under the Warlord's own banner at the decisive point; win, and everything the campaign reached for belongs to the Dragon at last."
+        }
+      },
+      "capstone": true,
+      "blurb": "The whole Reach comes down to Mallory's World. The March and the Dragon have both committed everything they have left — and your command is the weight that tips it.",
+      "systemProfile": {
+        "starType": "G2V",
+        "rechargeHours": 183,
+        "positionInSystem": "6",
+        "timeToJumpPointDays": 9.12,
+        "satellites": "1 (Viktor's Moon)",
+        "surfaceGravity": 1.04,
+        "atmPressure": "Standard (Breathable)",
+        "equatorialTempC": 37,
+        "climate": "Tropical",
+        "surfaceWaterPct": 80,
+        "rechargeStation": "None",
+        "hpgClass": "B",
+        "highestNativeLife": "Mammals",
+        "population": 214608000,
+        "populationYear": 3150,
+        "socioIndustrial": "A-C-B-C-C",
+        "landmasses": [
+          "Oregon"
+        ],
+        "capitalCity": null
+      },
+      "situation": "Every campaign in the Draconis Reach ends the same way it has for a thousand years — on a single world, with two exhausted hosts and one last field to decide it. This time the world is Mallory's World: a warm, tropical planet of one great continent called Oregon, sitting square on the road between the March's heart and the Combine's gains. It has no arsenal worth the name and no fortress on it, but it has the one thing that matters at the end of a war — it is where both sides have finally agreed to stop maneuvering and fight.\n\nThe Draconis March has committed the last of its reserves to Mallory's World, and the Combine has answered with the Warlord who has run the whole Reach offensive from the first jump — the officer whose name has sat behind every raid and every landing your command has fought this campaign. He is here now, in person, with the best of what the Dragon has left. So is the March's high command. And so are you: not a garrison, not a raider, but the decisive command, the weight both generals are counting on to be where the line finally breaks.\n\nThis is the reckoning. Win on the Oregon plain and the Reach holds for the Federated Suns, the Combine offensive is spent, and your command's name is written into the one battle everyone will remember. Lose, and everything you held across the whole campaign — every world, every contract, every clean win — was the long road to handing the Dragon the Reach on the last day.\n\nThe terms match the stakes: the March pays a decisive-battle bonus, replaces losses in full, and there will be no other work after this one — Mallory's World is the last contract the campaign has to give.",
+      "contract": {
+        "scale": 3,
+        "intensity": 3,
+        "lengthMonths": 4,
+        "steps": {
+          "basePay": 9,
+          "support": 8,
+          "transport": 8,
+          "salvage": 6,
+          "command": 5
+        },
+        "enemyFaction": "Draconis Combine",
+        "constraints": "Command House (the March's high command commits you to the decisive point). Salvage decent — the Reach's dead machines are the March's to claim. This is the campaign's FINAL contract; there is no work after it.",
+        "additionalRequirements": "Track Scale 3; minimum fielded force 7,000 BV / 280 PV. Bring your best — this is the reckoning.",
+        "bonus": "Win the Reckoning — take Mallory's World across all three tracks and the March grants +2 Reputation, full battle-loss compensation, and the campaign's decisive-victory settlement (the war's end tallied in your favor)."
+      },
+      "missionBrief": {
+        "behindScenes": "The campaign finale — a decisive three-track engagement, escalating in a line (no branch): the hosts collide (t1), the main lines break (t2), the Warlord makes his stand (t3). The Combine is at full strength and the Warlord fights to the end; this is meant to be the hardest contract in the campaign.",
+        "complications": [
+          {
+            "roll": "1-3",
+            "effect": "None — the reckoning needs no help to be hard."
+          },
+          {
+            "roll": "4",
+            "effect": "The whole Reach watches. Every friendly and enemy 'Mech destroyed is a headline — no reputation penalties this contract for collateral (both sides have stopped counting), but the Warlord's death is worth double reputation."
+          },
+          {
+            "roll": "5",
+            "effect": "Monsoon over Oregon. The tropical rains open — spotting beyond 8 hexes fails on a 1-2 (1D6) for the first 3 turns each track."
+          },
+          {
+            "roll": "6",
+            "effect": "March reserves. One friendly Battlefield Support strike is free each track (the last of the March's guns)."
+          },
+          {
+            "roll": "7",
+            "effect": "The Dragon's elite. The Warlord's command lance fields at Gunnery 2 / Piloting 3 (his household guard)."
+          },
+          {
+            "roll": "8+",
+            "effect": "Roll twice, ignore repeats."
+          }
+        ],
+        "contractVictory": "You: win the Reach — win all three tracks (the Combine must be broken on the Oregon plain and the Warlord beaten). Draconis Combine: win any two of the three tracks, or kill your commander in the Duel.",
+        "tally": "The Reckoning — this is the campaign's decisive settlement; the contract victory is the war's end. No running tally, only the final result.",
+        "namedCharacters": [
+          {
+            "name": "Tai-shu Genji Ishara",
+            "role": "OpFor commander — the campaign's Warlord (DCMS)",
+            "chassis": "Marauder II",
+            "skill": "Gunnery 2 / Piloting 3",
+            "rule": "The Warlord who ran the whole Reach offensive; he fights the entire contract and will not withdraw. His command lance is elite (Gunnery 2 / Piloting 3). If he is killed, the Combine force is -3 Initiative for the rest of that track and takes a morale break (a Combine 'Mech that ends a turn in his line of sight when he falls must pass a Piloting check or withdraw)."
+          }
+        ],
+        "purchaseOptions": "Before the reckoning only (no resupply mid-battle) — a March grand-armory list: any weight, 2D6 of 6+. Spend what you have; there is no next contract to save for."
+      },
+      "tracks": [
+        {
+          "id": "t1",
+          "name": "The Oregon Plain",
+          "templateId": "Meeting Engagement",
+          "root": true,
+          "situation": "The two hosts come onto the Oregon plain at dawn, and for the first time in the whole campaign neither side is raiding, landing, or withdrawing — they are simply here to fight until one of them cannot. Your command holds the center of the March's line, where the generals expect the Dragon to throw its weight, because that is where a war is won or lost.\n\nA meeting engagement is decided by who seizes the center first and holds it. Break the Combine's leading formations before they can set, take the middle of the plain, and the March fights the rest of the day on its own terms. Give the Dragon the center and every track after this one is uphill. This is first blood in the reckoning — make it count.",
+          "deployment": "Short edges, open plain. Both hosts enter Turn 1 from opposite home edges; neither sets up in advance. The center third of the Oregon plain is the decisive ground. Scale 3.",
+          "objectives": [
+            {
+              "text": "Seize the Center — more of your non-crippled BV/PV in the center third than the Combine at end of Turn 4.",
+              "vp": 50,
+              "kind": "primary",
+              "side": "both"
+            },
+            {
+              "text": "Hold the Plain — the same at end of Turn 8.",
+              "vp": 250,
+              "kind": "secondary",
+              "side": "both"
+            },
+            {
+              "text": "Bleed the Dragon — reduce the Combine to two-thirds its starting BV/PV.",
+              "vp": 200,
+              "kind": "secondary",
+              "side": "both"
+            },
+            {
+              "text": "Mark the Warlord — scan (identify) the Warlord's command lance.",
+              "vp": 100,
+              "kind": "bonus",
+              "side": "both"
+            }
+          ],
+          "specialRules": "Holding the center at track end carries the momentum into Track 2 (the loser deploys first there). The Warlord is present but does not commit his elite lance until Track 2.",
+          "trackEnd": "Default (Turn 10 / Turn 8 AS, or one side has no 'Mechs in play).",
+          "salvagePolicy": "Winner-all (the March claims the Reach's wrecks; SP at your salvage %).",
+          "opfor": {
+            "faction": "Draconis Combine",
+            "armsMix": "COMBINED_ARMS",
+            "vehicleShare": 0.25,
+            "bvRatio": 1.1
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t2",
+              "trigger": "First blood on the Oregon plain is spent; both lines commit.",
+              "consequence": "The main lines close — this is where the Dragon's back breaks, or yours does.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2",
+          "name": "Break the Dragon's Line",
+          "templateId": "Assault",
+          "root": false,
+          "situation": "The skirmishing is over and the two main lines have closed on each other across the middle of Oregon. There is no more maneuver left in either host — just weight against weight, and the knowledge that the side whose line breaks first loses the Reach. The Warlord commits his elite command lance now, and your command has to be the hammer that cracks the Dragon's formation before it cracks yours.\n\nAn assault is the hardest fight there is: you go straight at a prepared enemy at full strength and break him by will and firepower. Reduce the Combine host below the point where it can hold a line, take and keep the ground they stand on, and the road to the Warlord's own position opens for the last track. Fail to break them here and the reckoning is already lost, whatever happens after.",
+          "deployment": "Long edges. The Combine (Defender if you lost Track 1, else Attacker) sets up within 5 hexes of its home edge (10\" AS) before Initiative; the other side enters Turn 1. The Warlord's elite command lance (Gunnery 2 / Piloting 3) is on the field. Scale 3.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Press the Line — engage the Combine main body for 3 consecutive turns.",
+              "vp": 50,
+              "kind": "primary",
+              "side": "attacker"
+            },
+            {
+              "text": "Hold the Line — the Combine keeps half its force in a coherent line for 3 turns.",
+              "vp": 50,
+              "kind": "primary",
+              "side": "defender"
+            },
+            {
+              "text": "Break Them — reduce the Combine to half its starting BV/PV (tie = neither).",
+              "vp": 300,
+              "kind": "secondary",
+              "side": "both"
+            },
+            {
+              "text": "Take the Ground — hold the center of the Combine line at track end.",
+              "vp": 200,
+              "kind": "secondary",
+              "side": "both"
+            },
+            {
+              "text": "Blood the Guard — destroy or cripple two of the Warlord's elite command lance.",
+              "vp": 150,
+              "kind": "bonus",
+              "side": "both"
+            }
+          ],
+          "specialRules": "The Warlord's command lance fights at Gunnery 2 / Piloting 3. If the Combine main body breaks (reduced below half), the Warlord falls back to his command position for the final track.",
+          "trackEnd": "Default.",
+          "salvagePolicy": "Winner-all (SP at your salvage %).",
+          "opfor": {
+            "faction": "Draconis Combine",
+            "armsMix": "COMBINED_ARMS",
+            "vehicleShare": 0.2,
+            "bvRatio": 1.15
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "The Dragon's main line is spent; only the Warlord's own guns are left.",
+              "consequence": "It comes down to the two commanders on the field where the Reach is decided.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t3",
+          "name": "The Warlord's Last Stand",
+          "templateId": "Duel",
+          "root": false,
+          "situation": "The hosts have fought each other to ruin, and what is left on the Oregon plain is what a war always comes down to in the end — the two who would not quit. The Warlord who ran the whole Reach offensive stands on the last high ground with his household guard, and the March's high command has made the call every mercenary dreams of and dreads: this is your command's field, and your commander's fight, with the whole Reach watching to see whose banner is still up at dusk.\n\nA duel is honor and guns in equal measure. Your commander against the Warlord, their households holding the ring, no artillery and no ganging on a downed opponent who has yielded — a Combine Warlord will offer that courtesy and expect it. Beat him and the Reach is won, the Dragon's offensive is broken at its head, and the campaign ends with your name on it. Lose your commander here and everything held for the whole campaign is undone in a single afternoon.",
+          "deployment": "The Warlord's command position at center. Champion against champion (1-vs-1 by weight, or your command lance vs his household guard if both agree), the households holding a ring. No Battlefield Support. Scale 3 costs. Exit off any edge = forfeit (scored as destroyed).",
+          "objectives": [
+            {
+              "text": "Face the Dragon — engage the Warlord's unit in melee or fire for 2 consecutive turns.",
+              "vp": 50,
+              "kind": "primary",
+              "side": "both"
+            },
+            {
+              "text": "Beat the Warlord — force the Warlord's yield or destroy his unit.",
+              "vp": 400,
+              "kind": "secondary",
+              "side": "both"
+            },
+            {
+              "text": "Break the Guard — destroy or cripple half his household guard.",
+              "vp": 150,
+              "kind": "secondary",
+              "side": "both"
+            },
+            {
+              "text": "A Clean Victory — beat the Warlord without a dishonorable act (no firing on a yielded foe, no ganging a downed opponent).",
+              "vp": 100,
+              "kind": "bonus",
+              "side": "both"
+            }
+          ],
+          "specialRules": "The Warlord fights at Gunnery 2 / Piloting 3 and yields only if crippled and offered the courtesy; a dishonorable win forfeits the +2 Reputation. Beating the Warlord ends the contract as a decisive victory; losing your commander ends it as the campaign's defeat.",
+          "trackEnd": "On a kill or an accepted yield (or one side more than half down by BV/PV).",
+          "salvagePolicy": "The Warlord's 'Mech is the campaign's trophy (claimed to Cold Storage on a win); the households' wrecks pool-draft.",
+          "opfor": {
+            "faction": "Draconis Combine",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "The Warlord stands, or he falls.",
+              "consequence": "The Reckoning of the Reach is decided; the campaign ends here.",
+              "threat": "LOW"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hs-drm-cap-02",
+      "title": "The Last Arsenal",
+      "world": "New Ivaarsen",
+      "employer": "Federated Suns — New Ivaarsen Chasseurs (AFFS), last stand",
+      "type": "Capstone / Final defense",
+      "sides": {
+        "a": {
+          "key": "a",
+          "role": "defender",
+          "employer": "Federated Suns — New Ivaarsen Chasseurs (AFFS), last stand",
+          "faction": "Mercenary",
+          "contract": {
+            "scale": 3,
+            "intensity": 3,
+            "lengthMonths": 4,
+            "steps": {
+              "basePay": 9,
+              "support": 8,
+              "transport": 8,
+              "salvage": 4,
+              "command": 4
+            },
+            "enemyFaction": "Draconis Combine",
+            "constraints": "Command House (a Chasseur liaison rides with the last stand). Salvage Exchange (the Chasseurs claim the Dragon's wrecks for the arsenal). The campaign's FINAL contract — no work after New Ivaarsen.",
+            "additionalRequirements": "Track Scale 3; minimum fielded force 7,000 BV / 280 PV. Everything you have — this is the wall.",
+            "bonus": "Hold the arsenal — keep New Ivaarsen across all three tracks and the March grants +2 Reputation, full battle-loss compensation, and the campaign's decisive-victory settlement. Let the factory burn and the Reach is lost with it."
+          },
+          "blurb": "The war ends where your campaign began — hold the New Ivaarsen arsenal one last time, at full strength, and the Dragon's whole offensive breaks on the wall of iron your command would not move.",
+          "situation": "The war has come back to where it began: everything the Dragon has left is in orbit, come for the arsenal that lets the March fight at all. The Chasseurs make their stand on the Vestfold plain, and they want the command that held the academy line beside them. Behind you are the halls of Fluute; behind those, nothing — hold."
+        },
+        "b": {
+          "key": "b",
+          "role": "attacker",
+          "employer": "Draconis Combine — Tai-shu Aya Morishita's command (the Reach Warlord's final offensive)",
+          "faction": "Draconis Combine",
+          "contract": {
+            "scale": 3,
+            "intensity": 3,
+            "lengthMonths": 4,
+            "steps": {
+              "basePay": 9,
+              "support": 8,
+              "transport": 7,
+              "salvage": 4,
+              "command": 4
+            },
+            "enemyFaction": "Mercenary",
+            "constraints": "Command House (you spearhead the Warlord's last offensive). Salvage Exchange (the Dragon claims what the arsenal loses). The campaign's FINAL contract — no work after New Ivaarsen.",
+            "additionalRequirements": "Track Scale 3; minimum fielded force 7,000 BV / 280 PV. Everything the Dragon has left — take the forge.",
+            "bonus": "Take the arsenal — break New Ivaarsen across all three tracks (or gut the works' control room) and the Combine grants +2 Reputation, full battle-loss compensation, and the campaign's decisive-victory settlement: the March's forge taken and the war won for the Dragon."
+          },
+          "blurb": "Lead the Dragon's last offensive under Tai-shu Morishita — take the New Ivaarsen works and you don't just win a battle, you take the March's power to rebuild, and end the Reach war at Fluute.",
+          "situation": "Tai-shu Morishita commits the Dragon's last strength to the prize that makes every other gain permanent: the New Ivaarsen works, the forge that lets the March replace what it spends. Take the arsenal and the war does not just end — it stays won. The Chasseurs and their hired wall stand on the Vestfold plain; go through them."
+        }
+      },
+      "capstone": true,
+      "blurb": "The war ends where your campaign began — at the New Ivaarsen arsenal. Hold it one last time, at full strength, or the March loses the machines to ever fight again.",
+      "systemProfile": {
+        "starType": "K1V",
+        "rechargeHours": 192,
+        "positionInSystem": "3rd (of 8)",
+        "timeToJumpPointDays": 5.18,
+        "satellites": "None",
+        "surfaceGravity": 1.1,
+        "atmPressure": "Standard (Breathable)",
+        "equatorialTempC": 36,
+        "climate": "Warm-Temperate",
+        "surfaceWaterPct": 62,
+        "rechargeStation": "Zenith, Nadir",
+        "hpgClass": "A",
+        "highestNativeLife": "Avians",
+        "population": 6823450000,
+        "populationYear": 3150,
+        "socioIndustrial": "A-B-A-A-A",
+        "landmasses": [
+          "Vestfold",
+          "Jorvik",
+          "Dyflin",
+          "Svalbard",
+          "Katanes",
+          "Pommern"
+        ],
+        "capitalCity": "Fluute"
+      },
+      "situation": "The campaign began at New Ivaarsen, on the Vestfold plain, holding an arsenal against a raid. It ends at New Ivaarsen too — but there is nothing small about the Dragon's return. This is the Combine's final offensive of the Reach war, and it has come for the one prize that would make everything else permanent: the New Ivaarsen works, the A-A-A arsenal and academy that lets the whole Draconis March replace what it spends. Break this world and the Combine does not just win a battle; it wins the ability of the March to keep fighting for a generation.\n\nEverything the Dragon has left is in orbit over New Ivaarsen, and everything the March could scrape together is on the ground. The New Ivaarsen Chasseurs — the regiment that has held this border for lifetimes — make their last stand on the Vestfold plain with your command beside them, because the Chasseurs remember who held the academy line when the campaign began, and they want that command at their shoulder for the end of it. Behind you are the factory halls of Fluute; behind those is a war the March cannot rebuild if they burn.\n\nThis is the last arsenal, and the last contract. Hold New Ivaarsen across the whole offensive and the Dragon's war is spent on the one world it could not take; the Reach is saved not with a raid or a clever flank but with a wall of iron that would not move. Lose it, and every clean win of the whole campaign was the long march to the day the March lost its forge.\n\nThe terms are a fortress-world's last: full commitment, full compensation, and no work after — win or lose, the war ends at Fluute.",
+      "contract": {
+        "scale": 3,
+        "intensity": 3,
+        "lengthMonths": 4,
+        "steps": {
+          "basePay": 9,
+          "support": 8,
+          "transport": 8,
+          "salvage": 4,
+          "command": 4
+        },
+        "enemyFaction": "Draconis Combine",
+        "constraints": "Command House (a Chasseur liaison rides with the last stand). Salvage Exchange (the Chasseurs claim the Dragon's wrecks for the arsenal). The campaign's FINAL contract — no work after New Ivaarsen.",
+        "additionalRequirements": "Track Scale 3; minimum fielded force 7,000 BV / 280 PV. Everything you have — this is the wall.",
+        "bonus": "Hold the arsenal — keep New Ivaarsen across all three tracks and the March grants +2 Reputation, full battle-loss compensation, and the campaign's decisive-victory settlement. Let the factory burn and the Reach is lost with it."
+      },
+      "missionBrief": {
+        "behindScenes": "The callback finale — a three-track defense in a line (no branch), escalating from the plain to the factory to the Combine's last push. The Combine is at full strength and its Warlord will spend everything to take the works. This is meant to be the hardest defensive contract in the campaign.",
+        "complications": [
+          {
+            "roll": "1-3",
+            "effect": "None — the last stand is hard enough."
+          },
+          {
+            "roll": "4",
+            "effect": "The academy fights. A Chasseur cadet lance (two mediums, regular Gunnery 4 / Piloting 5) joins you each track — the school will not sit this one out."
+          },
+          {
+            "roll": "5",
+            "effect": "Arsenal resupply. Between tracks you refit for free (rearm + heal) — you are standing on the March's largest works."
+          },
+          {
+            "roll": "6",
+            "effect": "Naginata guns. The Combine ranges the plain — one enemy Battlefield Support artillery strike hits each track (the Dragon's last barrage)."
+          },
+          {
+            "roll": "7",
+            "effect": "The Warlord's spearhead. The Combine command lance fields at Gunnery 2 / Piloting 3 (the tip of the last offensive)."
+          },
+          {
+            "roll": "8+",
+            "effect": "Roll twice, ignore repeats."
+          }
+        ],
+        "contractVictory": "You: hold New Ivaarsen — win all three tracks (the plain, the factory, and the last push). Draconis Combine: destroy the factory control room (Track 2), or win two of the three tracks.",
+        "tally": "Arsenal Integrity — each factory hall destroyed across the contract counts 1. At 2+, the works are crippled: the decisive-victory settlement is halved even on a hold.",
+        "namedCharacters": [
+          {
+            "name": "Tai-shu Aya Morishita",
+            "role": "OpFor commander — the Combine's Reach Warlord (DCMS)",
+            "chassis": "Stalker",
+            "skill": "Gunnery 2 / Piloting 3",
+            "rule": "Leads the Dragon's final offensive from the front and means to end the war at Fluute. Her spearhead is elite (Gunnery 2 / Piloting 3). If she is killed, the Combine offensive breaks: -3 Initiative for the rest of that track and the Combine cannot start a new track (the last push is spent)."
+          }
+        ],
+        "purchaseOptions": "Between tracks, the New Ivaarsen grand armory — any weight, 2D6 of 5+ (you are standing on the March's forge). Spend it all; there is no next contract."
+      },
+      "tracks": [
+        {
+          "id": "t1",
+          "name": "The Vestfold Wall",
+          "templateId": "Defend",
+          "root": true,
+          "situation": "The Combine landing pours onto the Vestfold plain in strength no raid ever managed, and there is only one line between it and the works at Fluute — the one your command and the Chasseurs are standing on. This is the ground where the campaign began, and the Dragon has come to take it for good this time.\n\nA defense is a wall and a clock. You hold the Vestfold line against everything the Combine can push onto the plain, trading the outer fields for the hours the Chasseurs need to bring the works to full alert. Hold the wall and the Dragon has to grind through you to reach the factory; break, and the offensive is inside the works by nightfall.",
+          "deployment": "Short edges. You (Defender) hold one-third of your force off-map (arriving end of Turn 1, own half); the rest sets up within 6 hexes of your home (Fluute) edge (12\" AS; 12/18\" at Scale 2+), the Vestfold line at center. The Combine (Attacker) enters Turn 1 in strength. Scale 3.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Hold the Wall — half your force within 4 hexes of the Vestfold line at end of Turn 4 (6/12\" at Scale 2+).",
+              "vp": 50,
+              "kind": "primary",
+              "side": "both"
+            },
+            {
+              "text": "Bar the Plain — no Combine unit exits your home (Fluute) edge through end of Turn 8.",
+              "vp": 300,
+              "kind": "secondary",
+              "side": "defender"
+            },
+            {
+              "text": "Break the Wall — exit 4 units off the Fluute edge toward the works.",
+              "vp": 300,
+              "kind": "secondary",
+              "side": "attacker"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV on the Vestfold line at track end.",
+              "vp": 200,
+              "kind": "bonus",
+              "side": "both"
+            }
+          ],
+          "specialRules": "The Warlord's spearhead (Gunnery 2 / Piloting 3) leads the Combine assault. Holding the line to track end delays the offensive; a breakthrough puts the Combine into the factory approaches for Track 2.",
+          "trackEnd": "End of Turn 8 (Turn 10 AS at Scale 3).",
+          "salvagePolicy": "Winner-all (the Chasseurs claim Combine wrecks; SP at your salvage %).",
+          "opfor": {
+            "faction": "Draconis Combine",
+            "armsMix": "COMBINED_ARMS",
+            "vehicleShare": 0.25,
+            "bvRatio": 1.15
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t2",
+              "trigger": "The Vestfold plain is fought out; the Dragon reaches for the works.",
+              "consequence": "Whatever crossed the wall goes for the factory — the arsenal's beating heart.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2",
+          "name": "The Factory Floor",
+          "templateId": "Strike",
+          "root": false,
+          "situation": "The Combine is into the factory approaches at Fluute, and the target is no secret — the four great production halls, and among them the master control room the whole arsenal runs on. Wreck the control room and the works go dark for a decade whatever else survives; the Dragon knows it, and its spearhead drives straight for the halls. Your command stands in the factory itself now, fighting among the gantries for the thing the whole campaign was really about.\n\nThis is a strike, run in reverse — you are the defender of the objective the enemy has come to destroy. Keep the Combine off the control room, hold the halls long enough for the arsenal's own defenses to wake, and the works survive. Let them reach the master hall and the March loses its forge in an afternoon, no matter who holds the plain outside.",
+          "deployment": "Long edges, factory map. You (Defender) set up before Initiative in your own half, at least half your force within 3 hexes of four Heavy buildings (the production halls, one secretly the master control room / HQ) near center. The Combine (Attacker) enters half its force Turn 1, the rest from a short edge Turn 2. Scale 3.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Case the Works — scan 2 halls, or find the control room.",
+              "vp": 50,
+              "kind": "primary",
+              "side": "attacker"
+            },
+            {
+              "text": "Hold the Halls — half your force within reach of the buildings at end of Turn 4.",
+              "vp": 50,
+              "kind": "primary",
+              "side": "defender"
+            },
+            {
+              "text": "Kill the Heart — identify and destroy the master control room.",
+              "vp": 350,
+              "kind": "secondary",
+              "side": "attacker"
+            },
+            {
+              "text": "Save the Heart — the control room still standing at track end.",
+              "vp": 350,
+              "kind": "secondary",
+              "side": "defender"
+            },
+            {
+              "text": "Cut the Spearhead — destroy the Warlord's unit.",
+              "vp": 150,
+              "kind": "bonus",
+              "side": "defender"
+            }
+          ],
+          "specialRules": "Scanning follows Strike reveal rules (a scanned hall's role becomes known; the control room can be identified). Each production hall destroyed adds to Arsenal Integrity. Destroying the control room is a Combine contract victory even if they lose the rest.",
+          "trackEnd": "Default.",
+          "salvagePolicy": "Pool-draft; Exchange cash to you (the Chasseurs claim the wrecks).",
+          "opfor": {
+            "faction": "Draconis Combine",
+            "armsMix": "COMBINED_ARMS",
+            "vehicleShare": 0.2,
+            "bvRatio": 1.1
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "The factory floor is decided; the Dragon throws its last strength at what remains.",
+              "consequence": "The Warlord commits everything left for one final push on the works.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t3",
+          "name": "The Last Push",
+          "templateId": "Assault",
+          "root": false,
+          "situation": "The Combine offensive is spent to its last reserves, and the Warlord makes the only move a beaten commander with nothing left can make — she throws everything remaining at the works in one final assault, to break the arsenal by will if she cannot by weight. Your command and the Chasseurs stand between the last of the Dragon and the last of the forge, and this is where the whole campaign is decided: not a wall, not a clever defense, but a straight fight to see whose iron gives out first.\n\nAn assault is broken by meeting it and not giving ground. Hold the works against the Warlord's last push, break her final formation, and the Dragon's war ends at Fluute with the arsenal still standing — the Reach saved, the campaign won, your command's name on the wall that held. Let the last push through, and everything you spent the whole campaign holding is lost on the final field.",
+          "deployment": "Long edges, the factory grounds. You (Defender) set up in your own half among the works before Initiative; the Combine (Attacker) enters Turn 1 with everything it has left, the Warlord's spearhead (Gunnery 2 / Piloting 3) at the front. Scale 3.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Meet the Push — engage the Combine assault for 2 consecutive turns.",
+              "vp": 50,
+              "kind": "primary",
+              "side": "defender"
+            },
+            {
+              "text": "Press the Assault — the Combine keeps half its force attacking for 3 turns.",
+              "vp": 50,
+              "kind": "primary",
+              "side": "attacker"
+            },
+            {
+              "text": "Break the Last Push — reduce the Combine to a quarter of its starting BV/PV.",
+              "vp": 350,
+              "kind": "secondary",
+              "side": "defender"
+            },
+            {
+              "text": "Overrun the Works — control the factory center at end of Turn 6.",
+              "vp": 350,
+              "kind": "secondary",
+              "side": "attacker"
+            },
+            {
+              "text": "Fell the Warlord — destroy the Warlord's unit.",
+              "vp": 200,
+              "kind": "bonus",
+              "side": "both"
+            }
+          ],
+          "specialRules": "The Warlord fights at Gunnery 2 / Piloting 3 and will not withdraw. If she falls, the last push breaks (the Combine takes -3 Initiative and any Combine 'Mech in her line of sight must pass a Piloting check or withdraw). Each factory hall destroyed still adds to Arsenal Integrity.",
+          "trackEnd": "Default.",
+          "salvagePolicy": "Winner-all (the Chasseurs claim the Dragon's last wrecks; the Warlord's 'Mech to Cold Storage on a win).",
+          "opfor": {
+            "faction": "Draconis Combine",
+            "armsMix": "COMBINED_ARMS",
+            "vehicleShare": 0.15,
+            "bvRatio": 1.15
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "The last push is broken, or the works are overrun.",
+              "consequence": "The Last Arsenal holds or falls; the campaign ends at Fluute.",
+              "threat": "LOW"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

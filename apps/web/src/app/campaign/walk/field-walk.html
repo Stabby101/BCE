@@ -1,0 +1,81 @@
+<div class="fw-overlay" (click)="later()">
+    <div class="fw" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Walk the field">
+        <div class="fw-head">
+            <div class="fw-htext">
+                <div class="fw-title">Walk the field <span class="fw-flag">{{ clauseLabel() }}</span></div>
+                <div class="fw-sub">{{ branchName() }} — every machine triaged off its <b>live end-state</b>. Haul-back lift <b>{{ recoverCap() }}</b> · cold-storage slots <b>{{ prizeSlots() }}</b>. The Three Questions are auto-scored; override any per row.</div>
+            </div>
+            <button type="button" class="fw-x" (click)="later()" aria-label="Walk later">✕</button>
+        </div>
+
+        <!-- BLUFOR -->
+        <section class="fw-side blufor">
+            <div class="fw-shead"><span class="badge">BLUFOR</span><span class="sh-t">Your force</span><span class="sh-c">{{ recoversSelected() }}/{{ recoverCap() }} recoveries</span></div>
+            @for (r of blu(); track r.instanceId) {
+                <div class="fw-row sev-{{ r.readout.severity }}">
+                    <div class="fw-unit"><span class="fw-name">{{ r.label }}</span><span class="fw-tons">{{ r.tons }}t</span></div>
+                    <div class="fw-readout">
+                        <span class="sev sev-{{ r.readout.severity }}">{{ sevLabel(r.readout.severity) }}</span>
+                        <span class="ro">armor {{ pct(r.readout.armorPct) }}%</span>
+                        @if (r.readout.internalBreaches.length) { <span class="ro warn">internal {{ r.readout.internalBreaches.join('/') }}</span> }
+                        @if (r.readout.engineDead) { <span class="ro crit">ENGINE</span> }
+                        @if (r.readout.gyroDead) { <span class="ro crit">GYRO</span> }
+                        @if (r.readout.legsKilled) { <span class="ro crit">LEGS</span> }
+                        @if (r.readout.destroyedCrits && !r.readout.unitDestroyed) { <span class="ro">{{ r.readout.destroyedCrits }} crits</span> }
+                        @if (r.readout.unitDestroyed) { <span class="ro crit">DESTROYED</span> }
+                    </div>
+                    <div class="fw-q">
+                        <button type="button" class="q1" [class.no]="!effQ1(r)" (click)="toggleQ1(r)" title="Q1 — can we get it to the ship? click to override">Q1 {{ effQ1(r) ? 'YES' : 'NO' }}</button>
+                        @if (r.pilot && r.pilot.status !== 'OK') { <span class="pil" [class.kia]="r.pilot.status === 'KIA'">{{ r.pilot.status === 'KIA' ? '☠ PILOT KIA' : '✚ PILOT INJURED · ' + r.pilot.recoveryDays + 'd' }}</span> }
+                    </div>
+                    <div class="fw-disp">
+                        <select (change)="setDisp(r, $any($event.target).value)" [attr.aria-label]="r.label + ' disposition'">
+                            @for (o of bluOptions; track o.v) { <option [value]="o.v" [selected]="o.v === effDisp(r)">{{ o.l }}</option> }
+                        </select>
+                        <span class="fw-credit">@if (rowCredit(r)) { +{{ fmt(rowCredit(r)) }} } @else if (effDisp(r) === 'RECOVER') { <span class="tri tri-{{ r.readout.severity }}">triage {{ r.readout.severity }}</span> } @else { — }</span>
+                    </div>
+                </div>
+            }
+            @if (!blu().length) { <div class="fw-none">No BLUFOR engaged.</div> }
+        </section>
+
+        <!-- OPFOR -->
+        <section class="fw-side opfor">
+            <div class="fw-shead"><span class="badge">OPFOR</span><span class="sh-t">Enemy machines</span><span class="sh-c">{{ claimsSelected() }}/{{ prizeSlots() }} prizes</span></div>
+            @for (r of opf(); track r.instanceId) {
+                <div class="fw-row sev-{{ r.readout.severity }}">
+                    <div class="fw-unit"><span class="fw-name">{{ r.label }}</span><span class="fw-tons">{{ r.tons }}t</span></div>
+                    <div class="fw-readout">
+                        <span class="sev sev-{{ r.readout.severity }}">{{ sevLabel(r.readout.severity) }}</span>
+                        <span class="ro">armor {{ pct(r.readout.armorPct) }}%</span>
+                        @if (r.readout.internalBreaches.length) { <span class="ro warn">internal {{ r.readout.internalBreaches.join('/') }}</span> }
+                        @if (r.readout.engineDead) { <span class="ro crit">ENGINE</span> }
+                        @if (r.readout.gyroDead) { <span class="ro crit">GYRO</span> }
+                        @if (r.readout.legsKilled) { <span class="ro crit">LEGS</span> }
+                        @if (r.readout.unitDestroyed) { <span class="ro crit">DESTROYED</span> }
+                    </div>
+                    <div class="fw-q">
+                        <button type="button" class="q1" [class.no]="!effQ1(r)" (click)="toggleQ1(r)" title="Q1 — recoverable? click to override">Q1 {{ effQ1(r) ? 'YES' : 'NO' }}</button>
+                        <span class="val">value {{ fmt(r.value) }}</span>
+                    </div>
+                    <div class="fw-disp">
+                        <select (change)="setDisp(r, $any($event.target).value)" [attr.aria-label]="r.label + ' disposition'">
+                            @for (o of opfOptions; track o.v) { <option [value]="o.v" [selected]="o.v === effDisp(r)" [disabled]="o.v === 'CLAIM_PRIZE' && claimDisabled(r)">{{ o.l }}</option> }
+                        </select>
+                        <span class="fw-credit">@if (rowCredit(r)) { +{{ fmt(rowCredit(r)) }} } @else if (effDisp(r) === 'CLAIM_PRIZE') { <span class="tri">→ cold storage</span> } @else { — }</span>
+                        @if (claimGate(r); as g) { <div class="gate-note">{{ g }}</div> }
+                    </div>
+                </div>
+            }
+            @if (!opf().length) { <div class="fw-none">No OpFor on the field.</div> }
+        </section>
+
+        <div class="fw-foot">
+            <div class="fw-total">Net credit <b>+{{ fmt(totalCredit()) }}</b> C-bills · {{ clauseLabel() }}</div>
+            <div class="fw-acts">
+                <button type="button" class="fw-later" (click)="later()">Walk later</button>
+                <button type="button" class="fw-go" (click)="confirm()">Confirm dispositions &raquo;</button>
+            </div>
+        </div>
+    </div>
+</div>

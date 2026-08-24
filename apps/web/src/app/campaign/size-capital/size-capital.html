@@ -1,0 +1,97 @@
+<main class="sheet" aria-label="New campaign — unit size, starting capital, and resource level">
+    <span class="reg tl" aria-hidden="true"></span><span class="reg tr" aria-hidden="true"></span>
+    <span class="reg bl" aria-hidden="true"></span><span class="reg br" aria-hidden="true"></span>
+    <div class="holes" aria-hidden="true"><div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div></div>
+    <div class="stamp" aria-hidden="true">New Campaign</div>
+
+    <header>
+        <div>
+            <div class="ttl">BATTLETECH CAMPAIGN ENGINE</div>
+            <div class="crumb">Create &nbsp;&rsaquo;&nbsp; <span class="done">era &#10003;</span> &nbsp;&rsaquo;&nbsp; <span class="done">date+force &#10003;</span> &nbsp;&rsaquo;&nbsp; <span class="done">faction &#10003;</span> &nbsp;&rsaquo;&nbsp; <b>Size, capital &amp; resources</b></div>
+        </div>
+        <div class="step"><div><b>STEP</b> 04 / 04</div><div><b>FIELD</b> ASSETS</div></div>
+    </header>
+
+    <!-- DIRECTIVE-068 — Quick Mission arms-mix toggle: flows into the force-generator pool (and the OpFor). -->
+    @if (quickMission()) {
+        <div class="ph">Arms mix <small>— the one-shot force composition</small></div>
+        <div class="sizes">
+            <button type="button" class="sz amx" data-amx="combined" [class.sel]="armsMix() === 'combined'" [attr.aria-pressed]="armsMix() === 'combined'" (click)="setArmsMix('combined')">
+                <div class="szn">Combined Arms</div><div class="szc">’Mechs + vehicles</div><div class="szk">D-046 mix</div>
+            </button>
+            <button type="button" class="sz amx" data-amx="mechs" [class.sel]="armsMix() === 'mechs'" [attr.aria-pressed]="armsMix() === 'mechs'" (click)="setArmsMix('mechs')">
+                <div class="szn">’Mechs only</div><div class="szc">no vehicles</div><div class="szk">pure ’Mech force</div>
+            </button>
+        </div>
+    }
+
+    <div class="ph">Unit size</div>
+    <div class="sizes">
+        @for (s of sizes; track s.id) {
+            <button type="button" class="sz" [class.sel]="selectedSize()?.id === s.id" [attr.aria-pressed]="selectedSize()?.id === s.id" (click)="selectSize(s)">
+                <div class="szn">{{ s.name }}</div>
+                <div class="szc">{{ s.count }} &times; ’Mech</div>
+                <div class="szk">{{ s.clan }}</div>
+            </button>
+        }
+    </div>
+
+    <div class="ph">Starting capital
+        @if (selectedSize(); as s) { <small>— {{ s.name }}, {{ s.count }} ’Mech</small> }
+    </div>
+    @if (selectedSize()) {
+        <div class="cap">
+            @for (p of presets(); track p.tier) {
+                <button type="button" class="chip" [class.sel]="isPresetSel(p)" [attr.aria-pressed]="isPresetSel(p)" (click)="selectPreset(p)">
+                    <div class="chl">{{ p.tier }}</div>
+                    <div class="chv">{{ short(p.amount) }}</div>
+                    <div class="chs">{{ fmt(p.amount) }}</div>
+                </button>
+            }
+            <div class="custom">
+                <label for="cust">Write your own (C-bills)</label>
+                <input #cust id="cust" type="number" min="0" step="1000000" placeholder="e.g. 35000000"
+                    [value]="customText()" (input)="onCustom(cust.value)" />
+            </div>
+        </div>
+    } @else {
+        <div class="cap">
+            <div class="custom none">Pick a unit size first — capital scales to it.</div>
+        </div>
+    }
+
+    <div class="ph">Starting resource level <small>provided assets — separate from cash</small></div>
+    @if (selectedSize()) {
+        <div class="res">
+            @for (r of resourceCards(); track r.id) {
+                <button type="button" class="rc" [class.sel]="selectedResource() === r.id" [attr.aria-pressed]="selectedResource() === r.id" (click)="selectResource(r.id)">
+                    <div class="rch"><span class="rcn">{{ r.name }}</span><span class="rct">{{ r.grade }}</span></div>
+                    <ul class="rcl">
+                        @for (line of r.lines; track line.text) {
+                            <li [class.none]="line.none">{{ line.text }}</li>
+                        }
+                    </ul>
+                </button>
+            }
+        </div>
+    } @else {
+        <div class="res">
+            <div class="res-empty">Pick a unit size first — the DropShip scales to it.</div>
+        </div>
+    }
+    <p class="capnote">Capital is cash; resource level is hardware you start with. Lean means you buy transport yourself; higher tiers provide it.</p>
+
+    <footer>
+        @if (beginError()) {
+            <div class="begin-error" style="margin:0 0 10px;padding:10px 12px;border:1px solid #6b4a2f;border-radius:8px;background:#241a12;color:#e7a86b;font-size:13px;display:flex;align-items:center;gap:12px;justify-content:center">
+                <span>⚠ {{ beginError() }}</span>
+                <button type="button" class="btn go" (click)="begin()">Retry</button>
+            </div>
+        }
+        <div class="nav">
+            <button type="button" class="btn" (click)="back()">&lsaquo; Back</button>
+            <button type="button" class="btn go" [disabled]="!canBegin() || generating()" (click)="begin()">{{ generating() ? 'Mustering force…' : 'Begin campaign »' }}</button>
+        </div>
+        <div class="meta2">BCE v0.1 &middot; campaign parameter 4 of 4<br>era &middot; date+force &middot; faction &middot; <b>size+capital+resources</b></div>
+    </footer>
+</main>

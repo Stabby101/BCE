@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="72" fill="#d8c8a2"/>
+  <g transform="translate(256,256) scale(1.45)">
+    <polygon points="0,-150 130,-75 130,75 0,150 -130,75 -130,-75" fill="#e4d8b8" stroke="#1a1712" stroke-width="9"/>
+    <polygon points="0,-150 130,-75 130,75 0,150 -130,75 -130,-75" fill="none" stroke="#b5611a" stroke-width="4" transform="scale(0.86)"/>
+    <text x="0" y="40" text-anchor="middle" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="122" letter-spacing="1" fill="#1a1712">BCE</text>
+  </g>
+</svg>

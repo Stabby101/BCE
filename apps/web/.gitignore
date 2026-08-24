@@ -1,0 +1,63 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Compiled output
+/dist
+/dist-player
+/tmp
+/out-tsc
+/bazel-out
+/public/zip
+# DEPLOY-005: build-emitted per-era catalog SLICES (fetched from the proxied catalog at build time;
+# witness-derived data per REF-001 → NOT committed; gen-slices regenerates them on the Cloudflare build).
+/public/mekbay/slim
+# DEPLOY-007: full catalog JSON mirrored same-origin at build time (units/equipment2/quirks/factions/
+# eras/units_sources) so the market full-catalog never touches db.mekbay.com. Build-fetched, REF-001 → NOT committed.
+/public/mekbay/*.json
+# DIRECTIVE-127: the MUL ilClan faction allow-list, COPIED here at build from the committed source of truth
+# (content-forge/mul/ilclan/allowlist.json) → served same-origin. Build-emitted, like the slices → NOT committed.
+/public/mekbay/mul-ilclan
+# DEPLOY-002 P4-prep: the generated unit SPRITES are committed (baked) so a clean cloud clone
+# (Cloudflare Pages) builds a working app WITHOUT the gitignored mm-data (the T-006 dependency).
+# They are MekBay GPL display assets (unit icons), NOT the REF-001-gated rulebooks/witnesses.
+# gen-sprites still regenerates them when mm-data IS present (MM_DATA_PATH); absent → it no-ops + these stand.
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+/src/app/build-meta.ts
+/scripts/fixtures
+/plans

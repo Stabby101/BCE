@@ -1,0 +1,147 @@
+<main class="sheet" aria-label="New campaign — mercenary command">
+    <span class="reg tl" aria-hidden="true"></span><span class="reg tr" aria-hidden="true"></span>
+    <span class="reg bl" aria-hidden="true"></span><span class="reg br" aria-hidden="true"></span>
+    <div class="holes" aria-hidden="true"><div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div></div>
+    <div class="stamp" aria-hidden="true">Hot Spots</div>
+
+    <header>
+        <div>
+            <div class="ttl">BATTLETECH CAMPAIGN ENGINE</div>
+            <div class="crumb">Hot Spots &nbsp;&rsaquo;&nbsp; <b>Mercenary Command</b></div>
+        </div>
+        <div class="step"><div><b>STEP</b> FINAL</div><div><b>FIELD</b> COMMAND</div></div>
+    </header>
+
+    <div class="lead">Stand up your mercenary command: name it, pick a <b>Start Profile</b>, and build a force to the profile's BV budget. The Warchest, Reputation, and Scale come from the profile.</div>
+
+    <label class="fld">
+        <span class="fl">Command name</span>
+        <input type="text" [value]="commandName()" (input)="commandName.set($any($event.target).value)" placeholder="e.g. Grey Death Legion" maxlength="40" />
+    </label>
+
+    <!-- HSFORGE-1 P2 - the merc command's THEATER of operations (ruling D4/D11): specific region or a
+         random draw (resolved at pick - the select then shows the resolved theater). Era-wide default =
+         the pre-P2 behavior byte-identical. Drives the offer board's chamber filter + the Forge top-up. -->
+    <label class="fld">
+        <span class="fl">Theater of operations</span>
+        <select (change)="setTheater($any($event.target))" data-testid="mc-theater" aria-label="Theater of operations">
+            <option value="" [selected]="!theater()">Era-wide (no set theater)</option>
+            @for (r of theaterRegions(); track r.id) {
+                <option [value]="r.id" [selected]="theater() === r.id">{{ r.name }}</option>
+            }
+            <option value="random">🎲 Random theater</option>
+        </select>
+    </label>
+
+    <div class="sh">Start Profile</div>
+    <div class="profs">
+        @for (pr of profiles; track pr.id) {
+            <button type="button" class="prof" [class.on]="profileId() === pr.id" (click)="setProfile(pr.id)">
+                <span class="prof-l">{{ pr.label }}</span>
+                <span class="prof-b">{{ pr.blurb }}</span>
+                @if (pr.id !== isCustom) {
+                    <span class="prof-n">BV {{ money(pr.forceBV) }} &middot; {{ pr.unitCap }} units &middot; {{ money(pr.warchestSP) }} SP &middot; Rep {{ pr.reputation }} &middot; Scale {{ pr.scale }} &middot; {{ pr.pilots }} pilots</span>
+                }
+            </button>
+        }
+    </div>
+    @if (profileId() === isCustom) {
+        <div class="custom">
+            <label class="cf"><span>Force BV</span><input type="number" min="0" step="500" [value]="customForceBV()" (input)="customForceBV.set(num($any($event.target).value))" /></label>
+            <label class="cf"><span>Warchest SP</span><input type="number" min="0" step="500" [value]="customWarchestSP()" (input)="customWarchestSP.set(num($any($event.target).value))" /></label>
+            <label class="cf"><span>Scale</span><input type="number" min="1" max="5" [value]="customScale()" (input)="customScale.set(num($any($event.target).value))" /></label>
+            <label class="cf"><span>Unit cap</span><input type="number" min="1" max="20" [value]="customUnitCap()" (input)="customUnitCap.set(num($any($event.target).value))" /></label>
+            <label class="cf"><span>Named pilots</span><input type="number" min="0" max="8" [value]="customPilots()" (input)="customPilots.set(num($any($event.target).value))" /></label>
+        </div>
+    }
+
+    <div class="sh">Pilot Rating</div>
+    <div class="rats">
+        @for (r of ratings; track r) { <button type="button" class="rat" [class.on]="rating() === r" (click)="rating.set(r)">{{ r }}</button> }
+    </div>
+
+    <div class="sh">Force
+        <span class="budget" [class.full]="chosen().length >= profile().unitCap">{{ chosen().length }}/{{ profile().unitCap }} units</span>
+        <span class="budget" [class.full]="chosenBV() >= profile().forceBV">BV {{ money(chosenBV()) }} / {{ money(profile().forceBV) }}</span>
+    </div>
+    <div class="cols">
+        <div class="cat">
+            <!-- DIRECTIVE-123 — search + two-key sort (Sort by / then + direction). [selected] per option (NG-SELECT). -->
+            <div class="ctools">
+                <input type="search" class="csearch" [value]="search()" (input)="search.set($any($event.target).value)" placeholder="Search chassis / model…" />
+                <div class="csort">
+                    <label class="ssel"><span>Sort by</span>
+                        <select (change)="setSortPrimary($any($event.target).value)" aria-label="Sort by">
+                            @for (f of sortFields; track f.key) { <option [value]="f.key" [selected]="sortPrimary() === f.key">{{ f.label }}</option> }
+                        </select>
+                    </label>
+                    <button type="button" class="dirtog" (click)="toggleSortDir()" [attr.aria-label]="'Sort direction — ' + (sortDir() === 'asc' ? 'ascending' : 'descending')">{{ sortDir() === 'asc' ? '▲' : '▼' }}</button>
+                    <label class="ssel"><span>then</span>
+                        <select (change)="setSortSecondary($any($event.target).value)" aria-label="Then sort by">
+                            <option value="none" [selected]="sortSecondary() === 'none'">—</option>
+                            @for (f of sortFields; track f.key) { <option [value]="f.key" [selected]="sortSecondary() === f.key">{{ f.label }}</option> }
+                        </select>
+                    </label>
+                </div>
+            </div>
+            <!-- DIRECTIVE-123b — FILTER groups: Weight × BV × Era (AND across groups, OR within a group). -->
+            <div class="ffilters">
+                <div class="fgroup">
+                    <span class="fglabel">Weight</span>
+                    @for (band of weightBands; track band.key) { <button type="button" class="fchip" [class.on]="weightFilter().has(band.key)" (click)="toggleWeight(band.key)">{{ band.label }}</button> }
+                </div>
+                <div class="fgroup">
+                    <span class="fglabel">BV</span>
+                    @for (band of bvBands; track band.key) { <button type="button" class="fchip" [class.on]="bvFilter().has(band.key)" (click)="toggleBv(band.key)">{{ band.label }}</button> }
+                </div>
+                <!-- DIRECTIVE-124f — the ERA band sub-filter is hidden in a Hot Spots campaign (the era is fixed to the
+                     campaign era; the pool is already the campaign-era slice). Traditional renders it exactly as before. -->
+                @if (!isHotspots() && eraBands().length > 1) {
+                    <div class="fgroup">
+                        <span class="fglabel">Era</span>
+                        @for (band of eraBands(); track band.key) { <button type="button" class="fchip" [class.on]="eraFilter().has(band.key)" (click)="toggleEra(band.key)">{{ band.label }}</button> }
+                    </div>
+                }
+                <div class="fmeta">
+                    <span class="fcount">{{ catalog().length }} unit{{ catalog().length === 1 ? '' : 's' }}@if (catalog().length > 120) { · showing 120 }</span>
+                    @if (activeFilters()) { <button type="button" class="fclear" (click)="clearFilters()">✕ Clear filters ({{ activeFilters() }})</button> }
+                </div>
+            </div>
+            @if (catalogVisible().length) {
+                <div class="clist">
+                    @for (u of catalogVisible(); track u.name) {
+                        <div class="crow">
+                            <span class="cn">{{ u.chassis }} {{ u.model }}</span>
+                            <span class="csub"><span class="ctype" [class.veh]="u.type !== 'Mek'">{{ unitTypeLabel(u) }}</span> {{ u.tons }}t &middot; BV {{ money(u.bv) }}</span>
+                            <button type="button" class="cbtn" [disabled]="!canAdd(u)" (click)="addUnit(u)">Add</button>
+                        </div>
+                    }
+                </div>
+            } @else if (catalogError()) { <p class="empty">Couldn't load the unit catalog. <button type="button" class="cbtn" (click)="retryCatalog()">Retry</button></p> }
+            @else if (!catalogReady()) { <p class="empty">Loading the unit catalog…</p> }
+            @else { <p class="empty">No era-legal units match.</p> }
+        </div>
+        <div class="chz">
+            <div class="chz-h">Chosen force</div>
+            @if (chosen().length) {
+                <div class="clist">
+                    @for (u of chosen(); track $index) {
+                        <div class="crow">
+                            <span class="cn">{{ u.chassis }} {{ u.model }}</span>
+                            <span class="csub"><span class="ctype" [class.veh]="u.type !== 'Mek'">{{ unitTypeLabel(u) }}</span> BV {{ money(u.bv) }}</span>
+                            <button type="button" class="cbtn rm" (click)="removeUnit($index)">&#10005;</button>
+                        </div>
+                    }
+                </div>
+            } @else { <p class="empty">Pick units from the catalog — up to the BV budget and unit cap.</p> }
+        </div>
+    </div>
+
+    <footer>
+        <div class="nav">
+            <button type="button" class="btn" (click)="back()">&lsaquo; Back</button>
+            <button type="button" class="btn go" [disabled]="!canBegin()" (click)="begin()">Begin campaign &rsaquo;</button>
+        </div>
+        <div class="meta">BCE v0.1 &middot; Hot Spots mercenary command<br>{{ chosen().length }} units &middot; {{ money(chosenBV()) }} BV &middot; {{ money(profile().warchestSP) }} SP warchest</div>
+    </footer>
+</main>

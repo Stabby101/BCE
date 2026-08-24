@@ -1,0 +1,137 @@
+<div class="ph">Intelligence
+    <span class="modes">
+        <button type="button" class="modebtn" [class.on]="mode() === 'contacts'" (click)="mode.set('contacts')">Contacts</button>
+        <button type="button" class="modebtn" [class.on]="mode() === 'notebook'" (click)="mode.set('notebook')">Notebook</button>
+    </span>
+</div>
+
+@if (mode() === 'contacts') {
+    <p class="note">Every contact the campaign has <b>met through play</b> — drawn into missions by the forge — plus any you introduce from the registry. Status is the GM's call and persists with the save. Tap a card to read the full dossier.</p>
+    <div class="ctc-bar">
+        <span class="ctc-count">{{ contacts().length }} known contact{{ contacts().length === 1 ? '' : 's' }}</span>
+        <button type="button" class="gobtn" (click)="introduceOpen.set(true)">+ Introduce contact</button>
+    </div>
+
+    @if (!contacts().length) {
+        <div class="ic-empty">
+            <div class="ic-h">No contacts on file</div>
+            <p class="note">Contacts are <b>earned through play</b> — generate a mission and the people in it file here. Or INTRODUCE one from the registry now.</p>
+        </div>
+    } @else {
+        <div class="ctc-grid">
+            @for (c of contacts(); track c.npcId) {
+                <div class="ctc" [class.dead]="c.status === 'dead'" [class.burned]="c.status === 'burned'">
+                    <button type="button" class="ctc-open" (click)="explode(c)">
+                        <span class="ctc-name">{{ c.name }}@if (c.callsign) { <span class="ctc-call">“{{ c.callsign }}”</span> }</span>
+                        <span class="ctc-arch">{{ c.archetype }} · {{ c.factions }}@if (c.gmIntroduced) { <span class="ctc-gm">GM</span> }</span>
+                        @if (c.missions.length) {
+                            <span class="ctc-msn">Missions: {{ c.missions.join(' · ') }}</span>
+                        } @else {
+                            <span class="ctc-msn none">No mission appearances on record</span>
+                        }
+                    </button>
+                    <div class="ctc-status">
+                        <label>Status</label>
+                        <!-- AGENTS NG-SELECT: dynamic @for options take [selected], never [value] on the select -->
+                        <select class="stsel" (change)="setStatus(c.npcId, $any($event.target).value)" [attr.aria-label]="c.name + ' status'">
+                            @for (s of statuses; track s) { <option [value]="s" [selected]="s === c.status">{{ s.toUpperCase() }}</option> }
+                        </select>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+} @else {
+    <p class="note">The campaign notebook — the delegate's between-session surface. Auto-entries surface from the campaign's <b>stored records</b> (contracts, missions, purchases, the walk, the bays); your own notes interleave by date.</p>
+    <div class="nb-compose">
+        <input type="text" class="nb-in" placeholder="Add a GM note…" [value]="noteText()" (input)="noteText.set($any($event.target).value)" (keydown.enter)="addNote()" />
+        <select class="nb-npc" (change)="noteNpc.set($any($event.target).value)" aria-label="Link note to a contact">
+            <option value="" [selected]="!noteNpc()">— no contact link —</option>
+            @for (c of contacts(); track c.npcId) { <option [value]="c.npcId" [selected]="c.npcId === noteNpc()">{{ c.name }}</option> }
+        </select>
+        <button type="button" class="gobtn" (click)="addNote()">Add note</button>
+    </div>
+    <div class="nb-feed">
+        @for (it of feed(); track $index) {
+            <div class="nb-item" [class.gm]="!!it.noteId">
+                <span class="nb-date">{{ it.dateText }}</span>
+                <span class="nb-kind k-{{ it.kind }}">{{ it.kind.toUpperCase() }}</span>
+                @if (editingId() && it.noteId === editingId()) {
+                    <span class="nb-edit">
+                        <input type="text" class="nb-in" [value]="editText()" (input)="editText.set($any($event.target).value)" (keydown.enter)="saveEdit()" />
+                        <button type="button" class="lnk" (click)="saveEdit()">save</button>
+                        <button type="button" class="lnk" (click)="cancelEdit()">cancel</button>
+                    </span>
+                } @else {
+                    <span class="nb-text">{{ it.text }}@if (it.npcName) { <span class="nb-link">→ {{ it.npcName }}</span> }</span>
+                    @if (it.noteId) {
+                        <span class="nb-acts">
+                            <button type="button" class="lnk" (click)="startEdit(it)">edit</button>
+                            <button type="button" class="lnk danger" (click)="askDelete(it.noteId!)">delete</button>
+                        </span>
+                    }
+                }
+            </div>
+        } @empty {
+            <p class="note">Nothing in the notebook yet — play, buy, fight, walk the field; it all files here.</p>
+        }
+    </div>
+}
+
+<!-- INTRODUCE — the unmet registry pool (era/faction-filtered) -->
+@if (introduceOpen()) {
+    <div class="cmodal" role="dialog" aria-modal="true" (click)="introduceOpen.set(false)">
+        <div class="cbox wide" (click)="$event.stopPropagation()">
+            <div class="ph flat">Introduce a contact</div>
+            <p class="cmsg">The unmet registry pool, filtered to this campaign's era and faction reach. Introducing a contact marks them <b>known</b> — they file under Contacts with GM provenance.</p>
+            <div class="ipool">
+                @for (n of introducePool(); track n.npcId) {
+                    <button type="button" class="ip-row" (click)="introduce(n.npcId)">
+                        <span class="ip-name">{{ n.name }}</span>
+                        <span class="ip-meta">{{ n.archetype.replace('-', ' ') }} · {{ n.factionAffinity.join(' · ') }}</span>
+                        <span class="ip-add">ADD »</span>
+                    </button>
+                } @empty {
+                    <p class="note">The whole registry is already known to this campaign.</p>
+                }
+            </div>
+            <div class="cbtns">
+                <button type="button" class="cbtn" (click)="introduceOpen.set(false)">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- EXPLODE — the full dossier -->
+@if (exploded(); as c) {
+    <div class="cmodal" role="dialog" aria-modal="true" (click)="exploded.set(null)">
+        <div class="cbox wide dossier" (click)="$event.stopPropagation()">
+            <div class="ph flat">{{ c.name }}@if (c.callsign) { <span class="ctc-call">“{{ c.callsign }}”</span> } <span class="dx-st st-{{ c.status }}">{{ c.status.toUpperCase() }}</span></div>
+            <div class="dx-meta">{{ c.archetype }} · {{ c.factions }} · eras: {{ c.npc.eraFit.join(', ') }} · flags: {{ c.npc.tieInFlags.join(', ') }}</div>
+            <p class="dx-bg">{{ c.npc.background }}</p>
+            @if (c.npc.traits.length) { <div class="dx-tr">Traits: {{ c.npc.traits.join(' · ') }}</div> }
+            <div class="dx-vh">Voice</div>
+            <ul class="dx-voice">
+                @for (v of c.npc.voiceTags; track $index) { <li>{{ v }}</li> }
+            </ul>
+            @if (c.missions.length) { <div class="dx-msn">Missions appeared: {{ c.missions.join(' · ') }}</div> }
+            <div class="cbtns">
+                <button type="button" class="cbtn" (click)="exploded.set(null)">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- DELETE NOTE confirm -->
+@if (deleteTarget()) {
+    <div class="cmodal" role="dialog" aria-modal="true" (click)="deleteTarget.set(null)">
+        <div class="cbox" (click)="$event.stopPropagation()">
+            <div class="ph flat">Delete note?</div>
+            <p class="cmsg">This GM note is removed from the notebook. Auto-entries are records and never delete.</p>
+            <div class="cbtns">
+                <button type="button" class="cbtn" (click)="deleteTarget.set(null)">Cancel</button>
+                <button type="button" class="cbtn go" (click)="confirmDelete()">Delete »</button>
+            </div>
+        </div>
+    </div>
+}

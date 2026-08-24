@@ -1,0 +1,1955 @@
+[
+  {
+    "seedId": "INSW2-01",
+    "family": "EXTRACTION_RAID",
+    "inspirationId": "INSP-201",
+    "inspiration": "A handful of swimmers paddle miles up a guarded estuary by night to mine enemy shipping at its moorings, then try to walk home through a country that is now hunting them.",
+    "skeleton": "a tiny infiltration element must work deep into a guarded DropShip mooring basin by stealth, place charges on hulls under repair where they cannot be defended by maneuver, and exfiltrate overland through a tightening search once the first explosion announces them, where the demolition is easy and the getting away is the mission",
+    "title": "OPERATION SLACK TIDE",
+    "eraFit": [
+      "civil-war",
+      "jihad"
+    ],
+    "factionFit": [
+      "is-liao",
+      "is-davion",
+      "merc"
+    ],
+    "register": "is-liao",
+    "threatRange": [
+      "LOW",
+      "MEDIUM"
+    ],
+    "localeFit": {
+      "settlement": [
+        "port",
+        "industrial"
+      ],
+      "regionRole": [
+        "contested",
+        "border"
+      ],
+      "terrain": [
+        "coastal",
+        "wetland"
+      ]
+    },
+    "armsMix": "MECH_ONLY",
+    "vehicleShare": 0,
+    "situation": "{TARGET_FACTION} keeps its assault DropShips in the repair basin at {DISTRICT} on {WORLD}. The hulls sit in the graving docks with their drives torn apart for a rebuild, and {EMPLOYER} wants them destroyed before they can lift again. You cannot reach them from the air without waking the whole port, and you cannot reach them with a column without a stand-up battle the contract does not pay for. But you can reach them from the water. The basin sits at the head of a tidal estuary — kilometers of mudflat and reed channel that the harbor guard treats as a moat. It is too shallow for a ship and too open for a force, and the watchtowers face the sea, not the marsh. {NPC:intel-source} counts three heavy hulls in the graving docks, drives apart, unable to move or fight. The guard is thin: a harbor security detachment walking the quays and one light 'Mech lance on call at the port garrison. That report is {INTEL_AGE_DAYS} days old, and a hull's repair can move forward in a single day. Your element goes in small and quiet, up the estuary at slack tide when the current is not fighting you, to place charges on hulls that sit blind in their cradles. The marsh cuts both ways. By night it is a road for anyone willing to wade it. By day it is open ground with no cover for kilometers, and a search will be closing across it. Planting the charges is the easy part — a stripped hull cannot dodge, shoot back, or do anything but burn. The hard part starts at the first blast, when {NPC:opfor-commander} floods the marsh with everything that can wade or fly. Your element will still be hours from safety, on foot, in the open, with the tide now turning against the way home. Recommended force: {FORCE_SIZE}, light and quiet. This is not a fight to win but a demolition raid to slip away from before the enemy can react. Go in on the slack tide, destroy the hulls in their cradles, and get off the flats before the search pins down your route. Stay too long and the same marsh that let you in becomes a trap that holds you for the enemy's 'Mech lance.",
+    "objectives": {
+      "primary": "Set and blow charges on at least two of the three DropShip hulls so they cannot lift, then get the element off the tidal flats before the port's search closes the marsh.",
+      "secondary": "Destroy the basin's drive-rebuild shop and its stock of spare parts. A port that loses the hulls but keeps the parts recovers in months; a port that loses both takes years.",
+      "bonus": "Recover or photograph the basin's repair manifest before you withdraw. It tells {EMPLOYER} which of {TARGET_FACTION}'s ships are down, where, and for how long across the whole theater."
+    },
+    "complications": [
+      {
+        "name": "The Turning Tide",
+        "text": "The estuary lets you pass only at slack water. You come in while the current rests, but the moment the charges blow the tide is already turning. A turning tide in a reed channel pushes against you the whole way out, so the water that carried you in now slows you down.",
+        "mechanicalEffect": "Track the tide state. After the charges blow, the element exfiltrates against the turning tide: movement through channel and mudflat hexes is slowed. An element that lingers at the docks past a set mark hits the full flood on the way out and slows further into the closing search."
+      },
+      {
+        "name": "The First Blast",
+        "text": "Nothing wakes the port until the first charge goes off. There is no way to blow a hull quietly, so that first blast is what gives you away, and it starts the clock on the escape whether you are ready or not. The harbor goes from asleep to hunting in the time it takes a hull to catch fire.",
+        "mechanicalEffect": "The reaction timeline starts at the first detonation, not at insertion. Set all charges before any of them blow, or the search begins with hulls still un-mined. The element cannot both demolish slowly and exfiltrate clean."
+      },
+      {
+        "name": "Open Flats by Day",
+        "text": "If the exfiltration runs long, daylight catches the element on the mudflats with nowhere to hide. The reeds at the channel edges give some cover, but the open flats give none. A light 'Mech or a spotter aircraft can pick out a moving figure across kilometers of mud.",
+        "mechanicalEffect": "If exfiltration runs into daylight, open-flat hexes give no concealment. The port's search 'Mech and any spotter get free detection rolls against elements crossing them, and a detected element draws the lance onto its line of retreat."
+      },
+      {
+        "name": "The Repair State Lies",
+        "text": "Intelligence said three hulls are down. But the basin is a working yard, and a hull whose drive went back in yesterday can move today. The element may reach a cradle and find a ship further along in its repair than the manifest promised — guarded, and maybe even able to move under its own power.",
+        "mechanicalEffect": "On a roll at the docks, one targeted hull is further along in repair than reported. It carries an active guard detail, and if it is not yet charged it may start moving out of the graving dock, forcing the element to choose between chasing it and finishing the others."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Lighting the Hulls",
+        "context": "Three hulls, one tide, and an element too small to survive a fight. You can charge the hulls one at a time and slip out before any of them blow, charge them all and fire them together to be sure of the kills, or wreck the drive shop instead of the third hull. Each choice trades how much you destroy against how much head start you keep.",
+        "options": [
+          {
+            "title": "Sequence and Slip",
+            "advantages": [
+              "Charges set quietly on every hull and the element well clear before the first blows — the maximum head start on the search",
+              "No firefight; the port wakes to find the damage already done and the doers gone"
+            ],
+            "disadvantages": [
+              "A long, patient setup spends the slack-tide window the exfiltration needs",
+              "A charge found or a guard stumbled into mid-setup blows the whole sequence early with hulls still un-mined"
+            ],
+            "consequence": "If the setup holds, you get the cleanest possible getaway. But the patience eats your tide window, and if you trip a guard partway you exfiltrate under a full search with the job half done.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the slack-tide window spent on a slow, complete setup before any charge fires",
+              "risk": "A guard stumbled into during the long setup starts the search with hulls un-charged and the tide already turning"
+            }
+          },
+          {
+            "title": "Fire Them Together",
+            "advantages": [
+              "Every charged hull blown at once — the surest destruction, nothing left half-mined for the yard to save",
+              "A single overwhelming blast sows confusion that buys the first minutes of the exfiltration"
+            ],
+            "disadvantages": [
+              "Simultaneous detonation means setting all charges before withdrawing — the element is still in the basin when they blow",
+              "The blast wave and fires across the whole basin make the docks themselves hazardous to cross on the way out"
+            ],
+            "consequence": "You guarantee the hulls, but you are still deep in the basin when every charge blows at once. You destroy them for certain and pay for it by being at the center of the blast.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the element committed inside the basin until the synchronized blast, with no early withdrawal",
+              "risk": "Caught in the basin by the blast and the fires, the element exfiltrates through its own destruction with the search already roused"
+            }
+          },
+          {
+            "title": "Take the Drive Shop",
+            "advantages": [
+              "Two hulls charged and the drive-rebuild shop wrecked instead of the third — the loss the yard cannot repair quickly",
+              "The shop sits inland of the cradles, a step closer to the exfiltration route off the flats"
+            ],
+            "disadvantages": [
+              "One hull left whole and able to be saved by the yard once the fires are out",
+              "The shop is the one structure in the basin with a standing watch — wrecking it risks the contact the cradles would not"
+            ],
+            "consequence": "You trade the third hull for the years it takes to rebuild a drive shop, and you accept the standing watch guarding it. You hurt the port's future more, at the cost of one hull left whole and a louder approach.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the third hull conceded whole in exchange for the drive shop's long-term destruction",
+              "risk": "The shop's standing watch makes contact before the charges are set, waking the basin early with two hulls still to confirm"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The first charge detonates; the harbor watch reports an explosion in the graving docks and the port garrison stands to." },
+        { "t": "T+4:00", "event": "{NPC:opfor-commander} releases the on-call light lance toward the basin and the harbor security detachment fans out along the quays and the marsh edge." },
+        { "t": "T+10:00", "event": "The search reaches the channel mouths the element used to come in; the tide has turned and the open flats are the only fast way out." },
+        { "t": "T+16:00", "event": "Spotter coverage extends over the estuary; an element still on the flats is being hunted from the air as well as the ground." },
+        { "t": "T+24:00", "event": "Daylight, or the closing of the last open channel, ends the window; an element not clear of the marsh by now is run down in the open." }
+      ],
+      "hardDeadline": "The element must be off the tidal flats and clear of the marsh by T+24:00. By then the turning tide, the spreading search, and the coming daylight seal the estuary together. A team still on the flats is surrounded and captured, and a captured infiltrator hands {TARGET_FACTION} the sponsor the whole operation was meant to hide."
+    },
+    "opforSketch": {
+      "composition": "A port-security response, light and reactive: one light 'Mech lance (20-35 tons) at Regular quality on call at the garrison, built for pursuit across open ground rather than a stand-up fight, plus the harbor security detachment (narrative infantry on the quays and in patrol craft, dressing the search) and possible spotter aircraft. The graving-dock hulls themselves are inert targets under repair, not combatants. One hull may carry an active guard detail if its repair is further along than reported.",
+      "behavior": "Search-and-cordon doctrine: the lance does not defend the hulls — they are already lost — but races to cut the exfiltration routes off the flats and run the element down in the open, working with the harbor detachment to seal the channels. It presses hardest in daylight and on the open flats where its mobility tells; it will not wade deep into reed channels where a light 'Mech bogs."
+    },
+    "forks": [
+      {
+        "name": "OPERATION EBB CHANNEL",
+        "outcomeGate": "SUCCESS",
+        "trigger": "Hulls destroyed and the element exfiltrated clean off the flats, the sponsor unrevealed.",
+        "consequence": "The basin burns and {TARGET_FACTION} cannot prove who lit it. {EMPLOYER} presses the advantage with a follow-on against the crippled port's wider repair infrastructure while the yard is still counting its losses — a deeper strike now that the harbor's teeth are pulled.",
+        "threat": "MEDIUM",
+        "family": "OBJECTIVE_RAID"
+      },
+      {
+        "name": "OPERATION DRAGNET",
+        "outcomeGate": "FAILURE",
+        "trigger": "The element was caught on the flats or compromised at the docks; the search has a line on it and the sponsor is exposed.",
+        "consequence": "The job is blown and the hunters know who sent the team. The next operation is a hasty extraction — get the surviving element off {WORLD} ahead of a port now actively hunting it and a garrison alerted to {EMPLOYER}'s hand. The fire was lit; now it is a fire to escape.",
+        "threat": "MEDIUM",
+        "family": "EXTRACTION_RAID"
+      }
+    ],
+    "storyElementSeed": "Someone lies flat in the reeds at the channel edge in the dark, counting the seconds between a tower searchlight's passes, a charge timer warm against the chest, the only sound the water working back down the mud.",
+    "voiceSlots": [
+      "intelligence",
+      "naval",
+      "engineering",
+      "command"
+    ],
+    "registerVariants": {
+      "is-davion": {
+        "objectives.primary": "Mine and destroy at least two of the three DropShip hulls in the graving docks, then get the team off the flats clean before the port's search closes the marsh — a quiet job, done quiet, with nothing left to say who did it."
+      },
+      "merc": {
+        "objectives.primary": "Put at least two of the three hulls on the bottom of their cradles and get the team out before the search lines up the marsh. The contract pays for the hulls and the clean exit. A team caught on the flats loses the bonus, the fee, and the deniability all at once."
+      }
+    },
+    "specifics": {
+      "INTEL_AGE_DAYS": { "min": 4, "max": 11, "unit": "days" },
+      "ESTUARY_LENGTH_KM": { "min": 6, "max": 14, "unit": "km of estuary to the basin" },
+      "SLACK_WINDOW_MIN": { "min": 40, "max": 90, "unit": "minutes of slack tide" }
+    }
+  },
+  {
+    "seedId": "INSW2-02",
+    "family": "EXTRACTION_RAID",
+    "inspirationId": "INSP-202",
+    "inspiration": "A captured leader is held at a mountaintop site reachable only by one road; a glider-borne snatch team lands on the summit itself, takes him before the guard can react, and is gone before a relief can climb.",
+    "skeleton": "an aerospace-inserted snatch element must land directly onto an isolated high holding-site reachable by one ground road, seize a captured principal from a guard detail before it can organize, and lift him out before the road-bound relief can climb to the summit, where the whole problem is arriving on top of the objective instead of fighting up to it",
+    "title": "OPERATION HIGH WINDOW",
+    "eraFit": [
+      "dark-age",
+      "civil-war",
+      "jihad"
+    ],
+    "factionFit": [
+      "is-davion",
+      "is-steiner",
+      "merc"
+    ],
+    "register": "is-davion",
+    "threatRange": [
+      "MEDIUM",
+      "HIGH"
+    ],
+    "localeFit": {
+      "settlement": [
+        "frontier"
+      ],
+      "regionRole": [
+        "interior",
+        "border"
+      ],
+      "terrain": [
+        "mountain"
+      ]
+    },
+    "armsMix": "MECH_ONLY",
+    "vehicleShare": 0,
+    "situation": "{TARGET_FACTION} is holding a principal vouched for by {NPC:intel-source} — call the asset GREYLOCK — at a mountaintop site in {DISTRICT} on {WORLD}. {EMPLOYER} wants GREYLOCK out before an interrogation that has already begun finishes its work. The site is a former observation post on a high shoulder, walled and isolated. {TARGET_FACTION} chose it for one reason: there is exactly one road up, a switchback cut into the mountainside. A relief force can climb it, but an attacker would have to fight up it under fire the whole way. Take the road and you announce yourself hours before you reach the top, and the guard would move or kill GREYLOCK long before you crest the last bend. So you do not take the road. You come down on top of the post itself, dropped from aerospace onto the shoulder, landing on the objective instead of climbing to it. {NPC:intel-source} reads the guard as a reinforced light detail: a security lance and a platoon of infantry, Regular quality, comfortable behind their wall and their one road. That picture is {INTEL_AGE_HOURS} hours old, and a holding site's roster changes easily. The mountain works against you now. What makes the post safe from below makes the summit a trap with no second way out: once you are on the shoulder there is only the post, the cliff, and the one road — and the relief starts up that road the moment your DropShip is heard. The snatch is a race against that climb. You land, cross the wall, find GREYLOCK in the holding block before the guard organizes a defense, and lift off before the relief reaches the last switchback. If the relief reaches the gate, the snatch becomes a siege on a summit you cannot hold. {NPC:opfor-commander} commands the valley garrison and keeps a reaction force at the foot of the road for exactly this. Recommended force: {FORCE_SIZE}. Drop on the window, take GREYLOCK off the mountain, and be airborne before the road delivers the enemy — or be trapped on a summit with one road in, watching the relief climb it.",
+    "objectives": {
+      "primary": "Land directly on the mountaintop site, seize the principal GREYLOCK from the holding block before the guard can organize a defense or harm the asset, then lift off the shoulder before the road-bound relief reaches the summit.",
+      "secondary": "Recover GREYLOCK's interrogation file, the record of what {TARGET_FACTION} has already pulled out. It tells {EMPLOYER} what was given up before the rescue and what must now be treated as compromised.",
+      "bonus": "Take the site's signals officer alive along with GREYLOCK. This one person on the shoulder knows the garrison's wider holding network and the other names {TARGET_FACTION} has hidden on quiet mountaintops."
+    },
+    "complications": [
+      {
+        "name": "The Climbing Relief",
+        "text": "The moment the DropShip is heard, {NPC:opfor-commander}'s reaction force starts up the switchback road. It cannot arrive fast, and that slow climb is the whole reason the snatch is possible. But it is coming steadily, and every minute the element spends on the shoulder is another switchback the relief has climbed.",
+        "mechanicalEffect": "Track the relief's climb from insertion as a fixed countdown to the summit. The element must have GREYLOCK and be lifting before the countdown runs out. A relief that crests the last bend with the element still on the shoulder brings a heavy force into a fight on ground with no exit."
+      },
+      {
+        "name": "The Hostage in the Block",
+        "text": "GREYLOCK is both the objective and the weak point. If the post is stormed, the guard's standing order is not to fight to the last. It is to kill the prisoner, because an asset who knows what was asked is worth more to {TARGET_FACTION} dead than to {EMPLOYER} alive. So the first moments on the shoulder are a race to reach GREYLOCK before a guard reaches the cell.",
+        "mechanicalEffect": "From insertion, a hidden clock runs on the guard reaching the holding block to kill the asset. Reaching and securing the block fast, or cutting the guard's internal communications first, saves GREYLOCK. A slow approach risks completing the rescue only to find the asset already dead."
+      },
+      {
+        "name": "One Road, No Exit",
+        "text": "The summit has only the post, the cliff, and the one road. There is no way out overland: the element leaves by air or it does not leave. A DropShip circling to stay clear of the post's defenses is not on the ground when the element needs it. A DropShip on the ground is a fat target for anything the relief brings up the road.",
+        "mechanicalEffect": "Exfiltration is by air only. The lift ship's position is a live tradeoff: grounded for a fast pickup but exposed, or holding off for safety but adding minutes to the extraction. Damage to the lift ship from the relief's heavier weapons can strand the element on the shoulder."
+      },
+      {
+        "name": "The Soft Roster",
+        "text": "A holding site's guard list is never as advertised. The post may hold more than the lance and platoon reported — a second detail rotated in, a heavier weapon mounted on the wall since the last look. The element lands committed, and learns the true count only once it is on the shoulder with the relief already climbing.",
+        "mechanicalEffect": "On a roll at insertion, the guard is reinforced beyond the reported strength — an extra security element or a wall-mounted heavy weapon covering the courtyard, lengthening the fight for the block and eating into the climb clock."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Landing on the Window",
+        "context": "You are coming down on the shoulder, but how and where you land decides the snatch. Land hard inside the wall for speed and surprise; land outside it and breach the gate for control; or drop a cutting element onto the relief's road first to buy the shoulder more time. Each choice trades surprise, the asset's safety, and the climb clock differently.",
+        "options": [
+          {
+            "title": "Land Inside the Wall",
+            "advantages": [
+              "Puts the element on top of the holding block in seconds — the fastest possible reach for GREYLOCK before the guard can act on the prisoner",
+              "Maximum surprise; the guard meets the assault inside its own courtyard before it can form a line"
+            ],
+            "disadvantages": [
+              "A landing inside a walled post is tight, hazardous ground, exposed to any heavy weapon on the wall the moment the ship flares",
+              "No control of the gate means the guard's outer elements can rally behind the element while it works the block"
+            ],
+            "consequence": "You give yourself the best odds on the asset, at the cost of a dangerous landing and an open perimeter. GREYLOCK is likely safe, but the element has to fight inward toward the block and outward against the rallying guard at the same time.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the lift ship exposed over the courtyard during a tight, hazardous insertion",
+              "risk": "A wall-mounted heavy weapon or a hard flare cripples the lift ship inside the wall — the element's only ride gone"
+            }
+          },
+          {
+            "title": "Breach the Gate",
+            "advantages": [
+              "Landing outside and taking the gate gives the element control of the post's one entrance and a secured perimeter",
+              "The lift ship stays clear of the wall's defenses during insertion, safer for the extraction it must perform"
+            ],
+            "disadvantages": [
+              "Breaching costs the minutes the climb clock is counting, and gives the guard those minutes to act on GREYLOCK",
+              "A contested gate is a chokepoint the guard can hold briefly, slowing the reach for the block"
+            ],
+            "consequence": "You trade speed to the asset for a controlled fight and a safer ship. The post is taken cleanly, but the delay at the gate is time the relief spends climbing and the guard spends reaching the cell.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "time at the gate, against both the climb clock and the asset's safety clock",
+              "risk": "Minutes spent breaching let a guard reach GREYLOCK first — a clean assault that rescues no one"
+            }
+          },
+          {
+            "title": "Cut the Road First",
+            "advantages": [
+              "Dropping a cutting element onto a switchback below stalls or blocks the relief's climb, lengthening the shoulder's time",
+              "A road cut behind the relief's lead can strand its heavy elements below the block it falls"
+            ],
+            "disadvantages": [
+              "Splitting the force sends part of it down the mountain instead of at the block — fewer guns for the snatch itself",
+              "The cutting element on the road has its own exfiltration problem, and may have to be lifted out under fire separately"
+            ],
+            "consequence": "You buy the shoulder the time the snatch needs by dividing your weight; the post is taken against the clock you slowed, but a split force risks both halves being too light for what they meet.",
+            "costs": {
+              "cbills": 8000,
+              "days": null,
+              "resource": "demolition stores for the road cut and an element committed away from the block",
+              "risk": "A split force is caught in two places — the snatch under-gunned at the block, the cutters stranded on the road"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The lift ship is heard on approach; the post guard stands to, and {NPC:opfor-commander}'s reaction force starts up the switchback road from the valley floor." },
+        { "t": "T+2:00", "event": "The element is on the shoulder and inside or at the wall; the guard's internal order on the prisoner is given." },
+        { "t": "T+6:00", "event": "The relief is a third of the way up the road; the element should have GREYLOCK out of the block by now." },
+        { "t": "T+11:00", "event": "The relief's lead reaches the upper switchbacks within sight of the post; the lift ship must be loading or airborne." },
+        { "t": "T+15:00", "event": "The relief crests the shoulder. An element still on top is now in a fight on ground with one road and a cliff, no way out but the air it no longer controls." }
+      ],
+      "hardDeadline": "The element must have GREYLOCK secured and be lifting off the shoulder before the relief crests the summit at T+15:00. A team caught on top by the relief is trapped on a mountaintop with no overland exit and a contested sky, and GREYLOCK is lost in the fight or back in the guard's hands."
+    },
+    "opforSketch": {
+      "composition": "An isolated guard plus a road-bound relief: at the post, a light security lance (20-40 tons) at Regular quality behind a wall, with a narrative infantry platoon and possibly a wall-mounted heavy weapon. The relief climbing the road is a heavier reaction force — a medium 'Mech lance or company (40-65 tons), Regular, that cannot maneuver off the switchback. No armor on the summit; the ground is too broken and too high.",
+      "behavior": "Isolated-holding doctrine: the post guard trusts its one road and its wall, and on being stormed shifts to dealing with the prisoner rather than a doomed defense of the courtyard. The relief grinds up the road at best safe speed, unable to flank, committed to reaching the summit; it does not turn back once started, betting that the climb is faster than the snatch."
+    },
+    "forks": [
+      {
+        "name": "OPERATION QUIET RANGE",
+        "outcomeGate": "SUCCESS",
+        "trigger": "GREYLOCK lifted off the shoulder before the relief crested; the asset is out and the holding network's secret is loose.",
+        "consequence": "GREYLOCK is recovered, and the interrogation file or the signals officer has named the other quiet mountaintops where {TARGET_FACTION} keeps its prisoners. {EMPLOYER} moves on the network before it can be relocated — a follow-on snatch against a second holding site, now that the pattern is known.",
+        "threat": "HIGH",
+        "family": "EXTRACTION_RAID"
+      },
+      {
+        "name": "OPERATION CLOSED ROAD",
+        "outcomeGate": "FAILURE",
+        "trigger": "The relief crested with the element still on the shoulder, or GREYLOCK was lost in the block; the snatch became a fight on a summit with no exit.",
+        "consequence": "The element is pinned on the mountaintop with the relief on the shoulder and its sky contested. The next operation is to break it out — a relief of your own up the one road, or a fighting extraction off the summit before the trapped element is destroyed. The rescue became the thing that needs rescuing.",
+        "threat": "HIGH",
+        "family": "RELIEF_DUTY"
+      }
+    ],
+    "storyElementSeed": "Wind on a bare summit, a holding-block door coming open, and a prisoner who flinches from the light not knowing yet whether the figures in the doorway are a worse interrogation or a way down the mountain.",
+    "voiceSlots": [
+      "command",
+      "intelligence",
+      "naval",
+      "medical"
+    ],
+    "registerVariants": {
+      "is-steiner": {
+        "objectives.primary": "Land on the mountaintop site, recover the asset GREYLOCK from the holding block before the guard can act, and lift clear before the relief climbs the road. One asset out, the account settled, before the bill arrives by the only road up."
+      },
+      "merc": {
+        "objectives.primary": "Drop on the post, get GREYLOCK out of the block, and be airborne before the relief reaches the top. The fee is the asset breathing on your DropShip; a team trapped on the summit is a write-off the contract does not cover."
+      }
+    },
+    "specifics": {
+      "INTEL_AGE_HOURS": { "min": 6, "max": 24, "unit": "hours" },
+      "ROAD_CLIMB_MIN": { "min": 11, "max": 20, "unit": "minutes for the relief to climb the road" },
+      "SHOULDER_ELEVATION_M": { "min": 1800, "max": 3200, "unit": "meters elevation of the post" }
+    }
+  },
+  {
+    "seedId": "INSW2-03",
+    "family": "RECON_RAID",
+    "inspirationId": "INSP-203",
+    "inspiration": "A raid on a lightly held coastal station to seize a working piece of the enemy's newest sensor gear and, just as important, a technician who knows how to run it, then withdraw by sea before the garrison reacts.",
+    "skeleton": "a raid element must reach a lightly held coastal technical station, capture a working specimen of an enemy device AND a crew member who can operate it, and withdraw by water before the garrison reacts, where smashing the station is failure and the intelligence prize is worthless without the human who explains it",
+    "title": "OPERATION GLASS HARVEST",
+    "eraFit": [
+      "star-league",
+      "amaris-civil-war"
+    ],
+    "factionFit": [
+      "sldf",
+      "is-davion"
+    ],
+    "register": "sldf",
+    "threatRange": [
+      "LOW",
+      "MEDIUM"
+    ],
+    "localeFit": {
+      "settlement": [
+        "frontier",
+        "industrial"
+      ],
+      "regionRole": [
+        "contested",
+        "border"
+      ],
+      "terrain": [
+        "coastal"
+      ]
+    },
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.35,
+    "situation": "{TARGET_FACTION} has fielded a new sensor on {WORLD}: a deep-scan array on the coastal station at {DISTRICT} that is reading SLDF movements the command cannot keep losing. HPG STATION reports it is unlike anything in the known order of battle. {EMPLOYER} does not want it destroyed. {EMPLOYER} wants it taken — a working set, lifted out whole, brought home so the engineers can learn what makes it see. And because a captured machine no one can run is just a crate of riddles, the raid also wants the station's lead technician: the one person who knows the calibration the schematics will not show. {NPC:intel-source} reads the station as lightly held — a security lance and a section of armor, Regular quality, guarding a site chosen for its sea view and its quiet, not for a fight. That picture is {INTEL_AGE_DAYS} days old, and a quiet station can be reinforced the week you arrive. The raid comes from the sea, lands on the shingle below the station, and climbs the cliff path while the garrison still treats the coast as its safe flank. The ground is tight: a narrow shelf of beach, a cliff with one path, and a station above it with open water at its back and the garrison's reaction force a coast-road drive away. The prize is fragile in two ways. The array must come out intact — a firefight in the equipment hall turns the thing you came for into scrap — and the technician has to come willing enough to be useful, which a wrecked station and a dead colleague do not encourage. {NPC:opfor-commander} holds the coastal sector and will send the reaction force the moment the station calls. Recommended force: {FORCE_SIZE}, with the lift and recovery handled carefully. This is a theft, not a demolition. Get the array and the technician who runs it down the cliff and onto the boats before the reaction force arrives by road. Let the raid become a firefight in the station and you bring home only broken equipment and a dead technician — nothing the engineers can use.",
+    "objectives": {
+      "primary": "Seize a working specimen of the deep-scan array from the station's equipment hall, intact and movable, and withdraw it by sea before the garrison's reaction force arrives.",
+      "secondary": "Capture the station's lead technician alive and cooperative, and extract them with the array. The hardware is just a riddle without the operator who can explain its calibration.",
+      "bonus": "Recover the station's logged scan archive, the record of exactly what the array has already seen of SLDF movements. It tells the command what {TARGET_FACTION} learned before the device was taken."
+    },
+    "complications": [
+      {
+        "name": "Fragile Glass",
+        "text": "The array is the prize, and it will not survive a fight. The deep-scan hardware is delicate and finely aligned, and it is worth nothing as a smoking ruin. Every weapon fired in or near the equipment hall risks wrecking the very thing you came to take. The raid has to lift a working machine out of a building it cannot let become a battlefield.",
+        "mechanicalEffect": "Weapons fire in or next to the equipment-hall structure rolls against the array's survival each time. A destroyed array fails the primary objective. The element must clear the hall by maneuver and close work, not firepower, to bring the specimen out whole."
+      },
+      {
+        "name": "The Unwilling Expert",
+        "text": "The technician is a person, not a component. Taken at gunpoint over a colleague's body, they are a sullen prisoner who will give the engineers nothing useful; taken cleanly, separated from the fight, they are an asset who can be persuaded that cooperation beats the alternative. How the station is taken decides what kind of expert comes home.",
+        "mechanicalEffect": "The technician's cooperation is tracked against the violence of the station's capture. Heavy collateral damage or technical-staff casualties degrade the secondary objective from a cooperative asset to a hostile one; a clean, contained capture preserves their usefulness."
+      },
+      {
+        "name": "The Sea at Its Back",
+        "text": "The station's only retreat for the raid is the water it came from. The beach shelf is narrow, the cliff path is single-file, and the lift must take the array, the technician, and the element back down to the boats under whatever weather the coast offers. A rising sea or a contested beach turns the clean withdrawal into a scramble on a shrinking shingle.",
+        "mechanicalEffect": "Exfiltration funnels through the single cliff path to the beach. Track the sea state and the beach as a chokepoint; the array and the prisoner slow the descent, and a reaction force reaching the cliff top before the element is down catches it strung on the path."
+      },
+      {
+        "name": "The Quiet Station Wakes",
+        "text": "The station was chosen for quiet, but quiet is not the same as undefended, and {TARGET_FACTION} may have grown nervous about its valuable new sensor. The garrison could be larger than the last look showed: a second security element rotated in, or a heavier piece on the cliff road now that the array has proven its worth.",
+        "mechanicalEffect": "On a roll at the cliff top, the station's guard is reinforced beyond the report, lengthening the fight for the equipment hall and threatening the survival of the fragile array in a longer engagement."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Taking the Station",
+        "context": "A working machine and a willing man, out of a building you cannot shoot up, before the road delivers the garrison. You can move in quiet and surgical, hit hard and fast to own the station before it reacts, or seal the cliff road first to buy the equipment hall its delicate work. Each answer trades the prize's safety against the clock.",
+        "options": [
+          {
+            "title": "Quiet and Surgical",
+            "advantages": [
+              "Minimal fire near the equipment hall — the best protection for the fragile array and the cleanest capture of the technician",
+              "A contained entry keeps the station's call for help late and the prisoner cooperative"
+            ],
+            "disadvantages": [
+              "A careful, low-violence entry is slow, and slow against a garrison that may wake at any moment",
+              "Surgical work demands the guard be neutralized quietly — a single alarm turns the delicate plan into the brawl it was meant to avoid"
+            ],
+            "consequence": "You give the array and the technician their best odds, at the cost of speed. The prize comes out whole if the quiet holds, but a tripped alarm leaves you doing delicate work under a reaction clock you no longer control.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "time spent on a careful, low-fire entry to protect the array and the prisoner",
+              "risk": "An alarm during the slow approach forces the fragile extraction under a reaction clock already running"
+            }
+          },
+          {
+            "title": "Hard and Fast",
+            "advantages": [
+              "Overwhelms the guard before it can organize or call — the station is yours in minutes",
+              "Speed banks the most time against the reaction force on the coast road"
+            ],
+            "disadvantages": [
+              "A violent assault near the equipment hall is the surest way to wreck the very array you came for",
+              "A man taken in the middle of a firefight, his colleagues dead, is a prisoner who tells the engineers nothing"
+            ],
+            "consequence": "You own the station fast and keep the most withdrawal time, but you put both prizes at the greatest risk. Sweeping the station clean while wrecking the array and souring the technician means winning the fight and losing the point of the raid.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the array's survival and the prisoner's cooperation staked on a violent, fast capture",
+              "risk": "A firefight in the hall destroys the array and sours the technician — speed bought with the mission's whole point"
+            }
+          },
+          {
+            "title": "Seal the Cliff Road",
+            "advantages": [
+              "Blocking or covering the coast road delays the reaction force, buying the equipment hall the time for delicate work",
+              "A sealed road lets the rest of the element take the station at the careful pace the array needs"
+            ],
+            "disadvantages": [
+              "Splitting weight onto the road leaves fewer guns to take the station and cover the cliff path",
+              "The blocking element has its own withdrawal to manage once the array is down on the beach"
+            ],
+            "consequence": "You buy the careful capture the time it wants by holding the garrison off, at the price of a divided force; the prize comes out whole if the road holds, but the blockers must then break clean themselves.",
+            "costs": {
+              "cbills": 6000,
+              "days": null,
+              "resource": "an element committed to the coast road and the stores to block it",
+              "risk": "The road element is cut off from the beach when the reaction force arrives in strength, stranded above the cliff"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The element reaches the station and the guard is engaged or alerted; the station signals the coastal garrison." },
+        { "t": "T+5:00", "event": "{NPC:opfor-commander} releases the reaction force down the coast road toward the station." },
+        { "t": "T+10:00", "event": "The array should be out of the equipment hall and moving to the cliff path by now; the technician secured." },
+        { "t": "T+16:00", "event": "The reaction force nears the station's landward approaches; the element should be on the beach loading the boats." },
+        { "t": "T+22:00", "event": "The reaction force reaches the cliff top. An element still ashore is caught with the prize on a narrow beach under fire from above." }
+      ],
+      "hardDeadline": "The array and the technician must be off the beach and onto the water by T+22:00, when the reaction force reaches the cliff top. An element still on the shingle is pinned against the sea with the fragile prize, and a raid that loses the array or the technician in that fight has smashed a station for nothing."
+    },
+    "opforSketch": {
+      "composition": "A light technical-station guard plus a road-bound reaction force: at the station, a security lance (25-45 tons) at Regular quality with a supporting armor section of 2-4 vehicles (Scorpion and Vedette behavior), guarding a site built for quiet. The reaction force on the coast road is a heavier element — a medium lance or company, Regular, with armor support, committed to the single coast road. The station's value may have drawn extra strength since the last look.",
+      "behavior": "Light-guard doctrine at a technical site: the station guard defends a perimeter it does not expect to be tested and calls for help early. The reaction force drives the coast road at speed to relieve the station, unable to flank off the road; it presses to reach the cliff top before the raiders can withdraw, knowing the prize is on a narrow beach with one path."
+    },
+    "forks": [
+      {
+        "name": "OPERATION CLEAR SIGHT",
+        "outcomeGate": "SUCCESS",
+        "trigger": "The array and its technician are off the water intact and cooperative; the SLDF will learn what {TARGET_FACTION} could see.",
+        "consequence": "The engineers have the device and the man who runs it, and the scan archive shows exactly what was compromised. {EMPLOYER} acts on the recovered intelligence with a strike against the network the array was feeding — moving now, while {TARGET_FACTION} does not yet know its eyes have been stolen rather than merely blinded.",
+        "threat": "MEDIUM",
+        "family": "OBJECTIVE_RAID"
+      },
+      {
+        "name": "OPERATION BROKEN LENS",
+        "outcomeGate": "FAILURE",
+        "trigger": "The array was wrecked in the fight, or the element was caught on the beach with the prize; the theft became a brawl.",
+        "consequence": "The raid did not bring home what it came for, and {TARGET_FACTION} now knows the SLDF wants its new sensor badly enough to bleed for it. The next operation is to break the surviving element clear of the coast and off {WORLD} before the alerted garrison runs it down — the harvest spoiled, the escape all that is left.",
+        "threat": "MEDIUM",
+        "family": "EXTRACTION_RAID"
+      }
+    ],
+    "storyElementSeed": "A technician's workbench in a sea-lit hall, a half-calibrated array humming on the bench, and a stranger in unfamiliar armor saying quietly that the man can come and keep his hands, or stay and lose the work of years.",
+    "voiceSlots": [
+      "intelligence",
+      "engineering",
+      "naval",
+      "command"
+    ],
+    "registerVariants": {
+      "is-davion": {
+        "objectives.primary": "Lift a working set of the deep-scan array out of the station's equipment hall, whole and movable, and get it off the coast before the reaction force closes — bring home the machine, not the wreckage."
+      }
+    },
+    "specifics": {
+      "INTEL_AGE_DAYS": { "min": 5, "max": 12, "unit": "days" },
+      "CLIFF_HEIGHT_M": { "min": 30, "max": 80, "unit": "meters of cliff path" },
+      "COAST_ROAD_KM": { "min": 12, "max": 30, "unit": "km of coast road for the reaction force" }
+    }
+  },
+  {
+    "seedId": "INSW2-04",
+    "family": "DIVERSIONARY_RAID",
+    "inspirationId": "INSP-204",
+    "inspiration": "Cheap, expendable hulls are sent burning into a crowded enemy anchorage at night to break its order and scatter its ships, turning a tight formation into chaos for the cost of a few vessels no one will miss.",
+    "skeleton": "a force must drive a handful of cheap expendable units into a massed enemy staging area to panic and scatter a tight formation before it can sortie, where the attackers' own units are the spent currency, the goal is disorder and delay rather than destruction, and the real fight is whether the scattered enemy reforms before the disruption pays off",
+    "title": "OPERATION FIRE SHIP",
+    "eraFit": [
+      "early-succession-wars",
+      "late-succession-wars"
+    ],
+    "factionFit": [
+      "is-steiner",
+      "is-marik",
+      "merc"
+    ],
+    "register": "is-steiner",
+    "threatRange": [
+      "MEDIUM",
+      "HIGH"
+    ],
+    "localeFit": {
+      "settlement": [
+        "industrial",
+        "frontier"
+      ],
+      "regionRole": [
+        "contested",
+        "border"
+      ],
+      "terrain": [
+        "desert",
+        "coastal"
+      ]
+    },
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.5,
+    "situation": "{TARGET_FACTION} has massed a strike force in the staging grounds at {DISTRICT} on {WORLD}: DropShips, armor, and 'Mechs packed tight on the hardstand, fueling and arming for an offensive. {EMPLOYER} cannot meet that offensive head-on and cannot let it lift on schedule. So {EMPLOYER} will not meet it head-on. {EMPLOYER} will scatter it. The plan is old and cheap. A handful of expendable units — worn-out 'Mechs at the end of their service, salvage hulls patched just enough to walk, and vehicles loaded with everything that burns — drive straight into the packed staging area at night to set its fuel and ammunition alight and panic the tight formation into a stampede. {NPC:intel-source} reads the staging grounds as a dense, fuel-heavy laager guarded by a perimeter screen and a ready reaction company, with the bulk of the force buttoned up and unready for a fight on its own hardstand. That picture is {INTEL_AGE_DAYS} days old, and a staging force lifts on its own clock. The flat ground is the whole opportunity. The same flat that lets {TARGET_FACTION} pack its force tight lets the fire spread and the panic run. A dense formation has nowhere to scatter to in a hurry, and a few burning hulls among the fuel bladders turn order into chaos. The expendable units are meant to be spent. They get in among the ships, do their damage, and are lost. What matters is not bringing them home but the hours of disorder they buy while {TARGET_FACTION} sorts out a scattered, half-burned force. {NPC:opfor-commander} commands the staging grounds and will react fast to save the offensive. The whole question is whether the formation reforms before the chaos has cost it its schedule. Recommended force: {FORCE_SIZE}, with the expendable element counted as spent the moment it goes in. Light the laager and scatter the strike force, or watch a formation shrug off your fire, reform, and lift on time.",
+    "objectives": {
+      "primary": "Drive the expendable element into the massed staging area, set its fuel and ammunition stores alight, and scatter the packed formation badly enough to break its offensive timetable and delay the sortie past the point it matters to {EMPLOYER}.",
+      "secondary": "Cripple an outsized share of the heavy lift — the DropShips and assault 'Mechs the formation cannot quickly replace. Then the delay is not just hours but weight gone from the offensive for good.",
+      "bonus": "Pull the crews of the expendable element out after their run rather than losing them with the hulls. This costs {EMPLOYER} machines but not people."
+    },
+    "complications": [
+      {
+        "name": "The Spent Units",
+        "text": "The expendable units are not coming back, and planning as if they might wrecks the whole idea. They are meant to get in among the ships and be lost. Once committed, they are gone, and the only question is how much chaos they cause before they burn. Hold them back to save them and you get neither the units nor the chaos.",
+        "mechanicalEffect": "The expendable element is a one-way force: its destruction is expected, not a loss condition. Disruption is scored by the chaos it sows and the stores it ignites before it is lost, not by whether it survives. Holding it back from the densest packing reduces the disruption it can cause."
+      },
+      {
+        "name": "The Reforming Formation",
+        "text": "Scattering a force is not the same as destroying it. The instant the fires start, {NPC:opfor-commander} works to reform: rallying scattered elements, fighting the fires, and sorting the panic back into order. The chaos fades with every minute that passes. The operation pays off only if the formation cannot reassemble before its schedule is broken.",
+        "mechanicalEffect": "Track a reform clock. From the start of the chaos, the formation recovers order in steps. Each store ignited and each lift asset crippled lengthens the time it needs to reform. If the formation reassembles before the disruption threshold, the offensive lifts on time and the operation fails despite the damage done."
+      },
+      {
+        "name": "The Fuel-Heavy Ground",
+        "text": "The staging ground is packed with fuel and munitions, which is what makes the fire ship work and what makes the whole area lethal to be in. A fire among the bladders does not stay where it is lit — it spreads, cooks off ammunition, and turns the hardstand into a place no one, attacker or defender, can cross safely once it takes hold.",
+        "mechanicalEffect": "Ignited fuel and ammunition stores spread fire and cook-off hazards across adjacent hexes on a growing radius, dangerous to all units. The expendable element exploits this; the extraction element and the defender's reaction force both have to reckon with a hardstand that becomes impassable in patches."
+      },
+      {
+        "name": "The Ready Company",
+        "text": "Not the whole force is buttoned up. {NPC:opfor-commander} keeps a reaction company at readiness on the perimeter, the one part of the formation that can fight at once, and it will move to contain the raid and shepherd the panicked elements back into order. It cannot stop the fires alone, but it can hunt the raiders and shorten the chaos.",
+        "mechanicalEffect": "The ready reaction company engages the raid from the start, working to contain the disruption and cover the reforming formation. It fights to limit the chaos rather than to win outright, and pulling it into a pursuit of the extraction element draws it away from the reform effort."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Driving the Laager",
+        "context": "The expendables go in, but where and how decides what the disruption costs the enemy. Aim them at the fuel for the widest fire; aim them at the heavy lift for lasting damage; or hold a real element back to deepen the panic and cover the crews' extraction. Each answer trades the spread of the chaos against the weight of the loss and the lives of the crews.",
+        "options": [
+          {
+            "title": "Aim for the Fuel",
+            "advantages": [
+              "Striking the fuel bladders spreads fire across the widest area — the most chaos and the longest reform clock",
+              "A burning hardstand panics the densest part of the formation and denies it the ground to rally on"
+            ],
+            "disadvantages": [
+              "Fire spreads where it will; it may consume the lighter screen and spare the heavy lift the offensive actually depends on",
+              "A general conflagration is hard to steer toward the targets whose loss would matter most"
+            ],
+            "consequence": "You buy the most disorder and the longest delay, but the damage falls where the fire runs rather than where it would hurt; the schedule breaks, but the heavy weight may survive to lift later.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the expendables spent on the fuel stores for maximum spread rather than aimed at specific weight",
+              "risk": "A wide fire scatters the force but spares the assault lift — delay won, lasting loss missed"
+            }
+          },
+          {
+            "title": "Aim for the Heavy Lift",
+            "advantages": [
+              "Driving the expendables onto the DropShips and assault 'Mechs cripples the weight the offensive cannot replace",
+              "Damage that lasts beyond the delay — the offensive lifts later and lighter, if at all"
+            ],
+            "disadvantages": [
+              "The heavy lift is the best-guarded part of the laager; the expendables burn reaching it and may be stopped short",
+              "Concentrating on the heavy assets sows less general panic — a tighter, smaller fire the formation reforms around faster"
+            ],
+            "consequence": "You go for lasting damage at the cost of wide chaos. Cripple the lift and the offensive is gutted, but a tight, contained strike is one the enemy recovers its order around faster.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the expendables driven through the heaviest guard to reach the lift, likely stopped short of full effect",
+              "risk": "A strike contained around the heavy lift reforms fast — the lasting damage done but the schedule barely dented"
+            }
+          },
+          {
+            "title": "Hold a Real Element Back",
+            "advantages": [
+              "A genuine element kept in reserve deepens and prolongs the panic after the expendables are spent, and can extract their crews",
+              "Keeps the volunteers alive and adds real combat weight to shepherd the chaos at the decisive moment"
+            ],
+            "disadvantages": [
+              "The held-back element is real strength risked in a fight meant to be fought by the expendable hulls",
+              "Lingering to extract crews and prolong the panic keeps your force in a hardstand that is turning into a firestorm"
+            ],
+            "consequence": "You make the disruption last and bring the crews home, but you stake real units on staying in a burning laager longer than the expendables alone would have; the payoff is greater and so is the exposure.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "a real element committed to the laager beyond the expendables, exposed to the fire and the reaction company",
+              "risk": "The held-back element is caught in the spreading fire or the reaction company's containment — real weight lost to a one-way mission"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The expendable element penetrates the staging perimeter and the first fuel stores go up; the laager alarms and the formation scrambles." },
+        { "t": "T+3:00", "event": "Fire spreads through the packed hardstand; {NPC:opfor-commander} commits the ready reaction company to contain the raid and begins fighting the fires." },
+        { "t": "T+8:00", "event": "The panic is at its height — the disruption window is open; the heavy lift's fate is decided in these minutes." },
+        { "t": "T+14:00", "event": "The reaction company and the fire teams begin restoring order; the reform clock runs against the disruption already sown." },
+        { "t": "T+20:00", "event": "The formation reassembles enough to assess its schedule; if the disruption held past this mark, the offensive timetable is broken." }
+      ],
+      "hardDeadline": "The chaos must break the offensive's timetable before the formation reforms by T+20:00. A force that reassembles in order with its schedule intact lifts on time despite the fires, and the expendables — along with any real weight risked with them — are spent for a delay that never came."
+    },
+    "opforSketch": {
+      "composition": "A massed staging force, mostly unready: the bulk a packed formation of mixed 'Mechs and armor (all weights) buttoned up and fueling, not a fighting line. The active threat is a ready reaction company — a medium-to-heavy 'Mech company (45-75 tons) at Regular quality with an armor element — held at the perimeter for exactly this. The expendable raiders face the screen and this company, not the whole laager, which is busy not burning.",
+      "behavior": "Staging-laager doctrine under attack: the bulk of the force fights the fires and tries to reform rather than to engage; the ready reaction company moves to contain the raid, shepherd panicked elements, and shorten the chaos. It does not pursue recklessly into the spreading fire and prioritizes restoring the formation's order over hunting every raider, because the offensive's schedule is the thing it is really defending."
+    },
+    "forks": [
+      {
+        "name": "OPERATION SCATTERED ASH",
+        "outcomeGate": "SUCCESS",
+        "trigger": "The formation was scattered past reforming in time; the offensive's timetable is broken and the strike force lifts late and disordered, if at all.",
+        "consequence": "The blow {EMPLOYER} could not meet head-on will not land on schedule, and a half-burned formation is a tempting target. {EMPLOYER} exploits the disorder with a strike against the scattered, weakened elements before they can fully reassemble — pressing the advantage the fire ships bought.",
+        "threat": "MEDIUM",
+        "family": "OBJECTIVE_RAID"
+      },
+      {
+        "name": "OPERATION REFORMED LINE",
+        "outcomeGate": "FAILURE",
+        "trigger": "The formation contained the fires and reformed in time; the offensive's schedule survived and the expendables were spent for little.",
+        "consequence": "The strike force is shaken but intact and lifting near its schedule, and now it is coming. The next operation is a defense — meet the offensive the fire ships failed to stop, on ground of {EMPLOYER}'s choosing, with the disruption having bought only a few hours' grace. The cheap plan failed; the expensive fight begins.",
+        "threat": "HIGH",
+        "family": "GARRISON_DUTY"
+      }
+    ],
+    "storyElementSeed": "A volunteer in a worn-out 'Mech at the line of departure, running through a checklist that does not include coming back, watching the packed lights of the enemy laager and waiting for the word to drive in.",
+    "voiceSlots": [
+      "command",
+      "logistics",
+      "intelligence",
+      "engineering"
+    ],
+    "registerVariants": {
+      "is-marik": {
+        "objectives.primary": "Drive the expendable element into the massed staging force, fire its stores, and scatter the formation badly enough to break the offensive's timetable. Cheap hulls traded for an enemy's schedule, and worth every one of them if it holds."
+      },
+      "merc": {
+        "objectives.primary": "Run the expendable hulls into the laager, light the fuel, and scatter the formation past reforming on time. The contract buys the delay, not the hulls — they were written off before the line of departure."
+      }
+    },
+    "specifics": {
+      "INTEL_AGE_DAYS": { "min": 4, "max": 11, "unit": "days" },
+      "EXPENDABLE_COUNT": { "min": 3, "max": 6, "unit": "expendable units committed" },
+      "REFORM_WINDOW_MIN": { "min": 14, "max": 26, "unit": "minutes to reform the formation" }
+    }
+  },
+  {
+    "seedId": "INSW2-05",
+    "family": "PLANETARY_ASSAULT",
+    "inspirationId": "INSP-205",
+    "inspiration": "A liberation force lands to retake a usurped capital world held by a former ally who turned coat and dug in behind the very planetary defenses he was trusted to man — and who holds the population as his shield.",
+    "skeleton": "the player's company runs one urban slice of a larger liberation of a usurped capital held by a former ally entrenched behind the defenses he was trusted with, where the defender uses the loyal population as cover, the liberators must fight a betrayer who knows their own doctrine, and the prize is a city freed rather than flattened",
+    "title": "OPERATION TRUE NORTH",
+    "eraFit": [
+      "star-league",
+      "amaris-civil-war"
+    ],
+    "factionFit": [
+      "sldf"
+    ],
+    "register": "sldf",
+    "threatRange": [
+      "HIGH",
+      "EXTREME"
+    ],
+    "localeFit": {
+      "settlement": [
+        "capital"
+      ],
+      "regionRole": [
+        "interior"
+      ],
+      "terrain": [
+        "urban"
+      ]
+    },
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.25,
+    "situation": "{WORLD} was loyal, and the man who holds it now was trusted. He was a former ally who turned, seized the capital in {DISTRICT}, and dug in behind the planetary defenses he had been given to protect it. The liberation is a whole campaign; your company runs one slice of it. The main force has the orbit and the outer city. Your task is one district of the capital itself, where the betrayer's people are dug in among a population that never stopped being loyal and is now a hostage to the defense. {NPC:intel-source} reads your district as held by a reinforced company of the usurper's troops, Regular-to-Veteran quality, fighting from prepared urban positions. They use the civil infrastructure — the shelters, the hospitals, the packed residential towers — as cover that your rules of engagement will not let you simply blast through. That picture is {INTEL_AGE_HOURS} hours old, and a defender who knows he is losing fortifies fast. This is a hard fight for one reason: the enemy was trained the same way you were. He knows the doctrine you will use and has built his defense to punish exactly the textbook assault. And he hides among people who are on your side and will die if you fight the way the ground invites. Your prize is the district freed and standing with its people alive. You want the capital liberated, not flattened, because a city reduced to rubble to save it is a win for the usurper, not for you. {NPC:opfor-commander} commands your district's defense and will trade the population's safety for time without hesitation, daring you to be the one who brings the towers down. Recommended force: {FORCE_SIZE}, the player's company as one part of the larger liberation. Free the district and keep it whole, or fight the fight the betrayer wants and win a graveyard.",
+    "objectives": {
+      "primary": "Clear the assigned capital district of the usurper's forces and secure it for the liberation. Break the prepared urban defense while keeping the district's loyal population and its critical infrastructure mostly intact.",
+      "secondary": "Take the district's defense headquarters and its commander's records. They prove who turned, who was coerced, and which of the usurper's troops might be won back rather than fought to the last.",
+      "bonus": "Secure the district's shelters and hospitals before the defense can turn them into final strongpoints. This denies {NPC:opfor-commander} his human shields and saves the people sheltering there from the last stand."
+    },
+    "complications": [
+      {
+        "name": "He Knows Your Doctrine",
+        "text": "The defender trained where you trained. He knows the approach the manual recommends, the way a company is supposed to fight through a city, and the support you expect to call on. His defense is built to punish the textbook and turn the doctrine you trust into a trap. Fight him by the book and you fight him exactly the way he prepared for.",
+        "mechanicalEffect": "The defense anticipates standard assault patterns: prepared positions cover the doctrinally obvious approaches and support a counter to the expected maneuver. Unconventional approaches that deviate from the manual catch the defense off its prepared ground; predictable ones walk into it."
+      },
+      {
+        "name": "The Loyal Hostages",
+        "text": "The people in this district are on your side, and the defender is using them as cover. He fights from among the residential towers and the shelters, knowing your rules will not let you flatten a building full of loyal civilians to root out a platoon. Every position he holds among them is a question: how much of the city do you break to take it back?",
+        "mechanicalEffect": "Heavy or area fire against occupied civil structures carries a collateral track with a hard ceiling tied to the rules of engagement. Crossing it voids the keep-it-whole condition of the primary, converts a SUCCESS toward COMPROMISED, and feeds the usurper's narrative regardless of the tactical result."
+      },
+      {
+        "name": "Fast Fortification",
+        "text": "A defender who knows he is losing the planet does not husband his effort. {NPC:opfor-commander} fortifies the district as fast as he can — wiring buildings, blocking streets, turning every delay into a deeper defense. The district you assault tomorrow is harder than the one scouted today.",
+        "mechanicalEffect": "The defense's prepared positions deepen over the engagement: streets blocked, buildings rigged, strongpoints linked. A slow, methodical advance gives the defender time to harden ground ahead of it; pace traded against the collateral risk of a faster push."
+      },
+      {
+        "name": "Troops Who Might Turn Back",
+        "text": "Not everyone under the usurper turned willingly. Some of the troops in the district were coerced, or followed orders they now regret, and a few might lay down arms if given the chance rather than the muzzle. Telling the committed traitor from the reluctant conscript in the middle of a firefight is its own problem, and getting it wrong wastes lives on both sides.",
+        "mechanicalEffect": "On a roll at contact with a defending element, that element is wavering and may surrender if offered the chance rather than pressed to destruction; accepting surrenders preserves troops who feed the secondary's intelligence and eases the wider liberation, while treating all defenders as committed costs those lives and that information."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Freeing the District",
+        "context": "A district full of loyal people, a defender who knows your manual, and a city you must not wreck. You can go by the book and trade collateral risk for speed, work an unconventional line the defender did not prepare, or fight to take the shelters first and deny him his shields. Each answer trades the city's safety, the clock, and your own losses differently.",
+        "options": [
+          {
+            "title": "By the Book, Fast",
+            "advantages": [
+              "The doctrinally direct assault is the quickest way to clear the district before the defense deepens",
+              "Concentrated, supported advance brings the most weight to bear at the decisive points"
+            ],
+            "disadvantages": [
+              "It is exactly the assault the betrayer prepared to punish — into his prepared positions and his counter",
+              "The fastest, heaviest fighting in an inhabited district is the surest way to run the collateral track and break the city"
+            ],
+            "consequence": "You clear the ground fast and on familiar terms, straight into the defense built to meet it; speed and weight at the price of walking his trap and risking the towers you came to save.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the assault driven by the manual into the defender's prepared ground and counter",
+              "risk": "The textbook approach meets the textbook trap, and the heavy fighting among the towers breaks the city it frees"
+            }
+          },
+          {
+            "title": "Work an Unconventional Line",
+            "advantages": [
+              "An approach off the doctrinal axis catches the defense away from its prepared positions and its counter",
+              "Fighting on ground the betrayer did not rig spares more of the city and more of your company"
+            ],
+            "disadvantages": [
+              "The unconventional line is slower and harder to support, ground the manual avoided for reasons",
+              "A clever route that goes wrong leaves the company strung in bad ground without the support a doctrinal axis would have"
+            ],
+            "consequence": "You unsettle the defense and protect the city by refusing the fight he prepared, at the cost of speed and sure support; done well it unhinges him, done badly it strands you off the map he and you both know.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "time and sure support traded for an approach the defender did not prepare",
+              "risk": "An unconventional line gone wrong leaves the company unsupported in bad ground the manual avoided"
+            }
+          },
+          {
+            "title": "Take the Shelters First",
+            "advantages": [
+              "Securing the shelters and hospitals early denies {NPC:opfor-commander} his human shields and final strongpoints",
+              "Saves the most vulnerable population and removes the collateral leverage from the rest of the fight"
+            ],
+            "disadvantages": [
+              "Diverting to the shelters first delays the clearance of the district and gives the defense time to deepen",
+              "The shelters may already be held — taking them is a delicate fight among packed civilians of its own"
+            ],
+            "consequence": "You pull the hostages out from under the defense before clearing it, trading time and a hard delicate fight for a city you can then take without the towers held against you; the humane line is also the slow one.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the advance diverted to the shelters first, conceding time to the deepening defense",
+              "risk": "A defense given time while you clear the shelters hardens the rest of the district into a longer, costlier fight"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The company enters the assigned district; the usurper's defense stands to in its prepared urban positions and the population goes to ground." },
+        { "t": "T+6:00", "event": "{NPC:opfor-commander} commits his reserve to the threatened approaches and begins pulling elements into the shelters as strongpoints." },
+        { "t": "T+12:00", "event": "The defense deepens — streets blocked, buildings rigged; the collateral picture forms wherever the fighting is heaviest." },
+        { "t": "T+18:00", "event": "The defense headquarters is in reach if the advance held its pace; the wavering elements decide whether to fight on or fold." },
+        { "t": "T+24:00", "event": "The district is cleared and secured, or the fight congeals among the towers; the wider liberation's timetable depends on this slice being done." }
+      ],
+      "hardDeadline": "The district must be cleared and secured by T+24:00 to hold the liberation's timetable, and it must be taken mostly whole. A district freed as rubble, or a fight left stalled among the towers, hands the usurper the only victory left to him: proof that liberation costs the loyal more than the betrayal did."
+    },
+    "opforSketch": {
+      "composition": "A turncoat's prepared urban defense: a reinforced company of the usurper's troops (all weights, 30-85 tons) at Regular-to-Veteran quality fighting from prepared positions, supported by a street-fighting armor element (SRM and short-range behavior) and fixed emplacements woven into the civil infrastructure. The defenders are trained in the liberators' own doctrine. Some elements are coerced conscripts who may waver; the core is committed.",
+      "behavior": "Betrayer's-defense doctrine: hold the prepared ground that punishes the textbook assault, use the loyal population and the shelters as cover the liberators' rules will not let them blast, and trade civilian safety for time without hesitation. The committed core fights hard and fortifies as it goes; wavering elements may fold if offered the chance, but {NPC:opfor-commander} counts on the liberators being unwilling to win the way he is willing to lose."
+    },
+    "forks": [
+      {
+        "name": "OPERATION CLEAN SLATE",
+        "outcomeGate": "SUCCESS",
+        "trigger": "The district was freed and kept whole, its people alive and its defense broken; the liberation advances on the betrayer's core.",
+        "consequence": "The district stands liberated and intact, and its captured records name the usurper's network across the capital. The liberation presses inward toward the seat the betrayer holds, and your company takes the next slice — the fight closing on the man who turned, district by district.",
+        "threat": "EXTREME",
+        "family": "PLANETARY_ASSAULT"
+      },
+      {
+        "name": "OPERATION HELD GROUND",
+        "outcomeGate": "FAILURE",
+        "trigger": "The district could not be cleared, or was wrecked taking it; the slice stalled and the wider timetable slipped.",
+        "consequence": "The advance stalls in the district and the betrayer makes the most of it, deepening his hold and his narrative that liberation only brings ruin. The next operation is to hold the ground won and contain the defense while the main force reworks its plan — the liberation checked, the city still partly his. The campaign bends; the betrayer buys time.",
+        "threat": "HIGH",
+        "family": "GARRISON_DUTY"
+      }
+    ],
+    "storyElementSeed": "A family in a stairwell shelter listening to 'Mech footfalls in the street above, unsure whether the soldiers coming are the ones who turned or the ones come to undo it, holding very still either way.",
+    "voiceSlots": [
+      "command",
+      "intelligence",
+      "medical",
+      "engineering"
+    ],
+    "registerVariants": {},
+    "specifics": {
+      "INTEL_AGE_HOURS": { "min": 4, "max": 18, "unit": "hours" },
+      "DISTRICT_BLOCKS": { "min": 12, "max": 30, "unit": "city blocks in the district" },
+      "SHELTER_COUNT": { "min": 3, "max": 7, "unit": "civil shelters in the district" }
+    }
+  },
+  {
+    "seedId": "INSW2-06",
+    "family": "PLANETARY_ASSAULT",
+    "inspirationId": "INSP-206",
+    "inspiration": "A deep multi-axis offensive races into enemy territory faster than its own supply can follow, and must reach its objective and win before the advance outruns its fuel and ammunition and culminates short of the goal.",
+    "skeleton": "the player's company spearheads one axis of a deep multi-pronged offensive that has outrun its own logistics, where the objective must be reached and held before the supply tail catches up or the whole thrust culminates and stalls in enemy depth, and the crux is whether to push the exhausted spearhead one bound further or consolidate before it breaks",
+    "title": "OPERATION FAR BOUND",
+    "eraFit": [
+      "civil-war",
+      "late-succession-wars"
+    ],
+    "factionFit": [
+      "is-davion",
+      "is-steiner",
+      "is-kurita"
+    ],
+    "register": "is-davion",
+    "threatRange": [
+      "HIGH",
+      "EXTREME"
+    ],
+    "localeFit": {
+      "settlement": [
+        "industrial",
+        "frontier"
+      ],
+      "regionRole": [
+        "interior",
+        "contested"
+      ],
+      "terrain": [
+        "desert",
+        "mountain"
+      ]
+    },
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.35,
+    "situation": "{EMPLOYER}'s offensive into {TARGET_FACTION}'s territory on {WORLD} has gone fast and deep — too fast. Three axes drove into the interior of {DISTRICT} to break the defense before it could set. They have, but the supply tail has not kept up, so the whole thrust is running on what it can carry. Your company spearheads the deepest axis, and you are close to the objective: a road junction and supply town that, once taken and held, cuts the defender's lateral movement and makes the breakthrough permanent. {NPC:intel-source} reads the objective as held by a defending battalion-slice fighting to buy time for its own reinforcements, Regular-to-Veteran quality, dug into the town and the junction. That picture is {INTEL_AGE_HOURS} hours old, and a defender racing his own clock fortifies while he waits. The ground is fast to cross but hard to supply across: open interior with long, exposed roads back to the railhead. The further you push, the longer and thinner the line your fuel and ammunition come up. The real danger is not the next fight. It is the fight after, when the spearhead has spent its supplies reaching the objective and none has arrived to let it hold. An offensive that outruns its supply does not lose a battle — it culminates. It reaches a point where it cannot attack again, cannot be resupplied in time, and cannot pull back fast enough to escape, and it stalls deep in enemy territory where the defender's gathering reinforcements catch it. The decision under the whole operation is the oldest one in a deep advance: push the exhausted spearhead one bound further and take the prize now, or halt short and risk the moment passing while the defender sets. {NPC:opfor-commander} commands the objective and is trading ground for the time his reinforcements need. Recommended force: {FORCE_SIZE}, the spearhead of one axis. Take the junction before you culminate, or stall deep in enemy territory with empty racks and his reserves arriving.",
+    "objectives": {
+      "primary": "Seize the road junction and supply town at the head of the axis and hold it, cutting {TARGET_FACTION}'s lateral movement and making the breakthrough permanent, before the spearhead runs out of fuel and ammunition.",
+      "secondary": "Capture the town's fuel and ammunition stocks intact. That turns the objective into a forward supply point the spearhead can hold from, instead of a prize it cannot keep.",
+      "bonus": "Take and hold the road connecting to a neighboring thrust, so the breakthrough is a solid front rather than an exposed finger the defender can pinch off."
+    },
+    "complications": [
+      {
+        "name": "The Culmination Point",
+        "text": "The spearhead is running on what it carries, and that is nearly gone. There is a point coming when the company can no longer attack, cannot be resupplied in time, and cannot pull back fast enough to escape the gathering reserves. Reaching the objective with empty racks is not a win. It means arriving spent, on the enemy's ground, with nothing left.",
+        "mechanicalEffect": "Track the spearhead's fuel and ammunition as a resource that drains across the operation. Each major action draws it down. Past a threshold the company cannot keep attacking and may be unable to hold or withdraw. The objective must be taken and supply secured before that point, or the hold fails by exhaustion."
+      },
+      {
+        "name": "The Lengthening Supply Line",
+        "text": "Every bound deeper stretches the line back to the railhead thinner, and a thin line is easy to cut. The supply that does come up runs a long, exposed road through ground where the defender's bypassed elements still lurk. A single strike back there starves the spearhead at the front.",
+        "mechanicalEffect": "Resupply arrives slowly and unreliably along the lengthening line. On a roll between phases, the supply road is cut to the rear, delaying or denying a resupply increment and pushing the spearhead faster toward culmination."
+      },
+      {
+        "name": "The Defender's Clock",
+        "text": "{NPC:opfor-commander} is not trying to win the battle at the junction. He is trying to last until his reinforcements arrive, trading the town's ground for the hours they need. The longer the spearhead takes to force the objective, the closer those reserves come — and a spearhead that arrives exhausted just as fresh defenders do is a spearhead destroyed in enemy depth.",
+        "mechanicalEffect": "A defender reinforcement clock runs against the operation; if the objective is not taken and consolidated before it expires, fresh enemy weight arrives to contest the exhausted spearhead, raising the FAILURE fork's threat and the risk of the company being cut off."
+      },
+      {
+        "name": "Exposed Flanks",
+        "text": "A deep spearhead has open flanks by definition — it ran ahead of the line on either side, and the ground it bypassed is full of defenders it went around rather than through. Those elements can close on the axis's flanks as it slows near the objective, threatening to pinch off the finger the company has driven into enemy territory.",
+        "mechanicalEffect": "Bypassed enemy elements may close on the spearhead's flanks as it nears the objective, especially if it slows; linking with a neighboring thrust (the bonus) closes the flank, while pushing alone leaves it open to being cut off."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Last Bound",
+        "context": "The objective is one bound away and the spearhead is nearly spent. Push now and take it before you culminate; consolidate short and secure your supply before the final effort; or split off to link the neighboring axis and close your flank first. Each answer trades the prize, the company's endurance, and the open flank differently.",
+        "options": [
+          {
+            "title": "Push the Last Bound Now",
+            "advantages": [
+              "Takes the junction before the defender's reinforcements arrive and before the spearhead fully culminates",
+              "Seizing the town's intact supply stocks could refuel the spearhead and solve the exhaustion at a stroke"
+            ],
+            "disadvantages": [
+              "Spends the last of the fuel and ammunition on the assault, leaving nothing if the stocks are destroyed or denied",
+              "An exhausted spearhead that takes the town may lack the strength to hold it against the arriving reserves"
+            ],
+            "consequence": "You go for the prize while the going is barely possible, betting the spearhead's last reserve on taking the supply that would sustain it; win and the breakthrough is made, lose and you culminate in the town with the reserves at the gate.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the spearhead's last fuel and ammunition spent on the final assault, refilled only if the stocks are taken intact",
+              "risk": "An exhausted spearhead takes the town and cannot hold it — culmination at the objective with the reserves arriving"
+            }
+          },
+          {
+            "title": "Consolidate Short",
+            "advantages": [
+              "Halting to let supply catch up rebuilds the spearhead's endurance before the decisive effort",
+              "A consolidated company that then attacks has the reserve to both take the junction and hold it"
+            ],
+            "disadvantages": [
+              "The pause gives {NPC:opfor-commander}'s reinforcements time to arrive and the defense time to deepen",
+              "Consolidating short of the objective on exposed ground invites the bypassed flanking elements to close"
+            ],
+            "consequence": "You trade the moment for endurance, betting that a stronger attack later beats a weak one now; the spearhead holds together, but the prize may be far harder to take once the defender's reserves are in it.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the initiative and the defender's clock traded for the time to resupply and consolidate",
+              "risk": "The pause lets the reserves arrive and the defense set — the junction taken later against far heavier weight, if at all"
+            }
+          },
+          {
+            "title": "Link the Neighboring Axis First",
+            "advantages": [
+              "Closing the flank with the neighboring thrust secures the spearhead against being pinched off",
+              "A continuous front shares supply and weight, easing the exhaustion and the exposure both"
+            ],
+            "disadvantages": [
+              "Diverting to link sideways spends time and the last fuel on something other than the objective",
+              "The connecting road may be contested — the link is a fight of its own, not a free maneuver"
+            ],
+            "consequence": "You secure the finger before driving it deeper, trading the direct push for a safer base to attack from; the spearhead is no longer alone, but the objective waits while you spend endurance closing the flank.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "fuel and time spent linking sideways rather than driving on the objective",
+              "risk": "A contested link spends the spearhead's reserve without taking the objective — exhausted and still short of the prize"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The spearhead closes on the road junction; the defending slice stands to in the town and the junction, fighting to buy time." },
+        { "t": "T+5:00", "event": "The assault on the objective is joined; the spearhead's fuel and ammunition draw down hard in the fight for the town." },
+        { "t": "T+11:00", "event": "The defender trades ground for the junction's approaches; the spearhead nears its culmination point as the racks run low." },
+        { "t": "T+17:00", "event": "{NPC:opfor-commander}'s reinforcements approach the area; the town's supply stocks must be in hand by now to sustain the hold." },
+        { "t": "T+24:00", "event": "The junction is taken and consolidated, or the spearhead has culminated short; the breakthrough is made permanent or stalls in enemy depth." }
+      ],
+      "hardDeadline": "The road junction must be taken, its supply secured, and the position consolidated by T+24:00, before the spearhead culminates and the defender's reinforcements arrive. A company that reaches the objective with empty racks as fresh enemy weight closes is destroyed deep in enemy territory, and the offensive stalls short of the prize that would have made it permanent."
+    },
+    "opforSketch": {
+      "composition": "A defending slice fighting for time: a battalion-slice of mixed 'Mechs (40-80 tons) at Regular-to-Veteran quality dug into the supply town and the junction, supported by an armor element and fixed positions, trading ground deliberately. Behind it, a reinforcement element races to arrive — fresh medium-to-heavy weight that contests the exhausted spearhead if it arrives before the objective is consolidated. Bypassed enemy elements haunt the spearhead's flanks and rear.",
+      "behavior": "Delaying-defense doctrine against a deep thrust: the junction slice trades the town's ground for time, fortifying as it waits and never overcommitting, betting that the spearhead culminates before the objective falls. The arriving reinforcements aim to catch the spearhead exhausted; the bypassed elements interdict the supply line and threaten the flanks. The whole defense is a clock the attacker is racing, not a wall to break."
+    },
+    "forks": [
+      {
+        "name": "OPERATION FIRM JUNCTION",
+        "outcomeGate": "SUCCESS",
+        "trigger": "The junction was taken and held, its supply secured, before the spearhead culminated; the breakthrough is permanent.",
+        "consequence": "The junction is held and the captured stocks have the spearhead breathing again, the breakthrough made permanent and the defender's lateral movement cut. {EMPLOYER} pushes the advantage from the new forward base, your company driving the next objective now that the supply has caught up. The deep gamble paid.",
+        "threat": "HIGH",
+        "family": "PLANETARY_ASSAULT"
+      },
+      {
+        "name": "OPERATION SPENT THRUST",
+        "outcomeGate": "FAILURE",
+        "trigger": "The spearhead culminated short, or the reinforcements caught it exhausted at the objective; the axis stalled in enemy depth.",
+        "consequence": "The thrust has stalled with empty racks deep in {TARGET_FACTION}'s interior, the reserves closing and the flanks exposed. The next operation is to extract the spearhead before it is cut off and destroyed — a fighting withdrawal back toward the railhead, trading the ground won to save the company. The offensive overreached; the bill comes due.",
+        "threat": "EXTREME",
+        "family": "EXTRACTION_RAID"
+      }
+    ],
+    "storyElementSeed": "A crew chief reading a fuel gauge by torchlight at a halt deep in enemy country, doing the sum twice, then telling the commander the number flat and waiting to hear whether they go on or stop.",
+    "voiceSlots": [
+      "logistics",
+      "command",
+      "intelligence",
+      "engineering"
+    ],
+    "registerVariants": {
+      "is-kurita": {
+        "objectives.primary": "Seize the junction and hold it before the spearhead spends its last, cutting the enemy's lateral movement and making the Dragon's breakthrough permanent. The deepest thrust is the one that must not stop short of the goal."
+      },
+      "is-steiner": {
+        "objectives.primary": "Take the road junction and its supply stocks and hold the position before the advance outruns its own ledger; an offensive that culminates short has spent its capital for nothing, so secure the forward depot that funds the next bound."
+      }
+    },
+    "specifics": {
+      "INTEL_AGE_HOURS": { "min": 4, "max": 18, "unit": "hours" },
+      "AXIS_DEPTH_KM": { "min": 80, "max": 220, "unit": "km depth of the axis" },
+      "SUPPLY_RESERVE_PCT": { "min": 15, "max": 40, "unit": "percent of supply reserve remaining" }
+    }
+  },
+  {
+    "seedId": "INSW2-07",
+    "family": "OBJECTIVE_RAID",
+    "inspirationId": "INSP-207",
+    "inspiration": "Rather than assault a heavily fortified strongpoint, the campaign bypasses it and seizes the lightly held waystation system behind it, cutting the fortress off to wither while the advance moves on.",
+    "skeleton": "the player's company seizes a lightly held logistics waystation that sits behind a powerful bypassed fortress, cutting the fortress off to wither rather than storming it, where the prize is the connector not the strongpoint, the defender of the waystation is light but its loss strands a far heavier force, and speed beats the fortress's reaction",
+    "title": "OPERATION LEAPFROG",
+    "eraFit": [
+      "star-league",
+      "late-succession-wars",
+      "clan-invasion"
+    ],
+    "factionFit": [
+      "sldf",
+      "is-davion",
+      "merc"
+    ],
+    "register": "is-davion",
+    "threatRange": [
+      "MEDIUM",
+      "HIGH"
+    ],
+    "localeFit": {
+      "settlement": [
+        "industrial",
+        "frontier"
+      ],
+      "regionRole": [
+        "border",
+        "interior"
+      ],
+      "terrain": [
+        "vacuum",
+        "desert"
+      ]
+    },
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.3,
+    "situation": "{TARGET_FACTION} has poured its strength into the fortress at the front of {DISTRICT} on {WORLD}, and {EMPLOYER} has decided not to oblige it. The fortress is strong, dug in, and ready for the assault everyone expects — so the assault will not come. Instead the campaign goes around it. Your company takes the prize that makes the fortress irrelevant: the logistics waystation behind it, the depot and transit node that feeds the strongpoint and links it to the rest of the defense. Take the waystation and the fortress becomes an island — strong, intact, and cut off, left to starve on its own stores while the advance moves past it. {NPC:intel-source} reads the waystation as lightly held: a security company at most, Regular quality, guarding a depot that was never meant to be the front line, because the fortress was supposed to keep the front line far away. That picture is {INTEL_AGE_DAYS} days old, and a depot's garrison can be reinforced if the defender guesses the plan. The open ground is the whole opportunity. The waystation sits in the fortress's rear, on the open transit ground the strongpoint exists to protect. So reaching it is a race against the fortress's reaction, not a fight through its guns. Get to the waystation fast, take it before the fortress can detach a force to save it, and hold it long enough to make the cut permanent. The prize is the connector, not the strongpoint. A company drawn into fighting the fortress has lost the point of the mission, which is to leave the fortress alone and take the depot behind it. {NPC:opfor-commander} commands the sector and, once he sees the move, will try to pull weight back from the fortress to relieve the waystation. Recommended force: {FORCE_SIZE}. Take the waystation and strand the fortress, or get tangled with the strongpoint and let the connector stay open.",
+    "objectives": {
+      "primary": "Seize the logistics waystation behind the bypassed fortress and hold it long enough to cut the strongpoint's supply and communications, stranding the fortress while the advance moves on.",
+      "secondary": "Capture the waystation's transit records and depot stocks intact. The records map the defender's whole logistics network, and the stocks turn the captured node into a usable forward base.",
+      "bonus": "Destroy or capture the fortress's relief column if it sorties to save the waystation. A fortress that spends its mobile reserve trying to keep the connector is weaker still once it is finally stranded."
+    },
+    "complications": [
+      {
+        "name": "Leave the Fortress Alone",
+        "text": "The fortress is a magnet and a trap. It is right there, strong and obvious, and every instinct says a force in its rear should deal with it. But the plan is to ignore it — to take the waystation and let the strongpoint starve — and a company that gets drawn into trading fire with the fortress has abandoned the operation for the fight the defender would much rather have.",
+        "mechanicalEffect": "Engaging the fortress directly draws its full prepared strength and pulls the company off the time-critical waystation seizure. The objective is the waystation. Fighting the fortress only bleeds the company against ground it was never meant to take, and counts as a failure even though it looks like initiative."
+      },
+      {
+        "name": "The Fortress Reacts",
+        "text": "Once {NPC:opfor-commander} understands the waystation is the target, he will try to save it — detaching a relief column from the fortress's mobile reserve to drive back and break the seizure. The race is whether the company takes and consolidates the waystation before that column arrives, because a relief reaching an un-secured depot turns the quick cut into a stand-up fight in the fortress's rear.",
+        "mechanicalEffect": "A relief column sorties from the fortress on a clock once the seizure is recognized. Taking and consolidating the waystation before it arrives makes the cut clean; a relief reaching a contested depot forces the company to fight it (the bonus) or lose the hold."
+      },
+      {
+        "name": "The Open Transit Ground",
+        "text": "The waystation sits on open ground — the transit country the fortress protects — which is fast going both ways. It lets the company reach the depot quickly and lets the fortress's relief reach it quickly too, and offers little cover for the hold once the depot is taken. Speed is the company's weapon and the defender's as well.",
+        "mechanicalEffect": "The approach and the relief both move fast over open terrain with little cover; the company's hold of the waystation must reckon with exposed ground and the speed at which the relief can close, favoring a fast seizure and prepared blocking positions over a leisurely consolidation."
+      },
+      {
+        "name": "The Stiffened Depot",
+        "text": "If the defender guessed the plan, the lightly held depot is not so lightly held. The waystation may have been reinforced since the last look — a stronger garrison, dug-in positions added when {NPC:opfor-commander} began to worry about his rear — turning the quick seizure into a real fight against the clock of the fortress's relief.",
+        "mechanicalEffect": "On a roll at the waystation, the garrison is reinforced beyond the report, lengthening the seizure and squeezing the window before the fortress's relief column arrives, raising the risk of being caught between the depot's garrison and the relief."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Taking the Connector",
+        "context": "A lightly held depot behind a strong fortress, and a relief column that starts the moment the move is read. You can race straight for the waystation and seize it before the fortress reacts, cut the connecting routes first to isolate it slowly, or set a blocking force on the relief road to buy the seizure time. Each answer trades speed, the clean cut, and your exposed flank differently.",
+        "options": [
+          {
+            "title": "Race for the Waystation",
+            "advantages": [
+              "The fastest seizure — takes the depot before the fortress can detach a relief at all",
+              "A waystation taken and consolidated early makes the cut clean and the fortress's sortie pointless"
+            ],
+            "disadvantages": [
+              "A headlong race may arrive disorganized against a depot stiffer than reported",
+              "Committing everything forward leaves nothing watching the relief road if the seizure runs long"
+            ],
+            "consequence": "You bet on speed to make the whole operation moot for the defender; seize the depot fast and the fortress is stranded before it can act, but a slow seizure leaves you with the relief arriving and no one watching the road.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the company committed forward in a race, with nothing held to watch the relief road",
+              "risk": "A stiffened depot slows the seizure and the relief arrives on an unguarded road — caught between garrison and column"
+            }
+          },
+          {
+            "title": "Cut the Connecting Routes First",
+            "advantages": [
+              "Severing the depot's links isolates it before assaulting, ensuring the fortress is cut even if the seizure runs long",
+              "Cutting the routes also slows or blocks the fortress's relief on the same roads"
+            ],
+            "disadvantages": [
+              "Working the routes first spends time the fortress uses to react, and telegraphs the move",
+              "Dividing effort onto the routes leaves less weight for the seizure itself"
+            ],
+            "consequence": "You guarantee the cut by isolating the depot before taking it, at the cost of speed and surprise; the fortress is stranded regardless, but the slower tempo gives the defender his best chance to interfere.",
+            "costs": {
+              "cbills": 6000,
+              "days": null,
+              "resource": "time and an element spent cutting the connecting routes before the seizure",
+              "risk": "The slower, telegraphed approach lets the fortress stiffen the depot and ready its relief before the seizure even begins"
+            }
+          },
+          {
+            "title": "Block the Relief Road",
+            "advantages": [
+              "A blocking force on the relief road buys the seizure the time it needs by holding off the fortress's column",
+              "A blocked or ambushed relief can be destroyed (the bonus), weakening the fortress further"
+            ],
+            "disadvantages": [
+              "Splitting off a blocking force leaves fewer guns for the waystation seizure itself",
+              "The blocking force on open ground faces the fortress's mobile reserve with its back to the depot it is protecting"
+            ],
+            "consequence": "You protect the seizure by meeting the relief head-on with part of your weight, trading a divided force for a secured window; done right the relief is broken and the cut is clean, done wrong both halves are too light.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "a blocking element committed to the relief road, away from the seizure",
+              "risk": "The fortress's reserve overpowers the blockers on open ground — the relief breaks through to the depot mid-seizure"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The company reaches the waystation's approaches; the depot garrison stands to and the sector recognizes a force in the fortress's rear." },
+        { "t": "T+5:00", "event": "{NPC:opfor-commander} reads the target as the waystation and orders a relief column detached from the fortress's mobile reserve." },
+        { "t": "T+10:00", "event": "The seizure of the depot should be well underway; the relief column starts back from the fortress." },
+        { "t": "T+16:00", "event": "The relief column nears the waystation's approaches; the depot must be taken and consolidated, or held against both garrison and relief." },
+        { "t": "T+22:00", "event": "The cut is permanent and the fortress stranded, or the relief has broken through and the connector stays open." }
+      ],
+      "hardDeadline": "The waystation must be seized and consolidated by T+22:00, before the fortress's relief column can reopen it. A depot still contested when the relief arrives turns the clean bypass into a stand-up fight in the enemy's rear, and a fortress left connected is a strongpoint the campaign must still storm the hard way."
+    },
+    "opforSketch": {
+      "composition": "A light depot garrison plus a fortress relief: at the waystation, a security company (30-55 tons) at Regular quality guarding a logistics node, with a supporting armor element and depot defenses, not built for a serious fight. The fortress's relief column is a heavier mobile reserve — a medium-to-heavy 'Mech force (50-80 tons), Regular-to-Veteran, detached to save the connector. The fortress itself is strong but fixed and bypassed; engaging it brings its full prepared weight.",
+      "behavior": "Rear-area-depot doctrine: the waystation garrison defends a node it never expected to be the front, and holds for the relief rather than winning alone. The fortress reacts by detaching a relief to save its lifeline, racing to reach the depot before the seizure consolidates. The fortress proper stays put, a magnet for any attacker foolish enough to take it on instead of the connector behind it."
+    },
+    "forks": [
+      {
+        "name": "OPERATION WITHERED VINE",
+        "outcomeGate": "SUCCESS",
+        "trigger": "The waystation was seized and held; the fortress is cut off to wither and the advance moves on past it.",
+        "consequence": "The connector is taken and the fortress is an island, strong and useless, left to starve while the campaign rolls forward. {EMPLOYER} presses the advance from the captured node toward the next objective, the bypassed strongpoint forgotten behind the line. The leapfrog worked.",
+        "threat": "HIGH",
+        "family": "PLANETARY_ASSAULT"
+      },
+      {
+        "name": "OPERATION RECONNECTED",
+        "outcomeGate": "FAILURE",
+        "trigger": "The relief reopened the waystation, or the company was caught between the garrison and the column; the cut failed.",
+        "consequence": "The fortress kept its lifeline and the bypass did not take, and now the strongpoint's reserve is loose in the rear hunting the company that tried to strand it. The next operation is to hold the ground won and contain the situation while the campaign reconsiders — the fortress still connected, the easy cut spent. The plan bends; the strongpoint must be dealt with another way.",
+        "threat": "HIGH",
+        "family": "GARRISON_DUTY"
+      }
+    ],
+    "storyElementSeed": "A depot quartermaster watching unfamiliar 'Mechs come over the rise from the wrong direction — the rear, the safe direction — and reaching for a radio to a fortress that suddenly cannot help.",
+    "voiceSlots": [
+      "command",
+      "logistics",
+      "intelligence",
+      "naval"
+    ],
+    "registerVariants": {
+      "merc": {
+        "objectives.primary": "Take the waystation behind the fortress and hold it long enough to cut the strongpoint's supply, then sit on it — the contract pays for the connector, not for a brawl with the fortress nobody asked you to storm."
+      }
+    },
+    "specifics": {
+      "INTEL_AGE_DAYS": { "min": 4, "max": 11, "unit": "days" },
+      "WAYSTATION_DISTANCE_KM": { "min": 20, "max": 60, "unit": "km behind the fortress" },
+      "RELIEF_DELAY_MIN": { "min": 14, "max": 24, "unit": "minutes for the fortress relief to arrive" }
+    }
+  },
+  {
+    "seedId": "INSW2-08",
+    "family": "PLANETARY_ASSAULT",
+    "inspirationId": "INSP-208",
+    "inspiration": "A broad coalition of uneasy partners assaults a fanatical enemy's fortified homeworld, each contingent assigned its own sector, where the hardest part is that the enemy will not surrender and the allies barely trust each other.",
+    "skeleton": "the player's company holds one coalition contingent's sector in the assault on a fanatical enemy's fortified homeworld, where the defender fights to the death and may scorch its own ground, the flanking sectors are held by uneasy allies whose pace the player cannot control, and the crux is taking a fortified zone whose neighbors may or may not keep abreast",
+    "title": "OPERATION COMMON CAUSE",
+    "eraFit": [
+      "jihad"
+    ],
+    "factionFit": [
+      "is-davion",
+      "is-steiner",
+      "merc",
+      "comstar"
+    ],
+    "register": "merc",
+    "threatRange": [
+      "HIGH",
+      "EXTREME"
+    ],
+    "localeFit": {
+      "settlement": [
+        "capital",
+        "industrial"
+      ],
+      "regionRole": [
+        "interior",
+        "contested"
+      ],
+      "terrain": [
+        "urban",
+        "mountain"
+      ]
+    },
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.2,
+    "situation": "Everyone who has a reason to want {TARGET_FACTION} gone has come to {WORLD} to finish it — a coalition of partners who agree on nothing else, landed in force to grind down the fanatics' fortified homeworld in {DISTRICT} sector by sector. Your company holds one sector of that line. The contingents on both flanks are allies you would not trust with your back in any other season. They advance on their own schedules toward their own objectives, and no order from above can fully guarantee they keep pace with you. {NPC:intel-source} reads your sector as held by a dug-in fanatic force, Veteran quality, fighting from prepared positions and rigged, like everything these people hold, to deny the ground rather than give it up. That picture is {INTEL_AGE_HOURS} hours old, and a defender who means to die in place fortifies to the end. The ground is hard and the company you keep makes it harder. The fortified sector — prepared urban and high positions — would be a stiff fight on its own, and your flanks are only as safe as allies you cannot command choose to make them. If the contingent beside you stalls, your flank opens; if it surges, your advance can lag behind. Push ahead of both and you form a salient the defender can pinch off. The enemy will not surrender. There is no breaking point to aim for and no morale to crack, only a fanatic garrison that fights to the last position and may burn its own sector at the end rather than let it be taken whole. The decision under the whole operation is how to advance through prepared ground while tied to neighbors whose pace you cannot set: match the coalition's tempo and stay aligned, or take your sector at your own speed and risk an open flank. {NPC:opfor-commander} commands your sector's defense and counts on the gaps between allies as much as on his own guns. Recommended force: {FORCE_SIZE}, the player's company in one coalition sector. Take your ground and keep your flanks, or surge alone into a salient and be cut off by an enemy who reads the gaps between allies.",
+    "objectives": {
+      "primary": "Clear and hold the assigned sector of the fortified homeworld assault, breaking the fanatic defense in your zone while keeping pace with the flanking contingents so the line advances together rather than in exposed salients.",
+      "secondary": "Stop the defender from burning the sector's critical ground — the industry and infrastructure the coalition came to capture, not destroy — by reaching the demolition points before the fanatics can fire them.",
+      "bonus": "Secure the boundary with at least one flanking contingent so neither ally's stall nor surge opens a gap. It proves the coalition can actually fight as one where it counts."
+    },
+    "complications": [
+      {
+        "name": "Allies You Cannot Command",
+        "text": "The contingents on your flanks answer to their own commanders, their own politics, their own caution. One may push ahead for glory or its own objective; another may drag, husbanding its strength while you spend yours. You cannot order them, only react to them, and the defender knows it — the seams between uneasy allies are the softest part of any coalition line.",
+        "mechanicalEffect": "The flanking contingents advance on independent, partly unpredictable schedules; a flank may be secure, open, or overextended at any phase. The company's own pace interacts with theirs: surging ahead opens a flank the defender exploits, while matching a slow neighbor concedes time to the deepening defense."
+      },
+      {
+        "name": "An Enemy That Will Not Yield",
+        "text": "These defenders will not break and will not surrender. There is no rout to trigger and no morale collapse to exploit, only a fanatic garrison that fights from each prepared position until it is destroyed. It treats every casualty it inflicts on you as a win. Pressure that would shatter an ordinary defense only buys ground here, meter by bloody meter.",
+        "mechanicalEffect": "The defense does not check morale and fights to destruction across the sector. Tactics that rely on breaking enemy will produce no collapse; the only way through is to take each position, and the longer it takes the more of the sector the fanatics expend in the taking."
+      },
+      {
+        "name": "The Scorching",
+        "text": "A defender who will not yield ground may choose to ruin it instead. The fanatics may wire the sector's prize — the industry or infrastructure the coalition came to capture — to be destroyed at the end, denying it even in death. The fight is not only to take the ground but to reach the demolition points before they are fired and win a prize rather than a wasteland.",
+        "mechanicalEffect": "Demolition states may be active on the sector's critical ground; securing it intact requires reaching and disarming the charges under fire before the fanatics fire them. Failing voids the secondary objective and the coalition takes a ruin where it wanted a working asset."
+      },
+      {
+        "name": "The Salient Trap",
+        "text": "Advance faster than your neighbors and you create a salient — a finger of your company pushed ahead of the line, flanks in the air, exactly the shape the defender wants. {NPC:opfor-commander} watches the coalition's pace and will turn on an overextended sector, pinching the salient off where the allies failed to keep abreast.",
+        "mechanicalEffect": "If the company advances significantly ahead of its flanking contingents, the defender concentrates against the resulting salient, threatening to cut it off; staying aligned with the slower neighbor avoids the trap but concedes tempo. The bonus (securing a seam) reduces this risk on that flank."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Advancing the Sector",
+        "context": "Hard ground ahead, fanatics who will not quit, and allies whose pace you cannot set. You can match the coalition's tempo and stay aligned, push your own sector at speed and risk the salient, or spend effort securing a flank seam before driving on. Each answer trades the prize, your exposed flanks, and the coalition's cohesion differently.",
+        "options": [
+          {
+            "title": "Match the Coalition Tempo",
+            "advantages": [
+              "Staying aligned with the flanking contingents keeps your flanks as secure as the line allows",
+              "Advancing together denies the defender the seams and salients he is counting on"
+            ],
+            "disadvantages": [
+              "Matching a slow neighbor concedes time to the deepening defense and the scorching clock",
+              "Your sector's pace is hostage to the most cautious ally on your flank"
+            ],
+            "consequence": "You keep the line whole and your flanks covered at the cost of tempo; the defense gets the time a slow advance gives it, but the fanatics get no salient to pinch and the prize is taken with secure flanks.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "your sector's tempo tied to the slowest flanking contingent",
+              "risk": "A cautious neighbor's pace lets the defense deepen and the scorching clock run — the sector taken late, the prize perhaps already ruined"
+            }
+          },
+          {
+            "title": "Take the Sector at Speed",
+            "advantages": [
+              "A fast advance reaches the demolition points before the fanatics can scorch the prize",
+              "Speed takes the sector's ground while the defense is still setting, not after it has hardened"
+            ],
+            "disadvantages": [
+              "Outrunning your neighbors creates the salient the defender wants, flanks in the air",
+              "An overextended company can be pinched off where the allies failed to keep abreast"
+            ],
+            "consequence": "You go for the prize before it can be ruined and the ground before it hardens, at the risk of the salient; reach the charges in time and the sector is taken whole, but a defender who turns on your open flank may cut you off.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the company pushed ahead of the line, flanks exposed to the coalition's seams",
+              "risk": "A salient pinched off by the fanatics — cut off ahead of allies who did not keep up"
+            }
+          },
+          {
+            "title": "Secure a Flank Seam First",
+            "advantages": [
+              "Coordinating the boundary with a flanking contingent closes the seam the defender would exploit",
+              "A secured flank lets the company then advance at speed without the salient risk on that side"
+            ],
+            "disadvantages": [
+              "Spending effort on the seam — liaison, repositioning, waiting on an ally — costs time on the prize",
+              "The other flank remains uncertain, and the ally may not hold up its end of the boundary"
+            ],
+            "consequence": "You buy a secure flank by investing in the coalition seam, trading time for the cohesion that lets you then push hard; the boundary holds if the ally cooperates, but the effort concedes the defense time and covers only one side.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "time and effort spent coordinating the flank seam rather than advancing on the prize",
+              "risk": "An uncooperative ally leaves the seam open despite the effort — time spent and the flank still soft"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The coalition assault opens; the company advances into its sector and the fanatic defense stands to in its prepared positions." },
+        { "t": "T+6:00", "event": "The flanking contingents' pace becomes apparent — one ahead, one behind, or both abreast; the defender begins reading the seams." },
+        { "t": "T+12:00", "event": "{NPC:opfor-commander} concentrates against the softest part of the line in his reach, and any scorching clock on the sector's prize begins." },
+        { "t": "T+18:00", "event": "The sector's critical ground is in reach if the advance held; the demolition points must be secured before the fanatics fire them." },
+        { "t": "T+24:00", "event": "The sector is cleared and held with its prize, or the fight congeals and the coalition line stalls; the assault's progress depends on every sector keeping up." }
+      ],
+      "hardDeadline": "The assigned sector must be cleared, held, and its prize secured by T+24:00, in step with the coalition line. A sector that surges into a pinched-off salient, lags into a gap, or takes its ground only as a burned ruin fails the assault as surely as a sector overrun. Against an enemy who will not surrender, the only win is the ground taken whole with the line kept together."
+    },
+    "opforSketch": {
+      "composition": "A fanatic homeworld defense: a dug-in force of mixed 'Mechs (35-90 tons) at Veteran quality fighting from prepared urban and high positions, supported by fixed emplacements and a street-fighting armor element, with combat engineers manning demolition states on the sector's critical ground. The defense fights to the last position and will scorch the prize rather than yield it. No reserve to break — only ground to take.",
+      "behavior": "Fanatic last-ditch doctrine: hold every prepared position to destruction, scorch the prize rather than surrender it, and exploit the seams between uneasy coalition allies. The defense does not break or withdraw and imposes maximum cost; {NPC:opfor-commander} concentrates against salients and gaps in the coalition line, counting on the allies' mutual distrust to open the soft spot his own guns cannot."
+    },
+    "forks": [
+      {
+        "name": "OPERATION KEPT FAITH",
+        "outcomeGate": "SUCCESS",
+        "trigger": "The sector was taken whole and the line kept together; the coalition advances and the fanatics' homeworld is being reduced as one.",
+        "consequence": "Your sector is cleared, its prize intact, the flanks held — and the coalition, against the odds, is advancing as a line. {EMPLOYER}'s contingent presses to the next sector of the fortified zone, the uneasy alliance holding together one more bound. The common cause holds.",
+        "threat": "EXTREME",
+        "family": "PLANETARY_ASSAULT"
+      },
+      {
+        "name": "OPERATION BROKEN LINE",
+        "outcomeGate": "FAILURE",
+        "trigger": "The sector stalled, was cut off in a salient, or fell only as a ruin; the coalition line broke step and the defense made it pay.",
+        "consequence": "The advance has lost its cohesion in your sector — a salient pinched off, a gap opened, a prize scorched — and the fanatics are exploiting the seam. The next operation is to hold the ground won and restore the flank while the coalition steadies its line, the assault checked and the allies blaming each other. The cause bends; the fanatics buy time on the coalition's distrust.",
+        "threat": "EXTREME",
+        "family": "GARRISON_DUTY"
+      }
+    ],
+    "storyElementSeed": "A liaison officer at a sector boundary trying to raise the allied contingent on a frequency that keeps not answering, while the advance waits and the demolition smoke starts to rise somewhere ahead.",
+    "voiceSlots": [
+      "command",
+      "intelligence",
+      "engineering",
+      "comms"
+    ],
+    "registerVariants": {
+      "comstar": {
+        "objectives.primary": "Clear and hold the assigned sector of the assault, breaking the heretic defense in your zone and keeping faith with the flanking contingents — the Order advances with strange company toward a shared and necessary end, and the line must hold as one where the work is done."
+      },
+      "is-davion": {
+        "objectives.primary": "Clear and hold your sector of the assault, break the fanatic defense, and keep pace with the contingents on your flanks so the line advances together — the alliance is only as strong as its seams, and the enemy is hunting them."
+      }
+    },
+    "specifics": {
+      "INTEL_AGE_HOURS": { "min": 4, "max": 20, "unit": "hours" },
+      "SECTOR_WIDTH_KM": { "min": 4, "max": 12, "unit": "km of sector frontage" },
+      "FLANK_VARIANCE_MIN": { "min": 10, "max": 30, "unit": "minutes of pace variance with the flanking contingents" }
+    }
+  },
+  {
+    "seedId": "INSW2-09",
+    "family": "OBJECTIVE_RAID",
+    "inspirationId": "INSP-209",
+    "inspiration": "A raid is timed to a system-wide communications blackout, so that for a few precious hours the target cannot call for help and the relief that would normally come simply never learns there is anything to relieve.",
+    "skeleton": "a company must hit a target during a window when the wider communications grid is down so the defender cannot summon relief, where the whole operation is shaped by the blackout's start and end rather than by distance to a relief force, and the danger is the grid coming back before the raid is clear and the call going out late",
+    "title": "OPERATION SILENT HOUR",
+    "eraFit": [
+      "dark-age"
+    ],
+    "factionFit": [
+      "is-davion",
+      "is-steiner",
+      "merc"
+    ],
+    "register": "merc",
+    "threatRange": [
+      "MEDIUM",
+      "HIGH"
+    ],
+    "localeFit": {
+      "settlement": [
+        "industrial",
+        "capital"
+      ],
+      "regionRole": [
+        "interior",
+        "contested"
+      ],
+      "terrain": [
+        "urban",
+        "desert"
+      ]
+    },
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.3,
+    "situation": "The interstellar grid is down, and that silence is the whole operation. Since the wider communications net went dark, {WORLD} has been cut off: no fast word in or out of the system, every world thrown back on what it can reach by line of sight and local relay. {EMPLOYER} means to use the blackout. Hit the objective in {DISTRICT} during the hours the defender cannot call beyond the horizon for help, take what the raid came for, and be gone before the grid wakes and the call goes out. {NPC:intel-source} reads the objective as held by a standing garrison company, Regular quality, dug in around a target worth raiding — and, crucially, dependent on the off-world or cross-continent relief the blackout has cut off. That picture is {INTEL_AGE_HOURS} hours old, and a garrison that knows the grid is down may have grown jumpy. The terrain is ordinary; the clock is everything. The objective is a normal hard target — a garrisoned site to crack and loot or wreck — but the usual relief has been taken out of the equation. Normally the danger is how far the nearest reaction force sits and how fast it comes. Here there is no call for it to answer: for as long as the blackout holds, the garrison fights alone, and the raid's only real enemy is the moment the silence ends. The decision under the whole operation is timing against an uncertain window. No one knows exactly when the grid comes back — it could be hours yet, or any minute — and the raid is fast and clean only while the blackout holds. Hit early and you have margin but less time to prepare; cut it fine for a richer haul and you gamble the grid stays dark. {NPC:opfor-commander} commands the garrison and, cut off, will fight hard knowing no one is coming — until the silence breaks and suddenly someone might. Recommended force: {FORCE_SIZE}. Do the job inside the silent hours and vanish before the grid wakes, or still be on the objective when the blackout ends and the call for help finally crosses the horizon.",
+    "objectives": {
+      "primary": "Strike the objective and finish the raid's purpose — seizing its prize or destroying its function — within the communications blackout, then withdraw clear before the grid recovers and the garrison's call for relief can cross the horizon.",
+      "secondary": "Disable the objective's local relay and line-of-sight links before striking, so that even during the blackout the garrison cannot raise the nearest cross-continent help by the means still working.",
+      "bonus": "Recover the objective's record of the blackout's cause and expected length. It tells {EMPLOYER} how long the next silence might last and whether this one was an accident or someone's doing."
+    },
+    "complications": [
+      {
+        "name": "The Uncertain Window",
+        "text": "Nobody knows when the grid comes back. The blackout has a start everyone felt and an end no one can predict — it could hold for hours yet or end in the next ten minutes. The raid is built on a clock whose length is a guess, and every minute spent on the objective is a minute closer to a silence that could break at any time.",
+        "mechanicalEffect": "Track the blackout as a window of uncertain length: a fixed safe minimum, after which each interval carries a growing chance the grid recovers. Once it does, the garrison can call for relief and the reaction equation switches back on. The raid must finish and clear before the recovery, with no certainty of how long it has."
+      },
+      {
+        "name": "The Late Call",
+        "text": "When the grid wakes, the garrison's first act is to scream for help. If the raid is still on the objective, that call goes out with the raiders' description, strength, and heading attached. The blackout's whole value is silence, and the moment it ends with the company still in contact, that call chases the raid all the way home.",
+        "mechanicalEffect": "If the grid recovers while the company is still engaged or on the objective, the garrison transmits a full alert: a reaction force is summoned (its arrival a new clock) and the raid's withdrawal is now pursued and reported, raising the FAILURE fork's threat. Disabling the local relays first delays even this late call."
+      },
+      {
+        "name": "The Isolated Garrison's Nerve",
+        "text": "A garrison that knows the grid is down knows it is alone, and an isolated defender fights differently — sometimes harder, with the desperation of no relief coming, sometimes more cautiously, husbanding itself because there is no replacing losses. {NPC:opfor-commander}'s posture under the blackout is its own unknown, and it shapes how the objective must be cracked.",
+        "mechanicalEffect": "On a roll at contact, the isolated garrison's posture is determined: it fights with extra tenacity (no relief, nothing to lose) or with extra caution (no relief, nothing to waste), changing whether the objective is best taken by overwhelming pressure or by maneuver around a defender unwilling to be drawn out."
+      },
+      {
+        "name": "Local Eyes Still Work",
+        "text": "The interstellar grid is dark, but line of sight is not. Watchtowers, local relays, and a neighbor on the same continent can still pass a warning the short way, and the garrison may get a message out across the horizon even within the blackout if its local links are intact. The silence is only as complete as the raid makes it.",
+        "mechanicalEffect": "If the objective's local relay and line-of-sight links are not disabled first, the garrison can summon nearby cross-continent help even during the blackout (a shorter, lesser reaction than the full grid call, but real); disabling them first preserves the full value of the silence."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Timing the Silence",
+        "context": "An uncertain window, a hard target, and a clock no one can read. You can hit early for the safety margin, cut it fine for a richer and more thorough job, or spend the opening minutes killing the local links to deepen the silence first. Each answer trades the margin against the blackout, the completeness of the raid, and the risk of the late call.",
+        "options": [
+          {
+            "title": "Hit Early, Keep Margin",
+            "advantages": [
+              "Striking as soon as possible banks the most blackout time against the uncertain recovery",
+              "The widest cushion to finish and withdraw before the grid can wake"
+            ],
+            "disadvantages": [
+              "Less time to prepare the strike means a rougher, possibly less complete job",
+              "An early hit may forgo the richer haul or the relay-disabling that a setup would allow"
+            ],
+            "consequence": "You buy safety with speed, going in before you are fully set to be sure of beating the grid; the raid is clean and clear with margin to spare, but rougher and perhaps less thorough than a prepared strike.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "preparation and completeness traded for the widest margin against the grid's recovery",
+              "risk": "A rushed early strike achieves less than the objective offered — clear in time, but the haul thin"
+            }
+          },
+          {
+            "title": "Cut It Fine for the Full Haul",
+            "advantages": [
+              "More time to prepare and execute means a thorough job — the full prize, the relays down, the records taken",
+              "A complete raid extracts everything the objective is worth"
+            ],
+            "disadvantages": [
+              "Every extra minute gambles that the blackout holds, with no way to know when it ends",
+              "A grid that wakes mid-raid catches the company on the objective with the late call going out"
+            ],
+            "consequence": "You go for everything the silence can give, staking the clean getaway on the blackout lasting; do it and the raid is total, but cut it too fine and the grid wakes with you still in contact and the call goes out.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the safety margin spent on a thorough, complete raid",
+              "risk": "The grid recovers mid-raid — caught on the objective with a full alert broadcasting the company's description and heading"
+            }
+          },
+          {
+            "title": "Kill the Local Links First",
+            "advantages": [
+              "Disabling the relays and line-of-sight links deepens the silence, denying even the local cross-continent call",
+              "Buys insurance against the late call — a grid that wakes finds the objective unable to transmit at once"
+            ],
+            "disadvantages": [
+              "Spending the opening minutes on the links delays the strike itself, eating the blackout margin",
+              "The relays may be guarded or dispersed — disabling them is a small operation of its own"
+            ],
+            "consequence": "You make the silence as total as it can be before striking, trading time for a deeper blackout; the garrison stays truly cut off, but the minutes spent on the links are minutes the uncertain window is counting down.",
+            "costs": {
+              "cbills": 4000,
+              "days": null,
+              "resource": "time and effort spent disabling the local links before the main strike",
+              "risk": "Time on the relays lets the uncertain window close before the objective is even hit — the silence deepened but the raid late"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The company strikes the objective within the blackout; the garrison stands to and finds, as expected, that it cannot raise help beyond the horizon." },
+        { "t": "T+5:00", "event": "{NPC:opfor-commander} fights the raid as an isolated garrison, its posture — tenacious or cautious — becoming clear." },
+        { "t": "T+10:00", "event": "The raid's purpose should be achieved by now; the blackout has passed its safe minimum and every minute risks the grid waking." },
+        { "t": "T+16:00", "event": "The company should be withdrawing and clear of the objective; the chance of the grid recovering climbs with each interval." },
+        { "t": "T+22:00", "event": "If the grid wakes with the company still in contact, the garrison's call crosses the horizon and a reaction force is summoned to a raid no longer silent." }
+      ],
+      "hardDeadline": "The raid must be done and the company clear before the communications grid recovers — an uncertain moment that grows likelier after the safe minimum and is assumed to arrive by T+22:00. A company still on the objective when the silence breaks has its call-for-help, its description, and its heading broadcast at once, and the raid that depended on silence is then hunted by a reaction force that knows everything."
+    },
+    "opforSketch": {
+      "composition": "An isolated garrison: a standing garrison company of mixed 'Mechs (35-65 tons) at Regular quality, dug in around the objective, supported by an armor element and fixed defenses, reliant on relief that the blackout has cut off. If the grid recovers in time, a summoned reaction force — a fresh medium lance or company — arrives to pursue. The garrison's posture under isolation (tenacious or cautious) varies.",
+      "behavior": "Isolated-garrison doctrine under a comms blackout: the garrison defends knowing no help is coming, fighting either with the desperation of no relief or the caution of no replacements, and tries to get a warning out by any local link still working. The whole defense is shaped by the silence; the moment the grid wakes, it screams for help and any summoned reaction force hunts the withdrawing raid with full information."
+    },
+    "forks": [
+      {
+        "name": "OPERATION KEPT QUIET",
+        "outcomeGate": "SUCCESS",
+        "trigger": "The raid was done and the company clear before the grid woke; no call ever crossed the horizon.",
+        "consequence": "The job is finished and, as far as anyone beyond {WORLD} knows, nothing happened — the silence held and the raid never made the net. {EMPLOYER} exploits the unbroken secrecy with a follow-on while the defender is still piecing together what hit it, the recovered blackout intelligence hinting at when the next silence might fall.",
+        "threat": "MEDIUM",
+        "family": "OBJECTIVE_RAID"
+      },
+      {
+        "name": "OPERATION LATE WORD",
+        "outcomeGate": "FAILURE",
+        "trigger": "The grid woke with the company still in contact, or the local links carried a call; the alert went out with the raid's description attached.",
+        "consequence": "The silence broke too soon and the call for help crossed the horizon, the raiders' strength and heading with it. The next operation is to break clear and off {WORLD} ahead of a reaction force now hunting a known quantity — the raid that depended on silence undone by the late word. The plan bends; the silence failed.",
+        "threat": "HIGH",
+        "family": "EXTRACTION_RAID"
+      }
+    ],
+    "storyElementSeed": "A garrison radio operator keying a dead channel out of habit, getting nothing but the hiss of a grid that has been down for hours, while the firing starts somewhere on the perimeter and the help that channel used to reach is still a silence.",
+    "voiceSlots": [
+      "intelligence",
+      "comms",
+      "command",
+      "logistics"
+    ],
+    "registerVariants": {
+      "is-davion": {
+        "objectives.primary": "Strike the objective and finish the job inside the communications blackout, then be clear before the grid recovers and the garrison can call for relief — the silence is the whole plan, so do the work and be gone before it ends."
+      }
+    },
+    "specifics": {
+      "INTEL_AGE_HOURS": { "min": 4, "max": 18, "unit": "hours" },
+      "BLACKOUT_SAFE_MIN": { "min": 10, "max": 20, "unit": "minutes of assured blackout" },
+      "RELAY_COUNT": { "min": 2, "max": 5, "unit": "local relay/line-of-sight links" }
+    }
+  },
+  {
+    "seedId": "INSW2-10",
+    "family": "RECON_RAID",
+    "inspirationId": "INSP-210",
+    "inspiration": "A counter-battery hunt where the enemy's guns fire from concealment and shift between salvos, so the entire problem is finding where they are before they can be silenced — the locating, not the killing, is the mission.",
+    "skeleton": "a recon-strike company must locate an enemy's concealed, displacing fire support that is punishing friendly movement from hidden positions, where finding the guns by their signatures before they shift is the whole problem, the kill is trivial once located, and every probe to flush them risks becoming the target",
+    "title": "OPERATION SOUNDING LINE",
+    "eraFit": [
+      "civil-war",
+      "late-succession-wars"
+    ],
+    "factionFit": [
+      "is-steiner",
+      "is-davion",
+      "merc"
+    ],
+    "register": "is-steiner",
+    "threatRange": [
+      "MEDIUM",
+      "HIGH"
+    ],
+    "localeFit": {
+      "settlement": [
+        "agrarian",
+        "frontier"
+      ],
+      "regionRole": [
+        "contested",
+        "interior"
+      ],
+      "terrain": [
+        "mountain",
+        "jungle"
+      ]
+    },
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.4,
+    "situation": "Something on {WORLD} is killing {EMPLOYER}'s movement in {DISTRICT}, and no one can find it. {TARGET_FACTION} has placed fire support — long-range guns and missile batteries — in the broken high ground, and they are punishing every friendly advance from positions no one can fix. They fire a salvo and shift to a new hide before the counter-fire can fall. The advance has stalled, not because the enemy line is strong, but because crossing the open ground under that unseen fire is bleeding the force white. Your company is sent to do the one thing that breaks the problem: find the guns. {NPC:intel-source} reads the enemy fire support as a reinforced battery group, Regular-to-Veteran quality, screened by a light covering force and expert at hiding and moving. That picture is {INTEL_AGE_HOURS} hours old, and a battery that lives by moving has moved since. The high ground is the whole problem. It is a maze of ridge, draw, and cover — jungle-choked or rock-broken depending on the slope — that hides a gun a hundred meters off the track and swallows the flash and smoke that would give it away. The guns are heard and felt but never seen. Killing one is easy once you know where it is: a located battery is a dead battery. The hard part is the locating, and it comes with a cruel catch. The surest way to find a hidden gun is to give it a target worth shooting at, which means whatever flushes the battery is standing in its sights. Every probe to make the guns reveal themselves risks the prober becoming the next salvo's mark. {NPC:opfor-commander} commands the fire support and will keep moving, trading ground for the concealment that keeps his guns alive and his fire falling. Recommended force: {FORCE_SIZE}, recon-strike — eyes that can also kill what they find. Locate the batteries and silence them so the advance can move, or grope through the high ground feeding the guns targets until the force gives up the ground.",
+    "objectives": {
+      "primary": "Locate the enemy's hidden fire-support positions before they can move out of reach, and destroy enough of them to free friendly movement across the contested ground, breaking the unseen fire that has stalled the advance.",
+      "secondary": "Map the battery group's movement pattern — the routes and hide sites it cycles between — so the positions you cannot reach this time can be predicted and struck later.",
+      "bonus": "Capture the group's fire-control element intact. Losing it blinds the surviving guns, and its records reveal the whole indirect-fire plan for the sector."
+    },
+    "complications": [
+      {
+        "name": "Find It to Kill It",
+        "text": "The kill is the easy part. A gun whose position is known dies to a single accurate strike; there is no hard fight in destroying a located battery. The whole mission turns on finding them. The guns are hidden in ground built to hide them, and until one is fixed it cannot be touched, only endured. Every minute you spend not finding them is a minute the advance bleeds.",
+        "mechanicalEffect": "Enemy fire-support positions are hidden and must be located — through their signatures, by observation, or by drawing fire — before they can be engaged. Once a position is fixed, destroying it is straightforward. The operation is scored on positions located and silenced, not on a stand-up fight."
+      },
+      {
+        "name": "The Displacing Guns",
+        "text": "The batteries do not wait to be found. They fire and move — a salvo, then a shift to the next hide before the counter can fall — so a position fixed one minute is empty the next. Locating a gun is only useful if it is struck before it displaces, and a company that finds the battery a moment too late finds only the warm, abandoned ground it fired from.",
+        "mechanicalEffect": "Located positions are perishable: a fixed battery displaces after a set interval unless struck first. The company must convert each location into a strike quickly, and mapping the displacement pattern (the secondary) lets it intercept guns at their next position rather than chase empty hides."
+      },
+      {
+        "name": "The Bait Is the Prober",
+        "text": "The fastest way to find a hidden gun is to show it something it cannot resist shooting. But whatever flushes the battery is standing in its sights. To draw the fire that reveals a position, you have to take that fire. Every deliberate attempt to make the guns show themselves puts the prober under the very salvo that gives the position away.",
+        "mechanicalEffect": "Drawing fire to locate a battery exposes the baiting element to that fire: locating by provocation carries a real chance of casualties to the prober. A commander trades the speed of flushing the guns against the cost of being the bait that does it."
+      },
+      {
+        "name": "The Covering Screen",
+        "text": "The guns do not sit unguarded. A light covering force screens the battery positions and the displacement routes, there to fend off exactly the kind of recon-strike sent to hunt them — to delay the locators, give warning, and buy the guns time to shift. The screen is not the objective, but it stands between the company and every position it needs to fix.",
+        "mechanicalEffect": "A light covering force contests the company's reconnaissance, screening the battery positions and slowing the locating effort; it fights to delay and warn rather than to win, trading itself for the guns' time to displace. Brushing it aside costs time the displacing batteries use."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Hunting the Guns",
+        "context": "Hidden, shifting guns and a force bleeding under them. You can sweep methodically to fix positions by observation, deliberately bait the batteries into firing to flush them fast, or push for the fire-control node to blind the whole group at once. Each answer trades the speed of finding the guns against the cost of being shot at and the completeness of the silencing.",
+        "options": [
+          {
+            "title": "Sweep and Observe",
+            "advantages": [
+              "Methodical reconnaissance fixes positions by their signatures without deliberately drawing fire",
+              "Builds the displacement map (the secondary) as it goes, enabling future strikes on hides out of reach now"
+            ],
+            "disadvantages": [
+              "A careful sweep is slow, and slow lets the batteries keep firing on the stalled advance",
+              "Positions found by patient observation may displace before the strike can reach them"
+            ],
+            "consequence": "You find the guns the safe way, taking few casualties to the search itself but conceding time; the advance keeps bleeding while you work, and some batteries shift before you can convert a location to a kill.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "time spent on a methodical sweep while the advance bleeds under the unseen fire",
+              "risk": "The slow search lets batteries displace before they can be struck — guns located too late, ground still denied"
+            }
+          },
+          {
+            "title": "Bait the Batteries",
+            "advantages": [
+              "Deliberately drawing fire flushes the hidden guns fast — the quickest way to fix positions and free the advance",
+              "A battery that fires on the bait reveals itself for an immediate strike before it can displace"
+            ],
+            "disadvantages": [
+              "The baiting element is the target — flushing the guns means taking their fire to do it",
+              "Repeated baiting bleeds the prober, and a battery may shift between the bait and the strike anyway"
+            ],
+            "consequence": "You trade blood for speed, offering the guns a target to make them show themselves; the positions fall fast if the strike follows quickly, but the company pays for each location in the fire it drew to find it.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the baiting element exposed to the very fire that locates the guns",
+              "risk": "Casualties to the bait mount as the batteries are flushed — the guns found at the price of the force that found them"
+            }
+          },
+          {
+            "title": "Hunt the Fire-Control Node",
+            "advantages": [
+              "Taking or destroying the coordination node blinds the surviving guns and reveals the whole fire plan",
+              "One decisive strike on the node can break the battery group's coordination across the sector at a stroke"
+            ],
+            "disadvantages": [
+              "The fire-control element is the best-hidden and best-guarded part of the group — finding it is the hardest search of all",
+              "Committing to the node means passing up the guns you could have located in the meantime"
+            ],
+            "consequence": "You go for the brain instead of the limbs, betting that blinding the coordination unhinges the whole group; find the node and the guns fall silent together, but the search for it is the longest gamble and the advance bleeds while you hunt.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the search concentrated on the elusive fire-control node rather than the individual guns",
+              "risk": "A long, fruitless hunt for the node leaves the guns un-located and firing — the gamble lost, the advance still stalled"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The company enters the high ground; the enemy batteries continue firing on the stalled advance from concealment and the covering screen contests the recon." },
+        { "t": "T+5:00", "event": "First positions are located by observation or by drawn fire; {NPC:opfor-commander} begins displacing the revealed guns to fresh hides." },
+        { "t": "T+11:00", "event": "The displacement pattern starts to emerge; located batteries must be struck before they shift or chased to their next positions." },
+        { "t": "T+17:00", "event": "Enough of the fire support is silenced or mapped to begin freeing friendly movement, or the guns are still shifting faster than they can be fixed." },
+        { "t": "T+24:00", "event": "The unseen fire is broken and the advance can move, or the batteries have kept displacing and the force must reckon with ground it still cannot cross." }
+      ],
+      "hardDeadline": "Enough of the enemy fire support must be located and silenced by T+24:00 to free friendly movement across the contested ground. Batteries that keep moving faster than they can be fixed leave the advance bleeding under fire it still cannot see, and a hunt that finds only warm, empty hides has spent the company for ground that stays denied."
+    },
+    "opforSketch": {
+      "composition": "Concealed, displacing fire support plus a light screen: a reinforced battery group of long-range 'Mechs and combat vehicles (fire-support behavior, LRM and long-range weapons) at Regular-to-Veteran quality, expert at concealment and displacement, coordinated by a hidden fire-control element. A light covering force (fast light 'Mechs and vehicles) screens the positions and routes. The guns are deadly at range and fragile once found; the screen fights to delay.",
+      "behavior": "Shoot-and-scoot fire-support doctrine: fire a salvo, displace before the counter falls, and never hold a position long enough to be fixed. The covering screen delays and warns the recon-strike force to buy the guns time to shift; the fire-control node stays hidden and coordinates the displacement. The whole group trades ground for the concealment that keeps it alive, betting it can keep killing the advance from hides faster than it can be hunted down."
+    },
+    "forks": [
+      {
+        "name": "OPERATION CLEAR RANGE",
+        "outcomeGate": "SUCCESS",
+        "trigger": "Enough of the fire support was located and silenced to free the advance; the unseen guns are unseen no longer.",
+        "consequence": "The batteries are broken or mapped and friendly movement is free across the ground they denied, the displacement pattern in hand for any guns that fled. {EMPLOYER} resumes the stalled advance now that the killing fire is silenced, your company exploiting the ground it just opened. The hunt paid.",
+        "threat": "HIGH",
+        "family": "PLANETARY_ASSAULT"
+      },
+      {
+        "name": "OPERATION STILL BLIND",
+        "outcomeGate": "FAILURE",
+        "trigger": "The batteries kept displacing faster than they could be fixed; the unseen fire still owns the contested ground.",
+        "consequence": "The guns slipped the hunt and the advance is still bleeding under fire no one can see, the company itself now worn from the search. The next operation is to hold the line and protect friendly movement as best it can while the fire-support problem is reckoned with another way — the ground still denied, the guns still hidden. The hunt bends; the batteries keep firing.",
+        "threat": "HIGH",
+        "family": "GARRISON_DUTY"
+      }
+    ],
+    "storyElementSeed": "A scout 'Mech holding stock-still in a draw, the pilot watching a ridgeline for the flash that means a gun and knowing that the moment to see it is also the moment it sees back.",
+    "voiceSlots": [
+      "intelligence",
+      "command",
+      "engineering",
+      "logistics"
+    ],
+    "registerVariants": {
+      "is-davion": {
+        "objectives.primary": "Find the enemy's hidden guns before they can shift and kill enough of them to get the advance moving again — the locating is the whole job, so fix the batteries and silence them before they bleed the force off the ground."
+      },
+      "merc": {
+        "objectives.primary": "Locate the concealed fire support and silence enough of it to free movement across the contested ground. The contract pays for the guns found and killed; warm empty hides and a bled company are the worst invoice there is."
+      }
+    },
+    "specifics": {
+      "INTEL_AGE_HOURS": { "min": 4, "max": 18, "unit": "hours" },
+      "BATTERY_COUNT": { "min": 3, "max": 6, "unit": "concealed battery positions" },
+      "DISPLACE_INTERVAL_MIN": { "min": 4, "max": 9, "unit": "minutes before a fixed battery displaces" }
+    }
+  },
+  {
+    "seedId": "INSW2-11",
+    "family": "PIRATE_HUNTING",
+    "inspirationId": "INSP-211",
+    "inspiration": "A decoy convoy that looks like easy prey is rigged to bait commerce-raiders into committing, then turns out to be an armed trap that springs once the raiders are too close to run.",
+    "skeleton": "a hunter must disguise its strength as a soft merchant convoy to lure scarcity-driven raiders into committing to an attack, then spring the trap once they are too close to flee, where the whole problem is selling the bait convincingly enough to draw a cautious predator and timing the reveal so the raiders cannot escape the ambush",
+    "title": "OPERATION FALSE CARGO",
+    "eraFit": [
+      "periphery",
+      "late-succession-wars",
+      "dark-age"
+    ],
+    "factionFit": [
+      "periphery/pirate",
+      "merc"
+    ],
+    "register": "periphery/pirate",
+    "threatRange": [
+      "MEDIUM",
+      "HIGH"
+    ],
+    "localeFit": {
+      "settlement": [
+        "frontier",
+        "agrarian"
+      ],
+      "regionRole": [
+        "border",
+        "contested"
+      ],
+      "terrain": [
+        "desert",
+        "coastal"
+      ]
+    },
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.45,
+    "situation": "Raiders have been bleeding the supply runs across {DISTRICT} on {WORLD}, and they have gotten good at it. They hit the soft convoys, fade before any escort can close, and never commit to a fight they might lose. {EMPLOYER} has stopped chasing them and set a trap instead. The plan is a convoy rigged to look like exactly the soft prey the raiders have been feeding on — slow, lightly escorted, hauling cargo worth the risk — that is in truth your company in disguise, waiting to spring once the raiders commit too close to run. {NPC:intel-source} reads the raider band as a scarcity-driven outfit of mixed light 'Mechs and fast vehicles, Regular quality at best but cunning, that strikes only when the odds look certain and breaks contact the instant they do not. That picture is {INTEL_AGE_DAYS} days old, and a raider's strength shifts with whatever it has lately stolen. The ground is chosen for the trap. The convoy route runs through open frontier where a raider can watch a column from far off, and, crucially, it passes one stretch — a defile, a dry crossing, a coastal narrows — where a committed attacker cannot easily break off. Selling the bait is the whole problem. The raiders are cautious and will not commit to a convoy that looks wrong, so the disguise means a column that genuinely looks vulnerable, which means accepting real exposure to draw a real attacker. Then comes the timing. Spring too early and the raiders fade as they always do; spring too late and the disguised escort takes real losses playing the victim. {NPC:opfor-commander} leads the band and has survived this long by trusting nothing. The lure has to be good enough to beat his caution, and the reveal sharp enough to shut the trap before he bolts. Recommended force: {FORCE_SIZE}, hidden inside a convoy's skin. Sell the bait and spring it clean, or show your teeth too soon and watch a careful raider slip the hook one more time.",
+    "objectives": {
+      "primary": "Lure the raider band into committing to an attack on the disguised convoy, then spring the trap once they are too close to break off, destroying or capturing enough of the band to end the raids on {EMPLOYER}'s supply runs.",
+      "secondary": "Keep the convoy disguise convincing enough that the band commits fully rather than just probing. Sell real vulnerability without taking crippling losses before the reveal.",
+      "bonus": "Take the raider leadership alive — {NPC:opfor-commander} and the band's navigator. What they know about the raiders' base, their fences, and the other soft routes turns one ambush into the unraveling of the whole operation."
+    },
+    "complications": [
+      {
+        "name": "Selling the Bait",
+        "text": "A cautious predator does not bite a trap that smells of one. The convoy has to look genuinely soft — real cargo, a thin and plausible escort, the unguarded moments a raider watches for — because a band that has survived by trusting nothing will fade from anything that seems too easy or too odd. Selling the disguise means accepting real exposure; a column that is obviously a trap catches nothing.",
+        "mechanicalEffect": "The convoy's disguise is tracked against the raiders' caution. Holding too much strength visibly, or springing prematurely, reads as a trap and the band probes or withdraws instead of committing; selling genuine vulnerability (accepting some exposure of the decoy elements) is required to draw a full commitment."
+      },
+      {
+        "name": "Timing the Reveal",
+        "text": "The trap works only in a narrow window. Spring it early, while the raiders can still turn and run, and the cautious band fades as it always does, the ambush wasted. Spring it late, after the disguised escort has played victim through real attacks, and the decoy elements take genuine losses before they can fight back. The reveal has to fall in the moment the raiders are committed but not yet winning.",
+        "mechanicalEffect": "Track the raiders' commitment: the trap should spring once they are past the disengagement point but before the decoy takes crippling damage. An early reveal lets the band escape (failing the primary); a late one inflicts real losses on the disguised force before the ambush turns."
+      },
+      {
+        "name": "The Disengagement Ground",
+        "text": "The whole route is chosen so that, at one stretch, a committed attacker cannot easily break off — a defile, a crossing, a narrows past which the raiders are caught. Drawing the band onto that ground before the reveal is the art of it; raiders that commit before the trap-ground, or hang back from it, can still run when the teeth come out.",
+        "mechanicalEffect": "The ambush's effectiveness depends on the raiders being on the disengagement-limiting terrain when the trap springs. Springing while they are still on open, escapable ground lets the faster raiders flee; luring them onto the chosen ground first seals the trap."
+      },
+      {
+        "name": "A Predator Who Trusts Nothing",
+        "text": "{NPC:opfor-commander} has survived a long time by assuming every easy meal is a trap. He may probe with a fraction of his strength first, may hold his best units back, may break off at the first wrong note and not be tempted again. The band's caution is the real adversary — not its guns, which are beatable once committed, but its unwillingness to commit at all.",
+        "mechanicalEffect": "On a roll at the raiders' approach, the band probes cautiously rather than committing fully, testing the convoy with an expendable element; only a convincing performance against the probe draws the full band in, while a botched response or a premature reveal confirms the predator's suspicion and he withdraws his main strength."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Setting the Hook",
+        "context": "A cautious predator, a disguised column, and one stretch of ground where a committed raider cannot run. You can play it soft and patient to draw a full commitment, dangle an irresistible prize to overcome the band's caution, or spring early and sure to bag whatever has committed so far. Each answer trades the size of the catch against the risk of the band slipping the hook.",
+        "options": [
+          {
+            "title": "Play It Soft and Patient",
+            "advantages": [
+              "A convincingly vulnerable convoy drawn deep onto the trap-ground lures the full band into committing",
+              "Patience bags the whole outfit, leadership included, rather than a fraction"
+            ],
+            "disadvantages": [
+              "Playing victim longer means the decoy elements absorb real attacks before the reveal",
+              "The longer the bait runs, the more chances the cautious raider has to sense the trap and fade"
+            ],
+            "consequence": "You go for the whole band by selling the bait all the way onto the killing ground, at the cost of real punishment to the decoy first; spring it right and the outfit is finished, but every extra minute as the victim is risk and damage taken.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the decoy elements exposed to real raider attacks while the bait is sold all the way in",
+              "risk": "The band senses the trap during the long bait and fades — punishment taken for a catch that slips away"
+            }
+          },
+          {
+            "title": "Dangle an Irresistible Prize",
+            "advantages": [
+              "A cargo too rich to pass up can overcome even a cautious predator's suspicion and draw a full commitment fast",
+              "Greed shortens the patient game — the band commits sooner, less time for the decoy to take losses"
+            ],
+            "disadvantages": [
+              "A prize valuable enough to be irresistible is a prize you genuinely risk if the trap fails",
+              "An obviously rich convoy that is too lightly guarded may read as a trap to a truly careful raider"
+            ],
+            "consequence": "You bet on greed beating caution, putting up real bait to draw a fast full commitment; the band bites hard if the prize sells, but a failed trap means the valuable lure is genuinely lost to the raiders.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "a genuinely valuable cargo risked as the lure to overcome the raiders' caution",
+              "risk": "The trap fails and the rich bait is actually taken — the hook lost and the prize with it"
+            }
+          },
+          {
+            "title": "Spring Early and Sure",
+            "advantages": [
+              "Revealing as soon as part of the band commits bags whatever has taken the bait with the least risk to the decoy",
+              "A sure, early spring avoids the chance of the whole performance being read as a trap"
+            ],
+            "disadvantages": [
+              "An early reveal catches only the committed fraction; the cautious main body and the leadership escape",
+              "A band that loses a probe and keeps its strength simply stops taking the bait and moves on to softer routes"
+            ],
+            "consequence": "You take the safe, smaller catch, springing before the band is fully in to be sure of something; the committed element is destroyed, but the careful core slips away to raid another run, the operation a partial win at best.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the full catch traded for a sure, early spring on whatever has committed",
+              "risk": "Only the probe is bagged — the main band and the leadership escape to raid elsewhere, the problem unsolved"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The disguised convoy moves along the chosen route; the raider band, watching, begins to size it up as prey." },
+        { "t": "T+5:00", "event": "The band tests the convoy — a probe or a cautious approach; the disguise must hold to draw it in further." },
+        { "t": "T+10:00", "event": "If the bait sells, the raiders commit and close onto the disengagement-limiting ground; the reveal window approaches." },
+        { "t": "T+15:00", "event": "The trap springs — the convoy shows its teeth once the raiders are past the point of easy escape, or the moment is missed and the band reacts." },
+        { "t": "T+22:00", "event": "The band is destroyed or taken in the ambush, or the cautious core has broken contact and slipped away to softer routes." }
+      ],
+      "hardDeadline": "The trap must be sprung while the raiders are committed onto the disengagement-limiting ground but before the decoy is crippled, by roughly T+15:00. Spring too early and the cautious band fades as it always has; spring too late and the disguised force is mauled playing the victim. And a band that slips the hook learns the convoys are baited and never bites again."
+    },
+    "opforSketch": {
+      "composition": "A scarcity-driven raider band: mixed light 'Mechs (20-40 tons) and fast combat vehicles (hover and wheeled, hit-and-run behavior) at Green-to-Regular quality, cunning and cautious, built for ambushing soft targets and fleeing hard ones. The band may probe with an expendable element before committing its main strength and leadership. Beatable once committed; the whole challenge is making it commit and sealing its escape.",
+      "behavior": "Opportunist-raider doctrine: strike only when the odds look certain, break contact the instant they sour, and never commit to a stand-up fight. The band probes suspicious prey, holds its best back, and trusts nothing — its caution is its survival. Once genuinely committed onto bad ground it fights to escape rather than to win, making the timing of the trap, not its firepower, the decisive factor."
+    },
+    "forks": [
+      {
+        "name": "OPERATION FULL NET",
+        "outcomeGate": "SUCCESS",
+        "trigger": "The band committed and the trap sprung clean; the raiders are destroyed or taken and the raids are ended.",
+        "consequence": "The outfit that bled the supply runs is finished, and if the leadership was taken, it has given up the base and the other soft routes. {EMPLOYER} moves on the raiders' lair while the band is broken and leaderless — turning one clean ambush into the end of the whole nest. The fishing paid.",
+        "threat": "MEDIUM",
+        "family": "OBJECTIVE_RAID"
+      },
+      {
+        "name": "OPERATION SLIPPED HOOK",
+        "outcomeGate": "FAILURE",
+        "trigger": "The reveal came wrong or the band sensed the trap; the cautious core slipped away and now knows the convoys are baited.",
+        "consequence": "The hook missed and the raiders got away wiser, and a band that knows the convoys are traps will not be fooled again — it will hit harder and warier from here. The next operation is to hunt the band the hard way, on its own ground, now that the easy fishing is spent. The trap bends; the predator learned.",
+        "threat": "HIGH",
+        "family": "PIRATE_HUNTING"
+      }
+    ],
+    "storyElementSeed": "A convoy guard in shabby gear slouched on a cargo hauler, weapon hidden but ready, watching dust on the horizon resolve into riders and forcing himself to keep looking bored a little longer.",
+    "voiceSlots": [
+      "command",
+      "intelligence",
+      "logistics",
+      "naval"
+    ],
+    "registerVariants": {
+      "merc": {
+        "objectives.primary": "Bait the raider band into committing on the disguised convoy and spring the trap once they cannot run, breaking the outfit that has been hitting the supply runs — the contract pays for the band ended, so sell the bait and shut the hook clean."
+      }
+    },
+    "specifics": {
+      "INTEL_AGE_DAYS": { "min": 4, "max": 12, "unit": "days" },
+      "CONVOY_LENGTH_KM": { "min": 2, "max": 6, "unit": "km of convoy column" },
+      "REVEAL_WINDOW_MIN": { "min": 8, "max": 16, "unit": "minutes of the reveal window" }
+    }
+  }
+]

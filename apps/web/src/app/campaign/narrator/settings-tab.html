@@ -1,0 +1,111 @@
+<div class="ph">Settings — Narrator <span class="scaf">LOCAL · llama.cpp</span></div>
+<p class="note">The narrator runs on <b>your own silicon</b> — a local llama.cpp server polishing mission packages and AARs <b>under the voice gates</b>: prose only over a locked spec, machine-diffed, validation-linted, GM-triggered. Nothing leaves the machine; OFF is byte-identical to the templates.</p>
+
+<div class="set-grid">
+    <!-- MODE -->
+    <div class="set-card">
+        <div class="sc-h">Mode</div>
+        <div class="modebtns">
+            <button type="button" class="mbtn" [class.on]="mode() === 'off'" (click)="setMode('off')">OFF</button>
+            <button type="button" class="mbtn" [class.on]="mode() === 'local'" (click)="setMode('local')">LOCAL</button>
+            <button type="button" class="mbtn dis" disabled title="arrives with the engine (server-side key, SEC-002)">CLOUD</button>
+        </div>
+        <p class="sc-note">LOCAL spins the model up on demand; OFF unloads it and frees the GPU. CLOUD arrives with the engine.</p>
+    </div>
+
+    <!-- ENDPOINT + TEST -->
+    <div class="set-card">
+        <div class="sc-h">Endpoint</div>
+        <input type="text" class="sc-in" [value]="endpoint()" (change)="setEndpoint($any($event.target).value)" aria-label="Narrator sidecar endpoint" />
+        <button type="button" class="testbtn" [disabled]="testing()" (click)="test()">{{ testing() ? 'Testing…' : 'TEST CONNECTION' }}</button>
+        @if (testResult(); as t) {
+            <div class="testres" [class.ok]="t.ok" [class.bad]="!t.ok">
+                @if (t.ok) {
+                    <span class="tr-dot ok"></span> connected in <b>{{ t.ms }}ms</b> · model {{ t.llama === 'ready' ? 'READY' : t.llama === 'loading' ? 'LOADING' : 'idle (loads on first refine)' }}
+                    <div class="tr-model">{{ t.model }}</div>
+                } @else {
+                    <span class="tr-dot bad"></span> no connection ({{ t.ms }}ms) — {{ t.error }}. Is the sidecar running? <code>node narrator/sidecar.mjs</code>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- MODEL PICKER (D-040) — the registry; the sidecar swaps llama-server on change -->
+    <div class="set-card">
+        <div class="sc-h">Model</div>
+        @if (mode() !== 'local') {
+            <p class="sc-note">Switch to <b>LOCAL</b> to pick + load a model.</p>
+        } @else if (models()?.length) {
+            <select class="sc-sel" (change)="setModel($any($event.target).value)" aria-label="Narrator model">
+                @for (m of models(); track m.id) {
+                    <option [value]="m.id" [selected]="m.id === selectedId()" [disabled]="!m.fetched">{{ m.label }} · ~{{ m.approxVramGB }}GB VRAM{{ m.fetched ? '' : ' · NOT FETCHED' }}</option>
+                }
+            </select>
+            @for (m of models(); track m.id) {
+                @if (!m.fetched && m.id === selectedId()) {
+                    <p class="sc-note warn">Not fetched. Pull it first: <code>node narrator/fetch-narrator.mjs {{ m.id }}</code></p>
+                }
+            }
+            <p class="sc-note">Switching unloads the current model and loads the chosen one on the sidecar (one at a time). Unfetched models are disabled with their fetch command.</p>
+        } @else {
+            <p class="sc-note">Connecting to the sidecar to read the model registry…</p>
+        }
+    </div>
+
+    <!-- FUNCTION TOGGLES -->
+    <div class="set-card">
+        <div class="sc-h">Refine targets</div>
+        <label class="tog"><input type="checkbox" [checked]="briefingsOn()" (change)="toggleBriefings()" /> Mission briefings / packages</label>
+        <label class="tog"><input type="checkbox" [checked]="aarsOn()" (change)="toggleAars()" /> After-action reports</label>
+        <p class="sc-note">The REFINE button on those views is GM-triggered — never automatic. A toggle off hides it.</p>
+    </div>
+
+    <!-- SPA CAP (migrated from localStorage, D-036) -->
+    <div class="set-card">
+        <div class="sc-h">Special-ability force cap <span class="mig">migrated from D-036</span></div>
+        <select class="sc-sel" (change)="setCap($any($event.target).value)" aria-label="SPA force-wide cap variant">
+            @for (o of capOptions; track o.v) { <option [value]="o.v" [selected]="o.v === capVariant()">{{ o.l }}</option> }
+        </select>
+        <p class="sc-note">Governs how many SPA pilots a force may field (Barracks pilot detail enforces it).</p>
+    </div>
+
+    <!-- DEPLOY-009: GUEST recovery code — re-display the device's local copy (Copy + QR). Guest tier only. -->
+    @if (isGuest()) {
+        <div class="set-card rec-card">
+            <div class="sc-h">Your recovery code <span class="mig">guest</span></div>
+            @if (recoveryCode()) {
+                <div class="rec-row">
+                    <code class="rec-val">{{ recoveryCode() }}</code>
+                    <button type="button" class="testbtn" (click)="copyRecovery()">{{ recCopied() ? 'Copied' : 'Copy' }}</button>
+                </div>
+                @if (recoveryQr(); as q) { <div class="rec-qr" [innerHTML]="q"></div> }
+                <p class="sc-note">Write it down. It's the <b>only</b> way back to your campaigns on a new device or after clearing your browser. This restores <b>your own</b> identity — it is <b>not</b> the player join code (that's in the Lobby tab).</p>
+            } @else {
+                <p class="sc-note">No recovery code is stored on this device.</p>
+            }
+        </div>
+    }
+</div>
+
+<!-- FULLER STATS -->
+@if (mode() === 'local') {
+    <div class="ph flat" style="margin-top:18px">Live narrator stats</div>
+    @if (stats(); as s) {
+        @if (s.sidecar === 'offline') {
+            <p class="note">Sidecar offline — start it with <code>node narrator/sidecar.mjs</code> (or <code>narrator/start-narrator.ps1</code>).</p>
+        } @else {
+            <div class="stat-grid">
+                <div class="stat"><div class="l">Model</div><div class="v sm">{{ s.llama.status.toUpperCase() }}</div><div class="s">{{ s.llama.model }}</div></div>
+                <div class="stat"><div class="l">Runs (session)</div><div class="v">{{ s.llama.refineRuns }}<small> refine</small></div><div class="s">{{ s.llama.validateRuns }} validate</div></div>
+                <div class="stat"><div class="l">Tokens (cumulative)</div><div class="v sm">{{ cumulative().promptTokens }} <small>p</small></div><div class="s">{{ cumulative().completionTokens }} completion</div></div>
+                <div class="stat"><div class="l">Last run</div><div class="v">{{ s.llama.lastTokS || '—' }}<small> tok/s</small></div><div class="s">{{ s.llama.lastMs ? s.llama.lastMs + 'ms · ' + (s.llama.lastKind || '') : 'no run yet' }}</div></div>
+                @if (s.gpu; as g) {
+                    <div class="stat warn"><div class="l">{{ g.name }}</div><div class="v">{{ g.utilPct }}%</div><div class="s">{{ (g.memUsedMB/1024).toFixed(1) }}/{{ (g.memTotalMB/1024).toFixed(0) }} GB · {{ g.tempC }}°C</div></div>
+                } @else { <div class="stat"><div class="l">GPU</div><div class="v sm">n/a</div><div class="s">nvidia-smi offline</div></div> }
+                @if (s.sys; as sy) { <div class="stat"><div class="l">System</div><div class="v">{{ sy.cpuPct }}%<small> cpu</small></div><div class="s">{{ (sy.memUsedMB/1024).toFixed(0) }}/{{ (sy.memTotalMB/1024).toFixed(0) }} GB RAM</div></div> }
+            </div>
+        }
+    } @else {
+        <p class="note">Connecting to the sidecar…</p>
+    }
+}

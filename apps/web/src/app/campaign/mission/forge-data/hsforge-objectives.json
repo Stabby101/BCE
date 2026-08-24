@@ -1,0 +1,2360 @@
+{
+  "_meta": {
+    "file": "hsforge-objectives.json",
+    "directive": "HSFORGE-1",
+    "law": "IP-001 generic typed slots, our words; every numeric {TOKEN} declared in params; every noun {TOKEN} declared in sites. Placement: template-defined structures (objective-raid caches, strike's four structures, flank's emplacements) keep their template rules; any {SITE} token an objective introduces — on ANY template — is placed within 4 hexes of the map center before deployment (the defender places it if any defender objective references it, otherwise the GM), and is a destructible medium building (CF 40) unless an objective says otherwise; if BOTH sides' objectives reference a {SITE}, the GM places it at the map-center hex. Counting: 'half your force' always means half the units you deployed, by count; a crippled unit that exits counts toward an exit objective unless the objective says 'non-crippled'; at emit time the generator clamps unit-referencing count params ({N}/{K}, except strike's structure counts, which keep their declared min/max) to half the scale's nominal side size (Scale 1 = 4 units, 2 = 8, 3 = 12); fixed emplacements and structures are never units and never count toward 'your force' or any unit-count objective. Commander: each side publicly names one deployed unit as its commander before deployment; any objective naming 'the enemy commander's unit' refers to that unit. Scale: turn and radius params assume a Scale-1 standard track map; hexes convert at 1 hex = 2 inches at ground scale; the GENERATOR bakes the Scale-2+ conversion at emit ({R} doubled, {T}/{T2} +1) — the printed numbers are final. Placement and commander conventions are RENDERED onto each emitted track (deployment text); this law block is the designer contract, not a table-facing surface."
+  },
+  "templates": {
+    "assault": {
+      "sets": [
+        {
+          "key": "take-the-center",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Make Contact — end Turn {T2} with at least half your force in the defender's half."
+            },
+            {
+              "kind": "secondary",
+              "text": "Take the Center — more non-crippled BV/PV than the defender within {R} hexes of center at end of Turn {T}."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Hold the Line — keep at least half your force within {R} hexes of center through Turn {T}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Still Standing — more non-crippled BV/PV than the attacker within {R} hexes of center at end of Turn {T}."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Drop Their Commander — destroy or cripple the enemy commander's unit."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "T": {
+              "min": 6,
+              "max": 8
+            },
+            "R": {
+              "min": 3,
+              "max": 5
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "storm-the-works",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Reach the Walls — end a turn with a unit adjacent to {SITE_A} by Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Storm {SITE_A} — control it (your unit adjacent, no enemy adjacent) at end of Turn {T}."
+            },
+            {
+              "kind": "bonus",
+              "text": "Sweep the Yard — no non-crippled defender within {R} hexes of {SITE_A} at track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Man the Walls — keep at least half your force within {R} hexes of {SITE_A} through Turn {T}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Hold {SITE_A} — control it (your unit adjacent, no enemy adjacent) at end of Turn {T}."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "T": {
+              "min": 6,
+              "max": 8
+            },
+            "R": {
+              "min": 3,
+              "max": 4
+            }
+          },
+          "sites": [
+            "SITE_A"
+          ]
+        },
+        {
+          "key": "break-the-garrison",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Draw Blood — destroy or cripple a defending unit by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Break the Garrison — destroy or cripple half the defending force (by count) by track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Steady Line — no attacker unit within {R} hexes of center at end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Outlast Them — end the track with more non-crippled units on the map than the attacker."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Center Ground — control map center (a unit within 2 hexes, no enemy within 2) at track end."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "R": {
+              "min": 3,
+              "max": 5
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "two-strongpoints",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Split Their Line — end Turn {T2} with a unit within {R} hexes of each of {SITE_A} and {SITE_B} (placed at least 6 hexes apart)."
+            },
+            {
+              "kind": "secondary",
+              "text": "Take Both Posts — control {SITE_A} and {SITE_B} (a unit adjacent to each, no enemy adjacent) at track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Man Both Posts — keep a unit within {R} hexes of each post through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Neither Post Falls — control both posts (your unit adjacent, no enemy adjacent) at track end."
+            },
+            {
+              "kind": "bonus",
+              "text": "Throw Back the Rush — destroy or cripple {K} attacking units."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "R": {
+              "min": 2,
+              "max": 3
+            },
+            "K": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": [
+            "SITE_A",
+            "SITE_B"
+          ]
+        },
+        {
+          "key": "breach-the-gate",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Down the Gate — destroy {SITE_A} by end of Turn {T}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Pour Through — end the track with at least half your force, non-crippled, in the defender's half."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "The Gate Holds — {SITE_A} is not destroyed before the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Stem the Tide — end the track with fewer than half the attacker's force (by count) in your half."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Wreck the Ram — destroy or cripple the enemy commander's unit."
+            }
+          ],
+          "params": {
+            "T": {
+              "min": 4,
+              "max": 6
+            },
+            "T2": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": [
+            "SITE_A"
+          ]
+        }
+      ]
+    },
+    "breakthrough": {
+      "sets": [
+        {
+          "key": "punch-through",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Cross the Line — end a turn with at least half your force (by count) across the map centerline."
+            },
+            {
+              "kind": "secondary",
+              "text": "Break Out — exit at least {N} non-crippled units off the defender's home edge."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Bar the Way — no attacker unit ends a turn across the centerline through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Seal the Breach — fewer than {N} attacker units exit your home edge by track end."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Drop Their Commander — destroy or cripple the enemy commander's unit."
+            }
+          ],
+          "params": {
+            "N": {
+              "min": 2,
+              "max": 4
+            },
+            "T2": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "carry-the-cargo",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Name the Carriers — secretly record {N} of your units as carriers at deployment (revealed when a carrier is crippled, destroyed, or exits, and at track end); keep every carrier non-crippled through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Carry It Through — exit at least half the carriers, non-crippled, off the defender's home edge."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Find the Freight — destroy or cripple a carrier by end of Turn {T}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Nothing Gets Through — destroy or cripple at least half the carriers before they exit."
+            }
+          ],
+          "params": {
+            "N": {
+              "min": 2,
+              "max": 3
+            },
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "T": {
+              "min": 4,
+              "max": 6
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "race-the-gap",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Seize the Crossing — control {SITE_A} (your unit adjacent, no enemy adjacent) at end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Through the Gap — exit at least half your force (by count) off the defender's home edge."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Hold the Crossing — control {SITE_A} (your unit adjacent, no enemy adjacent) at end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Seal the Gap — fewer than half the attacker's force (by count) exits your home edge by track end."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "First Blood — first side to destroy 25% of the enemy (by count) scores this; simultaneous = both score."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 5
+            }
+          },
+          "sites": [
+            "SITE_A"
+          ]
+        },
+        {
+          "key": "race-the-clock",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "First One Out — exit a non-crippled unit off the defender's home edge by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Before the Door Shuts — exit at least {N} non-crippled units off the defender's home edge by end of Turn {T}."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Buy the First Hours — no enemy unit exits your home edge before the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Hold Till Late — fewer than {N} enemy units exit your home edge by the end of Turn {T}."
+            },
+            {
+              "kind": "bonus",
+              "text": "Toll of Passage — destroy or cripple {K} enemy units."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 4,
+              "max": 5
+            },
+            "N": {
+              "min": 2,
+              "max": 3
+            },
+            "T": {
+              "min": 7,
+              "max": 8
+            },
+            "K": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "drop-the-span",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Rush the Span — reach {SITE_A} (end a turn adjacent to it) by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Cross Intact — end the track with {SITE_A} standing and at least {N} of your non-crippled units past the map centerline."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Fight for Time — no enemy unit is adjacent to {SITE_A} at the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Drop the Span — destroy {SITE_A} before an enemy unit ends a turn adjacent to it."
+            },
+            {
+              "kind": "bonus",
+              "text": "Wreck Them at the Water — destroy or cripple {K} enemy units within {R} hexes of {SITE_A}."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "N": {
+              "min": 2,
+              "max": 4
+            },
+            "K": {
+              "min": 2,
+              "max": 3
+            },
+            "R": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": [
+            "SITE_A"
+          ]
+        }
+      ]
+    },
+    "defend": {
+      "sets": [
+        {
+          "key": "hold-the-center",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Close In — end Turn {T2} with a unit within {R} hexes of center."
+            },
+            {
+              "kind": "secondary",
+              "text": "Take the Center — more non-crippled BV/PV than the enemy within {R} hexes of center at end of Turn {T}."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Hold the Center — at least half your force within {R} hexes of center at end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Overmatch — more non-crippled BV/PV than the enemy within {R} hexes of center at end of Turn {T}."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Drop Their Commander — destroy or cripple the enemy commander's unit."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "T": {
+              "min": 4,
+              "max": 5
+            },
+            "R": {
+              "min": 3,
+              "max": 4
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "guard-the-site",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Reach the Target — end a turn with a unit adjacent to {SITE_A}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Tear It Down — destroy {SITE_A} before track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Screen {SITE_A} — no enemy unit ends a turn adjacent to {SITE_A} through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "It Still Stands — {SITE_A} is not destroyed at track end."
+            },
+            {
+              "kind": "bonus",
+              "text": "Punish the Rush — destroy or cripple {K} attacking units."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "K": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": [
+            "SITE_A"
+          ]
+        },
+        {
+          "key": "hold-until-relieved",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Shock Action — destroy or cripple a defending unit by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Clear the Ground — fewer than {N} non-crippled defenders within {R} hexes of center at track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Steady — no defending unit is destroyed or crippled before the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Hold Until Relieved — end the track with at least {N} non-crippled units within {R} hexes of center."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "First Blood — first side to destroy 25% of the enemy (by count) scores this; simultaneous = both score."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "N": {
+              "min": 2,
+              "max": 4
+            },
+            "R": {
+              "min": 3,
+              "max": 4
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "hold-both-gates",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Pick a Gate — come adjacent to {SITE_A} or {SITE_B} (placed at least 6 hexes apart) with a unit by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Take a Gate — control {SITE_A} or {SITE_B} (your unit adjacent, no enemy adjacent) at track end."
+            },
+            {
+              "kind": "bonus",
+              "text": "Both Doors Down — control both gates at track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Neither Gate Touched — no enemy unit ends a turn adjacent to either gate through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Both Gates Held — end the track in control of both gates (your units adjacent, no enemy adjacent)."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": [
+            "SITE_A",
+            "SITE_B"
+          ]
+        },
+        {
+          "key": "ward-the-charge",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Find the Mark — end a turn with a unit within {R} hexes of the defender's charge by Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Cut Down the Charge — destroy or cripple the defender's charge before track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Name the Charge — publicly name one of your deployed units as the charge at deployment; keep it non-crippled through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "See It Home Safe — the charge is neither destroyed nor crippled at track end."
+            },
+            {
+              "kind": "bonus",
+              "text": "Close Ranks — end Turn {T} with at least {N} non-crippled units within {R} hexes of the charge."
+            }
+          ],
+          "params": {
+            "R": {
+              "min": 2,
+              "max": 3
+            },
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "T": {
+              "min": 4,
+              "max": 5
+            },
+            "N": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        }
+      ]
+    },
+    "flank": {
+      "sets": [
+        {
+          "key": "turn-the-line",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Hook In — end Turn {T2} with a flanking unit in the defender's half."
+            },
+            {
+              "kind": "secondary",
+              "text": "Turn the Line — end Turn {T} with more non-crippled units in the defender's half than the defender."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Refuse the Flank — no enemy unit in your half at end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Hold the Front — end Turn {T} with at least half your force, non-crippled, in your own half."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Drop Their Commander — destroy or cripple the enemy commander's unit."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "T": {
+              "min": 6,
+              "max": 7
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "silence-the-guns",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Spot the Guns — end a turn with a unit within {R} hexes of a fixed emplacement."
+            },
+            {
+              "kind": "secondary",
+              "text": "Silence the Guns — destroy both fixed emplacements before track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Guns Up — both fixed emplacements still stand at end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Guns Hold — at least one fixed emplacement still stands at track end."
+            },
+            {
+              "kind": "bonus",
+              "text": "Bloody the Hook — destroy or cripple {K} units of the flanking element."
+            }
+          ],
+          "params": {
+            "R": {
+              "min": 2,
+              "max": 3
+            },
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "K": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "pincer-site",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Two Axes — end Turn {T2} with units from both your elements in the defender's half."
+            },
+            {
+              "kind": "secondary",
+              "text": "Seize {SITE_A} — control it (your unit adjacent, no enemy adjacent) at end of Turn {T}."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Anchor the Line — keep at least half your force within {R} hexes of {SITE_A} through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Hold {SITE_A} — control it (your unit adjacent, no enemy adjacent) at end of Turn {T}."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "First Blood — first side to destroy 25% of the enemy (by count) scores this; simultaneous = both score."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "T": {
+              "min": 6,
+              "max": 7
+            },
+            "R": {
+              "min": 3,
+              "max": 4
+            }
+          },
+          "sites": [
+            "SITE_A"
+          ]
+        },
+        {
+          "key": "cut-the-lifeline",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Swing Wide — end Turn {T2} with a non-crippled unit within {R} hexes of the defender's home edge."
+            },
+            {
+              "kind": "secondary",
+              "text": "Cut the Lifeline — end the track with more non-crippled units within {R} hexes of the defender's home edge than the defender."
+            },
+            {
+              "kind": "bonus",
+              "text": "Panic in the Rear — destroy or cripple a defending unit while it is within {R} hexes of its own home edge."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Watch the Back Door — no enemy unit within {R} hexes of your home edge at the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Reopen the Road — end the track with no non-crippled enemy unit within {R} hexes of your home edge."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "R": {
+              "min": 3,
+              "max": 4
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "sack-the-post",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Ride for the Post — put a unit within {R} hexes of {SITE_A} by the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Sack the Post — destroy {SITE_A}, then end a later turn with at least half your force in your own half."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Post Sentries — keep every enemy unit more than {R} hexes from {SITE_A} through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Keep the Lights On — {SITE_A} is not destroyed at track end."
+            },
+            {
+              "kind": "bonus",
+              "text": "Run Down the Raiders — destroy or cripple {K} enemy units in your half of the map."
+            }
+          ],
+          "params": {
+            "R": {
+              "min": 2,
+              "max": 3
+            },
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "K": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": [
+            "SITE_A"
+          ]
+        }
+      ]
+    },
+    "meeting": {
+      "sets": [
+        {
+          "key": "claim-the-field",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Get There First — end Turn {T2} with more units within {R} hexes of center than the enemy."
+            },
+            {
+              "kind": "secondary",
+              "text": "Claim the Field — more non-crippled BV/PV within {R} hexes of center at end of Turn {T}."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Get There First — end Turn {T2} with more units within {R} hexes of center than the enemy."
+            },
+            {
+              "kind": "secondary",
+              "text": "Claim the Field — more non-crippled BV/PV within {R} hexes of center at end of Turn {T}."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Drop Their Commander — destroy or cripple the enemy commander's unit."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "T": {
+              "min": 6,
+              "max": 8
+            },
+            "R": {
+              "min": 4,
+              "max": 6
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "the-crossroads",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Race to {SITE_A} — end a turn with a unit within 2 hexes of {SITE_A} by Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Take {SITE_A} — control it (a unit within 2 hexes, no enemy within 2) at track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Race to {SITE_A} — end a turn with a unit within 2 hexes of {SITE_A} by Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Hold {SITE_A} — control it (a unit within 2 hexes, no enemy within 2) at track end."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "First Blood — first side to destroy 25% of the enemy (by count) scores this; simultaneous = both score."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": [
+            "SITE_A"
+          ]
+        },
+        {
+          "key": "drive-them-off",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Draw Blood — destroy or cripple an enemy unit by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Drive Them Off — end the track with more non-crippled units on the map than the enemy."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Draw Blood — destroy or cripple an enemy unit by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Drive Them Off — end the track with more non-crippled units on the map than the enemy."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Hold the Middle — control map center (a unit within 2 hexes, no enemy within 2) at track end."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "two-prizes",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Stake a Claim — control either prize (placed at least 6 hexes apart; a unit within 2 hexes, no enemy within 2) at the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Take the Pair — control both prizes at track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Stake a Claim — control either prize (placed at least 6 hexes apart; a unit within 2 hexes, no enemy within 2) at the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Take the Pair — control both prizes at track end."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Early Sweep — control both prizes at the end of Turn {T}."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "T": {
+              "min": 5,
+              "max": 7
+            }
+          },
+          "sites": [
+            "SITE_A",
+            "SITE_B"
+          ]
+        },
+        {
+          "key": "the-champions",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Answer the Challenge — your commander's unit makes an attack against the enemy commander's unit by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Champion's Fall — destroy or cripple the enemy commander's unit while your own commander's unit is non-crippled."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Answer the Challenge — your commander's unit makes an attack against the enemy commander's unit by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Champion's Fall — destroy or cripple the enemy commander's unit while your own commander's unit is non-crippled."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Weight of Fire — destroy or cripple {K} enemy units other than their commander's."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "K": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        }
+      ]
+    },
+    "objective-raid": {
+      "sets": [
+        {
+          "key": "snatch-and-run",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Reach the Cache — end a turn with a unit adjacent to {SITE_A} or {SITE_B}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Carry It Home — seize a component and exit the carrying unit off your home edge."
+            },
+            {
+              "kind": "bonus",
+              "text": "Clean Getaway — seize at least one component, and no carrier is crippled or destroyed."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Screen the Caches — at least half your force within {R} hexes of the structures through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Keep the Stores — no component exits the raiders' home edge by track end."
+            }
+          ],
+          "params": {
+            "R": {
+              "min": 4,
+              "max": 6
+            },
+            "T2": {
+              "min": 3,
+              "max": 5
+            }
+          },
+          "sites": [
+            "SITE_A",
+            "SITE_B"
+          ]
+        },
+        {
+          "key": "hold-the-yard",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Into the Yard — end Turn {T2} with {N} units within {R} hexes of {SITE_A}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Work the Site — control {SITE_A} (your unit adjacent, no enemy adjacent) for {C} consecutive turns, then exit a unit carrying a component seized from {SITE_A} off your home edge."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Yard Watch — control {SITE_A} (your unit adjacent, no enemy adjacent) at end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Run Them Off — destroy or cripple {K} raiders by track end."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "The Second Site — control {SITE_B} (a unit adjacent, no enemy adjacent) at track end."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "N": {
+              "min": 2,
+              "max": 3
+            },
+            "R": {
+              "min": 2,
+              "max": 3
+            },
+            "C": {
+              "min": 2,
+              "max": 3
+            },
+            "K": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": [
+            "SITE_A",
+            "SITE_B"
+          ]
+        },
+        {
+          "key": "smash-the-grab",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Fast Hands — seize a component from {SITE_A} or {SITE_B} by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "The Full Haul — exit component-carrying units from both {SITE_A} and {SITE_B} off your home edge."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Stand the Guard — end Turn {T2} with at least half your force within {R} hexes of the structures."
+            },
+            {
+              "kind": "secondary",
+              "text": "Empty-Handed — components exit from at most one of the two structures by track end."
+            },
+            {
+              "kind": "bonus",
+              "text": "Drop the Carrier — destroy or cripple a unit while it carries a component."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "R": {
+              "min": 3,
+              "max": 5
+            }
+          },
+          "sites": [
+            "SITE_A",
+            "SITE_B"
+          ]
+        },
+        {
+          "key": "eyes-in-the-yard",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Lay Eyes On — scan {SITE_A} or {SITE_B} (end a turn with a unit adjacent to it) by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "The Full Picture — scan both {SITE_A} and {SITE_B}, then exit a unit that made a scan off your home edge."
+            },
+            {
+              "kind": "bonus",
+              "text": "Ghost Sweep — complete both scans with none of your units destroyed or crippled."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Jam the Sweep — no enemy unit ends a turn adjacent to either structure before the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Bag the Spotters — destroy or cripple every enemy unit that scanned a structure (met if none did)."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            }
+          },
+          "sites": [
+            "SITE_A",
+            "SITE_B"
+          ]
+        },
+        {
+          "key": "the-right-crate",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Sniff It Out — scan a structure (end a turn with a unit adjacent) to learn if it holds the prize; locate the prize by end of Turn {T}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Lift the Prize — seize the prize and exit the unit carrying it off your home edge."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Shell Game — secretly record which structure holds the prize at deployment; the enemy does not learn its location before the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "The Prize Stays — the prize does not leave the map by track end."
+            },
+            {
+              "kind": "bonus",
+              "text": "Guard Both Doors — end Turn {T2} with a unit within {R} hexes of each structure."
+            }
+          ],
+          "params": {
+            "T": {
+              "min": 4,
+              "max": 6
+            },
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "R": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": [
+            "SITE_A",
+            "SITE_B"
+          ]
+        }
+      ]
+    },
+    "pursuit": {
+      "sets": [
+        {
+          "key": "run-them-down",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Close the Gap — make an attack against a quarry unit by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Run Them Down — destroy or cripple at least half the quarry force (by count) before it exits."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Stay Ahead — at end of Turn {T2}, no enemy unit within {R} hexes of any of your units."
+            },
+            {
+              "kind": "secondary",
+              "text": "Get Away — exit at least half your force (by count), non-crippled, off the far edge."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "First Blood — first side to destroy 25% of the enemy (by count) scores this; simultaneous = both score."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "R": {
+              "min": 3,
+              "max": 5
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "save-the-haul",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Catch the Tail — destroy or cripple a slow quarry unit by end of Turn {T}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Take the Haul — destroy or cripple at least half the quarry's slow units before they exit."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Keep Rolling — end Turn {T2} with every slow unit past the map centerline."
+            },
+            {
+              "kind": "secondary",
+              "text": "Haul It Out — exit at least {N} non-crippled slow units off the far edge."
+            }
+          ],
+          "params": {
+            "T": {
+              "min": 4,
+              "max": 6
+            },
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "N": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "cut-the-road",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Flank the Column — end a turn with a unit closer to the far edge than every quarry unit."
+            },
+            {
+              "kind": "secondary",
+              "text": "Bag the Column — fewer than {N} quarry units exit the far edge by track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Burst Through — end Turn {T2} with at least half your force past the map centerline."
+            },
+            {
+              "kind": "secondary",
+              "text": "Slip the Net — exit at least {N} units off the far edge."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Rearguard Duel — destroy or cripple the enemy commander's unit."
+            }
+          ],
+          "params": {
+            "N": {
+              "min": 3,
+              "max": 4
+            },
+            "T2": {
+              "min": 3,
+              "max": 4
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "close-the-window",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Stay on Them — end Turn {T2} with a unit within {R} hexes of a quarry unit."
+            },
+            {
+              "kind": "secondary",
+              "text": "Close the Window — end the track with at least {N} quarry units prevented from exiting (still on the map or destroyed)."
+            },
+            {
+              "kind": "bonus",
+              "text": "Run Them Aground — end the track with {K} quarry units crippled but not destroyed."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Make the Window — exit a non-crippled unit off the far edge by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Gone Before Dark — end the track with none of your non-crippled units left on the map."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "R": {
+              "min": 2,
+              "max": 3
+            },
+            "N": {
+              "min": 2,
+              "max": 3
+            },
+            "K": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "hunt-the-standard",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Mark the Standard — end a turn with a unit within {R} hexes of the enemy commander's unit by Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Take the Standard — destroy or cripple the enemy commander's unit before it leaves the map."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Guard the Standard — your commander's unit is non-crippled at the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Carry the Standard Home — exit your commander's unit, non-crippled, off the far edge."
+            },
+            {
+              "kind": "bonus",
+              "text": "Shake the Hunters — exit at least {N} other non-crippled units off the far edge."
+            }
+          ],
+          "params": {
+            "R": {
+              "min": 2,
+              "max": 3
+            },
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "N": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        }
+      ]
+    },
+    "pushback": {
+      "sets": [
+        {
+          "key": "two-pincers",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Jaws Close — end Turn {T2} with units from both your elements in the defender's half."
+            },
+            {
+              "kind": "secondary",
+              "text": "Push Them Out — fewer than {N} non-crippled defenders in their own half at track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Hold the Shoulders — no enemy unit ends a turn within {R} hexes of your home edge through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Give No Ground — end the track with at least {N} non-crippled units in your own half."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Drop Their Commander — destroy or cripple the enemy commander's unit."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "N": {
+              "min": 3,
+              "max": 5
+            },
+            "R": {
+              "min": 4,
+              "max": 6
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "overrun-the-camp",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "First Push — end Turn {T2} with a unit within {R} hexes of {SITE_A}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Overrun the Camp — control {SITE_A} (your unit adjacent, no enemy adjacent) at track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Man the Camp — keep at least half your force within {R} hexes of {SITE_A} through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "The Camp Holds — control {SITE_A} (your unit adjacent, no enemy adjacent) at track end."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "First Blood — first side to destroy 25% of the enemy (by count) scores this; simultaneous = both score."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "R": {
+              "min": 3,
+              "max": 5
+            }
+          },
+          "sites": [
+            "SITE_A"
+          ]
+        },
+        {
+          "key": "grind-them-back",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Cross the Midline — end Turn {T2} with at least half your force past the map centerline."
+            },
+            {
+              "kind": "secondary",
+              "text": "Grind Them Back — destroy or cripple half the defending force (by count) by track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Hold the Midline — fewer than half the enemy force (by count) is past the centerline at end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Still Here — end the track with at least half your force, non-crippled, in your own half."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "take-and-hold",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Take the Step — end Turn {T2} with at least half your force (by count), non-crippled, past the map centerline."
+            },
+            {
+              "kind": "secondary",
+              "text": "Hold What You Take — keep at least {N} non-crippled units past the centerline for {C} consecutive turns."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Bend, Don't Break — end Turn {T} with fewer than {N} enemy units past the centerline."
+            },
+            {
+              "kind": "secondary",
+              "text": "Sway Them Back — the attacker never keeps {N} units past the centerline for {C} consecutive turns."
+            },
+            {
+              "kind": "bonus",
+              "text": "Counterpunch — destroy or cripple {K} enemy units while they are past the centerline."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "N": {
+              "min": 2,
+              "max": 3
+            },
+            "C": {
+              "min": 2,
+              "max": 3
+            },
+            "T": {
+              "min": 6,
+              "max": 8
+            },
+            "K": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "clear-the-belt",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Reach the Belt — end Turn {T2} with more non-crippled units within {R} hexes of the map centerline than the defender."
+            },
+            {
+              "kind": "secondary",
+              "text": "Clear the Belt — end the track with no non-crippled defender within {R} hexes of the centerline."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Line the Belt — end Turn {T2} with at least {N} non-crippled units within {R} hexes of the centerline."
+            },
+            {
+              "kind": "secondary",
+              "text": "Still on the Line — end the track with more non-crippled units within {R} hexes of the centerline than the attacker."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Break Their Push — destroy or cripple the enemy commander's unit."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "R": {
+              "min": 2,
+              "max": 3
+            },
+            "N": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        }
+      ]
+    },
+    "recon": {
+      "sets": [
+        {
+          "key": "count-the-guns",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Eyes On — scan (identify) an enemy unit by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Count the Guns — scan at least {N} enemy units by track end."
+            },
+            {
+              "kind": "bonus",
+              "text": "Bring It Home — a unit that scanned an enemy exits off your home edge."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Stay Dark — fewer than {N} of your units are scanned by track end."
+            },
+            {
+              "kind": "secondary",
+              "text": "Blind Them — destroy or cripple {K} enemy units."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "N": {
+              "min": 3,
+              "max": 5
+            },
+            "K": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "map-the-site",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Find the Site — end a turn with a unit within {R} hexes of {SITE_A}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Survey the Site — keep a unit within {R} hexes of {SITE_A} for {C} consecutive turns."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Patrol Line — no enemy unit ends a turn within {R} hexes of {SITE_A} through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Nothing to See — no enemy unit stays within {R} hexes of {SITE_A} for {C} consecutive turns."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Drop Their Commander — destroy or cripple the enemy commander's unit."
+            }
+          ],
+          "params": {
+            "R": {
+              "min": 2,
+              "max": 4
+            },
+            "C": {
+              "min": 2,
+              "max": 3
+            },
+            "T2": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": [
+            "SITE_A"
+          ]
+        },
+        {
+          "key": "probe-and-report",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Probe the Line — scan an enemy unit in the map half nearest the defender's home edge by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Get the Word Out — at least {N} units that scanned an enemy exit off your home edge."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Hunt the Scouts — destroy or cripple an enemy unit by end of Turn {T}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Kill the Report — no unit that scanned one of yours exits the map."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "First Blood — first side to destroy 25% of the enemy (by count) scores this; simultaneous = both score."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "N": {
+              "min": 1,
+              "max": 2
+            },
+            "T": {
+              "min": 3,
+              "max": 5
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "shadow-the-command",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Tag the Command — scan the enemy commander's unit by the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Shadow the Command — keep a unit within {R} hexes of the enemy commander's unit for {C} consecutive turns."
+            },
+            {
+              "kind": "bonus",
+              "text": "Deliver the Log — exit a unit that shadowed the command off your home edge, non-crippled."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Shake the Shadow — at the end of Turn {T2}, no enemy unit is within {R} hexes of your commander's unit."
+            },
+            {
+              "kind": "secondary",
+              "text": "Never Shadowed — no enemy unit stays within {R} hexes of your commander's unit for {C} consecutive turns."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "R": {
+              "min": 2,
+              "max": 3
+            },
+            "C": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "walk-the-line",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "First Fix — end a turn with a unit within {R} hexes of {SITE_A} or {SITE_B} by Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Walk the Line — survey both sites (end a turn with a unit within {R} hexes of each), then exit a surveying unit off your home edge."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Cordon the Ground — no enemy unit within {R} hexes of either site at the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Half a Map — the enemy surveys at most one of the two sites by track end."
+            },
+            {
+              "kind": "bonus",
+              "text": "Bag a Surveyor — destroy or cripple an enemy unit that has surveyed a site."
+            }
+          ],
+          "params": {
+            "R": {
+              "min": 2,
+              "max": 3
+            },
+            "T2": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": [
+            "SITE_A",
+            "SITE_B"
+          ]
+        }
+      ]
+    },
+    "retreat": {
+      "sets": [
+        {
+          "key": "break-contact",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Mark the Runners — scan (identify) {N} withdrawing units by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Cut Them Off — destroy or cripple at least half the withdrawing force before it exits."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Break Contact — exit at least one unit off your home edge."
+            },
+            {
+              "kind": "secondary",
+              "text": "The Long Road Out — exit at least half your force (by count), non-crippled, off your home edge."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "First Blood — first side to destroy 25% of the enemy (by count) scores this; simultaneous = both score."
+            }
+          ],
+          "params": {
+            "N": {
+              "min": 2,
+              "max": 3
+            },
+            "T2": {
+              "min": 3,
+              "max": 4
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "save-the-column",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Snap at the Heels — make an attack against a withdrawing unit by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Close the Door — fewer than {N} non-crippled enemy units exit their home edge."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Point the Way — end Turn {T2} with a unit within {R} hexes of your home edge."
+            },
+            {
+              "kind": "secondary",
+              "text": "Home Alive — exit at least {N} non-crippled units off your home edge."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Rearguard Duel — destroy or cripple the enemy commander's unit."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "N": {
+              "min": 2,
+              "max": 3
+            },
+            "R": {
+              "min": 4,
+              "max": 6
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "hold-the-door",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Dog Them — end Turn {T2} with {N} units in the defender's half of the map."
+            },
+            {
+              "kind": "secondary",
+              "text": "Run Them to Ground — destroy or cripple {K} withdrawing units before they exit."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Rear Guard — none of your units are destroyed before end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Leave None Behind — every one of your units exits off your home edge by track end, non-crippled; a unit destroyed, crippled, or still on the map counts as left behind."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "N": {
+              "min": 2,
+              "max": 3
+            },
+            "K": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "burn-the-depot",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Save the Depot — {SITE_A} is not destroyed before the end of Turn {T2} (suppress the torchers to stop it)."
+            },
+            {
+              "kind": "secondary",
+              "text": "Take It Working — end the track controlling {SITE_A} (your unit adjacent, no enemy adjacent) with it still standing."
+            },
+            {
+              "kind": "bonus",
+              "text": "Catch the Torch Crew — destroy or cripple an enemy unit that is adjacent to {SITE_A}."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Torch It — destroy {SITE_A} with your own fire by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Fade Away — exit at least {N} units, crippled or not, off your home edge."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "N": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": [
+            "SITE_A"
+          ]
+        },
+        {
+          "key": "hold-then-go",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Make Them Pay — destroy or cripple a pursuing unit before the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Wreck Their Column — by track end, at least half the enemy force (by count) has been destroyed or left crippled on the field."
+            },
+            {
+              "kind": "bonus",
+              "text": "Trample the Timetable — end Turn {T2} with more non-crippled units on the map than the enemy."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Hold the Timetable — keep at least half your force on the map through the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Then Vanish — exit at least {N} non-crippled units off your home edge, all after Turn {T2} has ended."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 3,
+              "max": 4
+            },
+            "N": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        }
+      ]
+    },
+    "strike": {
+      "sets": [
+        {
+          "key": "find-the-hq",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Case the Site — scan {N} of the four marked structures by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Find the Nerve Center — destroy the hidden headquarters building, finding it by scan or by fire (a destroyed building reveals what it was)."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Keep Them Guessing — the headquarters is not identified before end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "The HQ Stands — the headquarters building is not destroyed at track end."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "First Blood — first side to destroy 25% of the enemy (by count) scores this; simultaneous = both score."
+            }
+          ],
+          "params": {
+            "N": {
+              "min": 2,
+              "max": 3
+            },
+            "T2": {
+              "min": 3,
+              "max": 4
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "burn-it-all",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Breach the Perimeter — end Turn {T2} with {N} units within {R} hexes of the marked structures."
+            },
+            {
+              "kind": "secondary",
+              "text": "Burn It All — destroy at least {N2} of the four marked structures, including the headquarters."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Perimeter Watch — no enemy unit ends a turn within {R} hexes of the marked structures through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Save the Stores — fewer than {N2} of the four marked structures are destroyed at track end."
+            }
+          ],
+          "both": [
+            {
+              "kind": "bonus",
+              "text": "Drop Their Commander — destroy or cripple the enemy commander's unit."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "N": {
+              "min": 2,
+              "max": 3
+            },
+            "N2": {
+              "min": 2,
+              "max": 3
+            },
+            "R": {
+              "min": 3,
+              "max": 4
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "strike-and-fade",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "In Fast — make an attack against a marked structure by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Strike and Fade — destroy the headquarters, then exit half your force off your home edge."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Sound the Alarm — scan (identify) an enemy unit by end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Nothing Falls — no marked structure is destroyed this track."
+            },
+            {
+              "kind": "bonus",
+              "text": "Trap the Strike — destroy or cripple {K} attacking units."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "K": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "surgical-strike",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "One Target Only — destroy the headquarters building by end of Turn {T}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Surgical Hands — the other three marked structures all stand at track end."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Shield the Prize — the headquarters is not destroyed before the end of Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Still Sending — the headquarters is still standing when the track ends."
+            },
+            {
+              "kind": "bonus",
+              "text": "Make Them Rush It — destroy or cripple {K} attacking units before the headquarters falls."
+            }
+          ],
+          "params": {
+            "T": {
+              "min": 5,
+              "max": 7
+            },
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "K": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        },
+        {
+          "key": "sappers-in",
+          "attacker": [
+            {
+              "kind": "primary",
+              "text": "Sappers In — end Turn {T2} with a unit adjacent to one of the four marked structures."
+            },
+            {
+              "kind": "secondary",
+              "text": "Set and Blow — a unit that stays adjacent to a marked structure for {C} consecutive turns demolishes it (counts as destroyed); demolish at least one."
+            },
+            {
+              "kind": "bonus",
+              "text": "Flatten the Site — demolish {N2} of the four marked structures this way."
+            }
+          ],
+          "defender": [
+            {
+              "kind": "primary",
+              "text": "Walls Watched — no enemy unit ends a turn adjacent to a marked structure through Turn {T2}."
+            },
+            {
+              "kind": "secondary",
+              "text": "Cut the Fuses — no enemy unit stays adjacent to a marked structure for {C} consecutive turns."
+            }
+          ],
+          "params": {
+            "T2": {
+              "min": 2,
+              "max": 3
+            },
+            "C": {
+              "min": 2,
+              "max": 3
+            },
+            "N2": {
+              "min": 2,
+              "max": 3
+            }
+          },
+          "sites": []
+        }
+      ]
+    }
+  }
+}

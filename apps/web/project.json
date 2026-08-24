@@ -1,0 +1,49 @@
+{
+  "name": "web",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/web/src",
+  "targets": {
+    "prerun": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "apps/web", "command": "npm run prerun" }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["prerun"],
+      "options": { "cwd": "apps/web", "command": "npx ng serve --host 0.0.0.0" }
+    },
+    "serve-player": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["prerun"],
+      "options": { "cwd": "apps/web", "command": "npx ng serve --configuration=player --host 0.0.0.0 --port 4300" }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["prerun"],
+      "options": {
+        "cwd": "apps/web",
+        "parallel": false,
+        "commands": [
+          "npx ng build --configuration=production",
+          "npx ng build --configuration=player --base-href=/player/",
+          "node ../../tools/copy-player-into-pages.mjs",
+          "node ../../tools/pages-output-guard.mjs"
+        ]
+      }
+    },
+    "build-player": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["prerun"],
+      "options": { "cwd": "apps/web", "command": "npx ng build --configuration=player" }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "apps/web", "command": "npx eslint src" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "cwd": "apps/web", "command": "npx ng test --watch=false --browsers=ChromeHeadless --progress=false" }
+    }
+  }
+}

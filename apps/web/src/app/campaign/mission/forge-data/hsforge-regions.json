@@ -1,0 +1,26 @@
+{
+  "_meta": {
+    "file": "hsforge-regions.json",
+    "directive": "HSFORGE-1 (Phase 1, ruling D4 2026-07-16)",
+    "law": "Authored region table; membership is resolved INTERNALLY as anchor+radius over the committed star map (star/systems.json) — never by name join. Anchors are canon march capitals (setting facts). Adding a region here + re-running tools/build-systems.mjs guarantees the belt's worlds are committed to the star map (the HSFORGE-1a rule).",
+    "consumers": "tools/build-systems.mjs (belt must-include at build) · chaos/forge world selection (anchor+radius at runtime)"
+  },
+  "regions": [
+    {
+      "id": "draconis-march",
+      "name": "Draconis March",
+      "anchorWorld": "Robinson",
+      "anchorSystemId": "robinson",
+      "radiusLy": 150,
+      "blurb": "The Federated Suns' shield against the Draconis Combine. Fortress worlds, border raids, and grudges older than most of the regiments that hold the line."
+    },
+    {
+      "id": "capellan-march",
+      "name": "Capellan March",
+      "anchorWorld": "New Syrtis",
+      "anchorSystemId": "new-syrtis",
+      "radiusLy": 150,
+      "blurb": "The Federated Suns' southern march, facing the Capellan Confederation. Proxy raids, noble feuds, and trade lanes that change hands more often than the maps admit."
+    }
+  ]
+}

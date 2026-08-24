@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>BattleTech Campaign Engine</title>
+  <base href="/">
+  <script>
+    // DEPLOY-002 + HOTFIX-028: on a PUBLIC (non-localhost/non-LAN) origin the engine URL must be the hosted
+    // Railway API. Set it when unset (a fresh cloud visitor) AND replace a stored localhost/private-LAN value
+    // — that is unreachable from a public origin and is exactly the wedge that stranded returning players
+    // ("offline / Connecting…"). A stored PUBLIC value stands (never clobbered). Dev/LAN is UNCHANGED: the
+    // localhost/private ranges are skipped, keeping the app's localhost default / LAN derivation. Mirrors the
+    // never-destructive resolveEngineUrl in main.player.ts.
+    (function () {
+      try {
+        var h = location.hostname;
+        var isLocalLan = function (host) {
+          return host === 'localhost' || host === '127.0.0.1' || host === '[::1]'
+            || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+        };
+        if (isLocalLan(h)) return; // dev/LAN unchanged
+        var stored = localStorage.getItem('bce.engine.url');
+        var replace = true;
+        if (stored) {
+          try {
+            var u = new URL(stored);
+            if (isLocalLan(u.hostname)) replace = true; // local/LAN unreachable from public
+            else if (u.hostname === h && u.port && u.port !== '443' && u.port !== '80') replace = true; // the wedge: self-host:3000
+            else replace = false; // a genuine public api stands
+          } catch (e) { replace = true; }
+        }
+        if (replace) localStorage.setItem('bce.engine.url', 'https://bce-production.up.railway.app/api');
+      } catch (e) { /* localStorage unavailable — the app falls back to its default */ }
+    })();
+  </script>
+  <script>
+    // HOTFIX-028 — boot resilience: NEVER leave a black screen. Works even with a dead bundle (plain HTML).
+    //   (1) chunk / dynamic-import load failure → ONE cache-evicting reload (60s guard), then a fallback panel.
+    //   (2) watchdog: if <app-root> is still empty after 15s (a hung/dead bundle) show the same panel.
+    // The Angular shells call clearBootFallback() once they paint (removes #bce-boot-fallback), so a
+    // slow-but-successful boot self-clears — this only ever surfaces on a genuinely broken load.
+    (function () {
+      var shown = false;
+      function showFallback() {
+        if (shown || document.getElementById('bce-boot-fallback')) return; shown = true;
+        try {
+          var el = document.createElement('div'); el.id = 'bce-boot-fallback';
+          el.setAttribute('style', 'position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;background:#0c0f13;color:#e7edf3;font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif;padding:24px;box-sizing:border-box;');
+          el.innerHTML = '<div style="max-width:420px;text-align:center;background:#141a21;border:1px solid #26303c;border-radius:16px;padding:28px 24px;">'
+            + '<div style="font-weight:800;letter-spacing:.14em;color:#fff;">BATTLETECH CAMPAIGN ENGINE</div>'
+            + '<p style="color:#b9c6d4;margin:16px 0;">The app didn’t finish loading — usually a stale cached file.</p>'
+            + '<button id="bce-fb-reload" type="button" style="display:block;width:100%;margin:8px 0;padding:12px;border:none;border-radius:10px;background:#3d8ac2;color:#04121d;font-size:15px;font-weight:700;cursor:pointer;">Reload</button>'
+            + '<a href="?fresh=1" style="display:block;margin-top:10px;color:#9fb2c4;font-size:13px;">Reset app data &amp; reload</a>'
+            + '</div>';
+          (document.body || document.documentElement).appendChild(el);
+          var rb = document.getElementById('bce-fb-reload'); if (rb) rb.onclick = function () { location.reload(); };
+        } catch (e) { /* */ }
+      }
+      function isChunkError(msg, target) {
+        if (/ChunkLoadError|Loading chunk|Importing a module script failed|dynamically imported module/i.test(msg || '')) return true;
+        if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK') && target.src) return true;
+        return false;
+      }
+      function recover() {
+        var KEY = 'bce.chunkReloadAt', last = 0;
+        try { last = +(localStorage.getItem(KEY) || 0); } catch (e) {}
+        if (Date.now() - last > 60000) {
+          try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
+          try { if (window.caches && caches.keys) caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); }); } catch (e) {}
+          location.reload();
+        } else { showFallback(); }
+      }
+      window.addEventListener('error', function (e) {
+        if (isChunkError(e && e.message, e && e.target)) recover();
+      }, true);
+      window.addEventListener('unhandledrejection', function (e) {
+        var r = e && e.reason; if (isChunkError((r && r.message) || (r + ''), null)) recover();
+      });
+      setTimeout(function () {
+        var root = document.querySelector('app-root');
+        if (root && root.children.length === 0) showFallback();
+      }, 15000);
+    })();
+  </script>
+  <script>
+    // HOTFIX-009: KILL the vendored MekBay PWA service worker on EVERY load. Testers who already registered it
+    // (the "install MekBay" prompt) kept being served a STALE cached bundle (faction page "unavailable" until a
+    // hard-refresh). This unregisters all SWs + clears all CacheStorage so they finally get the latest deploy.
+    // Harmless when no SW is present; kept for the whole tester phase (a branded BCE PWA is a later, deliberate task).
+    (function () {
+      try {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); }).catch(function () {});
+          if (window.caches && caches.keys) { caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); }).catch(function () {}); }
+        }
+      } catch (e) { /* no SW/cache API — nothing to evict */ }
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, interactive-widget=resizes-content" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <!-- HOTFIX-009: <link rel="manifest"> removed (kills the MekBay PWA install prompt; no BCE PWA yet). -->
+  <meta name="theme-color" content="#292929" />
+  <meta name="description" content="BattleTech Campaign Engine — run a mercenary or House BattleTech campaign: force generation, interactive record sheets, missions, repair bays, and barracks." />
+  <meta property="og:title" content="BattleTech Campaign Engine" />
+  <meta property="og:description" content="Run a mercenary or House BattleTech campaign — force generation, interactive record sheets, missions, repair bays, and barracks." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://bcengine.org/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="BattleTech Campaign Engine" />
+  <meta name="twitter:description" content="Run a mercenary or House BattleTech campaign — force generation, interactive record sheets, missions, repair bays, and barracks." />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="BattleTech Campaign Engine" />
+  <!-- HOTFIX-009: apple-touch-icon removed — icons/icon-192x192.png was missing (a console-warning + dead PWA icon). -->
+  <link rel="preload" href="fonts/Roboto-VariableFont_wdth,wght.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="fonts/Roboto-Italic-VariableFont_wdth,wght.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="fonts/RobotoCondensed-VariableFont_wght.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="fonts/RobotoCondensed-Italic-VariableFont_wght.ttf" as="font" type="font/ttf" crossorigin>
+  <!-- BCE retool (DIRECTIVE-003): field-dossier fonts for the cover + era screens -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Saira+Stencil+One&family=Oswald:wght@400;500;600&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Roboto';
+      src: url('fonts/Roboto-VariableFont_wdth,wght.ttf') format('truetype');
+      font-weight: 100 900;
+      font-stretch: 75% 100%;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'Roboto';
+      src: url('fonts/Roboto-Italic-VariableFont_wdth,wght.ttf') format('truetype');
+      font-weight: 100 900;
+      font-stretch: 75% 100%;
+      font-style: italic;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'Roboto Condensed';
+      src: url('fonts/RobotoCondensed-VariableFont_wght.ttf') format('truetype');
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'Roboto Condensed';
+      src: url('fonts/RobotoCondensed-Italic-VariableFont_wght.ttf') format('truetype');
+      font-weight: 100 900;
+      font-style: italic;
+      font-display: swap;
+    }
+  </style>
+</head>
+<body>
+  <app-root></app-root>
+  <noscript>Please enable JavaScript to continue using this application.</noscript>  
+  <script>
+    document.addEventListener('gesturestart', function(e) {
+      e.preventDefault();
+    });
+
+    document.addEventListener('gesturechange', function(e) {
+      e.preventDefault();
+    });
+
+    document.addEventListener('gestureend', function(e) {
+      e.preventDefault();
+    });
+  </script>
+</body>
+</html>

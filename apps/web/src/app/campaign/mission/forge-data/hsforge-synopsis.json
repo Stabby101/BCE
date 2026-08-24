@@ -1,0 +1,368 @@
+{
+  "_meta": {
+    "file": "hsforge-synopsis.json",
+    "directive": "HSFORGE-1",
+    "law": "{EMPLOYER_NAME} = side A's prose-safe org name per hsforge-employers.json _meta.law (parenthetical stripped, sentence-cased at string start, plural-named orgs wrapped as 'the {ORG} command', merc-sub = 'the prime contractor', merc-vs-merc = \"the contract's paymaster\"). {TARGET_FACTION} / {TARGET_FACTION_THE} = attributive / article-baked SINGULAR noun forms of the OPPOSING faction from the engine's per-faction display map (sameFaction archetypes override to 'rival' / 'the rival command|faction'). {OWNER} = the world's owning faction at the campaign era (bare name, article-safe constructions only). A titles pattern may be an object {pattern, allow} restricting one or more named word slots to allowlists. All fills happen at generation, before the C11 residue bake."
+  },
+  "openers": [
+    {
+      "settlement": [
+        "port"
+      ],
+      "regionRole": null,
+      "text": "Everything {WORLD} sells and everything it fears arrives the same way: through the landing fields at {DISTRICT}. DropShips ground there every week with grain, machine parts, and news of other people's wars. The port makes the world worth visiting — and worth taking."
+    },
+    {
+      "settlement": [
+        "port"
+      ],
+      "regionRole": [
+        "border",
+        "contested"
+      ],
+      "text": "{WORLD} lives by its port. The landing fields at {DISTRICT} move cargo for half the nearby systems, and a border world that moves cargo draws customers of every kind. Lately, some of them arrive armed."
+    },
+    {
+      "settlement": [
+        "industrial"
+      ],
+      "regionRole": null,
+      "text": "{WORLD} is a working world. The factories at {DISTRICT} run around the clock, turning out the machines and parts that other worlds fight their wars with. Nobody writes songs about a place like this, but wars are won and lost on what it ships."
+    },
+    {
+      "settlement": [
+        "industrial"
+      ],
+      "regionRole": [
+        "border"
+      ],
+      "text": "On a quiet border, {WORLD} would be just another factory world. This border is not quiet, and the production lines at {DISTRICT} are exactly the kind of asset soldiers cross borders for."
+    },
+    {
+      "settlement": [
+        "agrarian"
+      ],
+      "regionRole": null,
+      "text": "{WORLD} feeds people. Its farms and granaries supply cities and garrisons across a dozen nearby systems, and that quiet fact is the whole reason armies care about it. A world that feeds soldiers is a military asset, whether its farmers like that or not."
+    },
+    {
+      "settlement": [
+        "agrarian",
+        "frontier"
+      ],
+      "regionRole": null,
+      "text": "There is not much on {WORLD} to point a camera at — fields, weather, and long roads between small settlements. The people who live here mostly want to be left alone. In {YEAR}, that is not one of the choices."
+    },
+    {
+      "settlement": [
+        "capital"
+      ],
+      "regionRole": null,
+      "text": "{WORLD} is where this region's decisions get made. The government quarter at {DISTRICT} holds the offices, the records, and the families that steer a dozen worlds around it. Whoever controls this world controls much more than its ground."
+    },
+    {
+      "settlement": [
+        "capital"
+      ],
+      "regionRole": [
+        "border"
+      ],
+      "text": "{WORLD} is an anchor world, the seat of {OWNER} authority along this stretch of the border. Its garrison, its treasury, and its command staff keep the neighboring systems in line. That is exactly what makes it worth a rival's attention."
+    },
+    {
+      "settlement": [
+        "frontier"
+      ],
+      "regionRole": null,
+      "text": "{WORLD} sits at the thin end of the map. Settlement is sparse, the garrison is small, and help is a long jump away. Out here, whoever arrives with 'Mechs makes the rules until someone argues back."
+    },
+    {
+      "settlement": null,
+      "regionRole": [
+        "contested"
+      ],
+      "text": "{WORLD} has changed hands before, and everyone who lives there knows it can happen again. Flags go up, flags come down, and the tax collectors change uniforms. In {YEAR} the world answers to {OWNER} tax collectors, and nobody bets on how long that lasts."
+    },
+    {
+      "settlement": null,
+      "regionRole": [
+        "border"
+      ],
+      "text": "{WORLD} is a border world, and border worlds live with one permanent question — not whether the neighbors will come across, but when. {OWNER} garrisons hold it today. Holding it tomorrow is the job that never finishes."
+    },
+    {
+      "settlement": null,
+      "regionRole": [
+        "interior"
+      ],
+      "text": "{WORLD} sits deep in {OWNER} space, far from any front line, and it has grown comfortable that way. Its garrison drills for a war that always seemed to be someone else's problem. That comfort is about to be tested."
+    },
+    {
+      "settlement": null,
+      "regionRole": null,
+      "text": "{WORLD} is nobody's idea of a famous world. It shows up in shipping schedules, tax rolls, and garrison rotations, and almost nowhere else. Most of the Inner Sphere's fighting happens on worlds exactly like it."
+    },
+    {
+      "settlement": null,
+      "regionRole": null,
+      "text": "In {YEAR}, {WORLD} is one entry on a long list of worlds the maps color confidently and the garrisons hold thinly. The map and the ground do not always agree."
+    },
+    {
+      "settlement": [
+        "agrarian"
+      ],
+      "regionRole": [
+        "contested"
+      ],
+      "text": "The harvest on {WORLD} does not care who governs it. Grain ripens on schedule while ownership is argued with rifles, and both claimants need the silos intact. Every farm road here is about to become a military road."
+    },
+    {
+      "settlement": [
+        "frontier"
+      ],
+      "regionRole": [
+        "border",
+        "contested"
+      ],
+      "text": "{WORLD} hangs at the far edge of settled space, where {OWNER} control is more claim than garrison. The nearest help is a jump away, and the nearest trouble is closer. Distance is the only defense, and distance can be crossed."
+    },
+    {
+      "settlement": [
+        "industrial",
+        "port"
+      ],
+      "regionRole": [
+        "interior",
+        "border"
+      ],
+      "text": "Nobody planned for fighting on {WORLD}. The fighting was always somewhere else, and the works at {DISTRICT} feed the front from a comfortable distance. But supply lines run both ways, and someone has decided to follow this one home."
+    },
+    {
+      "settlement": [
+        "capital"
+      ],
+      "regionRole": [
+        "contested",
+        "border"
+      ],
+      "text": "{WORLD} has been a capital under three rulers, and the offices at {DISTRICT} keep portraits of every regime in storage. Administrations change here without the furniture moving. The clerks who really run it have outlasted every owner."
+    },
+    {
+      "settlement": null,
+      "regionRole": [
+        "interior",
+        "border"
+      ],
+      "text": "By every rule of strategy, {WORLD} should be safe — no front a staff college would draw runs through it. But safe worlds keep their wealth close and their guard down. Certain planners count on exactly that."
+    },
+    {
+      "settlement": null,
+      "regionRole": null,
+      "text": "What {WORLD} has is position. JumpShip lanes, trade routes, and patrol circuits all bend toward it, the way traffic bends toward any world with working infrastructure. Position is a currency, and currencies get fought over."
+    },
+    {
+      "settlement": null,
+      "regionRole": null,
+      "text": "Ask the people of {WORLD} and they will tell you their world matters — its work, its weather, its stubborn habit of surviving. Ask a strategist and the answer is shorter: it is in the way. Both answers put soldiers on the ground."
+    },
+    {
+      "settlement": null,
+      "regionRole": null,
+      "text": "So far, {YEAR} has been kinder to {WORLD} than to its neighbors. The worst news still arrives from other worlds, and the garrison's hardest fight has been boredom. Every quiet world's history has a chapter that begins this way."
+    }
+  ],
+  "bridges": [
+    {
+      "text": "The trouble, this time, wears {TARGET_FACTION} colors. It started small, with an overflight, a probe, and a listening post gone quiet — and it has not stayed small."
+    },
+    {
+      "text": "Word reached {EMPLOYER_NAME} that {TARGET_FACTION_THE} has plans for {WORLD}, and the evidence has piled up ever since. Nobody on the ground believes this blows over on its own."
+    },
+    {
+      "text": "Now the pressure is on, and it is coming from {TARGET_FACTION_THE} — faster than {WORLD}'s own defenses were built to answer."
+    },
+    {
+      "text": "Around {DISTRICT}, people have stopped pretending things are normal. {TARGET_FACTION_THE} wants something on {WORLD}, and {EMPLOYER_NAME} has run out of quiet ways to refuse."
+    },
+    {
+      "text": "{EMPLOYER_NAME} has watched this build for months: incidents along the approaches, strangers with military bearing, prices moving the way they do before a war. Every sign points at {TARGET_FACTION_THE}."
+    },
+    {
+      "text": "Then {TARGET_FACTION_THE} moved, and the argument over {WORLD} stopped being theoretical. {EMPLOYER_NAME} now measures the problem in weeks, not seasons."
+    },
+    {
+      "text": "The quarrel over {WORLD} is older than most of the soldiers about to fight it. What is new is that {TARGET_FACTION_THE} has decided to settle it this season."
+    },
+    {
+      "text": "The people {EMPLOYER_NAME} keeps on {WORLD} have sent the same report for weeks, each version shorter and less polite: {TARGET_FACTION_THE} is coming, and the local garrison cannot meet it alone."
+    },
+    {
+      "text": "What is brewing on {WORLD} is the oldest story on any border: two sides want the same thing, only one can have it, and the season for talking is over."
+    },
+    {
+      "text": "Recon flights over the approaches come back with gaps — jammed windows, ghost contacts, relays answering late. {TARGET_FACTION_THE} is mapping {WORLD}, and mapping is how it always begins."
+    },
+    {
+      "text": "The polite remedies came first: protests filed, patrols doubled, money spread where money usually works. None of it slowed {TARGET_FACTION_THE}, and the calendar is not cooperating."
+    },
+    {
+      "text": "Refugees from outlying settlements tell one story — {TARGET_FACTION} scouts by night, supply caches where none should be. The garrison calls the reports unconfirmed, but no longer calls them wrong."
+    },
+    {
+      "text": "Exactly what {TARGET_FACTION_THE} wants on {WORLD} is still argued in every briefing. That it wants something is not argued at all — twice its forces have probed the defenses and withdrawn."
+    },
+    {
+      "text": "The timing is not an accident. Reinforcements and attention are pinned to louder crises elsewhere, and {TARGET_FACTION_THE} has read that distraction correctly. Such windows do not stay open long."
+    }
+  ],
+  "closers": [
+    {
+      "text": "So {EMPLOYER_NAME} is hiring outside soldiers, because its own forces are committed elsewhere and {WORLD} cannot wait its turn."
+    },
+    {
+      "text": "That is why {EMPLOYER_NAME} is paying for hired 'Mechs: it needs a force that answers to the contract, moves fast, and asks no political questions."
+    },
+    {
+      "text": "{EMPLOYER_NAME} wants this handled by professionals whose losses never appear on its own rolls, and that is where your command comes in."
+    },
+    {
+      "text": "So the job goes to mercenaries — {EMPLOYER_NAME} needs results on {WORLD} more than it needs to keep the matter inside its own chain of command."
+    },
+    {
+      "text": "Which is why the offer from {EMPLOYER_NAME} is on your table: {WORLD} needs soldiers now, and yours are the nearest ones worth the money."
+    },
+    {
+      "text": "{EMPLOYER_NAME} has money, a problem, and no time — the three things that have always put mercenaries in the field."
+    },
+    {
+      "text": "So {EMPLOYER_NAME} hires outside iron and pays fair rates, because on {WORLD} the cost of doing nothing has finally passed the cost of soldiers."
+    },
+    {
+      "text": "Hence the contract now on offer: {EMPLOYER_NAME} would rather spend money than explain losses, and hired 'Mechs come with invoices instead of funerals."
+    },
+    {
+      "text": "{EMPLOYER_NAME} is done waiting: the purse is real, the deadline is close, and the work is on {WORLD} for whoever signs first."
+    },
+    {
+      "text": "So the call goes out to the hiring halls: {EMPLOYER_NAME} needs a proven command on {WORLD}, and it will pay what proof costs."
+    },
+    {
+      "text": "That is the situation {EMPLOYER_NAME} is buying an answer to. The terms are negotiable. The need, by every account coming off {WORLD}, is not."
+    }
+  ],
+  "titles": {
+    "patterns": [
+      "The {TNOUN_A} {TNOUN_B}",
+      "{TNOUN_A} {TNOUN_B}",
+      "The {WORLD} {TNOUN_B}",
+      "The {TNOUN_B} at {WORLD}",
+      {
+        "pattern": "{TNOUN_B} on {WORLD}",
+        "allow": {
+          "TNOUN_B": [
+            "Standoff",
+            "Foothold",
+            "Crossing",
+            "Garrison",
+            "Homecoming"
+          ]
+        }
+      },
+      {
+        "pattern": "The {TNOUN_B} of {WORLD}",
+        "allow": {
+          "TNOUN_B": [
+            "Siege",
+            "Ransom",
+            "Reckoning",
+            "Harvest",
+            "Auction"
+          ]
+        }
+      },
+      "{TNOUN_G} {WORLD}",
+      {
+        "pattern": "{TNOUN_G} the {TNOUN_B}",
+        "allow": {
+          "TNOUN_G": [
+            "Holding",
+            "Taking",
+            "Keeping",
+            "Breaking"
+          ],
+          "TNOUN_B": [
+            "Crossing",
+            "Garrison",
+            "Armory",
+            "Salient",
+            "Foothold",
+            "Barricade"
+          ]
+        }
+      },
+      "Operation {TNOUN_A} {TNOUN_B}"
+    ],
+    "words": {
+      "TNOUN_A": [
+        "Stolen",
+        "Broken",
+        "Quiet",
+        "Burning",
+        "Hollow",
+        "Iron",
+        "Bitter",
+        "Borrowed",
+        "Crooked",
+        "Last",
+        "Cold",
+        "Narrow",
+        "Silent",
+        "Ashen",
+        "Rusted",
+        "Patient",
+        "Distant",
+        "Forgotten",
+        "Long",
+        "Late",
+        "False",
+        "Winter",
+        "Paper",
+        "Brittle"
+      ],
+      "TNOUN_B": [
+        "Ledger",
+        "Bargain",
+        "Debt",
+        "Harvest",
+        "Crossing",
+        "Standoff",
+        "Salient",
+        "Foothold",
+        "Garrison",
+        "Armory",
+        "Inheritance",
+        "Wager",
+        "Siege",
+        "Homecoming",
+        "Reckoning",
+        "Ransom",
+        "Vigil",
+        "Muster",
+        "Gambit",
+        "Ceasefire",
+        "Tithe",
+        "Auction",
+        "Barricade",
+        "Prize"
+      ],
+      "TNOUN_G": [
+        "Holding",
+        "Taking",
+        "Keeping",
+        "Breaking",
+        "Raiding",
+        "Bleeding"
+      ]
+    }
+  }
+}

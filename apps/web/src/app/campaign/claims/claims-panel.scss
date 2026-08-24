@@ -1,0 +1,62 @@
+/* Claim board (D-042) — rides the dashboard's .theme-dossier tokens (matches settings/intel). */
+:host { display: block; }
+
+.ph { font-family: var(--label); font-weight: 600; letter-spacing: 2.5px; font-size: 13px; text-transform: uppercase; border-bottom: 1.5px solid var(--ink); padding-bottom: 6px; margin: 0 0 12px; }
+.scaf { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--stamp); border: 1px solid var(--stamp); padding: 1px 6px; float: right; }
+.note { font-family: var(--type); font-size: 13px; color: var(--ink2); line-height: 1.6; margin: 0 0 12px; }
+.note b { color: var(--ink); }
+
+.cl-status { font-family: var(--mono); font-size: 11.5px; padding: 8px 12px; border: 1.4px solid var(--line); background: var(--paper2); margin-bottom: 12px; }
+.cl-status.live { border-color: var(--ok); }
+.cl-status.off { border-color: var(--stamp); color: var(--stamp); }
+.cl-status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.cl-status .dot.on { background: var(--ok); }
+.cl-status .dot.off { background: var(--stamp); animation: clblink 1.05s steps(1) infinite; }
+.cl-status .frz { color: var(--stamp); margin-left: 4px; }
+@keyframes clblink { 50% { opacity: 0.3; } }
+
+.cl-namewrap { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.cl-nl { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 11px; text-transform: uppercase; color: var(--ink2); }
+.cl-name { font-family: var(--mono); font-size: 13px; padding: 8px 10px; border: 1.3px solid var(--ink2); background: var(--paper); color: var(--ink); min-width: 220px; }
+
+.cl-empty { font-family: var(--type); font-size: 13px; color: var(--ink2); border: 1px dashed var(--line); padding: 14px; }
+
+/* D-050: per-side groups (GM sees both BLUFOR + OPFOR) + a tiny unit sprite per row. */
+.cl-group { margin-bottom: 16px; }
+.cl-side { font-family: var(--label); font-weight: 600; letter-spacing: 2px; font-size: 12px; text-transform: uppercase; color: var(--ink); margin: 0 0 8px; padding-bottom: 4px; border-bottom: 1.4px solid var(--line); }
+.cl-blufor .cl-side { border-bottom-color: var(--ok); }
+.cl-opfor .cl-side { border-bottom-color: var(--stamp); }
+.cl-side-sub { font-family: var(--type); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 11px; color: var(--ink2); margin-left: 6px; }
+.cl-side-n { float: right; font-family: var(--mono); font-size: 11px; color: var(--ink2); }
+/* DIRECTIVE-130 — the GM manual OpFor builder entry button (OPFOR section header) */
+.cl-buildopfor { float: right; margin: -3px 12px 0 0; font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 10px; text-transform: uppercase; padding: 5px 11px; min-height: 30px; cursor: pointer; border: 1.3px solid var(--stamp); background: transparent; color: var(--stamp); }
+.cl-buildopfor:hover:not(:disabled), .cl-buildopfor:focus-visible:not(:disabled) { background: var(--stamp); color: var(--paper); outline: none; }
+.cl-buildopfor:disabled { opacity: .4; cursor: not-allowed; }
+.cl-thumb { flex: 0 0 auto; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; }
+
+.cl-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.cl-row { display: flex; align-items: center; gap: 12px; border: 1.4px solid var(--ink); background: var(--paper2); padding: 9px 13px; min-height: 46px; }
+.cl-row.taken { background: var(--paper); }
+.cl-row.mine { box-shadow: inset 4px 0 0 var(--ok); }
+.cl-mech { font-family: var(--type); font-size: 14px; color: var(--ink); flex: 1 1 auto; font-weight: 600; }
+.cl-free { font-family: var(--mono); font-size: 10.5px; letter-spacing: 1px; color: var(--ink2); }
+.cl-held { font-family: var(--mono); font-size: 10.5px; letter-spacing: 1px; color: var(--stamp); }
+.cl-held.mine { color: var(--ok); }
+
+/* HOTFIX-030 — the board header counts + per-row presence dot + Kick/reassign; the spectator list. */
+.cl-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.cl-head .ph { flex: 1 1 auto; }
+.cl-counts { font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em; color: var(--ink2); white-space: nowrap; }
+.cl-counts .cl-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; background: var(--ok); }
+/* presence dot on a claimed row / spectator: green connected, red held-but-gone (pulsing). */
+.cl-dot { flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%; background: var(--stamp); }
+.cl-dot.on { background: var(--ok); }
+.cl-dot.off { background: #c0392b; animation: clblink 1.05s steps(1) infinite; }
+.cl-pside { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; color: var(--ink2); }
+.cl-pside.blu { color: #3d6ea5; } .cl-pside.opf { color: #a5483d; }
+.cl-kick { font-family: var(--label); font-weight: 600; letter-spacing: 1.2px; font-size: 10.5px; text-transform: uppercase; padding: 6px 12px; min-height: 36px; cursor: pointer; border: 1.4px solid var(--stamp); background: transparent; color: var(--stamp); }
+.cl-kick:hover { background: var(--stamp); color: var(--paper); }
+.cl-reassign { font-family: var(--mono); font-size: 10.5px; padding: 6px 10px; min-height: 36px; cursor: pointer; border: 1.3px solid var(--line); background: transparent; color: var(--ink2); }
+.cl-reassign:hover { border-color: var(--ink); color: var(--ink); }
+.cl-spectators .cl-side { border-bottom-color: var(--ink2); }
+.cl-row.spec { background: var(--paper); }

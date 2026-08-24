@@ -1,0 +1,184 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "mekbay": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist",
+            "index": "src/index.html",
+            "tsConfig": "tsconfig.app.json",
+            "allowedCommonJsDependencies": [
+              "jszip",
+              "qrcode"
+            ],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public",
+                "output": ".",
+                "ignore": [
+                  "images/units/**"
+                ]
+              }
+            ],
+            "styles": [
+              "src/styles.scss"
+            ],
+            "serviceWorker": false
+          },
+          "configurations": {
+            "production": {
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "public",
+                  "output": ".",
+                  "ignore": [
+                    "images/units/**"
+                  ]
+                },
+                {
+                  "glob": "icon-192x192.png",
+                  "input": "public/icons/prod",
+                  "output": "icons"
+                }
+              ],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2MB",
+                  "maximumError": "5MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "10kB",
+                  "maximumError": "22kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "next": {
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "public",
+                  "output": ".",
+                  "ignore": [
+                    "images/units/**"
+                  ]
+                },
+                {
+                  "glob": "icon-192x192.png",
+                  "input": "public/icons/next",
+                  "output": "icons"
+                }
+              ],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2MB",
+                  "maximumError": "5MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "10kB",
+                  "maximumError": "22kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "public",
+                  "output": ".",
+                  "ignore": [
+                    "images/units/**"
+                  ]
+                },
+                {
+                  "glob": "icon-192x192.png",
+                  "input": "public/icons/dev",
+                  "output": "icons"
+                }
+              ],
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            },
+            "player": {
+              "browser": "src/main.player.ts",
+              "outputPath": "dist-player",
+              "outputHashing": "all",
+              "serviceWorker": false,
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "public",
+                  "output": ".",
+                  "ignore": [
+                    "images/units/**"
+                  ]
+                },
+                {
+                  "glob": "icon-192x192.png",
+                  "input": "public/icons/dev",
+                  "output": "icons"
+                }
+              ],
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "mekbay:build:production"
+            },
+            "development": {
+              "buildTarget": "mekbay:build:development"
+            },
+            "player": {
+              "buildTarget": "mekbay:build:player"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "extract-i18n": {
+          "builder": "@angular/build:extract-i18n"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              },
+              {
+                "glob": "icon-192x192.png",
+                "input": "public/icons/dev",
+                "output": "icons"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

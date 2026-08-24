@@ -1,0 +1,202 @@
+/* Inherits the .theme-dossier tokens from the dashboard host (custom props cascade
+   through component boundaries) — no raw hex here. */
+:host { display: block; }
+
+.roster-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+.ph { font-family: var(--label); font-weight: 600; letter-spacing: 2.5px; font-size: 14px; text-transform: uppercase; }
+.formctx { font-family: var(--mono); font-size: 11px; letter-spacing: .5px; color: var(--stamp); border: 1px solid var(--stamp); padding: 2px 8px; margin-right: auto; }
+.live { font-family: var(--mono); font-size: 10.5px; letter-spacing: 1px; color: var(--ok); border: 1px solid var(--ok); padding: 2px 8px; white-space: nowrap; }
+.live .pulse { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); margin-right: 5px; vertical-align: 0; animation: pl 1.6s ease-in-out infinite; }
+@keyframes pl { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+.note { font-family: var(--type); font-size: 12px; color: var(--ink2); margin: 2px 0 14px; line-height: 1.5; }
+.note b { color: var(--ink); }
+.note .ph-note { color: var(--stamp); }
+
+/* Build-your-own empty roster (D-018) */
+.empty-roster { border: 1.6px dashed var(--ink2); padding: 28px 22px; text-align: center; margin: 8px 0 16px; }
+.empty-roster .er-h { font-family: var(--stencil, var(--label)); font-weight: 600; letter-spacing: 1.5px; font-size: 18px; color: var(--ink); text-transform: uppercase; margin-bottom: 6px; }
+.empty-roster .note { margin: 0 auto; max-width: 520px; }
+/* D-029 unit-market controls — header button + the BUILD YOUR COMMAND empty-state CTA */
+.acq-open { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 11px; text-transform: uppercase; border: 1.5px solid var(--stamp); background: transparent; color: var(--stamp); padding: 6px 11px; cursor: pointer; min-height: 34px; white-space: nowrap; }
+.acq-open:hover, .acq-open:focus-visible { background: var(--stamp); color: var(--paper); outline: none; }
+.empty-roster .er-cta { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 13px; text-transform: uppercase; border: 1.8px solid var(--stamp); background: var(--paper2); color: var(--stamp); padding: 12px 22px; cursor: pointer; min-height: 46px; margin-top: 14px; }
+.empty-roster .er-cta:hover, .empty-roster .er-cta:focus-visible { background: var(--stamp); color: var(--paper); outline: none; }
+
+.cat { margin-bottom: 16px; }
+.cathead { font-family: var(--label); font-weight: 600; letter-spacing: 2px; font-size: 13px; text-transform: uppercase; border-bottom: 1.5px solid var(--ink); padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.cathead .cnt { font-family: var(--mono); font-size: 11px; color: var(--ink2); }
+
+/* ── Force structure: lance/Star sub-unit headers + nested group headers (D-019) ── */
+.lance { margin-bottom: 14px; }
+.lancehead { font-family: var(--label); font-weight: 600; letter-spacing: 1.8px; font-size: 13px; text-transform: uppercase; border-bottom: 1.5px solid var(--ink); padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.lance.reserve-sec .lancehead { border-bottom-style: dashed; color: var(--ink2); }
+.lancehead .ln { color: var(--ink); }
+.lancehead .lcnt { font-family: var(--mono); font-size: 11px; color: var(--ink2); letter-spacing: 0; text-transform: none; }
+.lcnt .under { color: var(--warn, var(--stamp)); }
+.lcnt .resv { color: var(--ink2); }
+.grouphead { font-family: var(--stencil, var(--label)); font-weight: 600; letter-spacing: 2.5px; font-size: 14px; text-transform: uppercase; color: var(--stamp); margin: 18px 0 8px; }
+.grouphead:first-child { margin-top: 2px; }
+
+/* ════ Roster cell v2 (HOTFIX-002) — display ≠ control; the player-presentation carry-over card ════ */
+/* LANCE BLOCK: 2 cells per row (IS lance = 2×2, Clan Star = 2+2+1) so the sheet thumbnail can grow. */
+/* HOTFIX-002.1: narrower cells (grid capped + wider gutters) — 2-per-row blocks unchanged. */
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; max-width: 1000px; }
+/* RESERVE density = CC's call: same 2-up (floor-safe + readable). Bump to auto-fill minmax for denser. */
+.lance.reserve-sec .grid { grid-template-columns: repeat(2, 1fr); }
+
+.cell { display: flex; flex-direction: column; border: 2px solid var(--ink); background: var(--paper2); min-width: 0; }
+.cell.cmd { border-left: 6px solid var(--stamp); }
+.cmdbadge { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--paper); background: var(--stamp); padding: 1px 6px; white-space: nowrap; }
+/* D-046 — combat-vehicle chip + the motor-pool section (the armor hangar below the 'Mech lances) */
+.vehbadge { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--paper); background: #4a5a34; padding: 1px 6px; white-space: nowrap; }
+.lance.motorpool-sec .lancehead { border-bottom-style: dashed; border-bottom-color: #4a5a34; color: #3c4a26; }
+
+/* header + variant/custom-name line */
+.c-head { display: flex; align-items: baseline; gap: 8px; padding: 10px 12px 2px; }
+.c-head .chassis { font-family: var(--label); font-weight: 600; letter-spacing: .6px; font-size: 17px; text-transform: uppercase; line-height: 1.1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.c-head .tons { margin-left: auto; flex: 0 0 auto; font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--ink); } /* HOTFIX-002.1: tonnage BOLD */
+.c-sub { padding: 0 12px 9px; font-family: var(--mono); font-size: 12px; letter-spacing: .4px; color: var(--stamp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.c-sub .custom { color: var(--ink2); font-style: italic; }
+
+/* body (HOTFIX-002.1): LEFT column stacks sprite + vitals + DMG + pilot + controls · RIGHT column = the
+   sheet, top-anchored, owning the full column height to the cell bottom (align-items: stretch). */
+.c-body { display: flex; gap: 12px; padding: 0 12px 12px; align-items: stretch; }
+.leftcol { display: flex; flex-direction: column; gap: 8px; flex: 1 1 0; min-width: 0; }
+.sprite { width: 56px; height: 56px; border: 1.4px solid var(--ink2); background: var(--paper); display: flex; align-items: center; justify-content: center; }
+.vitals { border: 1.4px solid var(--ink2); background: var(--paper); padding: 6px 9px; font-family: var(--mono); font-size: 11px; line-height: 1.45; } /* HOTFIX-002.1: one step down */
+.vrow { display: flex; gap: 8px; align-items: baseline; }
+.vrow .k { flex: 0 0 46px; font-family: var(--label); letter-spacing: 1.2px; font-size: 9px; color: var(--ink2); padding-top: 1px; }
+.vrow .v { font-weight: 600; color: var(--ink); min-width: 0; }
+.vrow .v.arms { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; } /* CLAMP 2 lines, ellipsis last */
+.vrow .v.arms.long { font-size: 10px; letter-spacing: 0; } /* SCALE one step (floor ~10px) for long loadouts */
+.dmg { border: 1.4px solid var(--stamp); background: var(--paper); color: var(--stamp); font-family: var(--mono); font-size: 10.5px; line-height: 1.4; padding: 4px 9px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dmg b { letter-spacing: 1px; }
+
+/* THE FLOOR (regression guard, raised by HOTFIX-002.1): the thumbnail never renders below 225px on
+   desktop/tablet — armor pips + the heat scale must read at a glance. A squeeze fails VISIBLY (overflow),
+   never shrinks silently. The sheet owns the full column height (stretch); the thumb is top-anchored and
+   width-driven (height: auto), so the record-sheet aspect ratio is ALWAYS preserved (no stretch). */
+.sheet { flex: 0 0 225px; min-width: 225px; display: flex; align-items: flex-start; }
+.thumb { position: relative; width: 100%; height: auto; overflow: hidden; border: 1px solid var(--ink); background: #fff; cursor: pointer; padding: 0; display: block; }
+.thumb:hover, .thumb:focus-visible { outline: 2px solid var(--stamp); outline-offset: -2px; }
+.thumb .zoom { position: absolute; top: 3px; right: 3px; font-family: var(--mono); font-size: 12px; color: var(--paper); background: var(--ink); border: 1px solid var(--paper); padding: 0 4px; line-height: 1.3; opacity: .85; }
+.sheet-msg { width: 100%; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--ink2); color: var(--ink2); font-family: var(--mono); font-size: 10.5px; text-align: center; padding: 8px; }
+
+/* THE PILOT BLOCK — display text (name / callsign chip / G·P chip) + a separate ▾ change control */
+/* PILOT BLOCK (HOTFIX-002.2): line 1 = pmain (NAME flex:1 + skills + ▾ — these ALWAYS hold line 1); the
+   flavor chips (callsign/kin) WRAP to a 2nd line before the name is crushed. Priority NAME > skills > ▾
+   > callsign > kin. The name floors at ~12ch (never shorter than a recognizable name). */
+.pilot { margin: 2px 0 0; border: 1.4px solid var(--ink2); background: var(--paper); display: flex; flex-wrap: wrap; align-items: center; gap: 5px 8px; padding: 7px 10px; min-height: 44px; }
+.pilot .pmain { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; }
+.pilot .pname { flex: 1 1 auto; min-width: 12ch; font-family: var(--label); font-weight: 600; letter-spacing: .4px; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pilot .skills { flex: 0 0 auto; background: var(--ink); color: var(--paper); font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .5px; padding: 2px 8px; white-space: nowrap; }
+/* the ▾ control: an opacity:0 select OVER the chevron → the D-020 list opens, nothing renders in a select box */
+.pilot .chg { flex: 0 0 auto; position: relative; border-left: 1.4px solid var(--ink2); padding-left: 6px; min-width: 28px; min-height: 28px; display: flex; align-items: center; justify-content: center; }
+.pilot .chev { font-family: var(--mono); font-size: 15px; color: var(--ink2); pointer-events: none; }
+.pilot .chgsel { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+/* flavor chips — lowest priority; the whole group wraps to line 2 when line 1 can't fit it */
+.pilot .pflav { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.pilot .csign { flex: 0 0 auto; border: 1.4px solid var(--stamp); color: var(--stamp); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 1px 7px; white-space: nowrap; }
+.pilot .kin { flex: 0 0 auto; border: 1px solid var(--ink2); color: var(--ink2); font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 1px 6px; white-space: nowrap; }
+/* ★ CAPTURED (D-034) — provenance chip on prize cells; inverse-stamped so a prize reads at a glance */
+.pilot .capchip { flex: 0 0 auto; background: var(--stamp); color: var(--paper); border: 1.4px solid var(--stamp); font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; padding: 1px 6px; white-space: nowrap; }
+/* ★N ability chip (D-036) + the name-as-button that explodes the personnel file */
+.pilot .perkchip { flex: 0 0 auto; border: 1.4px solid var(--ok); color: var(--ok); font-family: var(--mono); font-size: 9.5px; font-weight: 700; letter-spacing: 1px; padding: 1px 6px; white-space: nowrap; }
+.pilot .pname.pbtn { background: transparent; border: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.pilot .pname.pbtn:hover, .pilot .pname.pbtn:focus-visible { color: var(--stamp); outline: none; }
+.pilot.empty .pname { color: var(--ink2); font-style: italic; font-weight: 400; }
+
+/* THE CONTROL ROW — condition + lance, labeled, reserved chevron padding, ellipsis, ≥40px targets */
+.ctrls { display: flex; gap: 8px; margin: 0; } /* HOTFIX-002.1: inside the left column */
+.ctl { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ctl label { font-family: var(--label); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink2); }
+.ctl .sok { color: var(--ok); margin-left: 4px; }
+.ctl select { font-family: var(--mono); font-size: 12.5px; background: var(--paper); border: 1.4px solid var(--ink); color: var(--ink); padding: 8px 28px 8px 9px; min-height: 40px; width: 100%; cursor: pointer; appearance: none; -webkit-appearance: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink2) 50%), linear-gradient(135deg, var(--ink2) 50%, transparent 50%);
+    background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
+.ctl.deployed select { border-color: var(--stamp); color: var(--stamp); font-weight: 700; }
+
+/* condition cell treatments — deployed accents the CONTROL (per mockup) + a faint top edge for glance-scan */
+.cell.deployed { box-shadow: inset 0 3px 0 var(--stamp); }
+.cell.cold { opacity: .66; background: repeating-linear-gradient(45deg, var(--paper2) 0 7px, var(--panel) 7px 14px); }
+.cell.repair { box-shadow: inset 4px 0 0 var(--warn); }
+.cell.reserve { opacity: .82; }
+
+/* ── Fleet & transport ── */
+.fleet { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.vessel { border: 1.6px solid var(--ink); background: var(--paper2); padding: 11px 13px; }
+.vh { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.vn { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 14px; text-transform: uppercase; }
+.vc { font-family: var(--mono); font-size: 10px; color: var(--ink2); }
+.ftag { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; border: 1px solid var(--ink2); color: var(--ink2); padding: 1px 5px; white-space: nowrap; }
+.barwrap { margin-top: 9px; }
+.barlbl { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10.5px; color: var(--ink2); margin-bottom: 3px; }
+.bar { height: 9px; border: 1px solid var(--ink); background: var(--paper); }
+.fill { height: 100%; }
+.fill.g { background: var(--ok); }
+.fill.a { background: var(--warn); }
+.fill.r { background: var(--stamp); }
+.fill.kf { background: var(--cold); }
+.contracted { font-family: var(--type); font-size: 12px; color: var(--ink2); border: 1.4px dashed var(--ink2); padding: 11px 13px; display: flex; align-items: center; }
+
+/* ── Active-mission cell (D-027) — the deployed-set dashboard face, above the lances ── */
+.missioncell { border: 2px solid var(--ink); background: var(--paper2); margin: 0 0 18px; display: flex; flex-wrap: wrap; }
+.mc-main { flex: 1 1 360px; padding: 12px 16px; border-right: 2px solid var(--ink); min-width: 0; }
+.mc-label { font-family: var(--label); font-weight: 600; font-size: 10.5px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--stamp); }
+.mc-op { font-family: var(--stencil, var(--label)); font-weight: 700; font-size: 24px; letter-spacing: 1.5px; margin: 2px 0 3px; color: var(--ink); line-height: 1.05; }
+.mc-meta { font-family: var(--mono); font-size: 12px; color: var(--ink2); letter-spacing: .3px; line-height: 1.5; }
+.mc-meta b { color: var(--ink); }
+.mc-counts { flex: 2 1 420px; display: flex; }
+.ct { flex: 1; padding: 8px 6px; text-align: center; border-right: 1px solid var(--ink2); display: flex; flex-direction: column; justify-content: center; gap: 3px; background: none; cursor: default; font: inherit; color: inherit; }
+.ct:last-child { border-right: none; }
+.ct .n { font-family: var(--stencil, var(--label)); font-weight: 700; font-size: 28px; line-height: 1; color: var(--ink); }
+.ct .n small { font-family: var(--mono); font-size: 13px; font-weight: 400; color: var(--ink2); }
+.ct .t { font-family: var(--label); font-size: 10px; letter-spacing: 1.8px; color: var(--ink2); }
+.ct.deployed .n { color: var(--stamp); }
+button.ct:not(:disabled) { cursor: pointer; }
+button.ct:not(:disabled):hover, button.ct:not(:disabled):focus-visible { background: var(--paper); outline: none; }
+button.ct.filtering { background: var(--ink); }
+button.ct.filtering .n, button.ct.filtering .n small, button.ct.filtering .t { color: var(--paper); }
+button.ct:disabled { opacity: .55; }
+.mc-bar { flex-basis: 100%; border-top: 2px solid var(--ink); padding: 6px 16px; font-family: var(--mono); font-size: 11px; letter-spacing: .4px; display: flex; gap: 18px; flex-wrap: wrap; color: var(--ink2); background: var(--paper); }
+.mc-bar b { color: var(--stamp); }
+.mc-hint { color: var(--ink2); }
+.mc-tap { margin-left: auto; }
+.missioncell.idle .mc-op { font-size: 17px; letter-spacing: 2px; color: var(--ink2); }
+.missioncell.idle .mc-label { color: var(--ink2); }
+
+/* lance management controls (D-027) */
+.lancehead .lcnt { margin-left: auto; }
+.lcnt .over { color: var(--warn); }
+.addsel { font-family: var(--mono); font-size: 10px; letter-spacing: .5px; text-transform: uppercase; background: var(--paper); border: 1.3px solid var(--ink2); color: var(--stamp); padding: 3px 6px; cursor: pointer; min-height: 30px; }
+.addsel:disabled { color: var(--ink2); opacity: .55; cursor: default; }
+/* D-071 — per-lance/Star "print the whole formation" (one record sheet per page) */
+.lprint { font-family: var(--mono); font-size: 10px; letter-spacing: .5px; text-transform: uppercase; background: var(--paper); border: 1.3px solid var(--ink); color: var(--ink); padding: 3px 8px; cursor: pointer; min-height: 30px; white-space: nowrap; }
+.lprint:hover:not(:disabled) { background: var(--ink); color: var(--paper); }
+.lprint:disabled { opacity: .55; cursor: default; }
+.movewrap { margin-top: 4px; max-width: 150px; }
+.moveto { font-family: var(--mono); font-size: 10.5px; background: var(--paper); border: 1.3px solid var(--ink2); color: var(--ink); padding: 4px 5px; width: 100%; cursor: pointer; min-height: 30px; }
+.newlance { font-family: var(--label); font-weight: 600; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; background: var(--paper2); border: 1.6px dashed var(--ink); color: var(--ink); padding: 9px 16px; margin: 2px 0 16px; cursor: pointer; min-height: 40px; }
+.newlance:hover, .newlance:focus-visible { background: var(--ink); color: var(--paper); border-style: solid; outline: none; }
+
+@media (max-width: 600px) {
+    /* phone: 1 cell per row; the sheet floor relaxes (phone is best-effort, T-009) but never silently below the leftcol */
+    .grid, .lance.reserve-sec .grid { grid-template-columns: 1fr; }
+    .sheet { flex: 0 0 150px; min-width: 150px; }
+    .c-body { gap: 8px; }
+    .roster-head { gap: 8px; }
+    .pilot .kin .ktx { display: none; } /* phone: kin → icon-only ⚭ (the title carries the meaning); callsign keeps text */
+    .mc-main { border-right: none; border-bottom: 2px solid var(--ink); flex-basis: 100%; }
+    .ct .n { font-size: 22px; }
+    .mc-bar { gap: 10px; }
+}
+
+/* HOTFIX-019 — PORTRAIT (tablet/phone): STACK the stat column above the record-sheet thumbnail so the left
+   column gets the full cell width — MOVE/BV/ARMS values show in full, the Condition/Lance labels stop
+   colliding, and the pilot name ellipsizes with room instead of hard-clipping against the sheet. Landscape +
+   desktop are untouched (scoped to orientation:portrait). Layout only — sheet composition is unaffected. */
+@media (orientation: portrait) and (max-width: 1024px) {
+    .c-body { flex-direction: column; gap: 10px; align-items: stretch; }
+    .leftcol { flex: 1 1 auto; min-width: 0; }
+    .sheet { flex: 0 0 auto; min-width: 0; width: 100%; }
+}

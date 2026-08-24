@@ -1,0 +1,232 @@
+<!-- FORKED FROM campaign/dashboard/roster/roster.html @ 6cc5dae - DIRECTIVE-ODM-1 Phase 1 (a DRIFT SURFACE). Strips: Acquire/Market CTA + overlay + market empty-state. -->
+<div class="roster-head">
+    <span class="ph">Unit roster</span>
+    @if (formationContext(); as fc) { <span class="formctx">{{ fc }}</span> }
+    <!-- ODM-1 FORK: the Acquire/Market CTA STRIPPED (IRON RULE - no unit market) -->
+    <span class="live"><span class="pulse" aria-hidden="true"></span>LIVE · server-authoritative</span>
+</div>
+<p class="note">Your command's roster — <b>the company's authored order of battle</b>. Cells reuse MekBay's <b>unit-icon</b> (sprite) + its own <b>Classic record sheet</b> (streamed as you scroll). Tap a sheet to explode it (read-only); the condition dropdown is the campaign layer.
+    @if (dataError()) {
+        <span class="ph-note">{{ dataError() }}</span>
+    } @else if (!ready()) {
+        <span class="ph-note">loading unit data + sheets from db.mekbay.com…</span>
+    }
+    <!-- DIRECTIVE-COMPLIANCE-1 Part C — data-source credit alongside the served unit data (CC BY-NC-SA 4.0). -->
+    <span class="ph-note ph-datacredit">Unit data &copy; The MegaMek Team — CC BY-NC-SA 4.0</span>
+</p>
+
+<!-- ACTIVE MISSION cell (D-027) — the deployed set's dashboard face, above the lances -->
+@if (activeMission(); as m) {
+    <div class="missioncell">
+        <div class="mc-main">
+            <div class="mc-label">Active mission</div>
+            <div class="mc-op">{{ m.op }}</div>
+            <div class="mc-meta">{{ m.type }} · {{ m.world }} · THREAT <b>{{ m.threat }}</b> · Day <b>{{ m.day }}</b> of {{ m.window }} · <b>RESOLVE</b> on the Missions tab</div>
+        </div>
+        <div class="mc-counts">
+            @for (c of counts(); track c.key) {
+                <button type="button" class="ct" [class.deployed]="c.key === 'mechs'" [class.filtering]="deployFilter() && c.key === 'mechs'"
+                    [disabled]="!c.total" (click)="toggleDeployFilter(c.key)" [attr.aria-pressed]="deployFilter() && c.key === 'mechs'">
+                    <span class="n">{{ c.deployed }}<small>/{{ c.total }}</small></span><span class="t">{{ c.label }}</span>
+                </button>
+            }
+        </div>
+        <div class="mc-bar">
+            <span>DEPLOYED <b>{{ readiness().deployed }}</b> · READY {{ readiness().ready }} · REPAIR {{ readiness().repair }}</span>
+            <span class="mc-hint">deployed = condition set to DEPLOYED on the cell below</span>
+            <span class="mc-tap">@if (deployFilter()) { showing deployed only — tap the count again to clear } @else { tap a count → filters the roster }</span>
+        </div>
+    </div>
+} @else {
+    <div class="missioncell idle">
+        <div class="mc-main">
+            <div class="mc-label">Active mission</div>
+            <div class="mc-op">— NO ACTIVE OPERATION —</div>
+            <div class="mc-meta">{{ idleContext() }}</div>
+        </div>
+        <div class="mc-counts">
+            @for (c of counts(); track c.key) {
+                <div class="ct"><span class="n">{{ c.deployed }}<small>/{{ c.total }}</small></span><span class="t">{{ c.label }}</span></div>
+            }
+        </div>
+    </div>
+}
+
+@if (isEmpty()) {
+    <div class="empty-roster">
+        <div class="er-h">Build your command</div>
+        <p class="note">The company is what survived the Breakout. What you lose is what you lose.</p>
+    </div>
+} @else {
+@for (sec of sections(); track sec.id) {
+    @if (!deployFilter() || sec.depCount > 0) {
+    @if (!deployFilter()) {
+        @for (g of sec.newGroups; track $index) {
+            <div class="grouphead">{{ g }}</div>
+        }
+    }
+    <div class="lance" [class.reserve-sec]="sec.reserve" [class.motorpool-sec]="sec.motorPool">
+        <div class="lancehead">
+            <span class="ln">{{ sec.name }}</span>
+            <span class="lcnt">{{ sec.count }}@if (sec.understrength) { <span class="under">· understrength</span> }@if (sec.overstrength) { <span class="over">· overstrength</span> }@if (sec.reserve) { <span class="resv">· unassigned</span> }@if (sec.motorPool) { <span class="resv">· armor / vehicles</span> }</span>
+            @if (!sec.reserve && !sec.motorPool) {
+                <select class="addsel" [disabled]="!reserveUnits().length" (change)="addToLance(sec.id, $any($event.target).value); $any($event.target).value = ''" aria-label="Add a reserve unit to this lance">
+                    <option value="">+ add</option>
+                    @for (r of reserveUnits(); track r.id) { <option [value]="r.id">{{ r.name }}</option> }
+                </select>
+            }
+            <!-- D-071 (B): print every record sheet in this group, one per page (ensures all sheets load first) -->
+            <button type="button" class="lprint" [disabled]="printingLance() === sec.id" (click)="printLance(sec)" [attr.aria-label]="'Print every record sheet in ' + sec.name">{{ printingLance() === sec.id ? 'Loading…' : '⎙ Print' }}</button>
+        </div>
+        <div class="grid">
+            @for (u of sec.units; track u.id) {
+                @if (!deployFilter() || u.cond === 'Deployed') {
+                <div class="cell" bceInView (inView)="loadSheet(u.id)"
+                    [class.deployed]="u.cond === 'Deployed'"
+                    [class.reserve]="u.cond === 'Reserve'"
+                    [class.cold]="u.cond === 'Cold storage'"
+                    [class.repair]="u.cond === 'In repair'"
+                    [class.cmd]="u.commander">
+                    <!-- header: chassis + CMD badge + tonnage -->
+                    <div class="c-head">
+                        <span class="chassis">{{ u.name }}</span>
+                        @if (u.commander) { <span class="cmdbadge" title="Commanding unit">★&nbsp;CMD</span> }
+                        @if (u.vehicle) { <span class="vehbadge" title="Combat vehicle (armor)">▣&nbsp;ARMOR</span> }
+                        <span class="tons">{{ u.tons }}t</span>
+                    </div>
+                    <div class="c-sub">{{ u.variant }}@if (u.customName) { <span class="custom">&middot; '{{ u.customName }}'</span> }</div>
+                    <!-- body: sprite + vitals (left column) · record-sheet thumbnail (right, 200px floor) -->
+                    <div class="c-body">
+                        <div class="leftcol">
+                            <div class="sprite"><bce-unit-sprite [unit]="u.unit" [size]="56"></bce-unit-sprite></div>
+                            <div class="vitals">
+                                <div class="vrow"><span class="k">MOVE</span><span class="v">{{ u.move }}</span></div>
+                                <div class="vrow"><span class="k">BV</span><span class="v">{{ u.bv }}</span></div>
+                                <div class="vrow"><span class="k">ARMS</span><span class="v arms" [class.long]="u.armsLong">{{ u.arms }}</span></div>
+                            </div>
+                            @if (dmgLine(u.id); as d) { <div class="dmg"><b>DMG</b> &mdash; {{ d }}</div> }
+                            <!-- PILOT BLOCK (display ≠ control): name / callsign chip / G·P chip + a ▾ change control -->
+                            @if (hasPilots() || u.captured) {
+                                <div class="pilot" [class.empty]="!u.pilotId">
+                                    <!-- HOTFIX-002.2: line 1 (pmain) = NAME (flex:1, ~12ch floor) + skills + ▾ — these always hold
+                                         line 1; the flavor chips (callsign/kin) WRAP to line 2 before the name is crushed. -->
+                                    <div class="pmain">
+                                        @if (u.pilotId) {
+                                            <button type="button" class="pname pbtn" (click)="detailPilot.set(u.pilotId)" [attr.aria-label]="'Open ' + u.pilotDisplayName + ' personnel file'">{{ u.pilotDisplayName }}</button>
+                                            <span class="skills">{{ u.pilotGp }}</span>
+                                        } @else {
+                                            <span class="pname">&mdash; no pilot assigned &mdash;</span>
+                                        }
+                                        <!-- the ▾ reuses the D-020 assignment list — an opacity:0 select over the chevron (no select text) -->
+                                        <span class="chg">
+                                            <span class="chev" aria-hidden="true">▾</span>
+                                            <select class="chgsel" (change)="reassignPilot(u.id, $any($event.target).value)" [attr.aria-label]="u.name + ' — change pilot'">
+                                                <option value="" [selected]="!u.pilotId">— no pilot —</option>
+                                                @for (p of pilotOptions(); track p.id) {
+                                                    <option [value]="p.id" [selected]="p.id === u.pilotId">{{ p.label }}</option>
+                                                }
+                                            </select>
+                                        </span>
+                                    </div>
+                                    @if (u.pilotId || u.captured) {
+                                        <!-- flavor chips — lowest priority; the group wraps to line 2 when line 1 can't fit it.
+                                             Future chips (WIA / ★ favorite, T-030) land here without touching the control. -->
+                                        <span class="pflav">
+                                            @if (u.captured) { <span class="capchip" title="Captured prize — taken on the field (provenance)">★&nbsp;CAPTURED</span> }
+                                            @if (u.perkCount) { <span class="perkchip" title="special pilot abilities on file">★{{ u.perkCount }}</span> }
+                                            @if (u.callsign) { <span class="csign">{{ u.callsign }}</span> }
+                                            @if (u.kin) { <span class="kin" title="kin — shares a family name">⚭<span class="ktx">&nbsp;kin</span></span> }
+                                        </span>
+                                    }
+                                </div>
+                            }
+                            <!-- CONTROL ROW: condition + lance — labeled, reserved chevron space, ellipsis, ≥40px targets.
+                                 D-069 (B): dropped for a Quick Mission — a one-shot force is simply deployed, no roster
+                                 management (the pilot control above + the sheet stay). Campaign roster keeps them. -->
+                            @if (!quickMission()) {
+                                <div class="ctrls">
+                                    <div class="ctl" [class.deployed]="u.cond === 'Deployed'" [class.synced]="syncedId() === u.id">
+                                        <label>Condition @if (syncedId() === u.id) { <span class="sok">✓</span> }</label>
+                                        <select class="csel" (change)="setCondition(u.id, $any($event.target).value)" [attr.aria-label]="u.name + ' condition'">
+                                            <!-- HOTFIX-024 — 'In repair' is greyed out for an undamaged unit (nothing to repair → it would
+                                                 strand: invisible in the bays + excluded from the mission pool). Stays selectable for damaged units. -->
+                                            @for (c of conditions; track c) { <option [value]="c" [selected]="c === u.cond" [disabled]="c === 'In repair' && !u.hasDamage && c !== u.cond">{{ c }}</option> }
+                                        </select>
+                                    </div>
+                                    <div class="ctl">
+                                        <label>Lance</label>
+                                        <select class="lsel" (change)="moveTo(u.id, $any($event.target).value)" [attr.aria-label]="u.name + ' lance assignment'">
+                                            @for (l of lanceOptions(); track l.id) { <option [value]="l.id" [selected]="l.id === u.lanceId">{{ l.name }}</option> }
+                                            <option [value]="reserveKey" [selected]="u.lanceId === reserveKey">Reserve</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <!-- RIGHT COLUMN: the record-sheet thumbnail — top-anchored, owns the column to the cell bottom -->
+                        <div class="sheet">
+                            @if (u.status === 'ok' && u.fu) {
+                                <button type="button" class="thumb" (click)="explode(u)" [attr.aria-label]="'Expand ' + u.name + ' record sheet'">
+                                    <bce-sheet-view [attr.data-iid]="u.id" [fu]="u.fu" [rev]="sheetRev.rev(u.id)" [abilities]="u.pilotAbilities"></bce-sheet-view>
+                                    <span class="zoom" aria-hidden="true">⤢</span>
+                                </button>
+                            } @else if (u.status === 'missing') {
+                                <div class="sheet-msg">not in catalog</div>
+                            } @else if (u.status === 'error') {
+                                <div class="sheet-msg">sheet unavailable</div>
+                            } @else {
+                                <div class="sheet-msg">loading sheet…</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                }
+            }
+        </div>
+    </div>
+    }
+}
+<button type="button" class="newlance" (click)="newLance()" aria-label="Create a new empty lance">+ new lance</button>
+}
+
+<!-- DIRECTIVE-IMPORT-7 Part B — Fleet & Transport (named DropShips, fuel bars, the jump-passage tier card) is a Traditional
+     resource-tier mechanic; the Draconis Reach book has NO fuel model (transport = the negotiated SP term + transit time, which the
+     HS brief keeps as its transit line). Traditional byte-unchanged (the @if is the only edit). -->
+@if (!isHotspots()) {
+<div class="cat">
+    <div class="cathead"><span>Fleet &amp; transport</span><span class="cnt">{{ fleetCount() }}</span></div>
+    <div class="fleet">
+        @for (v of fleet(); track v.name) {
+            @if (v.kind === 'contract' || v.kind === 'none') {
+                <div class="contracted">↗ {{ v.name }} — {{ v.cls }}@if (v.kind === 'contract') {. (Established tier adds an owned JumpShip w/ K-F charge.)}</div>
+            } @else {
+                <div class="vessel">
+                    <div class="vh">
+                        <div><div class="vn">{{ v.name }}</div><div class="vc">{{ v.cls }}</div></div>
+                        <span class="ftag">{{ v.kind === 'jump' ? 'K-F CHARGE' : 'REACTION FUEL' }}</span>
+                    </div>
+                    <div class="barwrap">
+                        <div class="barlbl"><span>{{ v.kind === 'jump' ? 'Jump charge' : 'Fuel' }}</span><span>{{ v.pct }}%</span></div>
+                        <div class="bar">
+                            <div class="fill"
+                                [class.kf]="v.kind === 'jump'"
+                                [class.g]="v.kind !== 'jump' && fuelClass(v.pct ?? 0) === 'g'"
+                                [class.a]="v.kind !== 'jump' && fuelClass(v.pct ?? 0) === 'a'"
+                                [class.r]="v.kind !== 'jump' && fuelClass(v.pct ?? 0) === 'r'"
+                                [style.width.%]="v.pct"></div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+}
+
+@if (explodedFu()) {
+    <bce-sheet-modal [fu]="explodedFu()" [title]="explodedTitle()" [abilities]="explodedAbilities()" (close)="closeModal()"></bce-sheet-modal>
+}
+<!-- ODM-1 FORK: the market overlay STRIPPED -->
+@if (detailPilot()) {
+    <bce-pilot-detail [pilotId]="detailPilot()!" (close)="detailPilot.set(null)" />
+}

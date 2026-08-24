@@ -1,0 +1,69 @@
+/*
+ * BCE ENGINE slice 2 (DIRECTIVE-042) — host-authoritative CLAIM state for the deployed 'Mechs.
+ * Durable in SQLite (survives a client reconnect AND a host restart, ARCH-001/DATA-001/DATA-002),
+ * keyed to (campaignId, engagementKey) — a NEW engagement is a new key, so its claim set starts
+ * empty (claims "reset" per engagement). Stored in a DEDICATED claims table, NOT folded into the
+ * CampaignSnapshot blob: keeps the snapshot version unchanged (no consolidation nudge) and avoids
+ * racing the client's persistCurrent PUTs. Own DatabaseSync to the shared file — safe because
+ * node:sqlite is synchronous (writes don't interleave on the single-threaded event loop).
+ */
+import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import { DatabaseSync } from 'node:sqlite';
+import { openDb } from '../open-db'; // HARDEN-7 A2 — shared durability-PRAGMA opener
+import { dbPath } from '../db-path';
+
+export interface Claim {
+    instanceId: string;
+    holderName: string;
+    holderToken: string;
+    at: number;
+}
+
+@Injectable()
+export class ClaimsService implements OnModuleInit {
+    private readonly log = new Logger('ClaimsService');
+    private db!: DatabaseSync;
+
+    onModuleInit(): void {
+        this.db = openDb(dbPath()); // HARDEN-7 A2 — shared opener (WAL + busy_timeout + synchronous=NORMAL, asserted)
+        this.db.exec(
+            `CREATE TABLE IF NOT EXISTS claims (
+                campaignId TEXT NOT NULL,
+                engagementKey TEXT NOT NULL,
+                instanceId TEXT NOT NULL,
+                holderName TEXT,
+                holderToken TEXT,
+                at INTEGER,
+                PRIMARY KEY (campaignId, engagementKey, instanceId)
+            );`,
+        );
+        this.log.log('claim store ready');
+    }
+
+    /** The current claim set for one engagement (the fan-out payload + reconnect resync). */
+    list(campaignId: string, engagementKey: string): Claim[] {
+        const rows = this.db
+            .prepare('SELECT instanceId, holderName, holderToken, at FROM claims WHERE campaignId = ? AND engagementKey = ? ORDER BY at ASC')
+            .all(campaignId, engagementKey) as Record<string, unknown>[];
+        return rows.map((r) => ({ instanceId: String(r['instanceId']), holderName: String(r['holderName'] ?? ''), holderToken: String(r['holderToken'] ?? ''), at: Number(r['at']) || 0 }));
+    }
+
+    /** First-tap claim (upsert — re-claim overwrites the holder; multiple-per-holder allowed). */
+    claim(campaignId: string, engagementKey: string, instanceId: string, holderName: string, holderToken: string, at: number): Claim[] {
+        this.db
+            .prepare(
+                `INSERT INTO claims (campaignId, engagementKey, instanceId, holderName, holderToken, at)
+                 VALUES (?, ?, ?, ?, ?, ?)
+                 ON CONFLICT(campaignId, engagementKey, instanceId) DO UPDATE SET
+                   holderName = excluded.holderName, holderToken = excluded.holderToken, at = excluded.at`,
+            )
+            .run(campaignId, engagementKey, instanceId, holderName, holderToken, at);
+        return this.list(campaignId, engagementKey);
+    }
+
+    /** Tap-release — back to the GM's hand (unclaimed). No enforcement this slice (ROLE-001 later). */
+    release(campaignId: string, engagementKey: string, instanceId: string): Claim[] {
+        this.db.prepare('DELETE FROM claims WHERE campaignId = ? AND engagementKey = ? AND instanceId = ?').run(campaignId, engagementKey, instanceId);
+        return this.list(campaignId, engagementKey);
+    }
+}

@@ -1,0 +1,396 @@
+:host {
+    display: contents;
+}
+
+.unit-square.compact-mode {
+    position: relative;
+    pointer-events: none;
+    width: 80px;
+    max-height: 105px;
+    min-width: 80px;
+    background: #0003;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    padding: 2px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-color);
+    flex-grow: 1;
+
+    .unit-content {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+    }
+
+    &.destroyed {
+        background-image: repeating-linear-gradient(140deg,
+                #500B 0px,
+                #500B 12px,
+                #300A 12px,
+                #300A 24px);
+        border-color: #d00;
+
+        &:hover {
+            background-image: repeating-linear-gradient(140deg,
+                    #600B 0px,
+                    #600B 12px,
+                    #400A 12px,
+                    #400A 24px);
+        }
+    }
+
+    &.missing {
+        background-color: #F003;
+    }
+
+    unit-icon {
+        pointer-events: none;
+    }
+
+    &.destroyed unit-icon {
+        filter: grayscale(1) brightness(0.7) sepia(1) hue-rotate(-30deg) saturate(6) contrast(1.2);
+    }
+
+    .unit-model {
+        color: var(--text-color-secondary);
+        font-size: 0.7em;
+        text-align: center;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        display: block;
+    }
+
+    .unit-alias,
+    .unit-chassis {
+        font-size: 0.8em;
+        color: var(--text-color);
+        word-break: break-word;
+        text-align: center;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .unit-alias {
+        font-weight: bold;
+    }
+
+    .info-slot {
+        padding: 0px 2px;
+        gap: 1px;
+        justify-content: start;
+        font-size: 0.7em;
+        position: absolute;
+
+        &.numeric {
+            justify-content: end;
+        }
+    }
+
+    .pilot-info {
+        top: 3px;
+        right: 3px;
+    }
+}
+
+:host(.miniMode) .unit-square.compact-mode {
+    width: 64px;
+    min-width: 64px;
+    overflow: hidden;
+
+    .unit-model {
+        font-size: 0.6em;
+    }
+
+    .unit-alias,
+    .unit-chassis {
+        font-size: 0.7em;
+    }
+
+    .unit-model,
+    .unit-alias,
+    .unit-chassis {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-all;
+    }
+
+    // We hide extra infos because we don't have space
+    .pilot-info {
+        display: none;
+    }
+}
+
+
+
+.unit-card {
+    pointer-events: none;
+    position: relative;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid gray;
+    border-left-width: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    transition: background-color 0.2s, border-color 0.2s;
+
+    .unit-content {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
+        position: relative;
+        z-index: 2;
+    }
+
+    .unit-alias,
+    .chassis {
+        font-weight: bold;
+    }
+
+    .unit-role {
+        width: 15px;
+        -webkit-writing-mode: vertical-lr;
+        writing-mode: vertical-rl;
+        text-orientation: sideways;
+        transform: rotate(180deg);
+        transform-origin: center;
+        font-size: 0.7em;
+        font-weight: bold;
+        position: absolute;
+        color: black;
+        left: -17px;
+        top: 2px;
+        bottom: 2px;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+
+        &.tight {
+            letter-spacing: -0.06em; // tighten vertical spacing between characters
+            font-weight: 500;
+        }
+    }
+
+    .unit-alias.thin {
+        font-size: 0.9em;
+        font-weight: normal;
+    }
+
+    .info-slot {
+        &.interactive {
+            pointer-events: auto;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: relative;
+            
+            &::after {
+                content: '';
+                position: absolute;
+                pointer-events: none;
+                background: rgba(255, 255, 255, 0.1);
+                opacity: 0;
+                inset: 0;
+                transition: opacity 0.15s;
+            }
+
+            &:hover::after {
+                opacity: 1;
+            }
+        }
+
+        &.off {
+            background-color: rgba(185, 16, 16, 0.5);
+        }
+
+        &.c3link {
+            background-color: rgba(128, 128, 128, 0.5);
+            
+            &.enabled {
+                background-color: color-mix(in srgb, var(--network-color) 100%, transparent 50%);
+            }
+        }
+        
+        &.ecm {
+            background-color: rgba(0, 130, 9, 0.5);
+            
+            &.eccm {
+                background-color: rgba(117, 0, 212, 0.5);
+            }
+        
+            &.ghost {
+                background-color: rgba(176, 173, 0, 0.5);
+            }
+        
+            &.off {
+                background-color: rgba(185, 16, 16, 0.5);
+            }
+        }
+    
+    
+    
+        &.pilot-info {
+            background-color: rgba(255, 196, 0, 0.4);
+        }
+    
+        &.destroyed {
+            background-image: repeating-linear-gradient(140deg,
+                    #500B 0px,
+                    #500B 12px,
+                    #300A 12px,
+                    #300A 24px);
+            color: #d00;
+        }
+    }
+
+
+
+
+    &.destroyed {
+        background-image: repeating-linear-gradient(140deg,
+                #500B 0px,
+                #500B 12px,
+                #300A 12px,
+                #300A 24px);
+        border-color: #d00;
+
+        &:hover {
+            background-image: repeating-linear-gradient(140deg,
+                    #600B 0px,
+                    #600B 12px,
+                    #400A 12px,
+                    #400A 24px);
+        }
+
+        unit-icon {
+            filter: grayscale(1) brightness(0.7) sepia(1) hue-rotate(-30deg) saturate(6) contrast(1.2);
+        }
+
+    }
+}
+
+.unit-actions {
+    float: right;
+    position: relative;
+    top: -4px;
+    right: 2px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-left: 4px;
+    pointer-events: auto;
+}
+
+.info-btn,
+.repair-btn,
+.remove-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 0;
+}
+
+.remove-btn:hover {
+    color: red;
+}
+
+.repair-btn:hover,
+.info-btn:hover {
+    color: var(--text-color);
+}
+
+:host(.selectable) .unit-card,
+:host(.selectable) .unit-square {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+:host(.selectable) .unit-square:hover,
+:host(.selectable) .unit-card:hover {
+    background-color: rgba(80, 80, 80, 0.3);
+}
+
+:host(.selected) .unit-square:hover,
+:host(.selected) .unit-card:hover {
+    background-color: var(--bt-yellow-background-bright);
+}
+
+:host(.selected) .unit-square,
+:host(.selected) .unit-card {
+    border-color: var(--bt-yellow);
+    background-color: var(--bt-yellow-background);
+    opacity: 1;
+}
+
+// Friendly/enemy alignment tint
+:host(.friendly) .unit-card,
+:host(.friendly) .unit-square {
+    border-color: rgba(var(--friendly-color), 0.4);
+    background-color: rgba(var(--friendly-color), 0.06);
+}
+
+:host(.enemy) .unit-card,
+:host(.enemy) .unit-square {
+    border-color: rgba(var(--enemy-color), 0.4);
+    background-color: rgba(var(--enemy-color), 0.06);
+}
+
+// Selected overrides alignment
+:host(.selected.friendly) .unit-card,
+:host(.selected.friendly) .unit-square,
+:host(.selected.enemy) .unit-card,
+:host(.selected.enemy) .unit-square {
+    border-color: var(--bt-yellow);
+    background-color: var(--bt-yellow-background);
+}
+
+.dirty-state {
+    position: absolute;
+    display: block;
+    width: 0;
+    height: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 1;
+    border-style: solid;
+    border-width: 0 0 30px 30px;
+    border-color: transparent transparent #666 transparent;
+
+    &.move {
+        border-color: transparent transparent var(--phase-move) transparent;
+    }
+
+    &.ranged {
+        border-color: transparent transparent var(--phase-ranged) transparent;
+    }
+
+    &.physical {
+        border-color: transparent transparent var(--phase-physical) transparent;
+    }
+
+    &.heat {
+        border-color: transparent transparent var(--phase-heat) transparent;
+    }
+
+    &.pending-effects {
+        border-color: transparent transparent var(--phase-pending-effects) transparent;
+    }
+}

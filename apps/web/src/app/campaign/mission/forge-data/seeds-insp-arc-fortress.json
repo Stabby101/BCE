@@ -1,0 +1,835 @@
+[
+  {
+    "seedId": "FWR-01",
+    "family": "PLANETARY_ASSAULT",
+    "inspirationId": "INSP-131",
+    "inspiration": "The phased reduction of a held world, opened by the coup-de-main on the void-defence battery that owns the only port heavy units can land at.",
+    "skeleton": "the arc's first phase: a vanguard slice must take a fortified DropPort's void-defence battery from a blind angle and hold it intact through one counterstroke so the heavy ships already committed overhead can land, where wrecking the battery saves the slice but denies the whole campaign its only deep-water port",
+    "title": "OPERATION OPENING DOOR",
+    "eraFit": [
+      "late-succession-wars",
+      "clan-invasion",
+      "jihad"
+    ],
+    "factionFit": [
+      "is-davion",
+      "is-kurita",
+      "merc"
+    ],
+    "register": "is-davion",
+    "threatRange": [
+      "MEDIUM",
+      "HIGH"
+    ],
+    "localeFit": {
+      "settlement": [
+        "port"
+      ],
+      "regionRole": [
+        "contested"
+      ],
+      "terrain": [
+        "vacuum",
+        "coastal"
+      ]
+    },
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.25,
+    "situation": "Taking {WORLD} means capturing it one objective at a time, and this is the first. {EMPLOYER} has already launched the assault's heavy DropShips, and they cannot be recalled. They are falling toward {WORLD} now and will arrive at a fixed time. They need a place to land. The only field on this coast that can take an assault DropShip is the deep-water port in {DISTRICT}, and {TARGET_FACTION} knows this as well as you do. The port is guarded by a void-defence battery: three heavy ground-to-orbit guns dug into the headland above the harbor. They are built to destroy anything descending into the landing lanes. {NPC:intel-source} reports the guns can hit targets up to {BATTERY_CEILING_KM} kilometers up, and their fire covers the whole landing corridor. That report is {INTEL_AGE_DAYS} days old. The battery has not moved since then, but it has not fired either, so no one has seen the crews work and knows how good they are. While those guns work, the heavy ships cannot land at the port. They would have to come down in the open sea instead, or turn back. Your force is the vanguard. You drop in light and early to take the battery before the ships arrive. The terrain is the main problem. The headland is bare rock cut by tidal gullies. There is no cover taller than a person until you reach the gun pits. The only path a 'Mech can climb to the guns is the service ramp the defenders built, and they have already ranged it. Everything else is a forty-meter cliff or open surf. Do not destroy the guns. Capture them undamaged, keep them silent through the landing window, then hold them until the main force is ashore and they are in {EMPLOYER}'s hands. {NPC:opfor-commander} commands the port garrison and will fight hard for the battery. A reaction company waits at the port town {REACTION_DISTANCE_KM} kilometers inland. The gun crews have orders to wreck the gun breeches with demolition charges rather than let you take them intact. Recommended force: {FORCE_SIZE}. Take the battery and hold it, and the rest of the invasion can land safely. Let it be destroyed in the fighting, and the ships overhead are forced down into the sea.",
+    "objectives": {
+      "primary": "Take the void-defence battery and silence all three guns before the landing window opens. Then hold the gun positions through the first counterattack, so the heavy ships land on the port and not in the sea.",
+      "secondary": "Stop the gun crews from destroying the breeches. The battery must reach {EMPLOYER} working, not wrecked. If it is wrecked, the next wave inherits a port it cannot defend from orbit.",
+      "bonus": "Capture the harbormaster's traffic-control bunker intact, with its map of the approach lanes and the garrison's landing-warning network. That gives Phase II a known landing schedule instead of a guess."
+    },
+    "complications": [
+      {
+        "name": "The Descent Clock",
+        "text": "The heavy ships are already coming down. Their landing window opens at a fixed hour, and they cannot slow down to wait for you. If even one gun is working and crewed when the lead ship enters the corridor, it fires on a descending DropShip — exactly what it was built to kill. Every minute you have not silenced all three guns is a minute the ships above must decide whether to abort into the sea.",
+        "mechanicalEffect": "Track a clock to the fixed landing window in the timeline. Any of the three guns still crewed and undamaged at the window scores a scripted hit on the landing wave and raises the FAILURE fork by one threat level. Silence all three before the window opens and this penalty is removed."
+      },
+      {
+        "name": "The Crews Will Wreck the Guns",
+        "text": "The crews will not hand over working guns. Their standing order is to fire thermite charges down the breeches the moment a pit is about to fall, ruining the barrels in under a minute. Wrecked guns cannot threaten orbit. That helps you today and hurts you later, because those same guns are the port's only defense against the enemy's ships when they come back for it.",
+        "mechanicalEffect": "If a gun pit is taken by direct assault without first cutting its crew's command line, roll to see if the crew wrecks the gun. On a success the gun is destroyed for good. That voids the secondary objective and switches the SUCCESS fork's follow-on to the recovery branch. Cutting the command bunker first removes the roll."
+      },
+      {
+        "name": "The Bare Headland",
+        "text": "From the gun pits, the defenders can see the whole approach. The only cover between the surf and the guns is the gullies cut by the tide, and those flood on the same cycle the ships come down on. A 'Mech caught in a gully at high water climbs out slowly, under fire, with nowhere to hide.",
+        "mechanicalEffect": "Open headland hexes give no cover against the battery's close-in defenses. The tide-cut gullies do give cover, but they flood and block ground movement during the high-water period noted in the phase data. A unit caught there loses a movement phase climbing out."
+      },
+      {
+        "name": "The Reaction Company",
+        "text": "The garrison's mobile company waits inland at the town, and {NPC:opfor-commander} will send it at the headland the moment the alarm reaches him. It cannot retake three guns from a dug-in attacker on its own. It does not need to. It only has to keep your force turned outward long enough for one gun crew to finish wrecking a gun, or for the landing window to arrive while a gun is still firing.",
+        "mechanicalEffect": "The reaction company reaches the headland at the timeline mark and presses the counterattack. It fights to pin you down, not to win, and it accepts losses to delay you from silencing the last gun until after the landing window."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Taking the Battery",
+        "context": "Three guns, one landing clock, and a force too light to be everywhere. How you go at the guns decides whether you take them whole, silence them in time, or take them at all. The service ramp is fast, but the defenders have ranged it. The gullies are slow and flood with the tide. The command bunker shuts off the crews' order to wreck the guns, but it sits behind the pits.",
+        "options": [
+          {
+            "title": "Storm the Ramp",
+            "advantages": [
+              "The only route that reaches all three pits fast enough to beat the landing window with time to dig in",
+              "A concentrated rush overruns the crews before most can reach their demolition charges"
+            ],
+            "disadvantages": [
+              "The defenders have already ranged the ramp with their close-in guns and the inland company's opening fire",
+              "A head-on rush gives the crews the seconds they need to start wrecking the guns you came to take whole"
+            ],
+            "consequence": "You reach the landing window with the guns silent, but at least one is likely wrecked in the rush, and your force is hurt before the counterattack even lands.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "ammunition: a head-on storm burns through your short-range load fighting past the close-in guns before the counterattack arrives",
+              "risk": "Speed wins the window but loses a gun to the crews — Phase II inherits a port one gun short when the enemy returns"
+            }
+          },
+          {
+            "title": "Cut the Command Bunker First",
+            "advantages": [
+              "Cutting the crews' command line stops all three crews from wrecking their guns before you even assault the pits",
+              "The guns reach {EMPLOYER} working, so the port can defend itself from orbit when the enemy comes back"
+            ],
+            "disadvantages": [
+              "The bunker sits behind the pits, so reaching it means a flanking move through the tidal gullies, against the clock",
+              "That detour spends time the landing window cannot spare — the last gun may still be firing when the ships enter the corridor"
+            ],
+            "consequence": "You keep the battery intact and hand Phase II a port it can defend, but the flank through the gullies risks arriving at the window with a gun still crewed.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "time: the flank through the gullies costs movement phases the landing clock is counting down",
+              "risk": "A slow flank leaves one gun firing at the window — a scripted hit on the landing wave, even though you save the battery whole"
+            }
+          },
+          {
+            "title": "Suppress, Don't Seize",
+            "advantages": [
+              "Standing back and pouring fire across the pits keeps the crews pinned through the landing window, without storming the ranged ground",
+              "Your force takes the fewest casualties and stays mobile for the counterattack"
+            ],
+            "disadvantages": [
+              "Pinning the crews is not taking the guns — they stay down, but the guns are neither yours nor wrecked, only quiet",
+              "The moment your fire lifts after the landing, the crews are back on the guns, unless the main force takes over the pits at once"
+            ],
+            "consequence": "The ships land safely on your covering fire alone, but you hold nothing. The battery is still contested when Phase II begins, and the hand-off to the follow-on force is the whole gamble.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "your force stays pinned at the pits, holding the crews down until the main force arrives to take physical control",
+              "risk": "If relief is late, the crews reman the guns behind the landing — the port's orbital defense is back in enemy hands, with the main force already ashore beneath it"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        {
+          "t": "T+0:00",
+          "event": "Your force is spotted on the headland, or you open fire on the pits. The port garrison sounds the alarm and the gun crews move to their demolition charges."
+        },
+        {
+          "t": "T+3:00",
+          "event": "{NPC:opfor-commander} sends the inland reaction company from the port town toward the headland."
+        },
+        {
+          "t": "T+9:00",
+          "event": "The landing window opens. The lead heavy ship enters the corridor. Any gun still working and crewed fires on it now."
+        },
+        {
+          "t": "T+12:00",
+          "event": "The reaction company reaches the headland and hits your force on the pits."
+        },
+        {
+          "t": "T+20:00",
+          "event": "The assault wave commits to the port harbor one way or the other. If the battery is not silent and in your hands by now, the landing comes down contested or in the water."
+        }
+      ],
+      "hardDeadline": "Silence all three guns by the T+9:00 landing window — pinned, taken, or wrecked. Then hold the pits through the counterattack to T+20:00. Miss either mark and the heavy ships land contested, so Phase II opens from a beachhead instead of a port."
+    },
+    "opforSketch": {
+      "composition": "A reinforced port garrison: one mixed 'Mech company of light and medium machines (30-60 tons) at Regular quality holding the battery and headland, supported by a tracked-armor section of 4-6 vehicles (Vedette and SRM-carrier behavior) and the dug-in gun crews with close-defence emplacements. The reaction element is a second medium 'Mech company, Regular, mobile. Heavy reliance on prepared positions, pre-ranged approaches, and the demolition protocol.",
+      "behavior": "Fixed defense of a fortified asset: hold the pits and the ramp, feed the reaction company in to pin the attacker on ranged ground, and wreck the guns before giving them up. The garrison fights to deny, not to survive. Gun crews fire their demolition charges at the point of being overrun rather than fall back."
+    },
+    "forks": [
+      {
+        "name": "OPERATION SALT BERM",
+        "outcomeGate": "SUCCESS",
+        "trigger": "The battery is held silent and intact through the counterattack. The heavy ships land on the port and the main force begins coming ashore.",
+        "consequence": "The door is open, and the enemy knows the war is now on the ground. {TARGET_FACTION} is already swinging its mobile reserve toward the coast. Your company holds one sector of the beachhead while the main force lands behind you. This is the second phase of taking the world.",
+        "threat": "HIGH",
+        "family": "GARRISON_DUTY",
+        "nextSeedId": "FWR-02"
+      },
+      {
+        "name": "OPERATION SECOND WAVE",
+        "outcomeGate": "FAILURE",
+        "trigger": "A gun was still firing at the landing window, or the battery was lost. The assault wave came down contested, scattered along the coast instead of on the port.",
+        "consequence": "The landing did not fail, but it did not land where it meant to. Scattered units are ashore and in trouble. The next operation is a rescue: fight inland to the cut-off groups and build a beachhead the hard way, without the port. The campaign bends but goes on.",
+        "threat": "HIGH",
+        "family": "RELIEF_DUTY"
+      }
+    ],
+    "storyElementSeed": "A tech crouches in a gun pit with a multi-tool, tracing the thermite charge's command line by feel, while the surf comes up the gully behind and someone on the net counts the descent down in a flat voice.",
+    "voiceSlots": [
+      "naval",
+      "command",
+      "intelligence",
+      "engineering"
+    ],
+    "registerVariants": {
+      "is-kurita": {
+        "objectives.primary": "Take the void-defence battery and silence its three guns before the landing window. Then hold the headland through the enemy's counterattack, so the Dragon's ships land on the port as ordered. The force that opens this door opens the whole campaign."
+      },
+      "clan": {
+        "objectives.primary": "Take the orbital battery and hold it whole through the counterattack, so the assault lands on the port. A wrecked gun is a wasted gun. Take them working, or do not take them at all."
+      }
+    },
+    "specifics": {
+      "BATTERY_CEILING_KM": {
+        "min": 40,
+        "max": 120,
+        "unit": "km orbital ceiling"
+      },
+      "INTEL_AGE_DAYS": {
+        "min": 6,
+        "max": 14,
+        "unit": "days"
+      },
+      "REACTION_DISTANCE_KM": {
+        "min": 8,
+        "max": 18,
+        "unit": "km inland"
+      }
+    }
+  },
+  {
+    "seedId": "FWR-02",
+    "family": "GARRISON_DUTY",
+    "inspirationId": "INSP-131",
+    "inspiration": "The second phase of a world's reduction: holding the coastal lodgment against the defender's mobile reserve until the line force ashore turns the beachhead from a foothold into a launch point.",
+    "skeleton": "the arc's second phase: a company must simultaneously hold a beachhead sector AND keep the one firm supply road through it trafficable while fighting across that same road, on soft tidal ground where the made road is the only fast route a counterattack can use to reach the surf, so the decisive ground is a highway the holder must both defend and keep open, until the still-landing line weight flips the perimeter to breakout",
+    "title": "OPERATION SHALLOW WATER",
+    "eraFit": [
+      "late-succession-wars",
+      "clan-invasion",
+      "jihad"
+    ],
+    "factionFit": [
+      "is-davion",
+      "is-kurita",
+      "merc"
+    ],
+    "register": "is-davion",
+    "threatRange": [
+      "HIGH",
+      "EXTREME"
+    ],
+    "localeFit": {
+      "settlement": [
+        "port",
+        "agrarian"
+      ],
+      "regionRole": [
+        "contested"
+      ],
+      "terrain": [
+        "coastal",
+        "wetland"
+      ]
+    },
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.3,
+    "situation": "The port is taken. Now you have to hold the ground behind it long enough for the rest of the force to land. The assault came ashore on {WORLD}'s {DISTRICT} coast, and the main force is still landing. For now the beachhead is a thin strip of reclaimed coastal flat, barely deep enough to stand on. {TARGET_FACTION} did not fight for the water's edge. {NPC:opfor-commander} pulled his mobile reserve back intact, and he is now hitting the beachhead in timed waves. He knows a beachhead is weakest in its first hours, before it has any depth. If a counterattack reaches the surf, it cuts the landing in two and destroys it against its own ships. Your company holds one sector of the line: the inland shoulder, where the coastal flat meets the first higher ground. The single raised road that feeds the whole beachhead its fuel and ammunition runs straight through your position. {NPC:intel-source} rates the reserve as a reinforced battalion of medium and heavy 'Mechs, mobile, attacking on roughly a {STRIKE_INTERVAL_HOURS}-hour cycle as it rotates fresh units forward and pulls damaged ones back to recover. That report is {INTEL_AGE_HOURS} hours old, and the gaps between attacks are getting shorter as he commits more force. The terrain is the main problem. The coastal flat is wet, cut by tidal drains and soft reclaimed paddy that will not bear an assault 'Mech off the built-up roads. That makes the road through your sector more than a supply line: it is the only firm ground a counterattack can use to reach the surf at speed. Hold the road and the reserve has to come at you across mud that bogs down its heavy machines and slows it. Lose the road and it gets a paved run straight to the water. This is not a fixed defense. Give up no ground you cannot retake before the next attack. Keep the road open behind you for the supply trucks, even while you fight across it. Hold until enough of the main force is ashore to stop defending and start pushing inland. Recommended force: {FORCE_SIZE}. Hold the firm ground and keep the road open, and the beachhead grows into a launch point for the advance. Let the reserve onto the firm ground and it drives the whole landing into the sea.",
+    "objectives": {
+      "primary": "Hold the inland-shoulder sector of the beachhead through the mobile reserve's counterattacks. Keep the raised supply road open, and give up no ground you cannot retake before the next attack, until the force ashore is strong enough to break out.",
+      "secondary": "Keep the supply road open for the landing's fuel and ammunition the whole time. A sector that holds its ground but loses the road starves the rest of the line and stalls the very breakout it was buying time for.",
+      "bonus": "Catch and break one of the reserve's spent attack groups as it pulls back, taking ground and prisoners that reveal how the enemy is organized. Then the breakout opens against a reserve down a battalion's worth of strength and shaken by the loss."
+    },
+    "complications": [
+      {
+        "name": "The Counterattack Cycle",
+        "text": "The reserve does not come all at once. It comes in waves, every few hours, fresh units forward and battered ones pulled back to reset. Any one wave is survivable. The danger is all of them together, and the fact that the gaps keep shrinking. {NPC:opfor-commander} can feel the beachhead hardening, and he is trying to break it while he still can.",
+        "mechanicalEffect": "Counterattacks arrive on the cycle in the timeline, with the gap shrinking by a set amount each wave. Between waves the defender may reposition. Ground given up and not retaken before the next wave counts against the perimeter and feeds the FAILURE fork."
+      },
+      {
+        "name": "The Soft Ground",
+        "text": "Off the built-up roads, the coastal flat is reclaimed paddy and tidal drain. It bears infantry and light vehicles, but it swallows an assault 'Mech to the hip. Heavy weight wins fights on firm ground and bogs down in the mud. That is true for the reserve, and it is true for you.",
+        "mechanicalEffect": "Off-road hexes in the sector are soft going: 'Mechs above a stated tonnage take movement penalties and bogging checks, and combat vehicles are mostly stuck to the roads. The firm road becomes the decisive ground for both sides."
+      },
+      {
+        "name": "The Open Road",
+        "text": "The supply road has to stay open while you fight over it. The trucks keep coming through your sector even during a counterattack. If wreckage or enemy fire blocks the road for too long, it starves the perimeter on both sides of you. You are holding a line and keeping a highway clear at the same time, with the same force.",
+        "mechanicalEffect": "Track road status through each wave. A road blocked or under enemy fire past a stated number of turns triggers a supply-shortage penalty across the wider perimeter. That voids the secondary objective and eases the next enemy wave."
+      },
+      {
+        "name": "Still Landing Behind You",
+        "text": "The main force is not ashore yet. It is coming ashore, through and behind your sector, in the middle of the fight. The reinforcements arrive during the battle, not before it. They are the whole point of holding, but until they form up they are unready units crossing your rear under fire.",
+        "mechanicalEffect": "Friendly reinforcements arrive in batches across the fight, not all at the start. Each batch that survives to form up builds toward the strength needed for the SUCCESS gate. Reinforcements caught moving by a counterattack can be badly hurt before they deploy."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Holding the Shoulder",
+        "context": "The reserve will keep coming on the firm ground until the beachhead is too deep to break. You have three ways to meet it. Fight forward of the road and keep the road safe, but expose your line. Fight on the road itself and make it a killing ground, but risk closing your own supply route. Or bend the line back onto the soft flank and let the mud wear the enemy down, but give up ground to do it. Each choice protects one thing and risks another.",
+        "options": [
+          {
+            "title": "Hold Forward of the Road",
+            "advantages": [
+              "Keeps the counterattack's fire well clear of the supply road, so the trucks run freely and the perimeter stays fed",
+              "Buys the deepest buffer of ground between the enemy and the surf"
+            ],
+            "disadvantages": [
+              "Fighting forward of the road on the open flat exposes your line to the reserve's full weight, on ground that favors the enemy",
+              "If a forward position is overrun, the road behind it is open, with nothing between the enemy and the water"
+            ],
+            "consequence": "You keep the road safe and the beachhead deep, but you fight the reserve on the ground it prefers. If the forward line cracks, you have to fall back fighting across the very road you were protecting.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the company fights forward and exposed on open ground, taking damage to keep the road untouched behind it",
+              "risk": "A broken forward line hands the enemy the open road, and the next wave runs at the surf on firm ground"
+            }
+          },
+          {
+            "title": "Make the Road the Killing Ground",
+            "advantages": [
+              "Funnels every counterattack onto the one firm route, where your fire can concentrate and the mud traps the enemy's flanks",
+              "Shortens your line and lets a smaller force hold against a heavier one"
+            ],
+            "disadvantages": [
+              "Fighting on the road means fighting over the supply route itself, so wreckage and fire close it exactly when the trucks need it",
+              "Massing on the road thins the soft flanks, and infantry and light vehicles can still work around through the paddy"
+            ],
+            "consequence": "You turn the road into the reserve's grave, but you choke your own supply doing it. The perimeter holds and your strength builds, but keeping the secondary objective depends on clearing wreckage between waves.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the supply road runs through the killing ground, so every wave fought on it risks closing it to the trucks",
+              "risk": "A road choked with wreckage past the limit starves the wider perimeter and eases the enemy's next blow elsewhere"
+            }
+          },
+          {
+            "title": "Bend the Line, Let the Mud Fight",
+            "advantages": [
+              "Pulling the shoulder back onto the soft flank forces the reserve off the firm ground to reach you, into paddy that drowns its weight and speed",
+              "Saves the company, because the terrain does the wearing-down the 'Mechs would otherwise pay for"
+            ],
+            "disadvantages": [
+              "Giving ground gives up depth, and on the wrong wave it brings the enemy close enough to hit the road with fire",
+              "A bent line is a line that has moved, and ground given up that you cannot retake before the next wave counts against you"
+            ],
+            "consequence": "You let the mud bleed the reserve cheaply, but you have given up ground and pulled the fight near the road. The hold works only if you retake the bend before the next wave arrives.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "depth traded for attrition: ground given to the mud that you must retake before the next wave",
+              "risk": "Ground given and not retaken in time leaves the road inside enemy gun range and counts against the perimeter at the gate"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        {
+          "t": "T+0:00",
+          "event": "The reserve's first counterattack hits the inland shoulder. The supply road through the sector comes under fire for the first time."
+        },
+        {
+          "t": "T+3:00",
+          "event": "The first wave is spent and pulling back to reset. The main force lands its first batch of reinforcements across the sector's rear."
+        },
+        {
+          "t": "T+6:00",
+          "event": "The second counterattack lands, heavier, and the gap has shrunk. {NPC:opfor-commander} commits fresh heavies to the firm ground."
+        },
+        {
+          "t": "T+10:00",
+          "event": "The third wave is the reserve's hardest, timed to hit before the beachhead gets too deep to break. The state of the road decides whether the perimeter is still fed."
+        },
+        {
+          "t": "T+14:00",
+          "event": "If the sector held and the road stayed open, enough force is ashore to break out and the perimeter can go on the attack. If the shoulder broke, the counterattack reaches the surf."
+        }
+      ],
+      "hardDeadline": "The inland-shoulder sector must hold and the supply road must stay open through the third counterattack to T+14:00, when the main force is strong enough to break out. If the shoulder is driven in or the road is starved before then, the reserve splits the beachhead and the next operation is a rescue, not a breakout."
+    },
+    "opforSketch": {
+      "composition": "A mobile reserve committed in waves: a reinforced battalion-equivalent of medium and heavy 'Mechs (45-75 tons) at Regular-to-Veteran quality, cycling fresh and blooded elements on a tightening interval, supported by a road-mobile armor company (Manticore and SRM-carrier behavior) that is decisive on the firm road and largely useless in the paddy. Each stroke is a reinforced company in weight.",
+      "behavior": "Mobile counterattack against a new beachhead: strike in timed waves to break it before it deepens, put the weight on the firm road where the reserve's heavy 'Mechs count for most, and accept losses to keep up the pace. Individual waves break contact at 40 percent group damage and pull back to reset. The reserve as a whole keeps pressing until the beachhead is plainly too deep to break."
+    },
+    "forks": [
+      {
+        "name": "OPERATION STONE GATE",
+        "outcomeGate": "SUCCESS",
+        "trigger": "The shoulder held, the road stayed open, and the main force is strong enough to break out. The beachhead becomes a launch point and the perimeter goes on the attack.",
+        "consequence": "The coast is won and the war moves inland. {TARGET_FACTION} has fallen back to a prepared line in the interior high ground, and the breakout must force one of a handful of passes through it. Your company leads the attack at one of those passes. This is the third phase of taking the world.",
+        "threat": "HIGH",
+        "family": "OBJECTIVE_RAID",
+        "nextSeedId": "FWR-03"
+      },
+      {
+        "name": "OPERATION DRIVEN TIDE",
+        "outcomeGate": "FAILURE",
+        "trigger": "The shoulder was driven in or the road was starved. The reserve reached the surf and split the beachhead into pockets along the coast.",
+        "consequence": "The beachhead did not fall, but it is cut in two and bleeding. The next operation is a rescue: fight along the coast to reconnect the cut-off pockets before the reserve destroys them one by one, then rebuild a perimeter to launch from. The campaign bends and the breakout waits.",
+        "threat": "EXTREME",
+        "family": "RELIEF_DUTY"
+      }
+    ],
+    "storyElementSeed": "Two truck drivers wait at the edge of the road with their engines off while the firing ahead rises and falls, watching a recovery crew drag a burning hull off the verge so the column can move, nobody saying how long the gap will stay open.",
+    "voiceSlots": [
+      "command",
+      "logistics",
+      "intelligence",
+      "engineering"
+    ],
+    "registerVariants": {
+      "is-kurita": {
+        "objectives.primary": "Hold the inland shoulder and keep the Dragon's road open through every wave the enemy reserve throws at you. Give up no ground you cannot retake, until the force ashore is strong enough to advance. Holding this beachhead proves the landing was no accident."
+      },
+      "merc": {
+        "objectives.primary": "Hold your contracted sector and the supply road through the reserve's counterattacks, until the main force is strong enough to break out. The road is the contract. Lose it and you lose the bonus and the perimeter both."
+      }
+    },
+    "specifics": {
+      "STRIKE_INTERVAL_HOURS": {
+        "min": 3,
+        "max": 6,
+        "unit": "hours between strokes"
+      },
+      "INTEL_AGE_HOURS": {
+        "min": 4,
+        "max": 18,
+        "unit": "hours"
+      },
+      "BREAKOUT_INCREMENTS": {
+        "min": 3,
+        "max": 5,
+        "unit": "reinforcement increments to breakout weight"
+      }
+    }
+  },
+  {
+    "seedId": "FWR-03",
+    "family": "OBJECTIVE_RAID",
+    "inspirationId": "INSP-131",
+    "inspiration": "The third phase of a world's reduction: forcing a defended interior pass that the enemy would rather wreck than yield, opening the road to the capital.",
+    "skeleton": "the arc's third phase: a breakthrough force must take and hold open one of a few prepared interior passes the defender has wired to collapse on a deliberate timer, where the enemy's plan is to drop the pass on the assault and trade the road for weeks rather than yield it intact, so the crux is seizing the demolition-control point and holding the pass usable before the charges fire, against a fixed defence that fights to deny the route, not to survive",
+    "title": "OPERATION HARD SHOULDER",
+    "eraFit": [
+      "late-succession-wars",
+      "clan-invasion",
+      "jihad"
+    ],
+    "factionFit": [
+      "is-davion",
+      "is-kurita",
+      "merc"
+    ],
+    "register": "is-davion",
+    "threatRange": [
+      "HIGH",
+      "EXTREME"
+    ],
+    "localeFit": {
+      "settlement": [
+        "frontier"
+      ],
+      "regionRole": [
+        "interior"
+      ],
+      "terrain": [
+        "mountain"
+      ]
+    },
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.2,
+    "situation": "The breakout cleared the coast and ran inland until it hit the wall {TARGET_FACTION} built to stop it. {WORLD}'s interior rises into high ground in {DISTRICT}, and the only roads to the capital beyond climb through a handful of passes the defender has spent the campaign preparing. He does not mean to hold your assigned pass. He means to drop it. {NPC:intel-source} reports the pass wired to be blown on purpose: charge tunnels bored into the gorge walls, set to bring the walls down and bury the road under a season's worth of rock. Losing the road costs the defender nothing he cares about and buys the capital weeks. That report is {INTEL_AGE_DAYS} days old, and the wiring has only grown since. That is the whole shape of the problem. The defense in the pass is not set up to win the firefight. It is set up to keep you off the demolition-control point long enough for the charges to fire and drop the mountain on an empty road. The control point is a hardened tunnel head dug into the gorge wall. It runs on a timer that starts the moment your assault begins. A pass taken and then collapsed is no victory: the breakout stalls at the rubble while the capital readies its last stand. A pass taken whole and held open is the road to the end of the war. The terrain is the whole problem. The gorge floor is a single strip of road between sheer walls, with no room to maneuver and every meter of it in range from above. The walls can be climbed in only two places. Both are covered, and both are the obvious route to the control point the defender expects you to take. Your company leads the attack. {NPC:opfor-commander} holds the pass with a fixed defense that will fight until the charges blow and not a minute longer. His job is the clock on the charges, not his own survival. Recommended force: {FORCE_SIZE}. Take the control point before the timer runs out and hold the pass standing, or the road to the capital becomes a wall of rock and the war drags into the winter.",
+    "objectives": {
+      "primary": "Take the pass's demolition-control tunnel and stop the planned collapse before the timer fires. Then hold the pass open and usable so the breakout can drive through toward the capital.",
+      "secondary": "Clear or pin the defenders on the gorge walls so the road behind you stays usable for the follow-on column. A control point taken but a pass still raked by enemy fire is a road no convoy will run.",
+      "bonus": "Capture the demolition plan and the defender's survey of the other passes intact. That map turns the drive on the capital from a string of ambushes into a known route."
+    },
+    "complications": [
+      {
+        "name": "The Demolition Timer",
+        "text": "Once your assault on the pass begins, the defender starts the charge timer. From that moment the mountain is coming down whether or not his troops are still in it. The collapse runs on a timer, not on a nerve, on purpose, so that storming the control point under fire will not stop it. You are racing a clock you cannot see. The only way to stop it is to reach the tunnel head and cut the firing line before it runs out.",
+        "mechanicalEffect": "Track a hidden demolition timer from the start of the assault to the mark in the timeline. If the control tunnel is not taken and the firing line cut by then, the pass collapses: the primary objective fails, the road is buried, and the outcome routes to the recovery fork."
+      },
+      {
+        "name": "The Ribbon Road",
+        "text": "The gorge floor is one road wide between vertical walls, with the high ground in enemy hands the whole way. There is no room to maneuver on the floor: only forward into their fire, or back the way you came. Until it reaches the walls, a 'Mech on the road is a target in a shooting gallery.",
+        "mechanicalEffect": "Gorge-floor hexes give no flanking room and stand exposed to fire from the positions above. Maneuver is possible only at the two climbable breaks in the walls. Everything on the floor advances or retreats under fire."
+      },
+      {
+        "name": "Fights to the Clock",
+        "text": "The defense in the pass is not trying to live. It is trying to keep you off the tunnel head until the charges fire, and it will spend itself to the last machine to win those minutes. There is no morale to crack and no breaking point to push. There is only a garrison counting down, fighting harder as the timer runs low, because it only has to last a little longer.",
+        "mechanicalEffect": "The fixed defense does not check morale or break contact. It fights to destruction to protect the timer. Pressure that would rout an ordinary garrison only wins ground here, never a collapse. The only way to end the fight is to reach and disarm the control point."
+      },
+      {
+        "name": "The Far Side Unknown",
+        "text": "What waits past the pass is a guess. {NPC:intel-source}'s picture stops at the gorge. Beyond it the road bends out of sight toward the capital. The defender may have a reserve sitting at the far mouth, ready to retake the pass once you are committed inside it. No one can confirm that until you are through.",
+        "mechanicalEffect": "When the control point is seized, roll to see if a defender reserve appears at the far mouth of the pass and contests the hold from behind. If it does, holding the pass open means fighting in two directions until the follow-on column arrives."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Reaching the Control Point",
+        "context": "The tunnel head sits high on the gorge wall, and the timer is already running. The two climbable breaks are the fast routes, but the defenders cover both. You have three ways up. Storm a break head-on: quickest, but bloodiest. Work a flank up the broken rock: slower, and the timer may beat you. Or blow your own way up with charges: it opens a route no one covers, but it means causing the very kind of collapse you came to stop.",
+        "options": [
+          {
+            "title": "Storm the Shoulder Break",
+            "advantages": [
+              "The fastest route to the tunnel head, and the best chance to beat the demolition timer outright",
+              "A concentrated rush can take the control point before the crews inside can fire the charges"
+            ],
+            "disadvantages": [
+              "The climbable break is the route the defense is built to cover, so the storm goes in under the heaviest prepared fire in the pass",
+              "A rush that stalls on the break leaves the company strung out on open rock with the timer still running"
+            ],
+            "consequence": "You give yourself the best odds against the timer, at the highest cost in blood. The control point is likely yours, but the company is battered going up, which makes the secondary hold harder.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the assault burns through the prepared kill zone on the break to beat the clock",
+              "risk": "A stalled storm leaves you exposed with the timer still running — the pass may drop with your company on its wall"
+            }
+          },
+          {
+            "title": "Flank Up the Broken Rock",
+            "advantages": [
+              "Avoids the prepared kill zone on the obvious break, reaching the tunnel head from ground the defender did not range",
+              "Saves the company for the two-way hold that may follow on the far side"
+            ],
+            "disadvantages": [
+              "The broken-rock climb is slow going, and the demolition timer may run out before the flank reaches the firing line",
+              "If the defender did watch one covered route, it could stop the flank cold with no time left to try another"
+            ],
+            "consequence": "You trade speed for less blood and more surprise. If the flank reaches the tunnel in time, the pass is taken cheap and whole. But the timer is the gamble: arrive late and the mountain comes down anyway.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "time: the broken-rock flank costs movement the demolition timer is counting against you",
+              "risk": "A slow flank loses the race to the timer, and the pass collapses with the control point almost in reach"
+            }
+          },
+          {
+            "title": "Blow Your Own Breach",
+            "advantages": [
+              "Shaped charges on a chosen section of wall open a route to the tunnel head the defender never prepared for",
+              "Drops one of the enemy's covering positions under rubble before the assault on the control point begins"
+            ],
+            "disadvantages": [
+              "Bringing down rock to open your route risks the road behind it, so the collapse you cause can bury part of the route you came to save",
+              "Placing the charges needs a dismounted tech team out on the gorge wall while the defender's fire and the timer both run"
+            ],
+            "consequence": "You open a way no one ranged, but you have used the mountain against itself. The control point may fall fast, yet the pass you hold open is narrower for the rock you dropped to take it.",
+            "costs": {
+              "cbills": 12000,
+              "days": null,
+              "resource": "demolition stores and an exposed tech team on the gorge wall, under fire and the clock",
+              "risk": "A misjudged breach buries more road than it opens: you stop the enemy's collapse only to cause your own"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        {
+          "t": "T+0:00",
+          "event": "The company enters the pass and engages the gorge defense. The defender starts the demolition timer on the charges."
+        },
+        {
+          "t": "T+4:00",
+          "event": "The defense on the walls fights to pin the assault on the narrow road, spending itself to keep the company off the tunnel head."
+        },
+        {
+          "t": "T+9:00",
+          "event": "The timer is halfway gone. To beat the collapse, the control point must be under direct assault by now. The defender throws everything left onto the tunnel approaches."
+        },
+        {
+          "t": "T+14:00",
+          "event": "The demolition timer runs out. If the firing line is not cut, the charges fire and the pass comes down. If the control point is held, the charges are safe and the pass stands."
+        },
+        {
+          "t": "T+20:00",
+          "event": "The follow-on column reaches the mouth of the gorge. The pass must be open and the walls clear enough to run convoys through, or the breakout stalls at the high ground anyway."
+        }
+      ],
+      "hardDeadline": "The demolition-control tunnel must be taken and the firing line cut by the T+14:00 timer, and the pass held open and usable to T+20:00 when the column arrives. Miss either and the mountain comes down on the road, so the drive on the capital waits out the winter behind a wall of rock."
+    },
+    "opforSketch": {
+      "composition": "A fixed pass defense built to deny, not to survive: one reinforced 'Mech company of mediums and heavies (50-80 tons) at Regular-to-Veteran quality in prepared positions on the gorge walls, supported by dug-in emplacements and turret-class fixed guns covering the gorge floor, plus a combat-engineer element manning the demolition tunnels. A possible reserve of mediums sits beyond the far mouth. Minimal armor, because the ground is too broken for vehicles off the road.",
+      "behavior": "Demolition defense: hold the tunnel head and the timer above all, fight from the high walls to pin the assault on the narrow road, and spend the garrison to the last machine to win the minutes the charges need. The defense does not break or withdraw. It fights to destruction to protect the collapse, and the engineer element fires the charges on the timer no matter how the firefight is going."
+    },
+    "forks": [
+      {
+        "name": "OPERATION COLD CROWN",
+        "outcomeGate": "SUCCESS",
+        "trigger": "The control point was taken, the charges cut, and the pass held open. The breakout drives through the high ground onto the road to the capital.",
+        "consequence": "The last wall is down and only the capital remains. {TARGET_FACTION}'s government and its final defense have pulled back into the fortified seat of power, with nothing left to trade and nowhere left to fall back. Your company leads the assault on the capital itself. This is the final phase of taking the world.",
+        "threat": "EXTREME",
+        "family": "PLANETARY_ASSAULT",
+        "nextSeedId": "FWR-04"
+      },
+      {
+        "name": "OPERATION WINTER WALL",
+        "outcomeGate": "FAILURE",
+        "trigger": "The timer beat the assault and the pass came down. The road to the capital is buried under a season of rock.",
+        "consequence": "The breakout did not break through. The collapse bought {TARGET_FACTION} the weeks it wanted. The front stalls at the high ground while your engineers fight the mountain and the enemy digs in deeper. The next operation is to hold the ground you won through the stall and keep pressure on the blocked passes until another route opens. The campaign bends and the capital waits out the winter.",
+        "threat": "HIGH",
+        "family": "GARRISON_DUTY"
+      }
+    ],
+    "storyElementSeed": "An enemy engineer sits in the gallery head with one hand near the firing key, watching a counter run down, while outside the firefight gets closer and a junior officer keeps asking on the net whether to fire now or wait for the order that was supposed to come.",
+    "voiceSlots": [
+      "command",
+      "engineering",
+      "intelligence",
+      "logistics"
+    ],
+    "registerVariants": {
+      "is-kurita": {
+        "objectives.primary": "Take the demolition tunnel and silence the charges before the enemy can bury the road. Then hold the pass open for the Dragon's column. The mountain the enemy would drop is the last gate between the landing and the throne."
+      },
+      "clan": {
+        "objectives.primary": "Take the demolition control and stop the collapse before the timer fires, then hold the pass standing for the advance. To drop a pass on an empty road is the act of a coward who will not face the assault. Deny him the rubble and take the route whole."
+      }
+    },
+    "specifics": {
+      "INTEL_AGE_DAYS": {
+        "min": 5,
+        "max": 12,
+        "unit": "days"
+      },
+      "DEMOLITION_TIMER_MIN": {
+        "min": 10,
+        "max": 18,
+        "unit": "minutes on the charge timer"
+      },
+      "PASS_COUNT": {
+        "min": 3,
+        "max": 5,
+        "unit": "prepared interior passes"
+      }
+    }
+  },
+  {
+    "seedId": "FWR-04",
+    "family": "PLANETARY_ASSAULT",
+    "inspirationId": "INSP-131",
+    "inspiration": "The final phase of a world's reduction: taking the fortified capital from a defender with nothing left to trade, where the fast route through the inhabited core risks the prize and the seat of power is either a last stand to storm or a shell the principal has already abandoned.",
+    "skeleton": "the arc's fourth phase: a decapitation assault must take a fortified capital from a last-ditch defence with nothing left to fall back to, choosing between a fast thrust through the inhabited core that risks the very seat of power and a slower envelopment, against an enemy who has either dug in to make a ruin of the prize or already extracted the principal and left a shell to bleed the attacker",
+    "title": "OPERATION LAST LANTERN",
+    "eraFit": [
+      "late-succession-wars",
+      "clan-invasion",
+      "jihad"
+    ],
+    "factionFit": [
+      "is-davion",
+      "is-kurita",
+      "merc"
+    ],
+    "register": "is-davion",
+    "threatRange": [
+      "EXTREME"
+    ],
+    "localeFit": {
+      "settlement": [
+        "capital"
+      ],
+      "regionRole": [
+        "interior"
+      ],
+      "terrain": [
+        "urban"
+      ]
+    },
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.2,
+    "situation": "Everything that held {WORLD} has fallen back to this: the capital in {DISTRICT}, the last ground {TARGET_FACTION} owns and the only ground it has left to lose. The orbit is yours. The coast is yours. The passes are yours. What remains is the city, and a defense with nothing behind it. That is what makes this final phase the hardest. An enemy with no line to retreat to does not fight to survive. It fights to make you pay, and it has to be dug out one position at a time, down to the last building. {NPC:intel-source} reports the seat of power at the city's heart: the government quarter, ringed by the last intact 'Mech force on the planet, and possibly wired with the same scorched-earth demolition the defender used on the mountain pass. That report is {INTEL_AGE_HOURS} hours old. The one thing it cannot answer is the thing that matters most: whether the enemy leader is still inside. A capital is a different problem than a pass. The fast route to the government quarter runs through the inhabited core: kilometers of tight streets and standing towers where the people never evacuated. There a 'Mech moves fast but half-blind. Any block can hide an ambush that turns a clean drive into a close-quarters brawl, and the heaviest fighting risks burning down the very prize you came to take. The slow route swings around the edge, through the outer industrial districts. It spares the core and the prize, but it gives the defender the time he wants: time to finish whatever demolition he has set, or to slip the enemy leader out the far side of the city while you take the long way in. One question sits under the whole operation, and you cannot answer it from here. Is the quarter a real last stand to be stormed, or an empty shell the leader has already left, manned only to bleed you for a prize that is no longer there? {NPC:opfor-commander} holds the city and will not surrender it. The only question is whether he dies in it or spends it buying time for someone more important to escape. Recommended force: {FORCE_SIZE}. Take the seat of power and end the war on {WORLD}, or storm an empty shell while the leader escapes and win the city only to find the war has moved on without you.",
+    "objectives": {
+      "primary": "Take the government quarter at the capital's heart and break the last organized defense on the planet, ending {TARGET_FACTION}'s hold on {WORLD}.",
+      "secondary": "Take the seat of power largely intact and stop the enemy from burning the government quarter down. A capital stormed but left in ashes costs {EMPLOYER} the very thing the whole campaign was meant to win.",
+      "bonus": "Capture the enemy leader before he can be slipped out the far side of the city, so the war ends with a clear decision and not just a ruin."
+    },
+    "complications": [
+      {
+        "name": "Nothing Left to Trade",
+        "text": "The defenders have no line behind this one. That makes them the most dangerous enemy of the whole campaign, not because they are strong, but because they will not break, will not withdraw, and will spend the city itself to make you pay. A garrison that knows it is the last one fights to the cellar and counts every hour it lasts as a small victory.",
+        "mechanicalEffect": "The capital defense does not check morale and will not surrender. It fights to destruction across the whole city. Pressure wins ground block by block but never forces a collapse, and the longer the assault takes, the more of the city the defender spends to delay it."
+      },
+      {
+        "name": "The City Never Left",
+        "text": "The people are still here. The core streets are full of the citizens the capital was built for, sheltering in the towers and cellars while the war comes to them. Every weapon fired in the core is fired among them, and the heaviest fighting turns the prize into rubble and the conquest into a massacre.",
+        "mechanicalEffect": "Combat in the inhabited core builds a civilian-casualty score. Heavy or area fire among the towers raises it. Passing a set limit voids the secondary objective, turns a SUCCESS into a COMPROMISED outcome, and costs you standing with the employer, whether or not you take the quarter."
+      },
+      {
+        "name": "The Empty Throne",
+        "text": "You do not know if the enemy leader is still in the quarter. If he is, the seat of power is a last stand, and taking it ends the war. If he is not, it is a shell: manned to look defended, wired to do damage, and kept fighting only to hold your eyes on the front door while the man you wanted slips out the back. The same assault is a triumph or a waste, and you cannot tell which until you are inside.",
+        "mechanicalEffect": "Whether the leader is present is resolved when you enter the government quarter. If he is gone, an escape is already underway from the city's far side. The bonus objective then becomes a race to the escape route instead of a search of the quarter, and a force fully committed to the core assault cannot also cover the far side."
+      },
+      {
+        "name": "The Last Charges",
+        "text": "The defender burned the pass rather than give it up. There is no reason to think he will treat his own capital differently. Charge crews may be set in the government quarter to bring it down at the end, denying {EMPLOYER} the seat even in defeat. It is one last scorched-earth move that costs the campaign its prize on the final day.",
+        "mechanicalEffect": "When you enter the quarter, the charges may already be armed. Taking the seat intact then means reaching and cutting the charges under fire on a short clock. Miss the clock and you take the quarter as a ruin, which voids the secondary objective."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Road to the Quarter",
+        "context": "The seat of power is at the city's heart. There are two ways to reach it, and a third that tries to split the difference. Through the core is fast but blind, and it risks the prize. Around through the outer districts is safe for the city but slow, slow enough to lose the enemy leader. Splitting your force tries for both and may get neither. The defender's whole hope is the time your caution buys him.",
+        "options": [
+          {
+            "title": "Thrust Through the Core",
+            "advantages": [
+              "The fastest route to the government quarter, and the only one with a real chance to catch the enemy leader before he escapes",
+              "Speed denies the defender the time to finish whatever he has wired in the seat of power"
+            ],
+            "disadvantages": [
+              "The inhabited core is close, blind ground where ambush favors the defender, and a thrust can bog down into a block-by-block brawl",
+              "The heaviest fighting in the core is the surest way to burn the prize and push the civilian-casualty score past the limit"
+            ],
+            "consequence": "You give yourself the best shot at ending the war cleanly and the worst odds on the city's survival. Reach the quarter fast and the leader may be yours, but the core may be a ruin behind you.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the assault fights through the inhabited core, taking damage and raising the civilian-casualty risk among the towers",
+              "risk": "A thrust bogged down in the core burns the city without reaching the quarter — the worst of both roads"
+            }
+          },
+          {
+            "title": "Envelop Through the Wards",
+            "advantages": [
+              "Spares the inhabited core and the prize, because the seat of power is approached through the industrial districts where fire does not fall among the people",
+              "Keeps the civilian-casualty score low and the secondary objective alive"
+            ],
+            "disadvantages": [
+              "The long way around gives the defender exactly the time he is fighting for: to finish his charges or slip the leader out the far side",
+              "An envelopment that arrives late may take only a shell: the quarter held, the leader gone"
+            ],
+            "consequence": "You protect the prize and very likely lose the leader. The city stands and the seat is taken whole, but the war may not end here. It may follow the man you let slip away.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "time: the envelopment spends the hours the defender needs, giving up the race for the leader",
+              "risk": "A slow envelopment takes the capital and finds the throne empty — a conquest without a decision"
+            }
+          },
+          {
+            "title": "Split the Thrust",
+            "advantages": [
+              "A fast element drives for the quarter while the main body swings around, trying to take the seat and cover the far-side escape at once",
+              "Hedges against the empty throne: if the leader runs, the fast element may catch him; if he stays, the main body takes the quarter"
+            ],
+            "disadvantages": [
+              "Splitting the company against the last intact enemy force on the planet risks both halves being too light for what they meet",
+              "The fast element in the core faces the ambush and civilian-casualty risks alone, without the main body's weight"
+            ],
+            "consequence": "You try to cover both answers to a question you cannot settle, and you accept that a divided force can be beaten one half at a time. Done right, it ends the war whole. Done wrong, it loses on both roads at once.",
+            "costs": {
+              "cbills": 0,
+              "days": null,
+              "resource": "the company splits its weight between the core thrust and the enveloping main body",
+              "risk": "A defender who masses on either half breaks it before the other can arrive — the split fails on both roads together"
+            }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        {
+          "t": "T+0:00",
+          "event": "The assault enters the capital. The last intact defense stands to across the government quarter and its approaches, and any escape of the leader begins."
+        },
+        {
+          "t": "T+5:00",
+          "event": "The defense fights for the outer districts and the core streets, spending the city to slow the advance. Civilian casualties start to mount in the inhabited blocks."
+        },
+        {
+          "t": "T+12:00",
+          "event": "The leading element reaches the government quarter's edge. Whether the leader is there or gone becomes clear, and any charges in the seat go live."
+        },
+        {
+          "t": "T+18:00",
+          "event": "The fight for the seat of power itself. If the quarter is wired, the charge clock runs, and any far-side escape of the leader reaches its route out of the city."
+        },
+        {
+          "t": "T+24:00",
+          "event": "The capital is taken, or the assault is fought to a standstill in its streets. The war on {WORLD} ends here, as a decision or as a ruin."
+        }
+      ],
+      "hardDeadline": "The government quarter must be taken by T+24:00. Whether it falls as an intact seat of power with the leader in hand, or as a burned shell with the leader gone, depends on the road you choose and the clocks you run inside it. The city is the last ground, and the campaign ends when it falls."
+    },
+    "opforSketch": {
+      "composition": "The last organized defense on the planet: a reinforced 'Mech battalion-equivalent of all weights (35-100 tons) at Regular-to-Veteran quality, dug into the government quarter and the urban approaches, supported by an armor company of street-fighting vehicles (SRM and short-range behavior) and fixed emplacements in the core, plus combat engineers manning any charges in the seat. A light, fast element may be screening a far-side escape of the leader.",
+      "behavior": "Last stand in a fortified city: hold the government quarter to the cellar, trade the urban ground block by block, and spend the capital itself to make the conquest as costly as possible. The defense does not break or surrender and fights to destruction. If the leader is being slipped out, a screening element fights a delaying action on the far side to buy the route out, while the core defense holds the attacker's eye on the front."
+    },
+    "forks": [
+      {
+        "name": "OPERATION FOUNDATION STONE",
+        "outcomeGate": "FULL_SUCCESS",
+        "trigger": "The capital fell with the seat of power intact and the enemy leader in hand. The war on {WORLD} ended as a clean decision, the prize whole and the leadership taken.",
+        "consequence": "The fortress world is taken and held entire: port, coast, interior, and an undamaged capital with its government in {EMPLOYER}'s hands. The campaign closes on the strongest possible footing: a working world won, not a ruin occupied, and a decision that ends the fighting instead of scattering it. The conquest is complete.",
+        "threat": "MEDIUM",
+        "family": "GARRISON_DUTY"
+      },
+      {
+        "name": "OPERATION ASHEN CROWN",
+        "outcomeGate": "SUCCESS",
+        "trigger": "The capital was taken, but only as a ruin or a shell: the seat burned, or the leader slipped out before the trap closed.",
+        "consequence": "{WORLD} is won and the organized defense is broken, but the victory is incomplete: a burned capital to rebuild, or a leader who escaped to fight again elsewhere. The world must now be garrisoned and pacified, and the loose ends of the campaign tied off the long way. The fortress is taken, but the cost is counted later.",
+        "threat": "MEDIUM",
+        "family": "GARRISON_DUTY"
+      },
+      {
+        "name": "OPERATION LAST RESORT",
+        "outcomeGate": "FAILURE",
+        "trigger": "The assault was fought to a standstill in the capital's streets. The last defense held and the attacking company is spent in the core, unable to close on the quarter.",
+        "consequence": "The campaign stalls at the gate of its final prize. The company must break clear of the city it could not take and get its survivors out before the defender's last counterattack traps them among the towers. Better to pull out, refit, and come again than to be destroyed on the doorstep of victory. The campaign bends one final time, and the capital still stands.",
+        "threat": "EXTREME",
+        "family": "EXTRACTION_RAID"
+      }
+    ],
+    "storyElementSeed": "A street in the core after the fighting has passed through it, civilians coming up out of a cellar into the dust to look at a stopped 'Mech, nobody sure yet whether the war is over or just somewhere else now.",
+    "voiceSlots": [
+      "command",
+      "intelligence",
+      "medical",
+      "engineering"
+    ],
+    "registerVariants": {
+      "is-kurita": {
+        "objectives.primary": "Take the seat of power at the capital's heart and break the last defense on {WORLD}, ending the enemy's hold. The Dragon does not hold a world until its throne is the Dragon's, whole or in ash."
+      },
+      "clan": {
+        "objectives.primary": "Take the government quarter and break the final defense on {WORLD}. An enemy who burns his own seat rather than give it up whole is an enemy without honor. Take the prize standing if he leaves you the chance, and take the leader alive if you can."
+      }
+    },
+    "specifics": {
+      "INTEL_AGE_HOURS": {
+        "min": 4,
+        "max": 20,
+        "unit": "hours"
+      },
+      "CORE_DEPTH_KM": {
+        "min": 3,
+        "max": 9,
+        "unit": "km of inhabited core to the quarter"
+      },
+      "DEMOLITION_CLOCK_MIN": {
+        "min": 8,
+        "max": 16,
+        "unit": "minutes on the seat's charge clock"
+      }
+    }
+  }
+]

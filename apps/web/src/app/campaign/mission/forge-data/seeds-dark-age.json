@@ -1,0 +1,1256 @@
+[
+  {
+    "seedId": "DAR-01",
+    "family": "GARRISON_DUTY",
+    "title": "OPERATION GLASS GIANT",
+    "eraFit": ["dark-age"],
+    "factionFit": ["merc"],
+    "register": "merc",
+    "threatRange": ["LOW", "MEDIUM", "HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.3,
+    "localeFit": { "settlement": ["capital"], "regionRole": ["border"], "terrain": ["urban"] },
+    "skeleton": "garrison must spend an irreplaceable deterrent machine's finite working life in public displays to keep a raid from ever landing, while every display wears the machine toward the day the bluff is real and every cancellation feeds the rumor that it already is",
+    "inspiration": "Tirpitz in the Norwegian fjords — fleet-in-being doctrine, 1942-44",
+    "situation": "{WORLD} dropped off the Republic's records in 3135, when the Fortress wall was raised 80 light-years coreward and the Republic garrison pulled out on 11 days' notice. Left behind: a planetary militia of 2 motorized rifle battalions, 1 armor company with 9 Vedette tanks, and the Pillar of {WORLD} — an Atlas AS7-D assault 'Mech, its hull plates dated 2989, that stood as a memorial for 40 years until a cooperative of 22 retired technicians got it running again in 3137. Since its first anniversary parade, raiders have steered clear of the system. In two years they hit four neighboring systems and left {WORLD} alone. This comes from courier news digests 19 to 66 days old, so treat it as likely but not certain. {EMPLOYER} — the planetary assembly's defense committee, acting through {NPC:employer-contact} — believes the Pillar is what keeps raiders away. They have hired your unit to garrison the world and run the deterrent program.\n\nThe problem is that the Atlas is wearing out and cannot be replaced. The technicians certify {PARTS_HOURS} walking-hours of life left in its original hip and gyro assemblies. The one factory that could supply replacement parts has not answered any message in 14 years. Every public parade burns some of that remaining life. But those same parades are what keep raiders away. Now a rumor is spreading, first heard at the spaceport 9 weeks ago from an unknown source. It says the Pillar is a gutted shell with no working parts, hauled around at night on a flatbed truck to fake that it still walks. The committee wants that rumor killed by staging the longest parade in the program's history.\n\nThe key terrain problem is the sluice bridge. The only direct route from the memorial vault to the spaceport plain crosses this bridge, which was rated to carry 95 tons in 3102 and has never been re-inspected since. The Atlas weighs 100 tons — over the limit. So every parade must instead take the long way, the Ring Route: 26 kilometers through the capital's streets, 4 hours at parade pace, every step of it burning the 'Mech's limited service life and on public display the whole way.\n\nOne more item in the digest, and this one is 31 days old and unconfirmed: a tramp freighter captain says someone questioned him in detail about {WORLD}'s parade schedule, in a spaceport bar 2 jumps away. {NPC:intel-source} confirms the man asking paid in raider scrip. Someone is checking whether the deterrent is real. Pirates do not investigate a threat they mean to keep avoiding.",
+    "objectives": {
+      "primary": "Keep the deterrent working. No enemy force lands on {WORLD} during the contract year, and the public keeps believing the Pillar is real.",
+      "secondary": "Add life to the Atlas. Find, build, or re-engineer hip and gyro parts that add at least 100 walking-hours to its service life.",
+      "bonus": "Find out who is behind the off-world questions and the flatbed rumor, with proof the defense committee can act on."
+    },
+    "complications": [
+      {
+        "name": "The Service-Life Ledger",
+        "text": "The Atlas's hip and gyro assemblies have {PARTS_HOURS} walking-hours of life left, and no replacement parts exist within 2 jumps. Only 6 people know the real number. If it leaks to the enemy, they will know exactly how long the deterrent can last and simply wait it out.",
+        "mechanicalEffect": "Every time the Pillar moves, hours come off a tracked service-life pool. Parade pace burns 1 hour for each hour walked. Combat pace burns 3. When the pool hits zero, the Atlas can no longer walk and is just a statue. If the real number leaks, the enemy stops guessing and times its raid for the day the deterrent runs out."
+      },
+      {
+        "name": "The Enemy's Observers",
+        "text": "{SPOTTERS} off-world observers have been seen working the parade route with professional cameras and sensors. Arresting them as spies without proof causes a scandal. But whatever they are allowed to see decides whether raiders think the world is worth attacking.",
+        "mechanicalEffect": "Hostile observers watch every public event. Their verdict on the deterrent sets how likely raids are for the whole campaign year: CREDIBLE, HOLLOW, or UNCERTAIN. The player's choices at the decision points below shape that verdict."
+      },
+      {
+        "name": "Re-Rating the Sluice Bridge",
+        "text": "An engineering survey could re-inspect the sluice bridge and maybe clear it for the Atlas's weight. That would cut the parade route from 26 kilometers to 9. The survey costs 40,000 C-bills and takes 30 days. But it might find the bridge can bear only 90 tons, less than the Atlas's 100, and rule it out for good.",
+        "mechanicalEffect": "Until a survey is paid for and passes, every Pillar move must use the 26 km Ring Route and burns the full service-life cost. If the survey fails, the short route is closed to the Atlas for good, and the bridge's real weight limit becomes public."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "The Anniversary Parade",
+        "context": "The committee wants the longest parade in the program's history, 18 days from now, to kill the flatbed rumor. But every step the Atlas takes burns service life that can never be replaced, so there is pressure to keep it standing still. The enemy's observers will be watching whatever the unit decides to do.",
+        "options": [
+          {
+            "title": "Full Ring Parade",
+            "advantages": ["The strongest answer to the rumor: a full 26-kilometer walk, no flatbed in sight", "Committee relations and militia morale both peak", "The enemy's observers have to report an Atlas that really walks"],
+            "disadvantages": ["Burns 4.5 hours of service life that cannot be refilled", "26 kilometers of close observation lets skilled analysts spot and measure the worn left hip", "One stumble in public would end the whole program in an afternoon"],
+            "consequence": "The rumor dies for a season, and the 'Mech is a season closer to wearing out. The observers report what they saw. If their sensors are good enough, that includes the limp in the left hip around kilometer 19, which tells them the machine is damaged.",
+            "costs": { "cbills": 6000, "days": null, "resource": "Pillar service life: 4.5 walking-hours out of the {PARTS_HOURS} remaining", "risk": "close observation of the worn hip lets the enemy measure how damaged the 'Mech is. That is almost as bad as leaking the real service-life number." }
+          },
+          {
+            "title": "Stationary Live-Fire Display",
+            "advantages": ["A firing demonstration from the memorial concourse: engine running, weapons live. It proves the 'Mech works and burns only 0.5 hours of service life instead of 4.5.", "Controlled ground: observers see only what the unit chooses to stage"],
+            "disadvantages": ["Half the crowd reads an Atlas that only stands still as an Atlas that cannot walk, so the rumor changes shape instead of dying", "Spends live ammunition on a world that cannot resupply it"],
+            "consequence": "The display proves the 'Mech works but not that it can move. The rumor changes from 'gutted shell' to 'frozen knees,' and the committee's next demand will be a walking parade anyway.",
+            "costs": { "cbills": 11000, "days": null, "resource": "Pillar service life: 0.5 walking-hours, plus one reload of AC/20 and LRM ammunition that cannot be replaced locally", "risk": "the display answers the wrong question. The enemy wants to know whether the 'Mech can move, not whether it can shoot." }
+          },
+          {
+            "title": "Cancel the Parade and Plant an Overhaul Cover Story",
+            "advantages": ["Spends zero service life during the most closely watched month of the program", "A planted cover story gives the cancellation a respectable reason: staged photos at the maintenance dock, parts crates, technician interviews", "Buys 34 days of doubt in the enemy's mind, the time for word to travel out and back"],
+            "disadvantages": ["On the planet, cancelling the parade looks like proof the rumor is true, whatever the press release says", "The cover story has to travel by courier to the spaceports where raiders gather. That takes 34 days, and the enemy's observers may file their report first."],
+            "consequence": "The 'Mech is preserved, but the bluff is now on borrowed time. If the cover story arrives first, the observers report UNCERTAIN and raiders stay away. If their report arrives first, {WORLD} has just confirmed it backed down.",
+            "costs": { "cbills": 7500, "days": null, "resource": "34 days to spread the cover story through 3 neighboring spaceports. The deterrent is on borrowed time until the story lands.", "risk": "a race between the planted story and the enemy's report, run at courier speed, with the whole planet as the prize" }
+          }
+        ]
+      },
+      {
+        "name": "What to Do About the Observers",
+        "context": "Counterintelligence has pinned down {SPOTTERS} observers at the overlook above the route junction, equipped with sensors and a transmitter to send their findings off-world. They have broken no law on {WORLD}'s books.",
+        "options": [
+          {
+            "title": "Arrest and Interrogate Them",
+            "advantages": ["The only option that can directly identify who hired the observers", "Removes professional observers from the parade route before the anniversary"],
+            "disadvantages": ["Arresting foreign nationals on mere suspicion hurts the committee's standing in public", "The arrest is itself a tell: whoever hired the observers learns {WORLD} is nervous enough to detain visitors", "Replacement observers arrive within about a month, better prepared"],
+            "consequence": "Maybe some names and a lead to whoever is behind this, and a guarantee that the next observers will be harder to spot. Either way, the committee is left with a diplomatic incident.",
+            "costs": { "cbills": null, "days": 2, "resource": "committee standing: a public arrest with no actual crime to charge", "risk": "interrogation yields only a middleman's name, while the person behind it learns the deterrent's keepers panicked first" }
+          },
+          {
+            "title": "Put On a Show Aimed at Them",
+            "advantages": ["Deterrence aimed straight at the decision-makers: route the parade through the junction at combat pace, then finish with a live-fire demonstration at the river range", "If the performance is flawless, the observers can only report that the deterrent is real"],
+            "disadvantages": ["Combat pace burns service life at triple the normal rate", "A show staged for hostile sensors is also judged by them. One visible fault and they report the 'Mech is damaged."],
+            "consequence": "The observers get the show they came for. Their report will say either CREDIBLE or HOLLOW, with no middle ground, and the 'Mech's service life pays for that certainty either way.",
+            "costs": { "cbills": 19000, "days": null, "resource": "Pillar service life: 11 walking-hours at combat pace, plus live-fire ammunition", "risk": "under professional sensors, a single actuator fault tells the enemy the deterrent is weak and marks the world as a target" }
+          },
+          {
+            "title": "Feed Them the Flatbed Rumor",
+            "advantages": ["Let the observers photograph a staged night move of a draped fake 'Mech, then walk the real Pillar past their lodgings at dawn", "Ruins the enemy's trust in every report they have ever had from {WORLD}, past and future"],
+            "disadvantages": ["16 days of prep, and a fake that has to survive professional scrutiny", "If the fake is spotted, the unit has confirmed it plays tricks. The enemy then escalates to a probe in force, on the logic that only a weak deterrent needs deception."],
+            "consequence": "Done cleanly, the enemy's spying on {WORLD} is worthless for a year: every future rumor arrives already doubted. Done badly, the enemy stops spying and sends a 'Mech lance to test the deterrent in person.",
+            "costs": { "cbills": 8000, "days": 16, "resource": "fabrication-shop time and the counterintelligence team's only deception asset, spent in one go", "risk": "if the fake is caught, doubt turns into provocation. That is the one outcome worse than a report that the deterrent is hollow." }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The ground watch spots an unscheduled ship burning in on a descent. The size fits one Union-class DropShip. It runs no transponder. The alarm goes out by landline." },
+        { "t": "T+0:40", "event": "Militia called up: rifle battalions to their district assembly points, the Vedette tank company to the spaceport plain." },
+        { "t": "T+2:00", "event": "The Pillar starts its cold start in the concourse vault. Walk-out is {COLD_START} hours away. Main-gun ammunition trucks in from the arsenal 11 km away, as the law requires." },
+        { "t": "T+6:00", "event": "Earliest the Pillar can walk out, on the Ring Route, at its best steady pace." },
+        { "t": "T+9:00", "event": "Earliest the enemy could land if the descent holds. The likely landing window runs to T+14:00." },
+        { "t": "T+11:00", "event": "The Pillar reaches the spaceport plain, in plain view from every approach." }
+      ],
+      "hardDeadline": "The deterrent only works if the enemy sees it in time. The Pillar must be standing in plain view on the spaceport plain before the intruder commits to its final descent, which is likely between T+9:00 and T+14:00. Miss that window and deterrence has failed. Then {WORLD}'s defense is a real battle: 2 rifle battalions, 9 Vedette tanks, and one Atlas with {PARTS_HOURS} hours of service life left, fighting alone, with no working HPG to call for help or even report what happened."
+    },
+    "opforSketch": {
+      "composition": "A pirate consortium that scouts a target before committing to a raid. Scouting tier: hired civilian observers (Green, unarmed). Raid tier, committed only if the observers judge {WORLD}'s deterrent to be hollow: 6-10 salvage-grade 'Mechs (Green/Regular), supporting technicals, 1-2 Union-class DropShips. The generator should scale the raid strictly to the observers' verdict: CREDIBLE brings no raid, UNCERTAIN brings a probing lance, HOLLOW brings the full consortium.",
+      "behavior": "Patient and businesslike. They are not raiding {WORLD} yet; they are assessing whether it is worth raiding. Probing elements withdraw the moment they see a credible assault-'Mech and come back to reassess next year. The full consortium, once committed, fights for the spaceport and the grain stores rather than for honor, and lifts off the moment the raid stops being profitable."
+    },
+    "forks": [
+      { "name": "OPERATION DEEP SPARE", "family": "OBJECTIVE_RAID", "outcomeGate": "FULL_SUCCESS", "trigger": "The contract year ends with no enemy landings and the Atlas's service life still above 60 hours.", "consequence": "The committee votes funds for the only permanent fix: an expedition to the silent factory world that last answered a message 14 years ago. The goal is to recover hip and gyro parts from whoever holds it now. The unit escorts the mission to secure the deterrent's future.", "threat": "MEDIUM" },
+      { "name": "OPERATION CALLED BLUFF", "family": "GARRISON_DUTY", "outcomeGate": "FAILURE", "trigger": "The enemy's observers conclude the deterrent is HOLLOW, or the true service-life figure leaks, and a raid force lands.", "consequence": "The deterrent must finally do the one thing it was kept in reserve to avoid: fight. The Pillar fights with whatever service life it has left, in front of the population that believed in it. Every hour it fights now is an hour taken from every year to come.", "threat": "HIGH" },
+      { "name": "OPERATION FLATBED", "family": "SECURITY_DUTY", "outcomeGate": "COMPROMISED", "trigger": "The deception is exposed, or the Atlas's true service-life figure reaches the arms-broker network.", "consequence": "The enemy stops spying and starts bidding. A brokered offer of 2.2 million C-bills for the Atlas arrives by mail packet. It splits the assembly between those who want to sell the bluff and those who want to keep it. The unit now has to guard the Pillar against its own would-be sellers.", "threat": "MEDIUM" }
+    ],
+    "storyElementSeed": "Parade morning. A tech with forty years of grease in his knuckles chalks a number on the inside of the left hip access panel where no crowd will ever see it. The number is smaller than it was in spring.",
+    "voiceSlots": ["engineering", "command", "intelligence", "logistics"],
+    "registerVariants": {},
+    "specifics": {
+      "PARTS_HOURS": { "min": 140, "max": 220, "unit": "walking-hours" },
+      "SPOTTERS": { "min": 2, "max": 4, "unit": "observers" },
+      "COLD_START": { "min": 5, "max": 7, "unit": "hours" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Put On a Show Aimed at Them", "requires": "depot-access", "whenLacking": "reprice", "lackingText": "No munitions depot under contract, so the live-fire ammunition must be bought on the open market. Add 14,000 C-bills. The purchase order itself is visible to anyone watching the spaceport's cargo records." },
+      { "appliesTo": "Feed Them the Flatbed Rumor", "requires": "established-base", "whenLacking": "reprice", "lackingText": "No secure workshop, so the fake 'Mech must be built in a rented civilian shop. Add 6 days. Every extra worker who helps build it is one more person who could leak the secret." }
+    ]
+  },
+  {
+    "seedId": "DAR-02",
+    "family": "GARRISON_DUTY",
+    "title": "OPERATION QUIET ARSENAL",
+    "eraFit": ["dark-age"],
+    "factionFit": ["periphery", "merc"],
+    "register": "periphery/pirate",
+    "threatRange": ["LOW", "MEDIUM", "HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.3,
+    "localeFit": { "settlement": ["agrarian"], "regionRole": ["interior"], "terrain": ["mountain"] },
+    "skeleton": "garrison hired to disarm a world must decide whose law it is enforcing while the confiscated garage arsenal is the only thing that stops the raids and the authority behind the writ may have lapsed with the government that issued it",
+    "inspiration": "Inter-Allied disarmament commissions and the Freikorps weapon caches, Weimar Germany 1920-23",
+    "situation": "{WORLD} was disarmed by Republic decree in 3084. The militia was dissolved, its BattleMechs were bought back, and the planetary arsenal was melted down at the smelters. A public holiday marked the day. But the decree has outlived the government that issued it. The Blackout killed the HPG in 3132. The Fortress wall cut off the Republic in 3135. The prefect who governs {WORLD} now holds a post that no living authority can renew. He governs out of habit from a half-empty tower, and 60 percent of the planetary assembly has stopped attending his sessions. That figure comes from the assembly clerk's attendance roll, 11 days old and reliable.\n\nWhat the decree could not melt down was the machine shops. Over the past 19 months, 14 licensed farm-equipment shops have built {CONVERSIONS} armed IndustrialMech conversions: MiningMechs with an autocannon bolted where the drill used to be, AgroMechs carrying salvaged missile racks. Tax informants say more were built illegally, but no one will put a number on it. Two raids hit the outlying districts in the past 5 months. Both were driven off by these conversions, not by the prefecture's 120-officer police force.\n\n{EMPLOYER} is the prefect's office, acting through {NPC:employer-contact}. It has hired your unit to enforce the 3084 decree: seize the conversions into a central armory under the prefecture's control. The legal authority for this is a Republic law, but the Republic is now unreachable. Asking the nearest working Republic office whether the decree still stands takes one full courier round trip, {COURIER_LOOP} days, and the honest answer is that no one will likely reply at all. So the contract rests on an authority that cannot be confirmed, and everyone on {WORLD} knows it.\n\nThe key terrain problem is the rail defile. The valley holds 9 of the 14 shops and is the heart of the resistance, which calls itself the Implement Combine. One rail line connects the valley to the capital plain through the defile: 7 kilometers of cut granite, 2 sidings, and no parallel road for 60 kilometers. Every confiscation convoy, every parts shipment, and every response to a valley raid has to use that one line. The Combine knows it. Its track-maintenance vehicles now carry welded armor plate and weapon mounts, and {NPC:intel-source} reports the Combine drills derailment and recovery on the second Sunday of every month, practicing to block the line.",
+    "objectives": {
+      "primary": "Settle the arsenal question across all 14 shops without starting a civil war. Do it either by the employer's writ or by a new registration deal the employer co-signs.",
+      "secondary": "Keep every outlying district within 4 hours of an armed response through raid season. No district goes undefended while its machines sit crated on railcars.",
+      "bonus": "Get one solid ruling on the prefect's authority before the contract ends: a reply from a Republic office, an assembly vote to ratify, or a formal abdication."
+    },
+    "complications": [
+      {
+        "name": "The Unconfirmable Decree",
+        "text": "The law being enforced is 52 years old, and the government that made it is unreachable behind the Fortress wall. Every weapon seized by force reopens the same public argument: does the prefect even have the authority to seize it? Here, that argument gets settled at gunpoint.",
+        "mechanicalEffect": "Every enforcement action taken by force rolls against a planetary legitimacy track. That track decides which factions cooperate, which shops comply on their own, and whether the assembly will ratify anything the unit negotiates."
+      },
+      {
+        "name": "Raid Season",
+        "text": "Two raids in 5 months, both driven off by the converted farm 'Mechs. The raiders follow the confiscation news as closely as everyone else does. To them, each newly disarmed district is a target that just lost its guns.",
+        "mechanicalEffect": "Confiscated machines in transit or in armory storage cannot defend anything. Raids hit the district with the least armed coverage at that moment. Each raid that lands on a disarmed district shifts the legitimacy track against the employer."
+      },
+      {
+        "name": "The Combine's Railway",
+        "text": "Nine shops, one rail line, two sidings, and members who have built armed rail vehicles and practice blocking the line every month. Holding the defile is the Combine's main bargaining chip.",
+        "mechanicalEffect": "All rail movement through the defile needs an escort. Combine sabotage can close the line for 2 to 5 days. While it is closed, the valley can only be reached by air or by a 60 km cross-country march."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Whose Law to Enforce",
+        "context": "The contract says to enforce the decree. The decree's authority is the Republic. The Republic has said nothing for years and cannot be reached. The unit has to decide what authority it is actually acting on before the Combine forces the question.",
+        "options": [
+          {
+            "title": "Enforce the Decree as Written",
+            "advantages": ["Follows the contract exactly, with no improvising, so the fee is secure", "Gathers every armed machine under one command and one armory", "The prefect's authority looks real for as long as the unit backs it with force"],
+            "disadvantages": ["Hands all the planet's weapons to the prefect, the man with the weakest claim to legitimacy", "Resistance from the valley is almost certain, and the Combine controls the defile", "Disarms the only force that has actually beaten raiders, right at the start of raid season"],
+            "consequence": "The decree survives another year, enforced at gunpoint. The armory fills up, the districts are left undefended, and the question of who legitimately governs simply passes to whoever takes over next, possibly the raiders.",
+            "costs": { "cbills": 0, "days": null, "resource": "legitimacy: every weapon seized by force is a recruiting argument for the Combine", "risk": "raid season arrives to find the planet's only working defense crated up at Siding 2, with the unit's name on the shipping manifest" }
+          },
+          {
+            "title": "Switch to a Register-and-License Scheme",
+            "advantages": ["Keeps the armed 'Mechs spread out where the raids actually fall. Assessment says 11 of the 14 shops will comply willingly.", "Turns the unit from a confiscator into an inspector, a job one lance can handle instead of a battalion", "The assembly will ratify it, which is the closest thing to law {WORLD} can currently make"],
+            "disadvantages": ["The employer may call this a breach of contract, since his own contractor publicly weakens his authority", "Registering the conversions legally also makes the Combine's weapons and its politics legitimate"],
+            "consequence": "{WORLD} gets a militia under a different name, and the prefect gets a precedent he will not like: his own contractor rewriting planetary law in his name. The fee survives in a renegotiated form. His office may not.",
+            "costs": { "cbills": 35000, "days": 20, "resource": "the employer's standing: his own contractor publicly rewriting his decree", "risk": "a breach-of-contract claim against the unit's bond if the prefect rejects the new scheme after the shops have already complied" }
+          },
+          {
+            "title": "Suspend Enforcement and Verify the Authority",
+            "advantages": ["Hard to attack: freeze enforcement, send a courier to ask the nearest Republic office, and hold things as they are until an answer comes back", "Whatever comes back, whether the decree is renewed, cancelled, or met with silence, is the only real authority anyone will have seen in years"],
+            "disadvantages": ["{COURIER_LOOP} days of paid idleness while the Combine digs in and raid season starts", "The prefect treats the freeze as mutiny dressed up as paperwork", "The most likely answer is silence, which settles nothing and leaves the question even older"],
+            "consequence": "The unit buys a real answer, but at Dark-Age speed. For one full courier round trip, {WORLD}'s arsenal question stays open while everyone watches the mail. The raiders keep to no schedule but their own.",
+            "costs": { "cbills": 9000, "days": null, "resource": "one courier round trip ({COURIER_LOOP} days) of limbo, paid for in raid-season exposure", "risk": "the most likely reply is no reply, leaving the same question even older, with the Combine dug in by then" }
+          }
+        ]
+      },
+      {
+        "name": "Dealing With the Combine",
+        "context": "The Combine has answered in writing: the 9 valley shops will not hand their machines to an official whose authority cannot be proven. The letter is polite. Its armed rail vehicles are not.",
+        "options": [
+          {
+            "title": "Take the Valley by Force",
+            "advantages": ["Breaks the organized resistance before it hardens into a rival government", "Fast: finished before raid season peaks, with the armory gathered up afterward", "The other 5 shops fall in line the same week, guaranteed"],
+            "disadvantages": ["Casualties among the very people who fought off the last raid", "Leaves the defile behind a hostile population, so every future convoy is a fight waiting to happen", "If the Republic later rules the prefect's authority invalid, this was armed robbery backed by rail power"],
+            "consequence": "The valley falls in days and stays fallen only as long as the unit personally garrisons it. {WORLD}'s only experienced fighters are now either its prisoners or its insurgents.",
+            "costs": { "cbills": 22000, "days": 8, "resource": "the defile: taken once by assault, then held forever against the people who live there", "risk": "fighting the planet's only proven raid-defense during raid season, on the strength of an authority nobody can prove" }
+          },
+          {
+            "title": "Blockade the Defile",
+            "advantages": ["Bloodless: control the rail line, ration the parts traffic, and let the pressure build", "The Combine's converted 'Mechs need spare parts the valley cannot make itself", "Leaves every exit open for a negotiated registration deal"],
+            "disadvantages": ["The capital depends on valley grain, so the blockade cuts both ways within {GRAIN_DAYS} days", "A siege that drags on for months favors raid season and rumor"],
+            "consequence": "Supply pressure does the fighting instead of guns. The winner is whichever side runs short last. But the capital's grain countdown is public knowledge, while the Combine's parts stockpile is not.",
+            "costs": { "cbills": null, "days": 30, "resource": "the capital's grain reserve: {GRAIN_DAYS} days at current rations before the blockade starves the unit's own employer", "risk": "a siege that may starve the besieger first, run in full view of raiders watching for undefended districts" }
+          },
+          {
+            "title": "Deputize the Combine",
+            "advantages": ["Maximum raid coverage at no cost: swear the converted 'Mechs in as auxiliary district militia under the unit's command", "The fight disappears, because the Combine wanted official standing, not war", "Registration in everything but name"],
+            "disadvantages": ["Openly reverses the contract: the unit hired to seize the weapons now commands them", "The prefect's office may stop payment and seize the unit's bond", "The 5 shops that complied ask, fairly, why refusing earned the Combine a better deal than obeying did"],
+            "consequence": "{WORLD} gets a real defense force this season, commanded by the unit and owing nothing to the prefect. Whoever holds the contract next inherits a militia the government did not create and cannot disband.",
+            "costs": { "cbills": 40000, "days": null, "resource": "the employer's remaining authority, spent by his own contractor with one signature", "risk": "both the fee and the bond ride on whether the prefect accepts this rather than call it the breach it is" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Raid alarm at the {DISTRICT} grain elevators, called in by landline from the elevator watch. {DISTRICT}'s 4 conversions sit crated on railcars at Siding 2, seized 6 days ago." },
+        { "t": "T+0:20", "event": "The {DISTRICT} police post formally asks for the crated machines to be released to their former crews." },
+        { "t": "T+1:00", "event": "The Combine offers 6 of its own machines, armed, unregistered, 70 minutes out by rail. The condition: a written amnesty signed by the unit commander." },
+        { "t": "T+3:00", "event": "Raiders finish sweeping the perimeter and start loading grain, the same pattern they used in the previous 2 strikes." },
+        { "t": "T+7:00", "event": "Raiders finish looting and lift off. This timing is based on both prior strikes and is likely, not certain." }
+      ],
+      "hardDeadline": "By T+3:00 the unit must do one of three things: release the seized machines back to the crews it took them from, accept the Combine's armed help on the Combine's written terms, or fight the raid alone with whatever it can move through the defile in time. At T+7:00 the grain elevators are empty. If the unit has not chosen by then, the delay itself is the choice, made in public, during raid season, with the legitimacy track recording the result."
+    },
+    "opforSketch": {
+      "composition": "Raider element: a light salvage company — 4-6 'Mech-scale machines of mixed grade (Green/Regular), armed technicals, one Buccaneer-class lifter. Local armed parties: the Combine's {CONVERSIONS}-strong conversion pool (Green crews, home ground, improvised machines with real guns). Generator should treat the Combine as a faction that can appear on either side of any engagement depending on the legitimacy track, never as a fixed OPFOR.",
+      "behavior": "Raiders avoid armed districts and strike undefended gaps within 10-20 days of any publicized confiscation; they fight only long enough to break contact and escape. The Combine fights defensively and only on or near its own valley ground — with one exception: it will always answer a raid alarm anywhere on {WORLD}, because every alarm it answers is proof that its 'Mechs, not the prefect's police, are what keeps the planet safe."
+    },
+    "forks": [
+      { "name": "OPERATION STANDING WRIT", "family": "GARRISON_DUTY", "outcomeGate": "FULL_SUCCESS", "trigger": "The assembly ratifies a registration scheme with the prefect's co-signature, and raid season ends without losing a district.", "consequence": "{WORLD} passes its first law of the post-Republic era and hires the unit to run the inspection scheme it wrote — wardens to train, registries to audit, and 14 shops now building to a legal standard the unit certifies.", "threat": "LOW" },
+      { "name": "OPERATION FREE VALLEY", "family": "GUERRILLA_WARFARE", "outcomeGate": "FAILURE", "trigger": "The valley is taken by force without a ruling on the prefect's authority, or the blockade starves the capital first.", "consequence": "The Combine declares the valley independent, the defile becomes a contested border, and the prefect demands the unit retake it under a contract clause written for riot control. The unit must choose between fighting that campaign and forfeiting its bond.", "threat": "HIGH" },
+      { "name": "OPERATION PAPER THRONE", "family": "RIOT_DUTY", "outcomeGate": "COMPROMISED", "trigger": "The Republic's reply arrives and cancels the prefect's authority — or confirms it after the unit has already rewritten his decree.", "consequence": "Two governments now claim {WORLD}: the prefect by habit, and the assembly by ratification. Pay is frozen pending the answer to a question the contract never anticipated, and both claimants want the unit's garrison presence as their endorsement.", "threat": "MEDIUM" }
+    ],
+    "storyElementSeed": "In a shed that smells of cut barley, a welder grinds the registration number off a mining rig's torso plate, then stamps a new one half a digit at a time. The number format is from a militia dissolved before she was born.",
+    "voiceSlots": ["command", "intelligence", "logistics", "engineering"],
+    "registerVariants": {},
+    "specifics": {
+      "CONVERSIONS": { "min": 19, "max": 27, "unit": "armed conversions" },
+      "COURIER_LOOP": { "min": 76, "max": 110, "unit": "days" },
+      "GRAIN_DAYS": { "min": 35, "max": 48, "unit": "days" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Suspend Enforcement and Verify the Authority", "requires": "treasury-min:9000", "whenLacking": "reprice", "lackingText": "The courier fee must be taken on credit at double rate: 18,000 C-bills charged against the contract's final payment. The captain holds the reply until the balance is paid." },
+      { "appliesTo": "Blockade the Defile", "requires": "established-base", "whenLacking": "reprice", "lackingText": "No fixed rail garrison, so the blockade has to run from leased rail vehicles. Add 6,000 C-bills per month. The lease records can be read by any clerk friendly with the Combine." }
+    ]
+  },
+  {
+    "seedId": "DAR-03",
+    "family": "SECURITY_DUTY",
+    "title": "OPERATION PAPER ANCHOR",
+    "eraFit": ["dark-age"],
+    "factionFit": ["merc"],
+    "register": "merc",
+    "threatRange": ["LOW", "MEDIUM"],
+    "armsMix": "MECH_ONLY",
+    "localeFit": { "settlement": ["port", "frontier"], "regionRole": ["border"], "terrain": ["vacuum"] },
+    "skeleton": "security detail must hold an isolated waystation against a rival claimant whose ownership paperwork cannot be verified faster than the standoff can escalate, while the station's neutrality — the thing both claimants want to own — is destroyed by the first shot either side fires",
+    "inspiration": "post-Soviet reiderstvo — armed corporate registry raids, Russia 1990s; lighthouse-keeper isolation posts",
+    "situation": "The anchorage sits at the {WORLD} zenith jump point. It is a recharge station and a cargo transfer ring. Since the Blackout, it is also the unofficial mail hub for 5 systems. Courier JumpShips swap mailbags, passengers, and bonded cargo here on a circuit nobody planned but everybody now depends on. There are 5 such ships, and {CONVERGENCE_DAY} days until the next quarterly convergence brings all of them to dock within the same 60-hour window. Your unit holds the station's security contract from its legal owner, the Tyrell Combine, a family freight firm two generations old. Their man aboard is {NPC:employer-contact}, the resident stationmaster.\n\nNineteen days ago a chartered Mule freighter docked at the far ring. It carried {MERIDIAN_GUARDS} personnel of the Meridian Custodial Group, a licensed private security company, not a mercenary unit. They came with crowd-control gear, corporate manners, and lawyers' letters. Their cargo is paperwork: deeds claiming the Combine's core-side heirs sold the anchorage 14 months ago. The registry that would prove or disprove the deeds is inside Fortress Republic and cannot be reached by any means that now exist. The stationmaster says the deeds are forged; the Meridian site director says the stationmaster is a holdover squatting on his client's property. Since docking, Meridian has posted 'joint custody' guards at 2 of the station's junctions, adding one guard post at a time, each move too small to fight over.\n\nThe key terrain problem is the Spine. It is an 800-meter central corridor linking the reactor, the sail control, and the dock ring. It is the only pressurized passage that runs the whole length of the station. Three valve junctions along the Spine control power, attitude, and atmosphere for every section. Whoever holds all 3 controls the station. Junction 2 sits 40 meters from the jump-sail capacitor bank. There, station rules forbid any weapon heavier than a needle pistol, and that rule is strict for good reason. A single hit on the capacitor bank would permanently destroy the station's ability to recharge ships, for everyone.\n\nThe deeper problem is commercial. The mail circuit stops here because the anchorage is neutral, legally bonded, and uneventful. The 5 courier captains have told both sides plainly: fire one shot aboard the station, by anyone against anyone, and the circuit moves to a rival hub. That reroute costs them 11 extra days, but they will take it to stay safe. So the station is only worth owning if the fight over it never turns violent. This warning is a joint letter from the captains, 12 days old, and it is reliable.",
+    "objectives": {
+      "primary": "Keep the anchorage running under your employer through the quarterly convergence. No shot may be fired aboard the station.",
+      "secondary": "Settle who owns the station in a way the courier captains accept as fair. That means verification, arbitration, or a signed surrender of the claim.",
+      "bonus": "Get the convergence done on time. All 5 courier ships dock, swap cargo, and leave inside their 60-hour window, with no mail seized or searched by either side."
+    },
+    "complications": [
+      {
+        "name": "The Deeds Cannot Be Verified",
+        "text": "The only registry that can confirm whether Meridian's deeds are genuine is behind the Fortress wall. The nearest working archive that holds Combine records is 2 jumps away — {ARCHIVE_ROUND_TRIP} days for a round trip by hired berth.",
+        "mechanicalEffect": "Until verification finishes, no action can treat the deeds as proven true or false. Say the unit acts early and backs the wrong side. When the truth comes out later, the unit pays the full legal and reputation cost for that mistake."
+      },
+      {
+        "name": "Custody Taken One Step at a Time",
+        "text": "Meridian never escalates by more than a single guard post, junction, or 'safety inspection' at a time. Each step is too small to be worth fighting over — but the steps add up to control of the whole station.",
+        "mechanicalEffect": "Every 4 to 6 days, Meridian takes one small custody action. Each one the unit lets pass moves real control a step toward Meridian. Undoing a step by force is the first act of violence, and both sides are waiting to pin that on the other."
+      },
+      {
+        "name": "The Capacitor No-Fire Rule",
+        "text": "Within 60 meters of the sail capacitor bank, station rules allow no weapon heavier than a needle pistol — a rule both sides obey, because firing anything heavier could destroy the very station they are fighting to own.",
+        "mechanicalEffect": "Inside the Junction 2 zone, combat is limited to needler, melee, and grappling regardless of what either side carries elsewhere. Any energy or ballistic weapon fired in the zone rolls for capacitor damage; a capacitor hit permanently destroys the station's ability to recharge ships."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Settling Who Owns the Station",
+        "context": "The deeds are either genuine or a well-made forgery, and finding out takes {ARCHIVE_ROUND_TRIP} days at best. Meridian's next personnel rotation arrives in 23 days and will double the number of guards they have aboard.",
+        "options": [
+          {
+            "title": "Send to the Archive for a Ruling",
+            "advantages": ["The only path that produces a real answer about the deeds", "A signed hold-in-place deal freezes joint custody while you wait. Meridian signs it, because waiting suits their incoming guards", "The courier captains respect the proper process, and they say so on the circuit"],
+            "disadvantages": ["You share control for {ARCHIVE_ROUND_TRIP} days with a rival who takes ground one step at a time", "The archive may hold no answer at all. Its Combine records stop 6 years ago", "The hold-in-place deal makes every step Meridian has already taken look legal"],
+            "consequence": "An answer comes back in 5 to 8 weeks. It lands into whatever control each side holds by then. You are betting the paperwork arrives before Meridian quietly takes the rest of the station, and that your archive run beats their reinforcement ship.",
+            "costs": { "cbills": 9000, "days": null, "resource": "one courier round trip ({ARCHIVE_ROUND_TRIP} days) of shared custody, with Meridian's guard count doubling on day 23", "risk": "the archive most likely returns no records at all. The question stays open, and you have given up half the station while waiting for that non-answer." }
+          },
+          {
+            "title": "Convene the Captains' Board",
+            "advantages": ["Arbitration by the 5 mail captains: fast — convened and decided within 12 days", "Their verdict carries the only enforcement that matters out here: the circuit will stop wherever the board names as the lawful operator", "Both sides must post good-behavior bonds, which freezes the step-by-step takeover"],
+            "disadvantages": ["Neither side is obligated to accept the verdict — only to lose the circuit if they defy it", "The captains are not neutral: 2 of the 5 carry cargo for Meridian's parent firm on other routes", "A ruling against the employer ends the unit's contract — through an arbitration the unit itself proposed"],
+            "consequence": "The captains who need the station calm decide its fate within 12 days. But you have staked your employer's claim on judges you cannot pick, and two of them have ties to the other side.",
+            "costs": { "cbills": 25000, "days": 12, "resource": "an arbitration bond lodged with the board, forfeit if the unit's side takes any custody step during the proceedings", "risk": "2 of the 5 judges carry the rival's parent-firm cargo elsewhere — a conflict of interest that is known, disclosed, and impossible to remove" }
+          },
+          {
+            "title": "Expel Meridian Before Their Reinforcements Arrive",
+            "advantages": ["Decisive while the numbers still favor the unit: {MERIDIAN_GUARDS} guards now, versus double after day 23", "Crowd-control guards are not boarding troops — a planned, bloodless push back to their DropShip is achievable", "Restores sole control of the station before the convergence window"],
+            "disadvantages": ["If the deeds later prove genuine, the unit has committed armed seizure of a lawful owner's property — piracy, in the only courts left", "A bloodless expulsion requires Meridian to also choose bloodless", "The captains' letter does not care who shoots first; it counts any shot fired at all"],
+            "consequence": "Within 72 hours the station is whole again, or it is a battlefield with a capacitor bank in the middle of it. Either way, you have not settled who owns the deeds. That question still waits for a court to rule on it.",
+            "costs": { "cbills": null, "days": 3, "resource": "the unit's legal standing, staked entirely on deeds it has not seen proven false", "risk": "one weapon fired near Junction 2 and the prize both sides are fighting for ceases to exist" }
+          }
+        ]
+      },
+      {
+        "name": "Where to Position for a Fight",
+        "context": "If it does come to a fight despite everything, the station's layout will decide it, and that layout was fixed years ago by whoever built the Spine. So pick your ground now. Once a fight starts, there is no time left to choose it.",
+        "options": [
+          {
+            "title": "Hold the Dock Ring",
+            "advantages": ["Keeps any fight 700 meters away from the capacitors", "Controls every arrival, departure, and resupply — including Meridian's reinforcement ship", "Defensible with a single platoon; the bulkheads favor whoever is dug in"],
+            "disadvantages": ["Gives up the 3 valve junctions, and with them control of power and atmosphere scheduling", "Whoever controls life support controls the negotiation"],
+            "consequence": "The unit controls the doors and Meridian controls the air. The station settles into a standoff where each side withholds utilities or access from the other — stable right up until the convergence makes the doors worth fighting for.",
+            "costs": { "cbills": null, "days": null, "resource": "the valve junctions: power and atmosphere scheduling handed to the rival's control", "risk": "negotiating from the doorway against an opponent who controls the heat and air" }
+          },
+          {
+            "title": "Hold the Three Junctions",
+            "advantages": ["Whoever holds all 3 junctions runs the station in practice, whatever the deeds say", "Setting the air and power schedule gives you legal, on-the-record pressure you can also reverse"],
+            "disadvantages": ["Junction 2 sits inside the capacitor zone, so the post that matters most is one where your own heavy weapons are banned", "Stretches the detail thin across 800 meters of corridor, with Meridian's people posted between your posts"],
+            "consequence": "You control the station, but the key post is Junction 2, and it can only be held with needle pistols. That is the one place where a single mistake cannot be undone. It is the post you can least afford to lose and the hardest one to defend.",
+            "costs": { "cbills": 4000, "days": null, "resource": "a continuous 3-post garrison across 800 meters — the detail's entire reserve, tied down as fixed posts", "risk": "the decisive position sits inside the zone where one ballistic round destroys the station" }
+          },
+          {
+            "title": "Wage an Administrative Siege",
+            "advantages": ["No change in posture at all: the stationmaster reschedules power, water, and galley priority by the book, section by section, against Meridian's quarters", "Every measure is documented, lawful, and individually trivial — Meridian's own one-step-at-a-time method turned back on them", "To escalate, Meridian has to be the side that visibly breaks station law"],
+            "disadvantages": ["Slow: weeks to have an effect, and the reinforcement ship arrives in the meantime", "Invites the same treatment in return from whichever junctions Meridian holds", "The captains will see a cold, dark guest section at convergence and draw their own conclusions about how 'uneventful' the station still is"],
+            "consequence": "The standoff becomes a slow contest of who can make the other more uncomfortable. Each side cuts the other's comforts strictly by the rulebook and waits for the other to slip. Meanwhile the convergence closes in on a station that is quietly turning miserable.",
+            "costs": { "cbills": 0, "days": 21, "resource": "the station's reputation for uneventful neutrality, spent one cold shower at a time in front of the mail circuit", "risk": "each small measure answered with another — the exact step-by-step escalation the rival started, now run by both sides at once" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Alarm: Meridian detail moves on Spine Junction 2 during the 0400 watch turnover — 12 personnel, restraint kit, a locksmith, and a notary with a camera." },
+        { "t": "T+0:06", "event": "Unit reaction element reaches Junction 1; Meridian locksmith begins work on the Junction 2 valve council lockout." },
+        { "t": "T+0:15", "event": "Stationmaster declares an ordinance violation over the all-station ring; both legal teams begin recording." },
+        { "t": "T+0:40", "event": "Meridian site director offers a 'joint operations protocol' for Junction 2 — signature in exchange for withdrawal, deadline one hour." },
+        { "t": "T+1:40", "event": "Offer lapses. Whoever physically controls Junction 2 at this mark controls atmosphere scheduling for the dock ring through the convergence." }
+      ],
+      "hardDeadline": "The quarterly convergence opens in {CONVERGENCE_DAY} days and runs 60 hours. Whoever runs the anchorage that week runs the mail of 5 systems, and their version of this standoff is the one everyone hears. Fire one shot before or during the convergence, by anyone against anyone, and the circuit moves to the rival hub for good. You do not lose the station by running out of time. You lose it the moment someone opens fire."
+    },
+    "opforSketch": {
+      "composition": "Meridian Custodial Group site element: {MERIDIAN_GUARDS} licensed security personnel (Green as soldiers, Veteran as process-servers) — riot kit, restraint tools, needlers, body cameras, 2 corporate counsel, and a site director with settlement authority. After day 23: double headcount plus a 6-person 'technical assessment team' whose kit manifests do not parse as crowd control. No 'Mechs, no battle armor; the battlefield is corridors, ledgers, and cameras.",
+      "behavior": "Advances one small step at a time by design: never the first to escalate visibly, always taking the next step right after the unit takes one. Films everything, litigates everything, and treats every reaction the unit makes as evidence for a future legal filing. Will back down from any single confrontation rather than open fire — and will be back 6 days later, one step further along."
+    },
+    "forks": [
+      { "name": "OPERATION BONDED RING", "family": "SECURITY_DUTY", "outcomeGate": "FULL_SUCCESS", "trigger": "The convergence finishes on time under your employer's control, and the ownership question is either settled or formally filed for a ruling.", "consequence": "The captains' board makes the anchorage a neutral bonded port, backed by the circuit, with your unit as its standing security on a multi-year retainer. It is the quiet, permanent contract every merc outfit says it wants, until it actually has one.", "threat": "LOW" },
+      { "name": "OPERATION DEAD FILE", "family": "EXTRACTION_RAID", "outcomeGate": "FAILURE", "trigger": "Control of the station is lost, or the deeds win at the captains' board, or the circuit reroutes.", "consequence": "The ousted stationmaster still holds the Combine's original ownership records, the only papers that can reopen the case. Meridian's parent firm has hired fast transport to chase him down. The follow-on is a 2-jump race to the archive, with a clerk's strongbox of records as the prize.", "threat": "MEDIUM" },
+      { "name": "OPERATION JURY RIG", "family": "SECURITY_DUTY", "outcomeGate": "COMPROMISED", "trigger": "Any exchange of fire aboard, or any capacitor damage, no matter who fired.", "consequence": "The circuit reroutes and the station's trade dies within a week. The stranded mail, 5 systems' worth of bonded cargo and letters, sits in a crippled station that every opportunist within 2 jumps has now heard about. Your unit is left guarding a broken waystation full of other people's mail.", "threat": "HIGH" }
+    ],
+    "storyElementSeed": "Third watch in the Spine. A guard from each company stands 40 meters apart under the capacitor warning signs. Neither is allowed a real weapon. They share the silence, and eventually a thermos that neither one will report.",
+    "voiceSlots": ["command", "naval", "intelligence", "logistics"],
+    "registerVariants": {},
+    "specifics": {
+      "MERIDIAN_GUARDS": { "min": 80, "max": 110, "unit": "personnel" },
+      "CONVERGENCE_DAY": { "min": 17, "max": 23, "unit": "days" },
+      "ARCHIVE_ROUND_TRIP": { "min": 38, "max": 52, "unit": "days" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Send to the Archive for a Ruling", "requires": "jumpship", "whenLacking": "reprice", "lackingText": "No owned JumpShip: the query rides a hired berth on a mail captain's schedule — add 9,000 C-bills and up to 14 days, and the captain carrying the question is also a potential juror." },
+      { "appliesTo": "Convene the Captains' Board", "requires": "treasury-min:25000", "whenLacking": "lock", "lackingText": "Option renders locked: ARBITRATION BOND REQUIRED — the board seats nobody who cannot post forfeit money, and a letter of credit drawn on a bank nobody can reach does not count." }
+    ]
+  },
+  {
+    "seedId": "DAR-04",
+    "family": "SECURITY_DUTY",
+    "title": "OPERATION SILENT LOOM",
+    "eraFit": ["dark-age"],
+    "factionFit": ["is-liao"],
+    "register": "is-liao",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.35,
+    "localeFit": { "settlement": ["agrarian", "industrial"], "regionRole": ["interior"], "terrain": ["wetland"] },
+    "skeleton": "security force must keep a covert factory conversion secret for a fixed build time while every measure that protects the site advertises it, and the decisive question is which day the asset stops being worth abandoning",
+    "inspiration": "Weimar Germany's clandestine rearmament — hidden production lines and the black Reichswehr, 1922-33",
+    "situation": "{WORLD}, 3134. The {TARGET_FACTION}'s presence here is a Standing Guard company at the spaceport, 90 kilometers from the valley, led by officers who have not been paid from the capital in 2 years and know it. The {EMPLOYER}'s presence is quieter. Plant 4 of the {WORLD} Agricultural Combine, called 'the Loom' by its workers, is {BUILD_DAYS} days from finishing a secret conversion. It is being retooled from building AgroMech farm 'Mechs to building BattleMechs. The machine tools arrived over 7 months in crates labeled as irrigation equipment. Your unit holds the security contract under a cover name: 'Combine Industrial Safety Division,' reporting to {NPC:employer-contact}, whose own line of authority is something one learns not to ask about.\n\nThis contract is the reverse of a normal garrison job. Here, being discovered is worse than being destroyed. A burned factory is just a tragedy. A discovered weapons plant is a provocation. If the plant surfaces now, the production line is only half-built and cannot defend itself. The Standing Guard would be obligated to act, and the pro-{TARGET_FACTION} Citizens' Committee would hand them the reason to do it. So every normal security measure actually gives the secret away. A new fence signals there is something new to hide. A patrol pattern traces the perimeter for anyone watching. A single sweep of air-search radar would be picked up from the spaceport tower within the hour.\n\nThe key terrain problem is the terrace locks. Plant 4 sits among the valley's terraced fields. The only heavy-truck route in crosses the lock stair: 4 water locks that can be heard from 2 kilometers away and seen from the public highway. Lock-keepers run them, and their families have logged every lock cycle in ledger books for 5 generations. Moving convoys at night does not hide them. It just creates a record of unexplained night traffic. Right now the keepers' ledgers show {LOCK_CYCLES} unexplained night cycles over the past 60 days, and the Citizens' Committee has started asking to borrow those books. This comes from committee minutes 9 days old, and it is reliable.\n\nOne leak is already active. A shipping clerk inside Plant 4 has been photographing truck paperwork. {NPC:intel-source} has identified the clerk, but not who is receiving the photos. They travel by hand, at bicycle speed, to a new drop point every fourth day. On {WORLD} this year, no one can chase a courier that slow and still catch him. But you can outpace him with a single decision made now.",
+    "objectives": {
+      "primary": "Get the Loom to production day without the Standing Guard finding it and without the Citizens' Committee being able to prove it. That means {BUILD_DAYS} days of secrecy, bought without adding visible security.",
+      "secondary": "Contain the paperwork leak. Find who is receiving the photos and shut that channel down, take it over, or feed it lies. Do it without a disappearance the valley would notice.",
+      "bonus": "Reach production day with the lock-keepers' ledgers handled first. Borrow them, copy them, buy them, or make the entries look boring, before the Committee reads them."
+    },
+    "complications": [
+      {
+        "name": "Protecting the Site Exposes It",
+        "text": "Fences, patrols, lights, radar — each one protects the plant and advertises it at the same time. The first rule of this contract is to add as little visible security as possible.",
+        "mechanicalEffect": "Every visible security measure the unit adds raises the site's discovery index. No single event triggers exposure. It is the rising index that decides when the Standing Guard's curiosity becomes a real inspection, and when the Committee's suspicion becomes a printed accusation."
+      },
+      {
+        "name": "The Lock-Keepers' Ledgers",
+        "text": "Five generations of lock-cycle logs, kept in pencil, accurate to the minute, sitting in 4 lockhouses along the public highway. The best surveillance network on {WORLD} was built by the canal authority in 3071 and never meant to be one.",
+        "mechanicalEffect": "Every heavy shipment to Plant 4 creates a permanent ledger entry. Scheduling convoys can shape how the entries look, but it cannot erase them. The ledgers act as a discovery clock that only counts up. It keeps rising unless the unit deals with it at the decision point or through complication play."
+      },
+      {
+        "name": "The Unpaid Garrison",
+        "text": "The Standing Guard company is professional, bored, broke, and 90 kilometers away. No one has given them anything worth dying for in a long time. What they would do if they discovered the plant is genuinely unknown — enforce the law, demand a bribe, sell the secret, or all three one after another.",
+        "mechanicalEffect": "On any discovery event, roll the Standing Guard's reaction (enforce the law / demand a bribe to stay quiet / sell the secret to the Committee / sell it to the {EMPLOYER}), weighted by the player's prior dealings with the garrison. They may act as an enemy, as a seller to be bought, or as both."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Handling the Manifest Leak",
+        "context": "The clerk photographs the truck paperwork, and the photos travel by bicycle to an unknown reader every fourth day. The clerk's supervisor is owed money; the clerk's sister teaches the lock-keepers' children. On a world this small, everyone is connected to everyone.",
+        "options": [
+          {
+            "title": "Arrest the Clerk Quietly",
+            "advantages": ["The leak stops completely on the day of the arrest", "Interrogation may identify who was receiving the photos before they notice the photos have stopped"],
+            "disadvantages": ["On a world this small, a person vanishing is more conspicuous than the plant being discovered — the valley notices a missing neighbor faster than the Committee reads ledgers", "If the recipient is the Standing Guard, the leak suddenly going dark tells them they were spotted — which tells them there was something worth spotting"],
+            "consequence": "Silence, bought at the cost of being noticed. The leak stops and the question of who was reading it goes unanswered — unless the reader, noticing the sudden quiet, decides to come and look in person.",
+            "costs": { "cbills": null, "days": 2, "resource": "the valley's lack of attention: one person's disappearance, noticed by a town that keeps track of everyone", "risk": "shutting down the leak is itself a message to whoever was receiving it" }
+          },
+          {
+            "title": "Feed the Leak False Information",
+            "advantages": ["The leak becomes a tool: rewrite the paperwork to show irrigation equipment, farm tooling, nothing of interest", "The recipient's reactions to specific planted items will eventually reveal who they are", "Nothing visible changes, so the discovery index stays flat"],
+            "disadvantages": ["Requires 30 days of flawless document forgery inside a working plant", "If the clerk or the reader catches the substitution, every previous month of real paperwork is confirmed as having been worth photographing"],
+            "consequence": "The plant runs a second, fake production line on paper, for a reader whose reach you do not know. Done perfectly, it buys the entire build window. Done wrong, a single mismatched serial number confirms the plant's real secret.",
+            "costs": { "cbills": 12000, "days": null, "resource": "30 days of flawless forgery: a documents team working without a single error inside a live plant", "risk": "one detected forgery turns the deception into confirmation, and worse than if the leak had simply been left alone" }
+          },
+          {
+            "title": "Accelerate the Build",
+            "advantages": ["Cut the schedule from {BUILD_DAYS} days toward 100 by adding day shifts — the race simply ends sooner", "Every day cut is a day the leak, the ledgers, and the garrison matter less", "Once the line passes the point where it can defend itself, discovery stops being fatal and becomes merely a diplomatic problem"],
+            "disadvantages": ["Day shifts triple the workforce's exposure: more new hires, more traffic, more lock cycles in the ledgers", "Discovery becomes near-certain around day 120 of the compressed schedule — the bet is that the line can defend itself before then"],
+            "consequence": "You spend secrecy to buy speed, and once the line is finished, it cannot be undone. The question is no longer whether {WORLD} finds out. It is what day they find out, and what is standing in Bay 3, ready to fight, that morning.",
+            "costs": { "cbills": 60000, "days": null, "resource": "the secret itself, spent gradually: the discovery index rises every week of the compressed schedule", "risk": "the projection puts discovery around day 120 against the line being defensible around day 100 — a 20-day safety margin built entirely from estimates" }
+          }
+        ]
+      },
+      {
+        "name": "Handling the Inspection Notice",
+        "context": "The Standing Guard announces a routine industrial-safety inspection of Combine facilities {INSPECTION_NOTICE} days from now — Plant 4 is fourth on the list. The letter calls it routine. By now, nobody on either side believes anything is routine.",
+        "options": [
+          {
+            "title": "Disguise the Plant",
+            "advantages": ["A 40-day partial teardown restores Buildings 1-3 to convincing farm-'Mech production; the new weapons line is compressed into Building 4 behind a certified hazardous-materials wall", "Passes a genuine routine inspection completely"],
+            "disadvantages": ["Costs 40 days off the build schedule, spent whether or not the inspection was ever a real threat", "If the inspectors were tipped off — by the leak's reader or by the ledgers — the disguise work is exactly what they will photograph as evidence"],
+            "consequence": "The weapons line stays hidden, protected by the delay itself. But the schedule now slips into the season when the Committee starts reading the ledgers. And the question of who tipped off the inspectors stays open, sitting behind a freshly painted hazard wall.",
+            "costs": { "cbills": 30000, "days": 40, "resource": "the build schedule: 40 days spent on disguise instead of production", "risk": "the disguise defeats a routine inspection but is incriminating evidence under a tipped-off one — and the unit cannot tell which kind is coming" }
+          },
+          {
+            "title": "Bribe the Inspector",
+            "advantages": ["The garrison is 2 years unpaid; the prefecture official who writes the inspection findings has a price {NPC:intel-source} can estimate to within 10 percent", "The inspection happens, the report says irrigation plant, and the build never stops"],
+            "disadvantages": ["A bribed officer stays bribed only until someone offers more — and the bribe creates the first hard evidence of {EMPLOYER} involvement, where none existed before", "It reverses the whole point of deniability: the cover story now comes with a paper trail"],
+            "consequence": "The cheapest option in days and the most expensive in the long run. The Loom's secret now has a second owner in a {TARGET_FACTION} uniform, and the danger from him grows the more nervous he gets.",
+            "costs": { "cbills": 45000, "days": 0, "resource": "deniability: the operation's first hard evidence, held by a man in the enemy's uniform", "risk": "every bribed official is a future blackmail or auction risk — his price could be estimated precisely because his loyalty is for sale" }
+          },
+          {
+            "title": "Stage a Hazard Lockout",
+            "advantages": ["A staged chemical-release incident seals Building 4 under the Combine's own certified hazard rules — the inspectors legally cannot enter", "Buildings 1-3 inspect clean and genuinely; the inspection passes on its own paperwork"],
+            "disadvantages": ["Hazard rules require a follow-up safety review in 60 days — so the inspection problem is not cancelled, just postponed", "A second hazard lockout timed to that follow-up review will not look like an accident to anyone"],
+            "consequence": "The inspection is defeated using its own rulebook, but the price is a new and harder deadline. The Loom must be finished, defensible, or emptied within 60 days — because the next inspection arrives with the legal right to enter.",
+            "costs": { "cbills": 8000, "days": null, "resource": "the hazard rules: a one-time legal shield, now spent, with a mandatory 60-day return inspection attached", "risk": "the staged accident must also convince the Combine's own safety office — people who know exactly what the plant really builds" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Discovery alarm: Standing Guard duty officer receives actionable evidence of the Plant 4 line — source per discovery event (ledgers, leak, inspection, or emission)." },
+        { "t": "T+1:00", "event": "Garrison commander gathers his officers and decides how to respond: enforce the law, extort a bribe, or sell the secret. Landline traffic from the DropPort spikes." },
+        { "t": "T+4:00", "event": "Citizens' Committee learns independently or by garrison leak; printing presses in the valley town begin a broadsheet run." },
+        { "t": "T+12:00", "event": "If the garrison chose to enforce, a Standing Guard column forms for the 90 km road march: 8 to 11 vehicles and 1 'Mech lance." },
+        { "t": "T+18:00", "event": "Column reaches the lock stair: single-file crossing, 90 minutes, the only approach wide enough for armor." }
+      ],
+      "hardDeadline": "The line becomes defensible on day {DEFENSE_DAY} of the build. Before that day, the right answer to discovery is to destroy your own work and evacuate the 60 technicians. After that day, the line can build 'Mechs to defend itself. So every decision here is a bet on which side of day {DEFENSE_DAY} the alarm sounds. When it does sound, it starts an 18-hour clock, and that clock ends at a lock stair a single lance can hold or lose."
+    },
+    "opforSketch": {
+      "composition": "Standing Guard company: 1 BattleMech lance (aging {TARGET_FACTION} models, Regular), 2 motorized infantry platoons, 8-11 light vehicles — professional, unpaid, and unpredictable in allegiance. Citizens' Committee: no combat value; its weapon is publication and the garrison's obligation to respond. Generator should treat the garrison's posture roll as the seed's true OPFOR variable: the same column arrives as law, as extortion, or as a rival bidder.",
+      "behavior": "The Standing Guard fights like a garrison defending its own reason to exist: by the book, tied to the roads, and committed only when it has a documented justification. If its reaction is to extort or to sell, contact opens as a negotiation conducted from firing positions rather than a battle. The Committee escalates through publication: every accusation it prints forces someone to act, usually someone other than the Committee."
+    },
+    "forks": [
+      { "name": "OPERATION FIRST THREAD", "family": "SECURITY_DUTY", "outcomeGate": "FULL_SUCCESS", "trigger": "The Loom reaches production day undiscovered, or after it passes day {DEFENSE_DAY} and can defend itself.", "consequence": "The first batch of finished 'Mechs must move. 6 machines, by night, down the same lock stair the ledgers record, to a DropShip whose manifest says farm equipment. It is the same secrecy problem as before, but now each machine weighs 75 tons more, and the {TARGET_FACTION} will not move the deadline.", "threat": "MEDIUM" },
+      { "name": "OPERATION TORN CLOTH", "family": "EXTRACTION_RAID", "outcomeGate": "FAILURE", "trigger": "The plant is discovered before day {DEFENSE_DAY}, with the Standing Guard choosing to enforce the law.", "consequence": "The unit must destroy its own half-built line and get 60 technicians off {WORLD}, through a spaceport the Standing Guard controls. Each of those technicians could rebuild the line somewhere else, so both the {TARGET_FACTION} remnant and the Committee now want to identify every one of them.", "threat": "HIGH" },
+      { "name": "OPERATION EVEN HAND", "family": "RIOT_DUTY", "outcomeGate": "PARTIAL", "trigger": "The Committee publishes its analysis of the ledgers without the garrison acting — an accusation with no proof behind it.", "consequence": "The valley town splits over what is really in Building 4, with crowds marching on the Combine gates and the Standing Guard refusing to take either side. The unit has to hold the plant's perimeter against crowds it cannot fire on, under a cover name that says Industrial Safety.", "threat": "MEDIUM" }
+    ],
+    "storyElementSeed": "Dusk at the third lock. The keeper's daughter does her arithmetic homework against the ledger stand while the gates fill, and writes the truck count in the margin the way her father taught her: without being asked, without looking up.",
+    "voiceSlots": ["intelligence", "command", "engineering", "logistics"],
+    "registerVariants": {
+      "is-liao": { "objectives.primary": "The Loom must finish its work unseen. That means {BUILD_DAYS} days of perfect secrecy. The Chancellor's gift to {WORLD} is delivered whole, or it is not delivered at all. A half-built plant that is discovered does not count as partial success. It is a failure, and worse than never having begun." }
+    },
+    "specifics": {
+      "BUILD_DAYS": { "min": 110, "max": 160, "unit": "days" },
+      "LOCK_CYCLES": { "min": 6, "max": 9, "unit": "night cycles logged" },
+      "INSPECTION_NOTICE": { "min": 12, "max": 16, "unit": "days" },
+      "DEFENSE_DAY": { "min": 85, "max": 105, "unit": "build-day" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Accelerate the Build", "requires": "treasury-min:60000", "whenLacking": "lock", "lackingText": "Option locked: COMBINE CO-FUNDING REQUIRED. Triple shifts must be paid in cash that the cover-name payroll cannot account for. Without that cash reserve, the acceleration is just a memo and cannot happen." },
+      { "appliesTo": "Feed the Leak False Information", "requires": "established-base", "whenLacking": "reprice", "lackingText": "No secure documents team: the forgery work has to run out of a rented print shop in the valley town — add 4,000 C-bills per month, and one more civilian landlord who must never start to wonder what the unit is doing." }
+    ]
+  },
+  {
+    "seedId": "DAR-05",
+    "family": "PIRATE_HUNTING",
+    "title": "OPERATION HEARTH WOLF",
+    "eraFit": ["dark-age"],
+    "factionFit": ["periphery", "merc"],
+    "register": "periphery/pirate",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.4,
+    "localeFit": { "settlement": ["agrarian", "frontier"], "regionRole": ["interior"] },
+    "skeleton": "hunter must carve a raider band out of the population that raised it, where every settlement's testimony is a weapon in its feud with the next settlement over, and checking any lead in person costs the days that let the band dissolve back into the crowd",
+    "inspiration": "sub-Roman Britain after the legions — endemic warbands living inside the communities they tax, 5th century",
+    "situation": "The {WORLD} steppe never had an HPG worth missing, but the Blackout hurt it anyway. When the trading networks died in 3134, the off-world grain buyers stopped coming and the cash economy left with them. What filled the gap is what the Landholders' Moot calls banditry. Half the steppe just calls it normal life. The band uses no name for itself. The Moot's contract calls them the Hearth Wolves. Collected testimony puts the band at {BAND_FIGHTERS} fighters, 5-7 armed vehicles, and 1 working BattleMech: a Rifleman with a dead left arm. Eleven witnesses across 4 raids confirm the Rifleman, so treat that as solid. The rest of the counts are 20 to 90 days old and shakier, so treat them as a rough guide, not a hard number.\n\nThe Wolves never leave the planet, because they have nowhere to go and no reason to. They live inside the steppe's 9 settlements as sons, cousins, and in-laws. They raid overland between harvests, and the stolen goods flow back home as favors: a grain store refilled here, a water pump fixed there, a wedding paid for. Every settlement swears the Wolves are based in the next settlement over. But each such accusation is also a weapon in some old water-rights feud, grazing dispute, or marriage grudge. Your employer is the Moot itself: {EMPLOYER}, working through {NPC:employer-contact}. It hired outsiders because no settlement will hunt its own relatives, and no two settlements will hunt together.\n\nThe core problem is that the truth costs time. Tips are everywhere and free, but every one has to be checked in person. That runs {LEAD_CHECK_DAYS} days per lead across the steppe's distances. Meanwhile the band needs only about 26 hours of warning to melt back into harvest crews and family homes. So your intelligence budget does not buy facts. It buys claims, sold by people who each have 60 years of reasons to lie.\n\nThe key terrain problem is the shelterbelts. These are 200 kilometers of planted windbreak lines, 12 trees deep, that split the steppe into narrow corridors. All vehicle traffic is funneled along them, and any movement throws up a dust plume you can see from 15 kilometers off. The belts also hide anything that holds still inside them. The Wolves grew up reading this ground. You have {CONTRACT_DAYS} days under contract to learn it, and the Moot pays in grain futures, not C-bills. That deadline will not move.",
+    "objectives": {
+      "primary": "Stop the organized raiding on the {WORLD} steppe. Break up, capture, or kill the band's fighting core, and take or destroy its Rifleman.",
+      "secondary": "Leave the 9 settlements still bound into one community. Do not let your own tip-buying push any feud into open fighting.",
+      "bonus": "Map out who fed and sheltered the band, and where the stolen goods went. Hand the Moot a record it can use to settle debts by ruling instead of revenge."
+    },
+    "complications": [
+      {
+        "name": "Testimony Is a Weapon",
+        "text": "Every tip is shaped by the informer's own feuds. When you gather intelligence, the settlements use you to hit their rivals. There is no way around it.",
+        "mechanicalEffect": "Every lead, whether bought or offered for free, carries a hidden feud-bias rating. If you act on a lead you have not checked, you risk hitting a feud rival instead of the band. Each time that happens, it hands that settlement a fresh grievance and makes all later tips less trustworthy."
+      },
+      {
+        "name": "The 26-Hour Vanishing Act",
+        "text": "Given about 26 hours of warning, the whole band can turn back into ordinary farmhands. Weapons go under the grain, vehicles into barns, and the Rifleman into one of an estimated 3 prepared hiding spots that nobody has found.",
+        "mechanicalEffect": "Any operation the band learns about more than 26 hours ahead of time finds only civilians when it arrives. After a fight that fails to pin them, the chance of catching the band falls to zero by T+26:00. You can find the Rifleman's hiding spots only through complication play or by seizing the band's favor ledger."
+      },
+      {
+        "name": "Paid in Grain Futures",
+        "text": "The Moot pays in grain futures that can only be cashed in at harvest. Every day of operations consumes real supplies bought with that paper — and the raids themselves keep driving down what the paper is worth.",
+        "mechanicalEffect": "The unit operates on a {CONTRACT_DAYS}-day clock with a fixed supply budget. Each major raid the band pulls off reduces the value of the unit's pay by 5-8 percent. Running out of either days or supplies ends the contract, no matter how much progress has been made."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "How to Hunt People Who Live Among Their Own",
+        "context": "The band cannot be found just by searching. It can only be forced to hold still, lured into the open, or cut off from the supplies that let it stay hidden. Three methods, one budget, and the whole steppe watching to see which one the outsiders choose.",
+        "options": [
+          {
+            "title": "Run a Vehicle Census",
+            "advantages": ["Registering every vehicle and fuel store, settlement by settlement, chokes off the band's mobility at its source", "Methodical, defensible, and produces the first honest baseline data anyone has ever had on the steppe", "Relies on no bought testimony at all"],
+            "disadvantages": ["Treats the entire population as suspects, in their own homes, for 40 days", "The band's vehicles get registered too — by their cousins, as farm equipment, with all the papers in order", "Slow enough that the Wolves can simply stop raiding and wait out the contract"],
+            "consequence": "The steppe gets mapped, and the steppe remembers being mapped. The band either loses its supply lines or simply waits out the census. Either way, you leave behind one more grievance for the next generation to carry.",
+            "costs": { "cbills": null, "days": 40, "resource": "the population's patience: 40 days of registration teams in 9 settlements that did not ask for them", "risk": "a band that has paused looks exactly like a band that has been beaten — until the contract ends and the raids start again" }
+          },
+          {
+            "title": "Buy the Band's Quartermaster",
+            "advantages": ["The Moot's fixer has named the band's supply handler and quoted a price. Turning him buys the favor ledger, the fuel caches, and probably the Rifleman's hiding spots", "One deal replaces a whole season of fieldwork", "The ledger turns the bonus objective from a hope into a written list"],
+            "disadvantages": ["The price includes written amnesty for the handler's entire home settlement, so the other 8 will call the contract bought and the Moot biased", "Everything he sells is only his side of the story. Checking any single item still costs {LEAD_CHECK_DAYS} days", "If he is playing both sides, you have just paid for the band's counterintelligence"],
+            "consequence": "The hunt turns into a business deal, and the deal turns into politics. The ledger is either the key to the whole steppe or a very expensive way to arm one settlement against the rest. You cannot tell which until you have checked each entry in person.",
+            "costs": { "cbills": 30000, "days": null, "resource": "written amnesty for one settlement, paid for with the trust of the other eight", "risk": "you would be trusting one source for everything. Every entry still needs {LEAD_CHECK_DAYS} days to check, and he knows which ones you will never have time for" }
+          },
+          {
+            "title": "Run a Bait Convoy",
+            "advantages": ["A convoy that looks rich, loaded with salt, medicine, and machine parts, run through the shelterbelt corridors, is the one target the band's favor-trading economy cannot ignore", "If they take the bait, the band is caught in the open for the first time in 3 years", "Resolved in an afternoon instead of over a season"],
+            "disadvantages": ["The band picks which fights to take and may simply let the convoy pass — only 3 runs are budgeted before the supply situation ends the experiment", "Convincing bait has to be real cargo, so losing the fight means handing the enemy its best haul in years", "The shelterbelts are ambush country for both sides; the trap can be sprung on the unit instead"],
+            "consequence": "The whole contract narrows to one engagement in a corridor between windbreaks, on ground both sides chose — with the unit's own supplies riding in the trucks it is using as bait.",
+            "costs": { "cbills": 18000, "days": 12, "resource": "the bait cargo: real salt, real medicine, genuinely lost if the fight is lost", "risk": "3 budgeted runs against a band that has studied every outsider's habits since the grain buyers stopped coming" }
+          }
+        ]
+      },
+      {
+        "name": "The Stolen Grain in the Granaries",
+        "context": "A verified lead pays off: a third of last season's stolen grain is sitting in the communal granaries of one settlement — handed out as favors, partly eaten, partly owed against. That settlement's children are being fed on the proceeds of the raid that emptied its rival's grain stores.",
+        "options": [
+          {
+            "title": "Confiscate It and Return It",
+            "advantages": ["The law as written: stolen goods back to their owners, the Moot's authority enforced in broad daylight", "Proves to the victim settlements that the contract actually serves them", "Materially weakens the band's standing in its best client settlement"],
+            "disadvantages": ["Takes the winter food supply away from one settlement's children to return it to a rival's stores", "Turns the band's supporters into the band's recruits within a single season", "The convoy out runs 60 kilometers of shelterbelt corridor on a schedule everyone knows"],
+            "consequence": "Justice arrives by truck and leaves a settlement hungry. The Moot's law is upheld, the band gains a settlement full of new recruits, and the return convoy is the most exposed target the unit has ever put on a schedule.",
+            "costs": { "cbills": 5000, "days": 6, "resource": "the settlement's winter food supply — and with it, the best listening post the unit had into the band's favor network", "risk": "a 60 km return convoy through ambush corridors, on a published schedule, carrying the band's single strongest recruiting argument" }
+          },
+          {
+            "title": "Record It and Leave It",
+            "advantages": ["The granary becomes a known, watched site on your map. It builds the picture of the band's favor network instead of a list of payback strikes", "No settlement starves, and you hand the band no recruiting argument", "Costs nothing to carry out"],
+            "disadvantages": ["The employer's contract says to recover stolen goods; the victim settlements will eventually learn the unit found their grain and left it there", "Once this tolerance is documented, it becomes policy: every other client settlement learns that the worst that happens if you get caught is a note in a ledger"],
+            "consequence": "The unit chooses intelligence over returning the grain. The map of the band's favor network grows more complete while the Moot's patience and the victims' trust both run down toward the contract's end date — a race the unit started on purpose.",
+            "costs": { "cbills": 0, "days": 0, "resource": "the victim settlements' trust, spent quietly until the day they learn what you found and ignored", "risk": "you are choosing to fail one duty on purpose. If the band is not broken before word gets out, that choice is how people will judge the whole contract" }
+          },
+          {
+            "title": "Seal It Under Unit Guard",
+            "advantages": ["The grain stays where the children are, locked under the unit's seal pending a Moot ruling — neither seized back nor abandoned", "Forces the Moot to actually build the dispute-resolution process the bonus objective imagines", "Makes the unit look like an honest broker to all 9 settlements at once — the first party ever to pull that off"],
+            "disadvantages": ["The unit takes over the band's own job. The seal is a promise you now have to guard, and the band's whole standing rests on being the steppe's only protector", "The Moot only meets four times a year, so a ruling can take a season, while your contract runs on days"],
+            "consequence": "The unit steps into the band's role and beats it at its own game: protection and fairness, with the unit's seal on the granary door. This is the boldest move available. It also makes the band's leaders personal enemies, because it takes away the one thing they truly have, their standing as the steppe's protector.",
+            "costs": { "cbills": 4000, "days": null, "resource": "a permanent guard detail on a granary 60 km from anywhere, for the rest of the contract", "risk": "you are taking away the band's whole reason to exist. It will strike back at the seal, and it will do it in front of everyone" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "The alarm goes off. The band makes contact: it takes the bait convoy, tests the granary seal, or ambushes a census team. An outrider reports the first shots." },
+        { "t": "T+0:30", "event": "The band's screening vehicles show up in the shelterbelt corridors on both flanks. They keep their dust down and move well. The Rifleman is not in the fight yet." },
+        { "t": "T+2:00", "event": "The band decides whether to stay and fight. They press the attack only if the Rifleman joins in. If it stays hidden, this was just a probe." },
+        { "t": "T+8:00", "event": "Whether they are winning or losing, the band starts breaking off. Its groups peel away down 3 separate corridors." },
+        { "t": "T+26:00", "event": "Dissolution complete: weapons cached, vehicles barned, fighters in harvest crews. Pursuit value zero." }
+      ],
+      "hardDeadline": "Any single fight is over, for all practical purposes, by T+26:00. After that the band is just 9 settlements of civilians again, and every door you knock on only feeds someone's feud. The bigger clock is your pay. You have {CONTRACT_DAYS} days of grain-future funding, and it loses 5-8 percent of its value with every raid the band pulls off. The Wolves do not have to beat you. They only have to stay hidden until your money runs out."
+    },
+    "opforSketch": {
+      "composition": "Endemic raider band: {BAND_FIGHTERS} fighters in squad-scale kin groups (Regular on home ground, Green in any stand-up fight), 5-7 armed agricultural vehicles and technicals, 1 Rifleman with a dead left arm (Veteran pilot, the band's founder). No air, no resupply line — the steppe is the resupply line. Generator should weight engagements toward harassment, screening, and dispersal; the band masses only when the Rifleman commits, which is rare and means the stake is existential to them.",
+      "behavior": "Refuses battle by default; fights only on shelterbelt ground of its own choosing, and only to protect its favor network or the Rifleman. It prefers to tax rather than destroy, to shame rather than kill, and to scatter on its 26-hour clock rather than take casualties. Its counterintelligence is the steppe itself: every settlement contains its informers, including the settlements it raids."
+    },
+    "forks": [
+      { "name": "OPERATION QUIET HARVEST", "family": "GARRISON_DUTY", "outcomeGate": "FULL_SUCCESS", "trigger": "The band's core is broken or has surrendered, with the Rifleman accounted for.", "consequence": "The Moot asks the unit to stand guarantee over the season of amnesty and payback that follows. You garrison the steppe as a neutral force for one harvest, while the debts from the favor network are settled by ruling. It is the rare contract where no one shoots, unless someone does.", "threat": "LOW" },
+      { "name": "OPERATION SECOND WOLF", "family": "PIRATE_HUNTING", "outcomeGate": "FAILURE", "trigger": "The contract expires with the band still intact, or a mistaken strike on a feud rival destroys the Moot's authority.", "consequence": "The grievances your hunt created unite the steppe's young men faster than the Wolves ever could. The new band is twice the size, and off-world fences now arrive by tramp freighter to buy its loot. The Moot's next contract pays even less, because the harvest it is drawn against is worth less than before.", "threat": "HIGH" },
+      { "name": "OPERATION DEN DIGGING", "family": "OBJECTIVE_RAID", "outcomeGate": "PARTIAL", "trigger": "The band's fighting core is broken but the Rifleman and the leadership escape the steppe.", "consequence": "The band's founder flees into the karst country beyond the shelterbelts, real badlands with 1 prepared fallback camp marked in the quartermaster's ledger. The passes close with the first snows in 30-40 days. The follow-on is a raid on that fixed camp, racing a weather deadline.", "threat": "MEDIUM" }
+    ],
+    "storyElementSeed": "A granary office, evening. The unit's quartermaster counts sacks against a ledger while a settlement elder watches, and both of them pretend not to recognize the third handwriting in the margins — the band keeps better books than the Moot.",
+    "voiceSlots": ["intelligence", "logistics", "command"],
+    "registerVariants": {},
+    "specifics": {
+      "BAND_FIGHTERS": { "min": 30, "max": 55, "unit": "fighters" },
+      "LEAD_CHECK_DAYS": { "min": 3, "max": 5, "unit": "days per lead verification" },
+      "CONTRACT_DAYS": { "min": 90, "max": 120, "unit": "days of retainer" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Run a Bait Convoy", "requires": "depot-access", "whenLacking": "reprice", "lackingText": "You have no depot under contract, so the bait cargo has to be bought at the steppe's scarcity prices. Add 11,000 C-bills. Worse, the buying itself tells every fixer on the steppe that a rich convoy is coming." },
+      { "appliesTo": "Buy the Band's Quartermaster", "requires": "treasury-min:30000", "whenLacking": "lock", "lackingText": "Option locked: you need hard currency. The handler will not sell for grain futures, for the same reason no one else on the steppe will take them." }
+    ]
+  },
+  {
+    "seedId": "DAR-06",
+    "family": "CADRE_DUTY",
+    "title": "OPERATION TWO BANNERS",
+    "eraFit": ["dark-age"],
+    "factionFit": ["is-kurita", "merc"],
+    "register": "is-kurita",
+    "threatRange": ["LOW", "MEDIUM"],
+    "armsMix": "MECH_ONLY",
+    "localeFit": { "settlement": ["agrarian"], "regionRole": ["contested"], "terrain": ["desert"] },
+    "skeleton": "instructor must run one school for two rival student formations who will jointly inherit the planet's only arsenal, while every grade, crew assignment, and range day is read by both sponsors as a ruling on who owns the world",
+    "inspiration": "Whampoa Military Academy — Nationalist and Communist cadets under one commandant, 1924-26",
+    "situation": "{WORLD}, 3136. The Republic's local government here collapsed quietly, and what replaced it is a simple, dangerous problem of numbers. The {EMPLOYER}'s civil-affairs mission sponsors a Self-Defense Cooperative of 130 trainees, paid in {EMPLOYER} scrip. Its liaison officer's loyalty to the {EMPLOYER} is the planet's worst-kept secret. The old Republic-chartered Militia Association still musters 110. The planetary assembly has to defend a world both groups claim to love. It has signed one training contract, yours, with three signatures on it: the Cooperative, the Association, and the assembly itself. One school. One curriculum. Two banners over the parade ground, by agreement, at exactly equal height.\n\nThe real problem is the inheritance. {WORLD}'s entire arsenal is just {MACHINES} working machines in the school's motor pool: 3 BattleMechs (a Panther, a Spider, and a Blackjack) and 5 armed IndustrialMech conversions. Under Article 9 of the contract, the whole arsenal passes at graduation to 'the certified planetary defense formation,' meaning one single formation. The people who wrote the contract could not agree which group that would be, so they funded the school and put off the fight. As a result, every grade, crew slot, and demerit your instructors hand out is read two ways: as training, and as a ruling on who will own the planet. Both sponsors keep score sheets. You have seen the Cooperative's, which is only 6 days old, so treat it as current. Assume the Association keeps one too.\n\nThe key terrain problem is the firing range. The only live-fire ground on {WORLD} is a stretch of salt flats. You share it with {WORLD}'s civilian harvest crews on a fixed schedule the assembly will not change, because the salt harvest is what pays for the school. The whole course allows only 12 live-fire days, and weather has already cancelled 3. Deciding which platoons get the remaining {RANGE_DAYS} is itself a ruling on who matters more, and everyone is keeping count.\n\nThere is no higher authority to appeal to. The {EMPLOYER}'s district command answers in one courier round trip at best. The Republic never answers at all, and the assembly answers only in committee. So whatever standards this school sets, the only thing that will hold them up on {WORLD} is people's habit of respecting them. You have {SYLLABUS_DAYS} days to build that habit in 240 people who are already, quietly, two opposing armies.",
+    "objectives": {
+      "primary": "Graduate one certified formation under Article 9. It can be integrated, run in parallel, or built some other way. Just make sure no one seizes the arsenal by force before, during, or at the ceremony.",
+      "secondary": "Certify crews for all {MACHINES} machines to a trained standard or better. Leave the motor pool with upkeep habits it can keep going after you are gone.",
+      "bonus": "Get all three signers to agree, in writing, on what Article 9 actually means before graduation day. This is the very question the drafters ducked."
+    },
+    "complications": [
+      {
+        "name": "The Score Sheets",
+        "text": "Both sponsors track every grade, crew slot, and demerit by which faction it lands on. A failed inspection looks like deliberate sabotage. An honest commendation looks like favoritism. To be believed at all, the school has to look perfectly even-handed to everyone watching.",
+        "mechanicalEffect": "Track how fair the school looks, as a separate score from how good its training actually is. Any decision that tips that fairness score toward one side can trigger sponsor protests, suspended stipends, or trainee walkouts. This happens even when the decision was the right call on training merit."
+      },
+      {
+        "name": "Twelve Days of Live Fire",
+        "text": "Live-fire on the saltpan only happens when the schedule allows it and the weather cooperates. Three days are already gone. There is exactly enough BattleMech ammunition for the planned curriculum plus one emergency reserve, and no more.",
+        "mechanicalEffect": "{RANGE_DAYS} range days remain, and each day covers 2 platoons. The schedule is a public document. Roll for weather cancellation on each scheduled day. Cancelled days cannot be made up, and the platoons that lost them treat it as a grievance."
+      },
+      {
+        "name": "The Liaison Is Watching",
+        "text": "The {EMPLOYER} liaison observes everything and writes a great deal down. His reports travel by courier, his suggestions are phrased as polite requests, and the unit has no way to know how much patience he has left.",
+        "mechanicalEffect": "The liaison, {NPC:opfor-commander}, is the standing antagonist here, not an enemy on the field. He keeps offering 'observations' that are really tests. How you respond shifts the {EMPLOYER} sponsor's behavior and sets how bad the day-{ALARM_DAY} event will be."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Designing the Command Structure",
+        "context": "Article 9 demands one formation. The curriculum has to produce a command structure, and that command structure is who inherits the arsenal. The unit decides how to build it before the sponsors settle the question by force.",
+        "options": [
+          {
+            "title": "Strict Merit, One Combined List",
+            "advantages": ["Honest, defensible, and the only standard a professional school can certify under its own name", "Produces the best command structure the trainee pool can actually support", "Neither sponsor can claim the ranking was bought — only that it was wrong"],
+            "disadvantages": ["The list will be mixed between the two factions, and a mixed chain of command pleases neither sponsor's score sheet", "Both sponsors have already drafted their sabotage accusations in advance, ready for whenever their candidates rank low"],
+            "consequence": "The school bets everything on the standard itself. If the standard holds, {WORLD} gets a real formation. If either sponsor rejects the list, the school has certified a formation that exists only on paper. Under Article 9, that paper formation now owns every machine on the planet.",
+            "costs": { "cbills": 0, "days": null, "resource": "the school's neutrality: spent on a single published list, with no chance for a second version", "risk": "a rejected merit list leaves the entire arsenal legally deeded to a formation that fell apart in the assembly hall" }
+          },
+          {
+            "title": "Two Parallel Companies, Split Arsenal",
+            "advantages": ["Realistic: train two companies under their own banners, split the machines 4 and 4, and certify both", "Each sponsor disciplines its own people, which halves the school's discipline problem", "Graduation day arrives with no winner-take-all decision in it"],
+            "disadvantages": ["Breaks the plain words of Article 9, which call for one formation, not two, and puts your name on the violation", "Arms both factions equally and makes splitting the planet a graduation requirement", "The 'Mechs cannot actually be split evenly. One machine is left over, and it is a war waiting to start over who gets it"],
+            "consequence": "The school answers the political question by formalizing the split. {WORLD} gets two small armies with diplomas, and the unit's signature is on the partition. The peace lasts exactly as long as the two sides stay evenly matched.",
+            "costs": { "cbills": null, "days": 10, "resource": "Article 9 itself, broken by the very people running the school, with the assembly's lawyers watching", "risk": "{MACHINES} does not split evenly in two, so one machine is left over, and that leftover becomes the most dangerous object on the planet" }
+          },
+          {
+            "title": "Deliberately Mixed Crews",
+            "advantages": ["Every multi-crew machine gets a mixed crew on purpose. Every BattleMech pilot gets a wingman and a technician from the other faction, so neither faction can field the arsenal without the other", "Builds the two sides' need for each other right into how the formation fights", "Quietly serves the {EMPLOYER}'s goal, because the design teaches integration that no lecture could"],
+            "disadvantages": ["Slow: mixed crews perform worse for 30-40 days before they perform at all, and the limited range days pay that cost", "A single publicized fistfight in one crew bay could discredit the whole approach", "Both sponsors will recognize the design for what it is — a trap built from their mutual dependence"],
+            "consequence": "The school builds the integration into the machines themselves, so that rejecting it costs the rejecter the use of the arsenal. It is the most durable answer and the most fragile to execute: the design cannot be announced, only revealed gradually as the crews graduate working together.",
+            "costs": { "cbills": 6000, "days": 30, "resource": "{RANGE_DAYS} range days spent on crews that shoot worse before they shoot better", "risk": "the design only works if it is discovered slowly — announced or exposed early, it looks like sabotage aimed at both sponsors at once" }
+          }
+        ]
+      },
+      {
+        "name": "The Liaison's Dossier",
+        "context": "On day {ALARM_DAY}, the {EMPLOYER} liaison hands you documents showing that 6 Association trainees plan to seize the motor pool on the eve of graduation. The documents are convincing. But the source is one of the two factions, and there is no way to check the papers independently on {WORLD}. The nearest neutral judge is a full courier round trip away.",
+        "options": [
+          {
+            "title": "Expel the Six Trainees",
+            "advantages": ["If the dossier is true, the plot dies when the six are removed from the rolls", "Shows the school enforces security regardless of which faction is involved", "The liaison's sponsor is satisfied, and the stipend money keeps flowing"],
+            "disadvantages": ["Acting on one faction's evidence against the other's trainees ends the school's neutrality with a single order", "If the dossier was faked, the unit has just done the {EMPLOYER}'s work of removing the Association's best cadets — exactly as the fake was designed to make it do"],
+            "consequence": "Six trainees are gone, and the school has shown whose side it takes when it reads a document. True or false, the dossier did its job. The only open question is whose job that was.",
+            "costs": { "cbills": null, "days": 1, "resource": "the school's neutrality, traded away for one faction's evidence file", "risk": "if the dossier was faked, then expelling the six is the real sabotage, and you carried it out under the school's own signature" }
+          },
+          {
+            "title": "Lock the Arsenal and Delay the Handover",
+            "advantages": ["The motor pool goes under unit guard with a dual-key lock. Graduation still happens, but the Article 9 transfer waits until the dossier can be checked", "Punishes no one on the strength of unverified paperwork", "A neutral judge from a neighboring circuit can rule on the dossier, one courier round trip, or {COURIER_JUDGE} days"],
+            "disadvantages": ["Both sponsors read the lockout as the unit seizing the arsenal for itself — the one thing they will agree on", "{COURIER_JUDGE} days of armed standoff with two certified formations and zero machines handed over", "The contract's payments are tied to the handover the unit just postponed"],
+            "consequence": "The unit becomes the planet's arsenal-keeper to avoid becoming its judge. A verdict arrives at courier speed into a parade-ground standoff that worsens with time — but no one was expelled on faith, and the school keeps its integrity.",
+            "costs": { "cbills": 14000, "days": null, "resource": "one courier round trip ({COURIER_JUDGE} days) of locked-down standoff, with the handover payment frozen alongside it", "risk": "the only thing both sides on {WORLD} agree on becomes that the foreign school stole the arsenal under cover of paperwork" }
+          },
+          {
+            "title": "Read the Dossier Aloud to Everyone",
+            "advantages": ["Brief both sponsors and the assembly together. Lay out the dossier, its source, and the fact that it cannot be verified, and let full openness be the only fair option left", "Forces the liaison to either stand behind his document in public or disown it", "If the plot is real, the plotters now know they are exposed, so the graduation-eve risk likely fades on its own"],
+            "disadvantages": ["Panics everyone at once: graduation week proceeds under open mutual suspicion and doubled guard rosters", "The liaison's sponsor treats the disclosure as a betrayal of confidence — both {EMPLOYER} relations and the scrip stipends suffer", "If the plot is real and the plotters adapt, the school has effectively published its own warning to them"],
+            "consequence": "The school refuses to be anyone's tool, at the cost of becoming everyone's problem. The information is now known and feared by all sides, and the graduation rehearses under guard towers regardless.",
+            "costs": { "cbills": 0, "days": 0, "resource": "the {EMPLOYER} stipend channel: suspended in protest for 20-30 days, with 130 trainees' pay caught inside it", "risk": "full transparency helps whichever side was lying — and one of them was" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Graduation eve, 0220. The motor pool perimeter wire trips. 20-24 figures are moving toward the arsenal hall from the salt-flat side. In the dark, no one can tell which banner they belong to." },
+        { "t": "T+0:04", "event": "The unit guard detail, 8 posted, calls out a challenge. The figures halt at the wire. No shots. Both barracks begin to light up." },
+        { "t": "T+0:15", "event": "Cooperative and Association duty officers arrive separately, each accusing the other's trainees, each with 40-60 personnel forming behind them." },
+        { "t": "T+0:45", "event": "The assembly holds an emergency session by landline. Both sponsors demand the gates open, each claiming they need to 'secure' the machines against the other." },
+        { "t": "T+7:40", "event": "Handover ceremony scheduled: 1000, parade ground, both banners, all {MACHINES} machines on display per program." }
+      ],
+      "hardDeadline": "Whoever physically holds the motor pool at 1000 holds the arsenal, the planet's defense, and the argument. Any ruling made after that only rubber-stamps who already has the machines. You have until the ceremony to produce a handover all three signers will accept, and the night is burning that time fast, one cut fence at a time."
+    },
+    "opforSketch": {
+      "composition": "No conventional OPFOR. Threat surfaces: factional trainee action (squad-to-platoon scale, small arms, intimate knowledge of the school's routines — Green skills, Veteran local knowledge); sponsor security details (12-20 each, professional); and the conditional arrival of a {EMPLOYER} 'training support' detachment — 1 'Mech lance plus infantry (Regular) — whose dispatch the liaison can request but not recall. Generator should treat the school's own graduates as the primary force pool on every side of any outcome.",
+      "behavior": "Factional action favors seizing control over fighting: grabbing, locking down, and occupying the motor pool, with actual violence as a thing that happens when the plan fails rather than the plan itself. The {EMPLOYER} detachment, if it lands, behaves with perfect courtesy — and never leaves."
+    },
+    "forks": [
+      { "name": "OPERATION SHARED WATCH", "family": "GARRISON_DUTY", "outcomeGate": "FULL_SUCCESS", "trigger": "One formation graduates and takes the arsenal handover without violence.", "consequence": "The new formation draws its first posting: a 90-day garrison rotation under your guidance, watching the pirate corridor that made the school necessary in the first place. Both former sponsors comb every duty roster for signs of favoritism. The first real combat alarm will put the design you chose to the test.", "threat": "MEDIUM" },
+      { "name": "OPERATION RECLAIMED STEEL", "family": "OBJECTIVE_RAID", "outcomeGate": "FAILURE", "trigger": "The arsenal changes hands by force, or graduation collapses into one faction seizing it.", "consequence": "The assembly is the only signer still standing, and it hires the unit to recover the machines from whichever faction took them. It is a raid against your own students, on ground you taught them to defend. Every lesson you gave them is now used against you.", "threat": "HIGH" },
+      { "name": "OPERATION CHANGED FLAG", "family": "EXTRACTION_RAID", "outcomeGate": "ANY", "trigger": "The {EMPLOYER} drops the courtesy act. A takeover force lands within 60 days of graduation.", "consequence": "The Association's leadership and the assembly's holdouts add up to 14-20 people the new administration will want for 'questioning.' They need to be off {WORLD} before the spaceport changes hands. The unit trained their bodyguards. It may also have to be their way out.", "threat": "MEDIUM" }
+    ],
+    "storyElementSeed": "Two trainees from two banners share a gun-cleaning bench because the rack assignments say so. Neither speaks. At the end, without looking, each checks the other's bolt carrier, the way the instructors made them do it for ninety days, and signs the other's tag.",
+    "voiceSlots": ["command", "intelligence", "logistics", "engineering"],
+    "registerVariants": {
+      "is-kurita": { "objectives.primary": "One formation. One certification. The arsenal passes intact, and the honor of all three signers stays intact with it. Fail, and the school has taught nothing worth the {EMPLOYER}'s name, and the arsenal is lost or split by force." }
+    },
+    "specifics": {
+      "MACHINES": { "min": 7, "max": 9, "unit": "working machines" },
+      "RANGE_DAYS": { "min": 7, "max": 9, "unit": "live-fire days remaining" },
+      "SYLLABUS_DAYS": { "min": 90, "max": 110, "unit": "days" },
+      "ALARM_DAY": { "min": 55, "max": 70, "unit": "syllabus day" },
+      "COURIER_JUDGE": { "min": 34, "max": 48, "unit": "days" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Lock the Arsenal and Delay the Handover", "requires": "established-base", "whenLacking": "reprice", "lackingText": "The unit has no secured site of its own, so the dual-key lock has to be jury-rigged inside the school's motor pool. Add 8 guard posts to the duty roster, and accept that every time the keys are used, it happens on contested ground." },
+      { "appliesTo": "Deliberately Mixed Crews", "requires": "treasury-min:6000", "whenLacking": "reprice", "lackingText": "The crew-pairing program runs without simulator money, so the mixed crews learn on drill time alone. That adds 12 more days of poor shooting, and those days come straight out of the range budget." }
+    ]
+  },
+  {
+    "seedId": "DAR-07",
+    "family": "OBJECTIVE_RAID",
+    "title": "OPERATION FIRST KEY",
+    "eraFit": ["dark-age"],
+    "factionFit": ["is-davion", "merc"],
+    "register": "is-davion",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.35,
+    "localeFit": { "settlement": ["agrarian"], "regionRole": ["border", "contested"], "terrain": ["mountain"] },
+    "skeleton": "raiders must win a sealed depot from its lawful caretakers ahead of a rival claimant's column, while the methods fast enough to beat the rival poison the legitimacy that makes the prize worth holding — and the prize itself takes thirty hours to physically move",
+    "inspiration": "the American-Soviet race to empty the Mittelwerk V-2 inventory ahead of the occupation-zone handover, 1945",
+    "situation": "{WORLD}, 3145. The Republic hid a fortune here: Depot Sierra, cut into a cliff face back when {DISTRICT} still got regular mail. It was sealed in 3133 and held ever since by a caretaker platoon of 28 RAF soldiers. Their warrant officer's last orders predate the Fortress wall, and he has carried them out, alone, for 12 years. The depot's inventory list is 9 years old, so treat it as a rough guide, not fact. It records {CRATED_MECHS} BattleMechs in sealed storage, more than 30 combat vehicles, and 600 tons of parts the Dark Age can no longer make. Most of the caretakers grew up here, and the warrant officer's people have married into the valley towns. {WORLD} welcomes them at every harvest festival. That fact matters more than the inventory list.\n\n{EMPLOYER}'s regional command, working through {NPC:employer-contact}, has sent the warning order. A {TARGET_FACTION} column is {RIVAL_ETA} hours from {WORLD} orbit: about one 'Mech company with armor and mobile cranes. That report is four days old, so the exact makeup may have changed. {EMPLOYER}'s claim to this world depends on winning over its people. So the order is to liberate, not conquer. That is practical, not sentimental. Moving 600 tons of crates needs the valley's dockworkers, drivers, and cranes. None of them will work for the side that shot the caretakers their daughters married.\n\nThe key terrain problem is the cliff-face ramp. Depot Sierra's blast doors open onto one switchback road down the cliff. It is rated for 60 tons, one vehicle at a time, 22 minutes per trip down. The depot's own gantry crane loads vehicles at the top of the ramp. Even in perfect conditions, clearing all the priority inventory is a {CRANE_CYCLE}-hour crane-and-convoy job, and these conditions are far from perfect. Whoever takes the doors still has to hold that ramp for more than a day, in a slow column, while the loser decides what to do next.\n\nThe warrant officer answered the unit's messenger by signal lamp, because the depot's radios stay silent on principle. His full reply: 'Produce authority. The Republic counts its property.' {NPC:intel-source} reports that the demolition charges on the gantry crane are real, tested every quarter, and wired to the caretakers' duty desk.",
+    "objectives": {
+      "primary": "Secure Depot Sierra's priority inventory for the {EMPLOYER} before the {TARGET_FACTION} column can contest or claim it. Priority inventory means the {CRATED_MECHS} crated BattleMechs and the fire-control stores.",
+      "secondary": "Resolve the caretaker problem without killing any of them. Try to win their cooperation first, a negotiated stand-aside second, and bloodless force only as a last resort.",
+      "bonus": "Keep the depot building and its gantry crane intact all the way through extraction. The cliff facility is worth a garrison contract to whoever governs {WORLD} next."
+    },
+    "complications": [
+      {
+        "name": "The Caretakers Are Locally Loved",
+        "text": "The 28 caretakers have gone 12 years unpaid, married into the valley, and won its loyalty. They are three things at once: the lock on the door, the conscience of the valley, and the only people who know which crate holds what.",
+        "mechanicalEffect": "If either side kills any caretakers, the valley's workers refuse to help that side. With no dockworkers, drivers, or crane operators, extraction time triples. If the caretakers help willingly, their knowledge of the inventory cuts extraction time from {CRANE_CYCLE} hours to {CRANE_CYCLE} minus 8."
+      },
+      {
+        "name": "The Nine-Year-Old Inventory List",
+        "text": "Nobody outside the blast doors has seen the real inventory since 3136. Local market activity hints that the caretakers may have quietly sold off some stock, but that is unconfirmed. After 12 years of their maintenance, scavenging, and possible sales, the prize could be worth a lot or very little. Plan for a wide range, not a fixed haul.",
+        "mechanicalEffect": "When the doors open, the game rolls the real inventory: 60 to 100 percent of the listed 'Mechs are actually there and crated. Whatever turns up changes what is worth loading first, so the crews have to update the loading plan on the fly."
+      },
+      {
+        "name": "The Demolition Desk",
+        "text": "Nothing heavy leaves the depot quickly without the gantry crane. That crane is wired to blow, with the trigger at the caretakers' duty desk, and they have tested it every quarter for 12 years. The warrant officer's orders are to deny Republic property to anyone without authority.",
+        "mechanicalEffect": "Any attempt to force the doors gives the caretaker commander 3 minutes to decide whether to blow the crane. If the crane is destroyed, extraction jumps from {CRANE_CYCLE} hours to 9 to 12 days. That is far too long to win the race."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Dealing With the Warrant Officer",
+        "context": "'Produce authority.' The Republic that gave him his orders cannot back anyone's claim now, and he knows that better than either House does. You have {RIVAL_ETA} hours until the rival arrives, and clearing the ramp takes more than a day on top of that. Winning this one man over matters more than beating the column.",
+        "options": [
+          {
+            "title": "Produce a Forged Transfer Order",
+            "advantages": ["A well-made forged Republic transfer order gives the warrant officer what 12 years of silence never did: orders to hand over the depot", "It is the fastest bloodless option. The caretakers cooperate fully and share what they know about the inventory", "The valley sees what looks like a legal handover, which is exactly the image {EMPLOYER}'s claim needs"],
+            "disadvantages": ["The forgery will be checked against real records sooner or later. The warrant officer trades signal-lamp letters with 2 other caretaker posts", "Once it fails that check, {EMPLOYER}'s claim to {WORLD} is stained for good by a forged document", "Every caretaker who cooperated is implicated after the fact, and they will know who set them up"],
+            "consequence": "The door opens within hours, but on a lie that will surface someday. The extraction runs at full speed while nobody can check the paperwork. The Dark Age is slow, so that check takes a long time to arrive. It will arrive eventually.",
+            "costs": { "cbills": 8000, "days": null, "resource": "{EMPLOYER}'s good name on {WORLD}, borrowed against the day the forgery is found out, which is roughly 2 to 4 courier round trips away", "risk": "the warrant officer has 12 years of real Republic paperwork to check the signatures against, and nothing but time to do it" }
+          },
+          {
+            "title": "Make an Honest Offer",
+            "advantages": ["An open offer to the caretakers: {EMPLOYER} commissions for all of them, a guaranteed depot garrison posting, and back pay for the missing years. That is relief with honor, not a forged paper", "If they accept, their help is genuine and lasting. It cuts 8 hours off the crane plan and leaves a ready-made garrison behind", "The valley then tells the story {EMPLOYER} wants told, for good"],
+            "disadvantages": ["Talking eats 10 to 20 hours of the {RIVAL_ETA}-hour window, and it may still fail", "The warrant officer may simply say no. His orders name the Republic, not whichever House is politest at the door", "If he refuses after an honest offer, the unit has just told the depot exactly what it wants and exactly when the rival arrives"],
+            "consequence": "The race now rides on one man's sense of duty. If he accepts, the unit wins everything cleanly. If he refuses, the unit has burned hours and warned the defenders. Either way, the answer takes hours this operation may not be able to spare.",
+            "costs": { "cbills": 45000, "days": null, "resource": "10 to 20 hours of a {RIVAL_ETA}-hour race, spent at the negotiating table", "risk": "an honest refusal leaves the depot warned, dug in, and 20 hours closer to the rival's arrival" }
+          },
+          {
+            "title": "Breach Before the Rival Arrives",
+            "advantages": ["Jam their comms, blow the secondary vehicle door, and get infantry inside before the duty desk can react. The plan is to beat the demolition charges by pure speed", "It needs no persuasion, no paperwork, and no old soldier's conscience", "It buys the most extraction time. Every hour not spent talking is an hour of crane time gained"],
+            "disadvantages": ["The caretakers get a 3-minute window to blow the crane, and the breaching crews cannot stop them. Whether the crane survives comes down to a die roll", "Caretaker deaths are likely, and they cost the unit the valley's labor, {EMPLOYER}'s liberation brief, and the cooperative loading plan", "Even with nobody killed, the story is armed strangers blowing doors guarded by the valley's harvest-festival neighbors"],
+            "consequence": "The door falls in 40 minutes, or the crane falls in 3. The unit gets whatever is behind it: maybe a fortune in crated 'Mechs, maybe a wrecked crane. Either way, {TARGET_FACTION} political officers get to broadcast their version of events in the valley square.",
+            "costs": { "cbills": 15000, "days": null, "resource": "the liberation brief, spent the moment the charges go off and salvageable only through flawless execution", "risk": "a 3-minute window to blow the charges against a 40-minute breach, with the whole thing riding on a 60-year-old warrant officer's hand on a switch" }
+          }
+        ]
+      },
+      {
+        "name": "What to Load First",
+        "context": "The door is open and the crane survived, so now the clock decides. Pulling everything out takes {CRANE_CYCLE} hours, and the rival arrives in {RIVAL_ETA} hours, minus whatever the door already cost. Something will have to be left for the {TARGET_FACTION}. What the unit loads first is the whole strategy.",
+        "options": [
+          {
+            "title": "Load the BattleMechs First",
+            "advantages": ["These are the headline assets. In a Sphere that can barely build new 'Mechs, {CRATED_MECHS} crated ones make a real difference", "Each crate that clears the ramp is a complete, movable, deniable asset", "It is {EMPLOYER}'s stated preference, in writing"],
+            "disadvantages": ["It is the slowest cargo per crane cycle: 1 crate per trip down the ramp, 22 minutes plus rigging time", "The estimate is that only 60 to 75 percent of the crates get loaded before the rival arrives. The rest sit rigged at the top of the ramp as the column shows up"],
+            "consequence": "{EMPLOYER} takes the most valuable assets and gives up the rest. Any 'Mechs still rigged at the ramp head when the fighting starts become part of the battlefield. They become {TARGET_FACTION} salvage unless the rearguard makes taking them too costly.",
+            "costs": { "cbills": null, "days": null, "resource": "the parts inventory: 600 tons of irreplaceable components left behind for the rival's trucks", "risk": "at 60 to 75 percent loaded, 3 to 6 'Mech crates are still being fought over at the ramp head when the rival arrives" }
+          },
+          {
+            "title": "Load Parts and Fire-Control First",
+            "advantages": ["The most value per crane cycle: gyros, actuators, and fire-control cores, the parts no Dark Age factory can still make", "All the priority parts can be pulled out inside the safe window with 4 hours to spare", "It also guts the rival's salvage. Crated 'Mechs without a steady supply of these parts are nearly impossible to keep running"],
+            "disadvantages": ["It leaves most or all of the {CRATED_MECHS} 'Mechs for the column, so in public it looks like a {TARGET_FACTION} win no matter what the real value adds up to", "{EMPLOYER} clearly wanted the 'Mechs, and explaining why the parts were worth more will be a hard sell in an {EMPLOYER} court"],
+            "consequence": "This is the quiet professional's choice. {EMPLOYER} takes the parts that keep 'Mechs running and leaves the trophies behind. Within 5 years, every {TARGET_FACTION} machine from this depot is grounded for lack of parts. But for all 5 of those years, the propaganda images of {TARGET_FACTION} colors on captured crates belong to the other side.",
+            "costs": { "cbills": null, "days": null, "resource": "the public win, given up along with the crated 'Mechs, and later answered for in an {EMPLOYER} court", "risk": "being strategically right and visibly beaten in the same operation" }
+          },
+          {
+            "title": "Load Nothing — Hold the Depot Instead",
+            "advantages": ["The cliff is a fortress: one 60-ton ramp, prepared positions, and now a fully stocked arsenal behind the defense", "It turns the raid into a defense the {TARGET_FACTION} column is too small to break. A 'Mech company cannot storm a depot one vehicle at a time up a cliff road", "If the follow-on battalion named in the last courier digest actually sails, {EMPLOYER} keeps the whole depot"],
+            "disadvantages": ["That follow-on report is 12 days old, cannot be checked, and is the entire basis of the plan", "The unit has to fortify a cliff with only {RIVAL_ETA} hours of warning and no idea how long the siege will last", "If the battalion never comes, this choice has traded the salvage for a siege and ends up with neither"],
+            "consequence": "This is the boldest bet on the table: keep everything by moving nothing, on the strength of a 12-day-old report. The {TARGET_FACTION} column arrives to find the door shut and a House flag flying on the cliff. What happens next depends entirely on whether that report was true.",
+            "costs": { "cbills": 30000, "days": null, "resource": "the extraction window, spent on fortifying instead, and gone for good once the column lands", "risk": "the whole operation rides on a follow-on report already 12 days old, in a Sphere where intelligence goes stale fast" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Alarm. Ground optical watch confirms {TARGET_FACTION} DropShips in {WORLD} orbit. They are committed to their descent and should land at the flats, 110 km southeast." },
+        { "t": "T+4:00", "event": "{TARGET_FACTION} column grounded and rolling: 'Mech company, armor escort, crane tractors. Road speed projection 28-34 km/h." },
+        { "t": "T+12:00", "event": "A {TARGET_FACTION} herald reaches the cliff approaches under a parley flag. Their recorded offer to the caretakers is {TARGET_FACTION} commissions, built the same way as any {EMPLOYER} offer already made." },
+        { "t": "T+18:00", "event": "The column closes to artillery range of the ramp head. It can now watch the loading, and it starts shelling convoy movement if the political officers allow it." },
+        { "t": "T+{RIVAL_ETA}:00", "event": "The full column is deployed against the cliff. Anything still on the ramp or rigged at the crane head is now contested property." }
+      ],
+      "hardDeadline": "At T+{RIVAL_ETA}:00 the rival's guns reach the ramp and the extraction stops wherever it stands. Every crate that is below the cliff and rolling west by then belongs to {EMPLOYER}. Everything still above that line is contested, and the people contesting it have a 'Mech company, crane tractors, and political officers who brought cameras for exactly this moment."
+    },
+    "opforSketch": {
+      "composition": "{TARGET_FACTION} expeditionary column: 1 BattleMech company (Regular, with a Veteran command lance), 1 armor company including engineering and crane vehicles, 1 jump-infantry platoon, organic short-range artillery. Caretaker platoon: 28 RAF personnel (Veteran in their own corridors, Green in the open), fixed defenses at the door, demolition initiative. Generator should keep the two OPFORs doctrinally separate — they share no command and may end up shooting at each other.",
+      "behavior": "The column races, then besieges: fast to the cliff, a show of parley for the cameras, then steady pressure on the ramp as the depot's only route in and out. It will not assault prepared positions up a one-lane cliff road unless it sees the prize starting to leave. The caretakers defend the doorway and the crane, not the cliff — their fight lasts only the 3 minutes it takes to decide whether to fire the demolition charges."
+    },
+    "forks": [
+      { "name": "OPERATION SETTLED DEED", "family": "GARRISON_DUTY", "outcomeGate": "FULL_SUCCESS", "trigger": "Priority inventory extracted or the depot held, caretakers alive, valley labor intact.", "consequence": "{EMPLOYER} turns the operation into a permanent posting: a {WORLD} garrison contract built around the depot, with the caretakers as the local cadre. A {TARGET_FACTION} column is still on the planet, 110 km southeast, working out its odds.", "threat": "MEDIUM" },
+      { "name": "OPERATION SALTED CLAIM", "family": "OBJECTIVE_RAID", "outcomeGate": "FAILURE", "trigger": "The column takes the depot, or the crane is destroyed and the race lost with it.", "consequence": "Whatever Depot Sierra still holds is now {TARGET_FACTION} supply. {EMPLOYER}'s next job is denial: hit the inventory before it is spread out into the {TARGET_FACTION}'s own depots. It is a second raid against the same crates, but this time the cliff works against the unit.", "threat": "HIGH" },
+      { "name": "OPERATION CROSSED LEDGERS", "family": "OBJECTIVE_RAID", "outcomeGate": "PARTIAL", "trigger": "A split outcome: both sides extracted a share before disengaging.", "consequence": "The {TARGET_FACTION} share heads for the landing flats and a waiting Seeker DropShip. The only chance to intercept it is the 110 km of road in between: one convoy, one escort company, and the unit's last shot at turning a partial win into a full one before the share lifts off-world.", "threat": "MEDIUM" }
+    ],
+    "storyElementSeed": "No inspector has opened the warrant officer's office in 12 years. One wall holds requisition forms filed in perfect order. Every quarter he sent a request for relief to an office that no longer exists, and every quarter he stamped his own copy: RECEIVED, NO REPLY.",
+    "voiceSlots": ["command", "logistics", "intelligence", "engineering"],
+    "registerVariants": {
+      "is-davion": { "objectives.secondary": "The caretakers walk out of this with their pensions or their parole, sergeant's choice, but they walk. {EMPLOYER} does not start its rule here by burying the people who kept the lights on." }
+    },
+    "specifics": {
+      "CRATED_MECHS": { "min": 12, "max": 16, "unit": "crated BattleMechs" },
+      "RIVAL_ETA": { "min": 48, "max": 72, "unit": "hours" },
+      "CRANE_CYCLE": { "min": 26, "max": 34, "unit": "hours" }
+    },
+    "resourceGates": [
+      { "appliesTo": "What to Load First", "requires": "dropship", "whenLacking": "reprice", "lackingText": "The unit owns no DropShip lift. Extraction has to run by ground convoy 40 km to the {WORLD} rail spur, which adds 9 hours per crane cycle. Worse, the rail schedule is public, so the {TARGET_FACTION} column can read it too." },
+      { "appliesTo": "Load Nothing — Hold the Depot Instead", "requires": "treasury-min:90000", "whenLacking": "lock", "lackingText": "This option is locked. It needs an operating reserve: 90 days of payroll and supplies in hand to sustain a siege. March command will reimburse it, but only at courier speed, which means long after the siege is over." }
+    ]
+  },
+  {
+    "seedId": "DAR-08",
+    "family": "OBJECTIVE_RAID",
+    "title": "OPERATION CLOSING BELL",
+    "eraFit": ["dark-age", "ilclan"],
+    "factionFit": ["merc"],
+    "register": "merc",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.3,
+    "localeFit": { "settlement": ["capital", "port"], "regionRole": ["border"], "terrain": ["urban"] },
+    "skeleton": "raiders must lift a weapons consignment out of a grey-market sanctuary whose peace bond is also their own livelihood, on behalf of an employer whose identity — and therefore the raid's true purpose and payment — cannot be verified until weeks after the shooting is over",
+    "inspiration": "the post-Soviet arsenal bazaar — laundered weapons lots and cutout buyers, 1990s",
+    "situation": "{WORLD}, 3151. The mercenary hiring hall survived the Blackout the way a pawnshop survives a depression: busier, harder, and less interested in asking questions. The quarterly Exchange auction is the Inner Sphere's polite lie. It sells salvaged 'Mechs with faked ownership records, under a peace bond the Exchange wardens enforce without mercy, inside the walled trade quarter. Lot 31 is the main event: {LOT_MECHS} refurbished BattleMechs, ex-Republic under their new paint, plus crated fire-control cores, at a minimum price of 4.1 million C-bills. The ownership papers are flawless, which on {WORLD} just means they were expensive to forge.\n\n{EMPLOYER} says it is a buying agency for a Successor House. The introduction came through {NPC:employer-contact}, a broker who has been reliable until now. The agency wants Lot 31 pulled off the market before its expected buyer can collect it. The employer's brief names that buyer as an agent for {TARGET_FACTION}'s auxiliaries, but that comes only from the employer's own file, so treat it as a guess, not fact. The employer's credentials are a signed, encrypted letter of engagement and a 30 percent advance in hard currency, already paid. The other 70 percent rides on a letter of credit drawn on an off-world bank. A courier can only confirm that letter in {CREDIT_CHECK} days, and that is {CREDIT_CHECK} days longer than the auction allows. The unit sees three real possibilities. The employer is exactly what it claims. Or the employer is a rival bidder using the unit to crash the price. Or the employer is the lot's original owner, stealing back what the launderers took. The contract reads the same in all three cases. The payment does not.\n\nThe key terrain problem is the trade quarter itself. It is a walled 40-hectare compound with 2 gates, the Pedestrian Arch and the Hauler Gate. Every lot leaves only on warden-scheduled flatbeds through the Hauler Gate. Inside the walls, the peace bond is absolute: no weapon may be fired, ever. It is enforced by 200 Exchange wardens whose other job is keeping the blacklist. {WORLD} is the unit's hiring floor, its bank, and its parts market. Breaking the peace bond does not just end this contract. It gets the unit banned from {WORLD} for good.\n\nThe auction sets the clock: {TRANSFER_WINDOW} hours from the winning bid to the buyer's departure window. At that point Lot 31 rides warden flatbeds to the spaceport and is gone, past the reach of anyone whose problems stay on the ground.",
+    "objectives": {
+      "primary": "Take Lot 31 out of the buyer's hands between the hammer and boost, and deliver it to the employer's chosen handover point. Lot 31 is all {LOT_MECHS} 'Mechs plus the fire-control cores.",
+      "secondary": "Keep the quarter's peace bond unbroken by anything that traces back to the unit. That means no weapon fired inside the walls, no warden hurt, and no blacklist.",
+      "bonus": "Find out who the employer really is before the final delivery, and get proof. If the unit is being used, it has not yet named its price for that."
+    },
+    "complications": [
+      {
+        "name": "The Peace Bond",
+        "text": "Inside the walls, the wardens' law is absolute, and breaking it ends careers. A blacklisted unit cannot hire, bank, or repair on {WORLD}, and {WORLD} is the unit's home base.",
+        "mechanicalEffect": "If any weapon fired or warden killed inside the quarter is traced to the unit, blacklist proceedings begin. That is a campaign-level penalty that follows the unit into future contracts. Deniable acts roll to see whether they get traced, and inside the walls nothing is ever fully untraceable."
+      },
+      {
+        "name": "The Unverifiable 70 Percent",
+        "text": "The 70 percent completion payment is a letter of credit that nobody can check for {CREDIT_CHECK} days. If it turns out to be worthless, the unit will have stolen {LOT_MECHS} 'Mechs for just a 30 percent fee, and made enemies worth far more than that.",
+        "mechanicalEffect": "Whether the payment is real stays unknown until {CREDIT_CHECK} days after delivery. Until then, the unit pays every operating expense out of its own pocket. Options that cost more dig a deeper hole if the credit turns out to be fake."
+      },
+      {
+        "name": "The Buyer Is Real",
+        "text": "Whatever the employer turns out to be, the buyer's escort is confirmed real: 8 contracted security riders. If the {TARGET_FACTION} file is accurate, add a {TARGET_FACTION} liaison who answers robbery with force, not a lawsuit.",
+        "mechanicalEffect": "The buyer's escort strength is confirmed when the lot is sold. If the {TARGET_FACTION} connection is real, the pursuit after the raid grows from commercial to military on the campaign layer. That means a hunting party with {TARGET_FACTION} equipment instead of just bounty notices."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Where to Take the Lot",
+        "context": "Three windows exist between the winning bid and the buyer's departure: inside the walls, at the gate, and on the road. The peace bond, the wardens, and the buyer's escort each control a different one.",
+        "options": [
+          {
+            "title": "Before the Auction — Just Buy It",
+            "advantages": ["No raid at all. Outbid the buyer with the employer's escrow money and walk Lot 31 out legally on warden flatbeds", "The peace bond now protects the unit instead of limiting it", "The buyer's escort has no answer to this. Nobody can act on simply losing an auction"],
+            "disadvantages": ["Bidding means posting a 205,000 C-bill deposit from the unit's own funds, backed by an employer credit line nobody can confirm for {CREDIT_CHECK} days", "If the credit is fake, the unit is the bidder who defaulted: deposit gone, blacklist proceedings, and the lot goes to the buyer anyway", "A rival-bidder employer gets exactly what it wanted, paid for at the unit's expense and risk"],
+            "consequence": "The cleanest plan on paper depends on the one thing the Dark Age cannot give: a fast answer about whether the money is real. The unit becomes the most exposed bidder in the room, betting its place on {WORLD} on a signature it cannot check.",
+            "costs": { "cbills": 205000, "days": null, "resource": "the bid deposit: the unit's own treasury, staked against an employer credit line that is {CREDIT_CHECK} days from being confirmed", "risk": "a default turns the unit from contractor into debtor, in the one place that enforces debts with a blacklist" }
+          },
+          {
+            "title": "At the Gate — File Paperwork First",
+            "advantages": ["The wardens act on paperwork. A legal challenge, such as disputing the ownership history, claiming a lien, or flagging a serial-number mismatch, freezes Lot 31 in storage for a 10-to-20-day review", "It buys time for the credit check and the employer investigation to come back before the unit does anything it cannot undo", "It is fully legal, and the unit never visibly does a thing"],
+            "disadvantages": ["The freeze helps anyone with patience, including the buyer's lawyers, who have deeper pockets", "A forged challenge that survives warden review needs documents as good as the launderers' own forgeries", "If the challenge is exposed as fake, the wardens treat document fraud exactly like firing a weapon. It is a peace-bond violation, just in writing"],
+            "consequence": "The raid becomes a lawsuit, fought at the speed of clerks. The lot sits frozen while three unverified parties spend money proving things. The unit has turned a 72-hour problem into a 20-day problem, with the same ending and more lawyers.",
+            "costs": { "cbills": 35000, "days": 15, "resource": "the risk of a forged document being exposed, which the wardens punish exactly like gunfire", "risk": "the time this buys the unit is also time it buys the buyer, whose backer may simply outspend the freeze" }
+          },
+          {
+            "title": "On the Road — Outside the Walls",
+            "advantages": ["The Spaceport Road runs 31 kilometers outside the peace bond. The bond ends at the Hauler Gate", "Ambushing 8 escort riders is a solvable military problem with a known order of battle", "It cannot be pinned on the unit in the only court that matters here. The wardens police their walls, not the highway"],
+            "disadvantages": ["Open robbery of a paid-for lot is a scandal on {WORLD} even outside the bond. Bounty notices follow whether or not anyone can prove it", "If the {TARGET_FACTION} file is accurate, the escort's backer answers ambushes with hunting parties, not insurance adjusters", "The unit then has to hide, move, and hold the lot: {LOT_MECHS} 'Mechs that everyone within 2 jumps will be hunting for"],
+            "consequence": "This is the military option, and its real price is what comes after. The fight is winnable in 20 minutes, but the prize is a cargo that makes the unit the most wanted address on the mercenary circuit until the payment clears, or fails to.",
+            "costs": { "cbills": 24000, "days": null, "resource": "the unit's anonymity: a highway ambush 31 km from the hiring hall is deniable, but not invisible", "risk": "success means custody: {CREDIT_CHECK} days holding the most-hunted cargo in the Sphere while the credit letter is checked" }
+          }
+        ]
+      },
+      {
+        "name": "Testing the Employer",
+        "context": "Three possible employers, one contract, and the 70 percent payment hinging on which one is real. The unit can proceed blind, or it can force the question — knowing that forcing it has costs of its own.",
+        "options": [
+          {
+            "title": "Demand Payment Converted to Hard Assets",
+            "advantages": ["Demand that the completion payment be converted to hard assets held in escrow on {WORLD} before the raid. That forces any honest employer to prove it can pay, right now", "If they comply, the mission is funded no matter who they are, and the unit can stop caring who it works for, the old comfort of the trade", "If they refuse, the unit is only out an advance it already banked and a raid it never had to run"],
+            "disadvantages": ["A rival-bidder employer can comply too. Being able to pay does not reveal who they are", "The demand signals distrust, and a genuine House cell may just re-hire a more desperate unit on a faster timeline", "Re-hiring means the raid happens anyway, around the unit or against it"],
+            "consequence": "The unit builds its suspicion into the contract and lets the market answer. Whoever pays the escrow gets their raid. Whoever refuses reveals they have a problem. Either way, the unit trades the leverage of the bonus objective for the safety of being just a hired contractor.",
+            "costs": { "cbills": 0, "days": 6, "resource": "the contract itself, risked on the client re-hiring elsewhere just to avoid proving payment", "risk": "a liar who can pay passes this test just as easily as an honest client" }
+          },
+          {
+            "title": "Investigate the Broker",
+            "advantages": ["{NPC:employer-contact} made the introduction, and brokers worry. About 12 days of quiet work on the broker's other deals can name the real client", "Knowing the client's identity turns the bonus objective into leverage over the 70 percent payment, and over whatever the raid was really for", "The knowledge outlasts the contract. Whoever this is, the unit will deal with them again"],
+            "disadvantages": ["12 days against a {TRANSFER_WINDOW}-hour clock means the investigation finishes after the unit has already committed. The answer arrives mid-custody or after delivery", "Brokers who notice they are being investigated stop working with the investigator, and that channel is also the unit's source of jobs", "The answer may be worse than not knowing. Being sure you robbed a House is different from just suspecting it"],
+            "consequence": "The unit runs the raid blind and learns the truth while holding the cargo: maximum information, maximum exposure. Whatever it learns arrives at the exact moment the unit is least able to renegotiate and easiest to punish.",
+            "costs": { "cbills": 9000, "days": 12, "resource": "the broker relationship, and with it the unit's flow of future jobs, staked on not getting caught investigating", "risk": "the client's identity lands mid-custody, when the unit's only options are deliver, extort, or run, and someone else sets the price of all three" }
+          },
+          {
+            "title": "Build in Deniability and Proceed",
+            "advantages": ["Take the contract at face value, but build the job so nothing leads back to the unit: front crews for the ambush, hidden cargo, and a handover at a drop site the unit picks", "Holding the lot at a unit cache until the credit clears turns payment risk into leverage. They pay, or the unit owns {LOT_MECHS} 'Mechs at a 30 percent discount", "'No questions asked' is, after all, the advertised service"],
+            "disadvantages": ["That 'leverage' means sitting on stolen strategic cargo while three possible clients, one maybe tied to {TARGET_FACTION}, work out who has it", "The cache becomes the heart of the operation, and guarding it is an unbudgeted second job", "If the payment clears normally, the caution cost nothing. If it doesn't, the unit is a fence, with a fence's short life expectancy"],
+            "consequence": "Professional indifference, fully armed. The unit runs the raid as written and turns the slow paperwork into its own collateral. The lot sits hidden under the unit's guard while the Dark Age works out, at courier speed, who owes whom.",
+            "costs": { "cbills": 16000, "days": null, "resource": "a guarded cache site for up to {CREDIT_CHECK} days, the second garrison this contract never mentioned", "risk": "every day in custody, more people learn roughly where Lot 31 went, in ways the unit cannot track" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Alarm reference. The hammer falls on Lot 31. The buyer's escort, 8 riders confirmed, signs for custody, and the wardens schedule the flatbed movement." },
+        { "t": "T+8:00", "event": "Lot 31 staged at bonded storage in the Hauler Gate queue. The warden escort assignments are posted, and that posting is a public document." },
+        { "t": "T+30:00", "event": "Earliest flatbed window: convoy of 6 through the Hauler Gate, warden escort to the wall's shadow only." },
+        { "t": "T+31:00", "event": "Convoy on the Spaceport Road. It is 31 km and about 70 minutes, and past the wall the buyer's escort is the only authority." },
+        { "t": "T+{TRANSFER_WINDOW}:00", "event": "The buyer's boost window opens. Lot 31 loads at the DropPort and leaves every jurisdiction that has a road in it." }
+      ],
+      "hardDeadline": "At T+{TRANSFER_WINDOW}:00 the lot lifts off-world and the contract becomes impossible to fulfill at any price. The options close one by one as that hour nears: the legal ones expire first, the deniable ones last. Whatever the unit has not done by the departure window, it has effectively chosen not to do. The employer, whichever of its three possible identities it really has, will judge the unit on that."
+    },
+    "opforSketch": {
+      "composition": "Buyer escort: 8 contracted security riders (Regular) on the road — light vehicles, anti-'Mech infantry kit, professional and unsentimental. Exchange wardens: 200 inside the walls (Veteran at their actual job, which is procedure), unarmored, backed by the blacklist rather than firepower. Conditional: a {TARGET_FACTION}-equipped pursuit element (Veteran/Elite) on the campaign layer if the {TARGET_FACTION} dossier is true. Generator should keep the inside-the-walls game procedural and the outside game kinetic, and never let the two blur.",
+      "behavior": "The wardens enforce procedure with total predictability — treat them as terrain, not an enemy, until a bond violation turns them into a sentence. The escort fights as paid professionals: hard for the first 10 minutes, then pragmatically, with no interest in dying over cargo someone else insured. The conditional {TARGET_FACTION} element does not negotiate, does not stop at jurisdiction boundaries, and treats hunting the unit down as a duty it has already accepted."
+    },
+    "forks": [
+      { "name": "OPERATION DELIVERED GOODS", "family": "SECURITY_DUTY", "outcomeGate": "FULL_SUCCESS", "trigger": "Lot 31 delivered, payment cleared, peace bond intact.", "consequence": "The employer, whoever they really were, pays a bonus to escort the lot to its true destination, 2 jumps away. On the way, the unit finally sees the cargo manifest. It answers the identity question, and the answer recasts everything the unit has done for the past month.", "threat": "MEDIUM" },
+      { "name": "OPERATION HALL DEBT", "family": "PIRATE_HUNTING", "outcomeGate": "FAILURE", "trigger": "Blacklist proceedings begin, the bond is forfeited, or the lot leaves on schedule.", "consequence": "The wardens offer the only second chance {WORLD} sells: work off the sanction in the Exchange's service by hunting down another unit that jumped its own bond with a client's cargo. The unit earns its way off the blacklist by enforcing it on someone else.", "threat": "MEDIUM" },
+      { "name": "OPERATION HOT INVENTORY", "family": "SECURITY_DUTY", "outcomeGate": "COMPROMISED", "trigger": "The credit letter turns out to be worthless while Lot 31 is in the unit's custody.", "consequence": "The unit owns {LOT_MECHS} 'Mechs, a 30 percent advance, and the attention of three clients who each believe the lot is theirs. The cache has to hold against commercial bounty teams, the buyer's backer, and the original launderers, while the unit decides whether it is a victim, a fence, or suddenly the owner of a combined-arms battalion.", "threat": "HIGH" }
+    ],
+    "storyElementSeed": "Auction morning. A rigger chalks lot numbers on 'Mech crates that carry four owners' stencils, each painted over the last, none fully hidden. The newest stencil is the cleanest lie in the row, and the rigger's chalk does not care.",
+    "voiceSlots": ["intelligence", "logistics", "command"],
+    "registerVariants": {},
+    "specifics": {
+      "LOT_MECHS": { "min": 8, "max": 10, "unit": "BattleMechs" },
+      "TRANSFER_WINDOW": { "min": 60, "max": 84, "unit": "hours" },
+      "CREDIT_CHECK": { "min": 33, "max": 40, "unit": "days" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Before the Auction — Just Buy It", "requires": "treasury-min:205000", "whenLacking": "lock", "lackingText": "This option is locked. The Exchange seats no bidder without 5 percent of the reserve price in hard assets on {WORLD}. By Exchange rule, the employer's letter of credit is only worth what a warden can confirm, and it cannot be confirmed yet." },
+      { "appliesTo": "Build in Deniability and Proceed", "requires": "established-base", "whenLacking": "reprice", "lackingText": "The unit has no secure cache within reach. Holding the lot means renting empty warehouse space through front companies, which adds 7,000 C-bills per week. Every week also adds one more landlord who could sell the unit's location." }
+    ]
+  },
+  {
+    "seedId": "DAR-09",
+    "family": "RELIEF_DUTY",
+    "title": "OPERATION CLEAN BILL",
+    "eraFit": ["dark-age"],
+    "factionFit": ["is-steiner", "merc"],
+    "register": "is-steiner",
+    "threatRange": ["MEDIUM", "HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.35,
+    "localeFit": { "settlement": ["port"], "terrain": ["coastal", "mountain"] },
+    "skeleton": "relief escort must carry aid into a rumor-quarantined world and carry believable proof back out, while the proof's legal validity decays on a fixed clock, its signatories' credentials are themselves suspect, and the local power that profits from the quarantine fights to keep the world sick on paper",
+    "inspiration": "age-of-sail quarantine law — the clean bill of health and the lazaretto regime, 18th-century Mediterranean",
+    "situation": "{WORLD} has been dying from a rumor for 5 months. The rumor came from a courier captain who refused to dock after seeing ground crew wearing filter masks: 'plague on {WORLD}.' That single sentence is the only evidence anyone has. It is 5 months old and unconfirmed, so treat it as thin. But with no working HPG network, no one can check it, and the story has grown at every port it reached. Three neighboring systems now block all traffic to {WORLD}. The insurance market has also marked the world VOID, which means no ship can buy insurance to travel there. In the Lyran Commonwealth that market is basically the whole economy, so a VOID mark cuts the world off. Here is the ground truth, sent by the last source still writing out ({NPC:intel-source} smuggles letters at 8 times normal postage). There was a real outbreak. It was regional, spread through the water, and killed {PLAGUE_DEAD} people. It burned out 11 weeks ago. The problem is that no trusted authority can prove it is over. So two million people are not sick, but they are cut off. In the Commonwealth, losing trade and insurance kills a world just as surely as any plague, only slower.\n\n{EMPLOYER} is a freight company that will go bankrupt on its old delivery contracts if {WORLD} stays VOID. It has put together the one thing the insurance market will accept as proof: a licensed medical board of 5 doctors. If they sign and seal a report saying the outbreak is over, the insurers will honor it. Your unit escorts the convoy that carries them: 3 DropShips of medical supplies plus the board itself. The hard part comes next. The board must take samples in 3 districts, including the valley where the outbreak started. Their signed report is only good for {VALID_DAYS} days after the first sample, and the two jumps home eat into that window. So the convoy must lift by day {LIFT_DAY} to reach the insurers' next decision meeting, which they hold once a quarter. Miss that meeting and the report expires before the next one. Then the whole job has to be run again from scratch, if the employer is even still in business.\n\nThe key terrain problem is the quay, {WORLD}'s only all-weather port. In practice the Dornbirn syndicate runs it. This smuggling ring has sold goods on the black market at 8 times the normal price for 5 months, and it knows that lifting the quarantine kills that profit. The other landing site is the plateau: safe and empty, but 60 kilometers of switchback mountain road from the people the board needs to reach.\n\nOne more problem, found in transit and known so far to only 4 people. Two of the 5 doctors lost their licenses when the college that certified them vanished behind the Fortress wall. The insurance market requires 4 valid signatures. Your unit is escorting a cure with a flaw already built into it.",
+    "objectives": {
+      "primary": "The board takes samples in all 3 assigned districts. Its sealed report reaches the insurers' quarterly meeting while still legally valid. The convoy must lift by day {LIFT_DAY}, no later.",
+      "secondary": "Get the medical cargo to district health authorities intact and out of the syndicate's hands. If the aid reaches people through the black market, the syndicate takes the credit and sets the price.",
+      "bonus": "Gather proof that the Dornbirn syndicate profited from the quarantine, in a form a planetary court can use once the quarantine ends. The employer's lawyers will pay extra for it."
+    },
+    "complications": [
+      {
+        "name": "The Validity Clock",
+        "text": "The signed report stops being legal {VALID_DAYS} days after the first sample is taken. The two jumps home already use up part of that time. So every day you lose on the ground is a day taken off the report's life. Delay does not push the deadline back; it just burns the report's remaining days.",
+        "mechanicalEffect": "A countdown starts the moment the first sample is taken. Delays on the ground, waits for JumpShips to recharge, and slow travel all subtract from the same {VALID_DAYS}-day total. When it reaches zero, the report is legally dead, no matter where it is."
+      },
+      {
+        "name": "The Syndicate's Profit Motive",
+        "text": "Dornbirn does not want the convoy destroyed. Wrecked relief ships would make martyrs and headlines, which hurts the syndicate. Instead it wants the report to fail quietly. It will disrupt sampling, scare off the doctors, and waste days. The quarantine is what keeps the syndicate in business.",
+        "mechanicalEffect": "The syndicate attacks the schedule, not the cargo. Expect roadblocks, dock strikes, sabotaged sampling sites, and rumor campaigns against the board. Any violence stays deniable and is aimed at costing the mission days, not lives."
+      },
+      {
+        "name": "The Flawed Certification",
+        "text": "Two of the 5 doctors have lost their licenses. The insurance market requires 4 valid signatures, so the report can survive one bad signature. It cannot survive two, and right now it has two. Worse, not even all the doctors know about the problem.",
+        "mechanicalEffect": "Until you fix this at the decision point, the report is one valid signature short. Who finds out sets how bad it gets. A doctor finding out is awkward. The syndicate finding out is dangerous. The insurance market finding out ends the mission."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "Where to Land",
+        "context": "The quay is the syndicate's home turf, but it is only 20 minutes from the first sampling district. The plateau belongs to no one, but it is 60 kilometers of switchback road from anywhere useful. Either way, the report's countdown starts the moment you take the first sample.",
+        "options": [
+          {
+            "title": "Land at the Quay",
+            "advantages": ["The port has cranes, cold storage, and roads, so you can start handing out cargo within 12 hours", "All 3 sampling districts are within one day's drive", "Landing in the syndicate's own port is a public signal that the districts will read as the embargo ending"],
+            "disadvantages": ["Every crane operator, pilot boat, and dock crew works for Dornbirn, so your enemy's workforce controls your schedule", "Docking at the quay puts all 3 DropShips in one place: watched, within mortar range, and open to dock strikes"],
+            "consequence": "You buy speed and pay for it with exposure. You are working on the syndicate's home turf. Every day you save is real, but the syndicate profits from every day you lose.",
+            "costs": { "cbills": 18000, "days": null, "resource": "control of your own schedule: all 3 ships depend on dock labor the syndicate controls", "risk": "the enemy runs the cranes, so a 4-day dock strike would cost more time than any roadblock" }
+          },
+          {
+            "title": "Land on the Plateau",
+            "advantages": ["Defensible, empty, and clear of the syndicate, so the convoy controls its own perimeter", "You never have to depend on hostile labor", "The DropShips sit out of reach of any realistic ground attack"],
+            "disadvantages": ["The 60 kilometers of switchback road to the districts add 9 days of driving across the mission", "Cargo has to move by truck through country made for ambushes and washouts", "Landing in the mountains looks, planet-wide, like the relief mission is not sure the plague is even real"],
+            "consequence": "You buy safety with the one thing you cannot replace: days. The syndicate does not even have to lift a finger here. The mountains burn the clock for it.",
+            "costs": { "cbills": 9000, "days": 9, "resource": "9 days of the {VALID_DAYS}-day report window, spent on the terrain right away", "risk": "the safe choice is the slow choice, and this mission fails by running out of days, not by being attacked" }
+          },
+          {
+            "title": "Split the Landing",
+            "advantages": ["Land the board and escort lance on the safe plateau, and send 1 cargo ship to the quay as a public, price-breaking delivery", "That delivery breaks the syndicate's 8-times-price black market within 48 hours and turns dock labor toward the convoy", "Sampling goes ahead safely while the syndicate is busy fighting its own customers over the cargo ship"],
+            "disadvantages": ["Your escort is split: 1 lance has to cover 60 km of gap while the cargo ship sits exposed in the syndicate's port", "If the syndicate stalls the quay ship with a fake customs delay, the lift deadline arrives with your convoy in two places"],
+            "consequence": "This is the aggressive play: you use relief as an economic weapon. The syndicate has to defend its profits in public against its own customers. But now you have 2 sites to protect, and the deadline applies to both.",
+            "costs": { "cbills": 14000, "days": null, "resource": "a concentrated escort: 1 lance stretched over 60 km and 2 key sites for the whole mission", "risk": "a customs hold on the quay ship turns day {LIFT_DAY} into a choice between making the deadline and leaving a DropShip behind" }
+          }
+        ]
+      },
+      {
+        "name": "The Lapsed Signatures",
+        "context": "You need 4 valid signatures and you have only 3. Four people know about the flaw, and sampling starts tomorrow. Every fix costs something you are short of: time, secrecy, or the look of being impartial.",
+        "options": [
+          {
+            "title": "Proceed With Five Signatures, Tell No One",
+            "advantages": ["No delay: the schedule runs as planned and the report arrives with all 5 seals on it", "The lost licenses are a paperwork problem from a college that no longer exists; the medical findings are still sound", "The odds are better than even that the insurers never audit a college that no longer exists"],
+            "disadvantages": ["If it is audited, it is not a paperwork problem: it is a fake report. That means the employer is ruined, your unit loses its bond, and {WORLD} is marked VOID again for good", "Four people know, and a secret shared by 4 people across a 2-jump trip does not stay a secret for long"],
+            "consequence": "You finish on time, but the report carries a hidden flaw that only hurts you if someone catches it. In the Dark Age, no one can easily check facts, so the lie holds for now. That cover gets thinner with every jump.",
+            "costs": { "cbills": 0, "days": 0, "resource": "the employer's survival, quietly bet on no one ordering an audit", "risk": "if it is caught, this relief mission becomes interstellar fraud after the fact, with names attached" }
+          },
+          {
+            "title": "Recruit a Fourth Signatory Locally",
+            "advantages": ["{WORLD}'s own chief medical officer still holds a current Commonwealth license, so a valid 4th signer is right here on the planet", "A local doctor who actually fought the outbreak adds credibility no off-world board can match", "It costs 2 days to vet and bring them on, not 30"],
+            "disadvantages": ["This doctor's own world depends on the finding, which is a conflict of interest the insurers may use against the report, whether you disclose it or they discover it", "The chief medical officer answers to a planetary government that, in the port at least, answers to the syndicate's money"],
+            "consequence": "You fix the flaw but add a new weakness. The report gains a valid signature and a fresh doubt at the same time. Whether the insurers accept it despite that doubt is impossible to know ahead of time.",
+            "costs": { "cbills": 5000, "days": 2, "resource": "the report's look of being impartial: one signer now has the biggest personal stake of anyone involved", "risk": "the conflict-of-interest rule is up to the reviewer, and that reviewer is 2 jumps away and cannot be reached from here" }
+          },
+          {
+            "title": "Send the Commissioners for Re-Accreditation",
+            "advantages": ["The prefecture medical college 1 jump away can re-license both doctors by reviewing their records, which fixes the flaw at its source", "The resulting report would survive any audit ever run against it"],
+            "disadvantages": ["One courier round trip takes {REACCREDIT_DAYS} days, taken straight out of the {VALID_DAYS}-day report window", "After that, the trip home has only 4 to 9 days of slack for 2 jumps, and bad weather at one recharge point wipes it out", "The college may review the records and still say no"],
+            "consequence": "This is doing it right, at Dark-Age speed. It is the only fix that truly solves the problem, paid for in the one resource you cannot replace: time. It only works if everything else goes perfectly, and this mission is already a long list of things going wrong.",
+            "costs": { "cbills": 22000, "days": null, "resource": "one courier round trip ({REACCREDIT_DAYS} days) taken from the report window, so the fix and the deadline draw from the same limited time", "risk": "only 4 to 9 days of slack left for the final 2 jumps, bet against recharge lines that no longer run on any schedule" }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Alarm: 3 mortar rounds land deliberately long, bracketing the landing zone during the commission's offload. No casualties. It is a warning, not an attack." },
+        { "t": "T+0:30", "event": "If landed at the quay, dock labor stands down 'for a safety review.' If landed on the plateau, the switchback road reports its first washed-out culvert." },
+        { "t": "T+6:00", "event": "A rumor surfaces in 2 districts at once: the commission is here to confirm the plague, not clear it, and sampling teams will seize and quarantine people. No one can prove who started it, but it is obviously the syndicate." },
+        { "t": "T+24:00", "event": "First sampling window at the outbreak valley. Crowds fill the clinic: half want medicine, half are blocking what they have been told are 'seizure teams.' The syndicate has spent only 3 mortar rounds and a stack of leaflets so far." },
+        { "t": "T+48:00", "event": "District authorities formally ask for an escort on all remaining sampling runs. The mission now has to guard its own evidence-gathering." }
+      ],
+      "hardDeadline": "The convoy must lift no later than day {LIFT_DAY}, with the sealed report aboard. The countdown allows no exceptions. A report that reaches the insurance market even one day past {VALID_DAYS} days is still medically true but legally dead, and the market's next session comes too late to save it. Two million people's access to insurance, and with it a normal life, rides on a courier schedule and a fresh seal."
+    },
+    "opforSketch": {
+      "composition": "Dornbirn syndicate: 200-300 organized personnel, 12-18 armed vehicles, dock-labor leverage, 2-3 mortar teams (Green crews, careful targeting), and money — the real weapon. No 'Mechs; possibly 1-2 IndustrialMech conversions kept deniably unarmed. Crowd elements: panicked, manipulable, never hostile by default. Generator should make the syndicate's interference proportionate and deniable: its victory condition is the calendar, not the battlefield.",
+      "behavior": "The syndicate attacks the schedule, not the people: strikes, holds, washed-out roads, rumors, and just enough violence to slow the mission without creating martyrs. It launches a direct attack only against the bonus objective — the evidence of its profiteering — which is the one thing it will take real risks to protect. If the quarantine looks close to being lifted, expect one desperate attempt against the certification itself in the final 72 hours."
+    },
+    "forks": [
+      { "name": "OPERATION OPEN HARBOR", "family": "PIRATE_HUNTING", "outcomeGate": "FULL_SUCCESS", "trigger": "The report reaches the insurance market valid, and {WORLD}'s VOID mark is lifted.", "consequence": "Legal trade returns and the syndicate's profits die at the dock. Dornbirn turns into what its gear always pointed toward: armed raiders preying on the trade lanes it used to control. The first insured convoys want the escort that already knows the ground.", "threat": "MEDIUM" },
+      { "name": "OPERATION LONG WINTER", "family": "EXTRACTION_RAID", "outcomeGate": "FAILURE", "trigger": "The report dies, whether by the clock, an audit, or seizure, and the VOID mark stays in place.", "consequence": "The employer goes bankrupt at courier speed. Its on-planet agents, the commission, and 11 crates of test samples are now stranded in a place the syndicate effectively controls. Getting them out is no longer a relief mission and no longer pays like one.", "threat": "HIGH" },
+      { "name": "OPERATION NARROW GATE", "family": "SECURITY_DUTY", "outcomeGate": "PARTIAL", "trigger": "The insurance market grants partial clearance: one certified route covering the port, the road, and the clinic chain, up for re-inspection in 180 days.", "consequence": "{WORLD} gets one legal trade route, and the unit holds the contract to keep it clean. That means running the inspections, securing the route, and watching a syndicate that now needs only one incident inside it to get the planet marked VOID again.", "threat": "MEDIUM" }
+    ],
+    "storyElementSeed": "A clinic nurse signs the sample-custody form with a pen the escort sergeant lends her, then wipes the pen on her sleeve out of 5 months of habit before handing it back. Both of them notice. Neither says anything.",
+    "voiceSlots": ["medical", "logistics", "command", "intelligence"],
+    "registerVariants": {
+      "is-steiner": { "objectives.primary": "Get the sealed report to the insurance market while it is still valid, so the VOID mark is lifted. In the Commonwealth, trade is life, and a world cut off is one the insurers have already started to abandon. Lift by day {LIFT_DAY}. After that, the numbers forgive nothing." }
+    },
+    "specifics": {
+      "PLAGUE_DEAD": { "min": 1700, "max": 2300, "unit": "deaths (contained outbreak)" },
+      "VALID_DAYS": { "min": 115, "max": 125, "unit": "days attestation validity" },
+      "LIFT_DAY": { "min": 35, "max": 41, "unit": "mission day" },
+      "REACCREDIT_DAYS": { "min": 30, "max": 38, "unit": "days" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Split the Landing", "requires": "dropship", "whenLacking": "reprice", "lackingText": "You only have chartered ships. The quay delivery ship flies under a hired captain who has the right to refuse to enter syndicate-controlled waters. Add an 11,000 C-bill hazard fee, and even then he can still say no." },
+      { "appliesTo": "Send the Commissioners for Re-Accreditation", "requires": "treasury-min:22000", "whenLacking": "lock", "lackingText": "Option locked: the college wants its fees in hard cash. The prefecture college re-licenses no one on credit, especially not for an insurance case. The request only travels if the payment travels with it in the same pouch." }
+    ]
+  },
+  {
+    "seedId": "DAR-10",
+    "family": "RECON_RAID",
+    "title": "OPERATION PAINTED WALL",
+    "eraFit": ["dark-age", "ilclan"],
+    "factionFit": ["is-marik"],
+    "register": "is-marik",
+    "threatRange": ["LOW", "MEDIUM", "HIGH"],
+    "armsMix": "COMBINED_ARMS",
+    "vehicleShare": 0.3,
+    "localeFit": { "settlement": ["agrarian"], "regionRole": ["contested", "border"], "terrain": ["coastal"] },
+    "skeleton": "recon element must measure a garrison that knows it is watched and stages strength it may not have, while every probe sharp enough to pierce the performance risks the incident that hardens the world against the campaign the measurement serves",
+    "inspiration": "Potemkin facades for the imperial inspection tour, 1787; the Aviation Day bomber-gap flyby that counted the same aircraft twice, 1955",
+    "situation": "{WORLD}, 3150. The re-formed {EMPLOYER} means to take this world back. Parliament has voted the funds, and the {EMPLOYER}'s planners have drafted 3 possible force packages. The gap between them is 11 months of campaign budget and one question: is {WORLD} to be liberated or conquered? The planners have no intelligence newer than 31 months old. The '{WORLD} Standing Guard,' the Republic-remnant garrison on record, claims a battalion with a full BattleMech company. But two defector debriefs, 14 and 9 months old and unreliable, say the truth is an understrength company with {OBSERVED_MECHS} working 'Mechs. The two sources contradict each other on the details. They agree the rest is fake: the same lance repainted in 3 color schemes and moved between bases, radio chatter for units that are only callsigns, fresh unit markings on bunkers that hold nothing but farm equipment. By both accounts, the Standing Guard's commander is very good at this. The garrison has scared off 2 pirate probes on the bluff alone.\n\nYour unit works under {EMPLOYER} contract through {NPC:employer-contact}. It inserts a recon element to produce a verified order of battle. The timing is unforgiving. The courier JumpShip waits at a hidden jump point and leaves on day {RV_DAY} no matter what. Any intelligence not aboard it might as well not exist. The fleet sails on Parliament's schedule either way. What your intelligence changes is which force package the fleet carries, and which speech the Captain-General gives when it lands.\n\nThe political side is worse. {WORLD}'s population is the real prize. The {EMPLOYER} is selling this takeover as a homecoming, and 31 months of blackout have left the planet's loyalties anyone's guess. If {EMPLOYER} soldiers are caught on the planet before the fleet arrives, the garrison gets the one thing its bluff cannot fake: real proof of a foreign invasion. Broadcast loudly, that proof turns the very people the campaign wants to welcome against it. One defector debrief also holds a thread no one can check from off-world: {ADVISORS} personnel in unmarked field gear, drilling the 'Mech company in tactics neither defector recognized. If some third party already has military advisors on {WORLD}, then every force package in the planners' files rests on a wrong assumption.\n\nThe key terrain problem is the tablelands. The only spot that overlooks Base 2's 'Mech hangars sits across 14 kilometers of terraced vineyard, worked around the clock through harvest season. Those hangars are where the repaints would happen, if they are real. The approach to that one good vantage runs through country where every row of vines has someone in it. Harvest is also the only season with enough temporary labor for strangers to blend in at all.",
+    "objectives": {
+      "primary": "Deliver a verified Standing Guard order of battle to the courier pickup by day {RV_DAY}: the working 'Mech count, the true unit strength, and the theater inventory.",
+      "secondary": "Settle the advisor question. Confirm, identify, or rule out the third-party presence, with evidence the planners can weigh.",
+      "bonus": "Leave no trace. No fight, capture, or sighting that anyone can tie to {EMPLOYER} before the fleet arrives."
+    },
+    "complications": [
+      {
+        "name": "The Performance",
+        "text": "The garrison fakes its strength as routine: rotating paint schemes, fake radio chatter, empty bunkers with fresh markings. Anything easy to observe was meant to be seen. The real numbers are what all the faking is meant to hide.",
+        "mechanicalEffect": "By default, passive watching returns the faked numbers. Only three things return the true numbers: round-the-clock watching, an inside source, or a forced response. Each of those raises the risk of being caught."
+      },
+      {
+        "name": "Harvest Country",
+        "text": "The tablelands approach is 14 km of worked terraces, with pickers, cart drivers, children, and dogs, night shifts included. The vineyard is the only cover strangers have. It is also a 5,000-person watch network that spreads news as fast as people talk over lunch.",
+        "mechanicalEffect": "Each trip to or from the overwatch rolls against being spotted by civilians. Each sighting adds to an alarm count. When that count crosses a set point, the checkpoint militia starts actively sweeping the terraces."
+      },
+      {
+        "name": "The Value of a Provocation",
+        "text": "The Standing Guard cannot fake the one thing that would help it most: proof of a foreign invasion. Your recon element is that proof, walking around. To the garrison, capturing the unit or forcing a firefight is worth more than a year of bluffing.",
+        "mechanicalEffect": "On any contact, the garrison tries to capture and record rather than kill: prisoners, equipment, footage. An incident traced to the {EMPLOYER} triggers the campaign-layer provocation track no matter how the fight goes. Escaping does not undo the damage."
+      }
+    ],
+    "decisionPoints": [
+      {
+        "name": "How to Count a Bluffing Garrison",
+        "context": "Three methods can read the garrison's true strength, and the element has the time and exposure budget for only one done properly. Each is reliable about a different thing.",
+        "options": [
+          {
+            "title": "The Long Watch",
+            "advantages": ["21 days of steady watching over the tablelands catches the repaint cycle in the act: hangar traffic, heat from the paint shop, the same 'Mech walk showing up under different colors", "Fully passive: nothing transmitted, no one approached, nothing for the enemy to catch but the unit's patience", "Produces the best result: a day-by-day activity log no analyst can dispute"],
+            "disadvantages": ["Spends 21 of the {RV_DAY}-day budget on one hillside, with harvest traffic passing below the position the whole time", "Only sees what Base 2 shows. The advisor thread and the other 2 bases stay unwatched.", "Two weeks of bad weather returns a confirmed nothing"],
+            "consequence": "The patient method: the most certainty about the narrowest question. The element comes home having proven or disproven the repaint cycle beyond argument. Everything it did not watch is still wearing fresh paint.",
+            "costs": { "cbills": 4000, "days": 21, "resource": "21 days hidden in 2 positions in harvest country. The alarm count rises with every supply run to the position.", "risk": "a firm answer to one question, bought with the time that could have answered three" }
+          },
+          {
+            "title": "Buy the Quartermaster's Records",
+            "advantages": ["A Standing Guard quartermaster, named by the second defector, will sell the garrison's real equipment records, fuel draws, and parts use for 45,000 C-bills, dropped at a set point", "The records cover all 3 bases and 18 months: the whole bluff, itemized from the inside", "One deal, 4 days, very little exposure"],
+            "disadvantages": ["A garrison this good at deception may fake its books too, so the records could be the deepest layer of the same bluff", "There is no way to check them. No second source on the planet can verify the records before the courier leaves.", "If the quartermaster is bait, the drop point is the capture site, a provocation handed to the garrison gift-wrapped"],
+            "consequence": "The fast method: broad, cheap in days, and resting on the one question this world is built to make unanswerable. Are the records real, or a script? The planners get either everything or a forgery, and from here there is no way to tell which.",
+            "costs": { "cbills": 45000, "days": 4, "resource": "reliance on one source: the whole product rests on a single seller's honesty, with no way to check it inside the mission window", "risk": "if the records are bait, the drop point is an ambush set up to capture the unit" }
+          },
+          {
+            "title": "Provoke a Muster",
+            "advantages": ["A fake raider alarm, 'pirate ships at the L1 point,' planted through the harbor watch, forces the garrison to roll out whatever it really has", "One watched muster is one honest count: 'Mechs that move are real, callsigns that stay silent are fakes", "Decisive within 72 hours, with all 3 bases sampled at once"],
+            "disadvantages": ["The alarm panics 3 districts of the civilians the {EMPLOYER} means to govern next spring", "A garrison that musters its real strength also goes on alert, so security doubles for weeks afterward", "The harbor watch will be interrogated. If the plant is traced, it becomes exactly the foreign-provocation story the {EMPLOYER} was trying to avoid."],
+            "consequence": "The aggressive method: one staged emergency tears the bluff open and the truth rolls onto the parade ground on its own. The cost lands on the population: fear in the districts, doubled guards afterward, and a planted lie with the unit's fingerprints on it.",
+            "costs": { "cbills": 12000, "days": 3, "resource": "the harbor watch channel: a one-time plant, used up in the using, with interrogation evidence left behind", "risk": "a traced plant turns the survey into the incident, wounding the campaign's whole political case by the unit's own hand" }
+          }
+        ]
+      },
+      {
+        "name": "The Advisor Thread",
+        "context": "Mid-mission, the overwatch confirms the defector's report: {ADVISORS} personnel in unmarked gear at Base 1, drilling the 'Mech company in movement tactics no Republic manual teaches. Identifying them changes every force package. So does getting caught trying.",
+        "options": [
+          {
+            "title": "Extend the Mission and Identify Them",
+            "advantages": ["8 more days of dedicated coverage of Base 1 can pin down where the advisors come from: their equipment, their drill style, their mess habits. How a unit operates is as identifiable as a fingerprint.", "If a third House or a Clan already has troops on {WORLD}, this answer matters more than the whole original job"],
+            "disadvantages": ["8 days the RV schedule does not have. The main report then misses the courier and ships on the backup, 31 days later, on a slower ship.", "The planners get nothing at the session that matters and a full answer at one that may not", "Every extra day raises the alarm count in harvest country"],
+            "consequence": "The element bets the campaign's schedule against its premise: a late but true answer versus an on-time guess. Parliament's clock will not wait for thoroughness. But a force package built on a wrong assumption is a disaster that will not wait either.",
+            "costs": { "cbills": null, "days": 8, "resource": "the main courier, given up for the backup 31 days later, with the data aging that much more", "risk": "the fleet may sail on the on-time guess while the decisive answer is still on the slow ship behind it" }
+          },
+          {
+            "title": "Photograph Them and Leave",
+            "advantages": ["Long-lens photos of the advisors as they are, labeled, shipped with the main report on schedule", "The planners get the thread flagged with evidence, on time, and headquarters decides what it is worth", "No extra exposure: the element keeps its small footprint and makes its courier"],
+            "disadvantages": ["Photos without an ID are only a 'maybe,' and planners answer a 'maybe' by assuming the worst case", "The worst case means the heavy force package: 11 more months of budget, a conquest posture, the liberation speech rewritten", "The one discovery that changes everything ships as a footnote"],
+            "consequence": "The disciplined answer: the mission as assigned, delivered as promised, with the biggest discovery attached as an open question. Planners answer a 'maybe' by assuming the worst, so {WORLD}'s homecoming gets armored to match.",
+            "costs": { "cbills": 0, "days": 0, "resource": "the advisor question, shipped unsolved, to be answered by force-package guesswork instead of evidence", "risk": "an unidentified 'maybe' triggers worst-case planning, making the cheapest option here the most expensive line in the campaign budget" }
+          },
+          {
+            "title": "Tap the Advisors' Transmitter",
+            "advantages": ["The advisors keep an off-band transmitter shack on Base 1's perimeter. A close-approach tap, one night's work, reads their communications at the source.", "Their signals name their sponsor faster and more surely than any photo. An encryption system is as identifying as a passport.", "Settles the thread within the main courier window"],
+            "disadvantages": ["The shack sits inside the only base with real soldiers in it, and guarding against recon is the advisors' own specialty", "A capture here is not a minor checkpoint incident. It is {EMPLOYER} operators taken at a third party's communications site, a far worse provocation, witnessed by professionals.", "If the advisors are Clan, the tap risks tipping them off that the {EMPLOYER} is coming, the one warning the fleet cannot afford to give"],
+            "consequence": "The decisive method aimed at the decisive question, done in the one place on {WORLD} where the opposition is real. It comes back with a clear ID or with prisoners, and the element learns which in the dark, at close range, with little time left before day {RV_DAY}.",
+            "costs": { "cbills": 7000, "days": 2, "resource": "the element's 2 best operators, sent inside the only professionally guarded perimeter on the planet", "risk": "failure here is more than a blown mission. It warns the exact party the campaign most needs to keep in the dark that an attack is coming." }
+          }
+        ]
+      }
+    ],
+    "reactionTimeline": {
+      "entries": [
+        { "t": "T+0:00", "event": "Compromise alarm: a vineyard work crew reports figures on the tablelands to the causeway checkpoint. The militia logs it and wakes the garrison's duty officer." },
+        { "t": "T+1:30", "event": "Checkpoint militia (2 vehicles, 11 personnel) starts a daylight sweep of the lower terraces. It is routine, not urgent. The garrison's real speed is not yet in play." },
+        { "t": "T+4:00", "event": "The Standing Guard quick-reaction force forms up at Base 2. This is where the bluff cracks: what actually rolls out, in what paint, at what speed, is the most honest count the element will ever get. Get the cameras going." },
+        { "t": "T+9:00", "event": "The sweep line reaches the overwatch ridge. The garrison is clearly trying to capture, not kill: nets, restraints, camera teams. It wants prisoners and evidence, not bodies." },
+        { "t": "T+36:00", "event": "Coastal extraction window: boat pickup at the shingle, 40 minutes of slack, then it is gone." }
+      ],
+      "hardDeadline": "The courier leaves the hidden jump point on day {RV_DAY} with whatever is aboard. Parliament's fleet then sails on its own schedule with whatever the courier brought. Intelligence that misses the courier does not arrive late. It does not arrive at all, and the force package defaults to the worst case. So the element's last spare day on {WORLD} is not really its own. It belongs to a planning cell 4 jumps away that will never know what that extra day might have bought."
+    },
+    "opforSketch": {
+      "composition": "{WORLD} Standing Guard, true strength per the defectors: 1 understrength company, {OBSERVED_MECHS} working BattleMechs (claimed strength: {CLAIMED_MECHS}), 8-12 vehicles, and district militia checkpoints (Green). The bluff layer: a paint crew, a fake-radio cell, and a stock of unit markings — skilled at deception but untested in actual combat. Conditional: {ADVISORS} third-party advisors (Veteran/Elite, whose identity is the secondary objective). The generator should run two OPFOR sheets — the faked one and the real one — and reveal the real one only through intelligence the player actually earns.",
+      "behavior": "The garrison fights its war through information: deter, stage, document, and above all capture — a captured {EMPLOYER} soldier is worth roughly ten times more to it than a dead one. It conserves its real combat power desperately because it has so little, and that scarcity is the secret the whole bluff exists to hide. The advisors, if drawn into a fight, behave according to whoever trained them — and that behavior is itself the intelligence the unit came for."
+    },
+    "forks": [
+      { "name": "OPERATION HOMECOMING", "family": "PLANETARY_ASSAULT", "outcomeGate": "FULL_SUCCESS", "trigger": "A verified order of battle reaches the courier, the advisor thread is settled or graded, and no incident is traced to the {EMPLOYER}.", "consequence": "Parliament buys the light package: a liberation-style landing with the unit as pathfinders on the ground it mapped. Seeing the size of what lands, the Standing Guard's commander will know how completely the bluff failed. He then chooses between staging a surrender and fighting one real battle with {OBSERVED_MECHS} machines.", "threat": "MEDIUM" },
+      { "name": "OPERATION HEAVY HAND", "family": "PLANETARY_ASSAULT", "outcomeGate": "FAILURE", "trigger": "The courier leaves with nothing, or the intelligence is judged unreliable.", "consequence": "Worst-case planning wins: the conquest package, 11 extra months of budget, and a population met by a fleet sized for an enemy that may never have existed. The unit lands with the fleet it failed to inform, policing a resentment its own silence helped create.", "threat": "HIGH" },
+      { "name": "OPERATION SOUR HARVEST", "family": "EXTRACTION_RAID", "outcomeGate": "COMPROMISED", "trigger": "Element personnel or equipment are captured and traced to {EMPLOYER}.", "consequence": "The garrison's broadcast runs within 18 hours: captured equipment on display, prisoners' faces lit for the cameras. The provocation track ignites planet-wide. Whoever is left of the element must cross 400 kilometers to the backup pickup, through districts that now believe the invasion has already begun. Officially, it has.", "threat": "HIGH" }
+    ],
+    "storyElementSeed": "Through the long lens at dawn, a paint crew masks the same Wolverine's shin for the third scheme in 20 days. They work fast and sloppy at the edges. Where the tape lifts, three colors deep under the fresh coat, the machine's original kill tallies still hold the primer line.",
+    "voiceSlots": ["intelligence", "command", "naval"],
+    "registerVariants": {
+      "is-marik": { "objectives.bonus": "No incident, no attribution, no gift to the provincialists in Parliament. They voted against this campaign, and they are waiting on the record for exactly one photograph of {EMPLOYER} soldiers where {EMPLOYER} soldiers should not yet be." }
+    },
+    "specifics": {
+      "CLAIMED_MECHS": { "min": 10, "max": 12, "unit": "BattleMechs (claimed)" },
+      "OBSERVED_MECHS": { "min": 3, "max": 5, "unit": "BattleMechs (defector estimate)" },
+      "RV_DAY": { "min": 24, "max": 30, "unit": "days" },
+      "ADVISORS": { "min": 4, "max": 6, "unit": "unidentified advisors" }
+    },
+    "resourceGates": [
+      { "appliesTo": "Buy the Quartermaster's Records", "requires": "treasury-min:45000", "whenLacking": "lock", "lackingText": "Option locked: the quartermaster wants hard cash at the drop. An IOU drawn on a {EMPLOYER} paymaster 4 jumps away is worthless to him on {WORLD}." },
+      { "appliesTo": "The Long Watch", "requires": "established-base", "whenLacking": "reprice", "lackingText": "No in-country support cell, so the 21-day watch has to be resupplied by overland cache runs. Add 2 trips through harvest country per week, and each one rolls against the alarm count." }
+    ]
+  }
+]

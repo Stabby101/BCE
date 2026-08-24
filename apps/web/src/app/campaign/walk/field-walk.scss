@@ -1,0 +1,61 @@
+:host { display: block; }
+
+/* full-screen overlay; the dialog owns its scroll (height-safe convention) */
+.fw-overlay { position: fixed; inset: 0; z-index: 70; background: rgba(20, 16, 12, .72); display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px calc(24px + var(--bce-footer-h, 0px)); overflow-y: auto; } /* IMPORT-7 A — clear the legal footer */
+.fw { width: 100%; max-width: 960px; background: var(--paper); border: 2px solid var(--ink); box-shadow: 0 18px 50px rgba(0, 0, 0, .5); display: flex; flex-direction: column; }
+
+.fw-head { display: flex; align-items: flex-start; gap: 12px; padding: 13px 16px; border-bottom: 2px solid var(--ink); background: var(--paper2); }
+.fw-title { font-family: var(--label); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; font-size: 16px; color: var(--ink); }
+.fw-flag { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--stamp); border: 1.3px solid var(--stamp); padding: 1px 7px; margin-left: 8px; }
+.fw-sub { font-family: var(--mono); font-size: 11px; line-height: 1.5; color: var(--ink2); margin-top: 4px; }
+.fw-x { margin-left: auto; flex: 0 0 auto; font-size: 18px; line-height: 1; background: transparent; border: 1.4px solid var(--ink2); color: var(--ink); width: 34px; height: 34px; cursor: pointer; }
+
+/* allegiance sections */
+.fw-side { border-bottom: 1.4px solid var(--ink2); }
+.fw-shead { display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: var(--paper2); border-bottom: 1.3px solid var(--ink2); position: sticky; top: 0; }
+.fw-side.blufor { border-left: 5px solid var(--blufor, #2c5f8a); }
+.fw-side.opfor { border-left: 5px solid var(--stamp); }
+.badge { font-family: var(--label); font-weight: 700; letter-spacing: 2px; font-size: 11px; color: var(--paper); padding: 3px 9px; }
+.blufor .badge { background: var(--blufor, #2c5f8a); }
+.opfor .badge { background: var(--stamp); }
+.sh-t { font-family: var(--label); font-weight: 600; letter-spacing: .6px; text-transform: uppercase; font-size: 12px; color: var(--ink); }
+.sh-c { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink2); }
+
+/* rows */
+.fw-row { display: grid; grid-template-columns: 1.4fr 2fr 1.3fr 1.5fr; gap: 10px; align-items: center; padding: 9px 16px; border-bottom: 1px solid var(--ink2); }
+.fw-row:nth-child(even) { background: var(--paper2); }
+.fw-unit { display: flex; flex-direction: column; gap: 1px; }
+.fw-name { font-family: var(--label); font-weight: 600; letter-spacing: .3px; text-transform: uppercase; font-size: 12.5px; color: var(--ink); }
+.fw-tons { font-family: var(--mono); font-size: 10px; color: var(--ink2); }
+.fw-readout { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.ro { font-family: var(--mono); font-size: 9.5px; letter-spacing: .3px; color: var(--ink2); border: 1px solid var(--ink2); padding: 1px 5px; }
+.ro.warn { color: var(--warn); border-color: var(--warn); }
+.ro.crit { color: var(--paper); background: var(--stamp); border-color: var(--stamp); font-weight: 700; }
+.sev { font-family: var(--mono); font-weight: 700; font-size: 9.5px; letter-spacing: 1px; padding: 1px 6px; color: var(--paper); }
+.sev-G { background: var(--ok, #3a7d44); } .sev-Y { background: #c79a23; } .sev-R { background: #c2622a; } .sev-B { background: #5a1d1d; }
+
+.fw-q { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.q1 { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .5px; border: 1.4px solid var(--ok, #3a7d44); color: var(--ok, #3a7d44); background: transparent; padding: 2px 8px; cursor: pointer; min-height: 24px; }
+.q1.no { border-color: var(--stamp); color: var(--stamp); }
+.pil { font-family: var(--mono); font-size: 9px; letter-spacing: .5px; color: var(--warn); }
+.pil.kia { color: var(--stamp); font-weight: 700; }
+.val { font-family: var(--mono); font-size: 9.5px; color: var(--ink2); }
+
+.fw-disp { display: flex; flex-direction: column; gap: 3px; }
+.fw-disp select { font-family: var(--mono); font-size: 11.5px; background: var(--paper); border: 1.4px solid var(--ink); color: var(--ink); padding: 6px 8px; min-height: 36px; cursor: pointer; }
+.fw-credit { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--ok, #3a7d44); }
+.tri { font-family: var(--mono); font-size: 9px; letter-spacing: .5px; color: var(--ink2); font-weight: 400; }
+.gate-note { font-family: var(--mono); font-size: 9px; font-style: italic; color: var(--warn); }
+.fw-none { font-family: var(--mono); font-size: 11px; color: var(--ink2); padding: 12px 16px; }
+
+.fw-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; background: var(--paper2); border-top: 2px solid var(--ink); position: sticky; bottom: 0; }
+.fw-total { font-family: var(--mono); font-size: 12px; color: var(--ink); } .fw-total b { color: var(--ok, #3a7d44); }
+.fw-acts { margin-left: auto; display: flex; gap: 10px; }
+.fw-later { font-family: var(--label); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; font-size: 11px; border: 1.4px solid var(--ink2); background: transparent; color: var(--ink2); padding: 9px 14px; cursor: pointer; min-height: 40px; }
+.fw-go { font-family: var(--label); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; font-size: 12px; border: 1.6px solid var(--ok, #3a7d44); background: transparent; color: var(--ok, #3a7d44); padding: 9px 16px; cursor: pointer; min-height: 40px; }
+.fw-go:hover, .fw-go:focus-visible { background: var(--ok, #3a7d44); color: var(--paper); outline: none; }
+
+@media (max-width: 620px) {
+    .fw-row { grid-template-columns: 1fr 1fr; gap: 7px; }
+    .fw-overlay { padding: 8px; }
+}

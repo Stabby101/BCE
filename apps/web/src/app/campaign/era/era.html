@@ -1,0 +1,48 @@
+<main class="sheet" aria-label="New campaign — select era">
+    <span class="reg tl" aria-hidden="true"></span><span class="reg tr" aria-hidden="true"></span>
+    <span class="reg bl" aria-hidden="true"></span><span class="reg br" aria-hidden="true"></span>
+    <div class="holes" aria-hidden="true"><div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div></div>
+    <div class="stamp" aria-hidden="true">New Campaign</div>
+
+    <header>
+        <div>
+            <div class="ttl">BATTLETECH CAMPAIGN ENGINE</div>
+            <div class="crumb">Create campaign &nbsp;&rsaquo;&nbsp; <b>Select era</b> &nbsp;&rsaquo;&nbsp; posture &nbsp;&rsaquo;&nbsp; forces &nbsp;&rsaquo;&nbsp; resources</div>
+        </div>
+        <div class="step"><div><b>STEP</b> 01 / 04</div><div><b>FIELD</b> ERA</div></div>
+    </header>
+
+    <div class="lead">Pick the era. It sets the <b>technology window</b> and which units may field. Rendered from the canonical era list — MekBay's live era feed needs unit data not present in this build.</div>
+
+    <!-- DIRECTIVE-108 — the game-system choice moved to the Campaign Setup card (the new first step). -->
+
+    <div class="grid">
+        @for (e of eras; track e.id) {
+            <button type="button" class="era" [class.sel]="selected().id === e.id" [attr.aria-pressed]="selected().id === e.id" (click)="select(e)">
+                <span class="sig" aria-hidden="true" [innerHTML]="sigilSafe[e.sigil]"></span>
+                <span class="em">
+                    <span class="nm">{{ e.name }}</span>
+                    <span class="yr">{{ yr(e) }}</span>
+                </span>
+            </button>
+        }
+    </div>
+
+    <div class="detail">
+        <div class="dleft">
+            <div class="dname">{{ selected().name }}</div>
+            <div class="dyr">{{ yr(selected()) }}</div>
+            <div class="dwindow">tech window {{ yr(selected()) }}</div>
+        </div>
+        <div class="ddesc">{{ selected().desc }}</div>
+    </div>
+
+
+    <footer>
+        <div class="nav">
+            <button type="button" class="btn" (click)="back()">&lsaquo; Back</button>
+            <button type="button" class="btn go" (click)="proceed()">Proceed &rsaquo;</button>
+        </div>
+        <div class="meta">BCE v0.1 &middot; campaign parameter 1 of 4<br>era &middot; posture &middot; unit&#8209;size &middot; resources</div>
+    </footer>
+</main>
