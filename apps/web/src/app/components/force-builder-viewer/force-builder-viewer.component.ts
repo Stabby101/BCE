@@ -1,61 +1,41 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { Component, computed, Injector, type ElementRef, effect, inject, ChangeDetectionStrategy, viewChild, viewChildren, input, signal, afterNextRender, DestroyRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import type { Subscription } from 'rxjs';
 import { ForceBuilderService } from '../../services/force-builder.service';
 import { LayoutService } from '../../services/layout.service';
-import type { Force, UnitGroup } from '../../models/force.model';
+import { OptionsService } from '../../services/options.service';
+import { buildEraWarningMessage, type Force, UnitGroup } from '../../models/force.model';
 import type { ForceSlot } from '../../models/force-slot.model';
 import type { ForceUnit } from '../../models/force-unit.model';
 import { DragDropModule, type CdkDragDrop, type CdkDragMove } from '@angular/cdk/drag-drop'
 import { DialogsService } from '../../services/dialogs.service';
 import { UnitDetailsDialogComponent, type UnitDetailsDialogData } from '../unit-details-dialog/unit-details-dialog.component';
-import { UnitBlockComponent } from '../unit-block/unit-block.component';
+import { UnitBlockComponent, type UnitBlockPilotEditEvent } from '../unit-block/unit-block.component';
 import { CompactModeService } from '../../services/compact-mode.service';
 import { ToastService } from '../../services/toast.service';
-import { FORMATION_DEFINITIONS } from '../../utils/formation-definitions';
+import { formatSummaryMovement } from '../../models/pilot-abilities.model';
+import { getFormationDefinition } from '../../utils/formation-blueprints';
+import { formationInheritsParentEffects } from '../../utils/formation-type.model';
+import { DataService } from '../../services/data.service';
+import { UnitAvailabilitySourceService } from '../../services/unit-availability-source.service';
+import { LobbyService } from '../../services/lobby.service';
+import { TooltipDirective } from '../../directives/tooltip.directive';
+import { MULFACTION_EXTINCT } from '../../models/mulfactions.model';
+import { formatBvPv } from '../../utils/force-viewer-bv-pv-display.util';
+import { LanceTypeIdentifierUtil } from '../../utils/lance-type-identifier.util';
+import { FormatTonsPipe } from '../../pipes/format-tons.pipe';
 
 
-/*
- * Author: Drake
- */
+
 @Component({
     selector: 'force-builder-viewer',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CommonModule, DragDropModule, UnitBlockComponent],
+    imports: [CommonModule, DragDropModule, UnitBlockComponent, TooltipDirective, FormatTonsPipe],
     templateUrl: './force-builder-viewer.component.html',
     styleUrls: ['./force-builder-viewer.component.scss']
 })
@@ -65,7 +45,11 @@ export class ForceBuilderViewerComponent {
     protected layoutService = inject(LayoutService);
     compactModeService = inject(CompactModeService);
     private dialogsService = inject(DialogsService);
+    protected optionsService = inject(OptionsService);
     private injector = inject(Injector);
+    private dataService = inject(DataService);
+    protected lobbyService = inject(LobbyService);
+    private unitAvailabilitySource = inject(UnitAvailabilitySourceService);
     private scrollableContent = viewChild<ElementRef<HTMLDivElement>>('scrollableContent');
 
     forceUnitItems = viewChildren<ElementRef<HTMLElement>>('forceUnitItem');
@@ -96,6 +80,25 @@ export class ForceBuilderViewerComponent {
 
     hasOwnedForce = computed<boolean>(() => this.forceBuilderService.loadedForces().some(s => !s.force.readOnly()));
 
+    forceEraWarning(force: Force): string | null {
+        const eras = this.dataService.getEras();
+        const availabilityContext = this.unitAvailabilitySource.createForceAvailabilityContextForUnits(
+            force.units().map((unit) => unit.getUnit()),
+            eras,
+        );
+        const extinctFaction = this.dataService.getFactionById(MULFACTION_EXTINCT) ?? null;
+
+        return buildEraWarningMessage(
+            force.units(),
+            force.era(),
+            force.faction(),
+            eras,
+            extinctFaction,
+            availabilityContext,
+            (faction, era) => this.unitAvailabilitySource.factionExistsInEra(faction, era, availabilityContext.source),
+        );
+    }
+
     /** Set of Force instances whose headers are currently blinking (remote update on visible force). */
     blinkingForces = signal<Set<Force>>(new Set());
     private blinkTimeouts = new Map<Force, ReturnType<typeof setTimeout>>();
@@ -104,17 +107,31 @@ export class ForceBuilderViewerComponent {
     /** Combined BV/PV totals across all visible loaded forces. */
     combinedTotals = computed(() => {
         const slots = this.loadedSlots();
-        let totalBV = 0;
-        let totalPV = 0;
-        for (const slot of slots) {
-            if (slot.force.gameSystem === 'as') {
-                totalPV += slot.force.totalBv();
-            } else {
-                totalBV += slot.force.totalBv();
-            }
-        }
-        return { totalBV, totalPV, hasBV: totalBV > 0, hasPV: totalPV > 0 };
+        const bvUnits = slots.filter(slot => slot.force.gameSystem !== 'as').flatMap(slot => slot.force.units());
+        const pvUnits = slots.filter(slot => slot.force.gameSystem === 'as').flatMap(slot => slot.force.units());
+        const mode = this.optionsService.options().forceViewerBVPVDisplay;
+        return {
+            totalBV: this.displayedBvPv(bvUnits, mode),
+            totalPV: this.displayedBvPv(pvUnits, mode),
+            hasBV: bvUnits.length > 0,
+            hasPV: pvUnits.length > 0,
+        };
     });
+
+    displayedBvPv(
+        units: readonly ForceUnit[],
+        mode = this.optionsService.options().forceViewerBVPVDisplay,
+    ): string {
+        return formatBvPv(
+            units.reduce((total, unit) => total + unit.getBv(), 0),
+            units.reduce((total, unit) => total + unit.baseAdjustedBv(), 0),
+            mode,
+        );
+    }
+
+    totalTons(units: readonly ForceUnit[]): number {
+        return units.reduce((total, unit) => total + unit.getUnit().tons, 0);
+    }
 
     // --- Collapsed/Expanded State ---
     /** Set of group IDs that are currently collapsed. */
@@ -325,12 +342,10 @@ export class ForceBuilderViewerComponent {
         await this.forceBuilderService.openC3Network(unit.force, unit.readOnly());
     }
 
-    async editPilot(event: MouseEvent, unit: ForceUnit) {
+    async editPilot({ event }: UnitBlockPilotEditEvent, unit: ForceUnit) {
         if (unit.readOnly()) return;
         event.stopPropagation();
-        const crew = unit.getCrewMembers();
-        const pilot = crew.length > 0 ? crew[0] : undefined;
-        await this.forceBuilderService.editPilotOfUnit(unit, pilot);
+        await this.forceBuilderService.editPilotOfUnit(unit);
     }
 
 
@@ -771,23 +786,35 @@ export class ForceBuilderViewerComponent {
         this.forceBuilderService.showFormationInfo(group);
     }
 
-    /** Build a tooltip title for a mismatched formation, including requirements if available. */
+    /** Build tooltip HTML for a mismatched formation, including formatted requirements if available. */
     getFormationMismatchTitle(group: UnitGroup): string {
         const formation = group.formation();
         if (!formation) return 'Formation does not match group composition';
+
         const parts: string[] = [];
-        if (formation.parent) {
-            const parent = FORMATION_DEFINITIONS.find(d => d.id === formation.parent);
+        const showParentRequirements = formationInheritsParentEffects(formation) && !!formation.parent;
+
+        if (showParentRequirements) {
+            const parent = getFormationDefinition(formation.parent!, group.force.gameSystem);
             if (parent?.requirements) {
-                const parentReq = parent.requirements(group.force.gameSystem);
-                if (parentReq) parts.push(`${parent.name}: ${parentReq}`);
+                const parentReq = parent.requirements;
+                if (parentReq) parts.push(this.buildFormationRequirementTooltipLine(parent.name, parentReq));
             }
         }
+
         if (formation.requirements) {
-            const req = formation.requirements(group.force.gameSystem);
-            if (req) parts.push(req);
+            const req = formation.requirements;
+            if (req) parts.push(this.buildFormationRequirementTooltipLine(showParentRequirements ? formation.name : null, req));
         }
-        return parts.length > 0 ? parts.join('\n') : 'Formation does not match group composition';
+
+        return parts.length > 0 ? parts.join('') : 'Formation does not match group composition';
+    }
+
+    private buildFormationRequirementTooltipLine(label: string | null, requirements: string): string {
+        const formattedRequirements = formatSummaryMovement(requirements, this.optionsService.options().ASUseHex);
+        return label
+            ? `<div><strong>${label}:</strong> ${formattedRequirements}</div>`
+            : `<div>${formattedRequirements}</div>`;
     }
 
     shareForce() {
@@ -879,6 +906,16 @@ export class ForceBuilderViewerComponent {
             if (!movedGroup) return;
 
             if (crossSystem) {
+                const sourceFormation = movedGroup.formation();
+                const convertedFormation = sourceFormation
+                    ? LanceTypeIdentifierUtil.getDefinitionById(sourceFormation.id, toForce.gameSystem)
+                    : null;
+                movedGroup.formation.set(convertedFormation);
+                if (sourceFormation && !convertedFormation) {
+                    movedGroup.formationLock = undefined;
+                    movedGroup.formationHistory.clear();
+                }
+
                 // Convert all units in the group to the target game system
                 const convertedUnits: ForceUnit[] = [];
                 for (const u of movedGroup.units()) {
@@ -899,6 +936,8 @@ export class ForceBuilderViewerComponent {
             this.forceBuilderService.generateFactionAndForceNameIfNeeded(fromForce);
             this.forceBuilderService.generateFactionAndForceNameIfNeeded(toForce);
             this.forceBuilderService.assignFormationIfNeeded(movedGroup);
+            this.forceBuilderService.reconcileASFormationAssignmentsForForce(fromForce);
+            this.forceBuilderService.reconcileASFormationAssignmentsForForce(toForce);
 
             // Select a unit in the moved group
             const firstUnit = movedGroup.units()[0];

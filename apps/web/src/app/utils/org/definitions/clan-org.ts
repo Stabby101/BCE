@@ -1,9 +1,13 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
 import { DEFAULT_ORG_RULE_REGISTRY } from '../org-facts.util';
 import type {
     OrgCIFormationRule,
     OrgComposedCountRule,
     OrgComposedPatternRule,
-    OrgDefinitionSpec,
+    OrgDefinition,
     OrgLeafCountRule,
 } from '../org-types';
 import {
@@ -26,7 +30,19 @@ export const CLAN_POINT: OrgLeafCountRule = {
     modifiers: { '': 1 },
     commandRank: 'Point Commander',
     tier: 0,
-    unitSelector: ['BM', 'IM', 'PM', 'BA', 'SC', 'WS', 'SS', 'JS', 'DA', 'DS', 'BD'],
+    unitSelector: ['BM', 'IM', 'BA', 'SC', 'WS', 'SS', 'JS', 'DA', 'DS', 'BD'],
+    pointModel: 'fixed',
+};
+
+export const CLAN_PM_POINT: OrgLeafCountRule = {
+    kind: 'leaf-count',
+    type: 'Point',
+    modifiers: { '': 5 },
+    commandRank: 'Point Commander',
+    tier: 0,
+    unitSelector: 'PM',
+    fragmentType: 'Unit',
+    fragmentTier: -1,
     pointModel: 'fixed',
 };
 
@@ -37,6 +53,8 @@ export const CLAN_CV_POINT: OrgLeafCountRule = {
     commandRank: 'Point Commander',
     tier: 0,
     unitSelector: ['CV', 'SV', 'AF', 'CF'],
+    fragmentType: 'Unit',
+    fragmentTier: -1,
     bucketBy: 'moveType',
     pointModel: 'fixed',
 };
@@ -51,15 +69,15 @@ export const CLAN_CI_POINT: OrgCIFormationRule = {
     commandRank: 'Point Commander',
     tier: 0,
     entries: [
-        { moveClass: 'foot', troopers: 5, counts: { '': 5 } },
-        { moveClass: 'motorized', troopers: 5, counts: { '': 5 } },
-        { moveClass: 'scuba', troopers: 5, counts: { '': 5 } },
-        { moveClass: 'jump', troopers: 5, counts: { '': 4 } },
-        { moveClass: 'mechanized-vtol', troopers: 5, counts: { '': 4 } },
-        { moveClass: 'mechanized-hover', troopers: 5, counts: { '': 4 } },
-        { moveClass: 'mechanized-wheeled', troopers: 5, counts: { '': 4 } },
-        { moveClass: 'mechanized-tracked', troopers: 5, counts: { '': 4 } },
-        { moveClass: 'mechanized-submarine', troopers: 5, counts: { '': 4 } },
+        { moveClass: 'foot', counts: { '': 5 } },
+        { moveClass: 'motorized', counts: { '': 5 } },
+        { moveClass: 'scuba', counts: { '': 5 } },
+        { moveClass: 'jump', counts: { '': 4 } },
+        { moveClass: 'mechanized-vtol', counts: { '': 4 } },
+        { moveClass: 'mechanized-hover', counts: { '': 4 } },
+        { moveClass: 'mechanized-wheeled', counts: { '': 4 } },
+        { moveClass: 'mechanized-tracked', counts: { '': 4 } },
+        { moveClass: 'mechanized-submarine', counts: { '': 4 } },
     ],
 };
 
@@ -89,7 +107,7 @@ export const CLAN_NOVA: OrgComposedPatternRule = {
     tier: 1.9,
     formationMatching: {
         ignoredChildRoles: [{ matches: ['Star'], onlyUnitTypes: ['BA'] }],
-        notice: 'Battle Armor child groups are ignored for formation requirements.',
+        notice: 'Battle Armor child groups are ignored for formation requirements. Mounted infantry in a Nova Formation may make weapon attacks. These mounted attacks use the attacker movement modifier of the transport along with an additional +2 Target Number modifier for being mounted.',
     },
     childRoles: [
         { matches: ['Star'], min: 1, max: 1, onlyUnitTypes: ['BA'] },
@@ -221,13 +239,14 @@ export const CLAN_GALAXY: OrgComposedCountRule = {
     childBucketBy: 'promotionBasic',
 };
 
-export const CLAN_CORE_ORG: OrgDefinitionSpec = {
+export const CLAN_CORE_ORG: OrgDefinition = {
     rules: [
         CLAN_NOVA,
         CLAN_SUPERNOVA_BINARY,
         CLAN_SUPERNOVA_TRINARY,
         CLAN_CI_POINT,
         CLAN_CV_POINT,
+        CLAN_PM_POINT,
         CLAN_POINT,
         CLAN_STAR,
         CLAN_BINARY,

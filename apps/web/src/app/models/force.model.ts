@@ -1,60 +1,34 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { signal, computed, type WritableSignal, type Injector } from '@angular/core';
 import { Subject } from 'rxjs';
 import type { DataService } from '../services/data.service';
-import type { Unit } from "./units.model";
+import type { UnitSummary } from "./unit-summary.model";
 import type { UnitInitializerService } from '../services/unit-initializer.service';
-import { generateUUID } from '../services/ws.service';
-import { type SerializedForce, type SerializedUnit, type SerializedGroup, type SerializedC3NetworkGroup, C3_NETWORK_GROUP_SCHEMA } from './force-serialization';
+import { type SerializedForce, type SerializedUnit, type SerializedGroup, type SerializedC3NetworkGroup, C3_NETWORK_GROUP_SCHEMA, FORCE_NOTE_MAX_LENGTH, sanitizeForceTags } from './force-serialization';
 import type { ForceUnit } from './force-unit.model';
 import { GameSystem } from './common.model';
-import { C3NetworkUtil } from '../utils/c3-network.util';
+import { C3NetworkEditor } from './c3-network-editor';
 import { Sanitizer } from '../utils/sanitizer.util';
 import { LoggerService } from '../services/logger.service';
-import { FACTION_EXTINCT, type Faction } from './factions.model';
+import { type Faction } from './factions.model';
 import type { Era } from './eras.model';
-import { type FormationTypeDefinition, type FormationMatch, isNoFormation } from '../utils/formation-type.model';
+import { type FormationTypeDefinition, type FormationMatch, formationNameMatchesGroupName, isNoFormation, NO_FORMATION } from '../utils/formation-type.model';
+import { clearInvalidFormationTargetSelection, resolveFormationTargetGroup } from '../utils/formation-target.util';
 import { LanceTypeIdentifierUtil } from '../utils/lance-type-identifier.util';
 import { FormationNamerUtil } from '../utils/formation-namer.util';
 import type { OrgSizeResult } from '../utils/org/org-types';
 import { getOrgFromForce, getOrgFromGroup } from '../utils/org/org-namer.util';
 import { getUnitsAverageTechBase, TechBase } from './tech.model';
+import { MULFACTION_EXTINCT } from './mulfactions.model';
+import { createMulForceAvailabilityContext, type ForceAvailabilityContext } from '../utils/force-availability.util';
+import { uuidv7 } from '../utils/uuid.util';
+import { C3Network, C3TaxCalculator, type C3TaxUnit } from './c3-network.model';
+import { DialogsService } from '../services/dialogs.service';
 
-/*
- * Author: Drake
- */
+
 export const MAX_GROUPS = 50;
 export const MAX_UNITS = 100;
 
@@ -62,22 +36,24 @@ function getEraEndYear(era: Era): number {
     return era.years.to ?? Number.POSITIVE_INFINITY;
 }
 
-function hasFactionEraAvailability(faction: Faction, eraId: number): boolean {
-    const eraUnits = faction.eras[eraId] as Set<number> | number[] | undefined;
-    if (!eraUnits) return false;
-    return eraUnits instanceof Set ? eraUnits.size > 0 : Array.isArray(eraUnits) && eraUnits.length > 0;
+function hasFactionEraAvailability(
+    faction: Faction,
+    era: Era,
+    availabilityContext: ForceAvailabilityContext = createMulForceAvailabilityContext(),
+): boolean {
+    return availabilityContext.getFactionEraUnitIds(faction, era).size > 0;
 }
 
-function hasFactionUnitMembership(faction: Faction | null | undefined, eraId: number, unitId: number): boolean {
-    if (!faction) return false;
-    const eraUnits = faction.eras[eraId] as Set<number> | number[] | undefined;
-    if (!eraUnits) return false;
-    return eraUnits instanceof Set ? eraUnits.has(unitId) : eraUnits.includes(unitId);
-}
+function resolveSerializedFormation(
+    formationId: string | undefined,
+    formationLock: boolean | undefined,
+    gameSystem: GameSystem,
+): FormationTypeDefinition | null {
+    if (formationId) {
+        return LanceTypeIdentifierUtil.getDefinitionById(formationId, gameSystem);
+    }
 
-function hasEraUnitMembership(era: Era, unitId: number): boolean {
-    const eraUnits = era.units as Set<number> | number[];
-    return eraUnits instanceof Set ? eraUnits.has(unitId) : eraUnits.includes(unitId);
+    return formationLock ? NO_FORMATION : null;
 }
 
 export interface EraUnitValidationSummary {
@@ -95,11 +71,59 @@ function formatEraWarningUnits(unitNames: readonly string[]): string {
     return unitNames.map(unitName => `"${unitName}"`).join(', ');
 }
 
+export function buildEraWarningMessage(
+    units: readonly ForceUnit[],
+    era: Era | null,
+    faction: Faction | null,
+    eras: readonly Era[],
+    extinctFaction: Faction | null,
+    availabilityContext: ForceAvailabilityContext = createMulForceAvailabilityContext(),
+    factionExistsInEra: (faction: Faction, era: Era) => boolean = (candidateFaction, candidateEra) => (
+        hasFactionEraAvailability(candidateFaction, candidateEra, availabilityContext)
+    ),
+): string | null {
+    if (!era) {
+        return null;
+    }
+
+    const warnings: string[] = [];
+    const {
+        invalidTrackedUnits,
+        invalidTrackedUnitNames,
+        extinctTrackedUnits,
+        extinctTrackedUnitNames,
+        invalidYearFallbackUnits,
+        invalidYearFallbackUnitNames,
+    } = getEraUnitValidationSummary(units, era, eras, extinctFaction, availabilityContext);
+
+    if (faction && !factionExistsInEra(faction, era)) {
+        warnings.push(`${faction.name} does not exist in this era.`);
+    }
+
+    if (invalidTrackedUnits > 0) {
+        const unitLabel = invalidTrackedUnits === 1 ? 'unit is' : 'units are';
+        warnings.push(`${invalidTrackedUnits} ${unitLabel} not listed in the ${era.name} era: ${formatEraWarningUnits(invalidTrackedUnitNames)}.`);
+    }
+
+    if (extinctTrackedUnits > 0) {
+        const unitLabel = extinctTrackedUnits === 1 ? 'unit is' : 'units are';
+        warnings.push(`${extinctTrackedUnits} ${unitLabel} extinct in the ${era.name} era: ${formatEraWarningUnits(extinctTrackedUnitNames)}.`);
+    }
+
+    if (invalidYearFallbackUnits > 0) {
+        const unitLabel = invalidYearFallbackUnits === 1 ? 'unit is' : 'units are';
+        warnings.push(`${invalidYearFallbackUnits} ${unitLabel} newer than this era ends in ${era.years.to}: ${formatEraWarningUnits(invalidYearFallbackUnitNames)}.`);
+    }
+
+    return warnings.length > 0 ? warnings.join(' ') : null;
+}
+
 export function getEraUnitValidationSummary(
     units: readonly ForceUnit[],
     era: Era,
     eras: readonly Era[],
     extinctFaction: Faction | null,
+    availabilityContext: ForceAvailabilityContext = createMulForceAvailabilityContext(),
 ): EraUnitValidationSummary {
     const eraEndYear = getEraEndYear(era);
     let invalidTrackedUnits = 0;
@@ -108,16 +132,27 @@ export function getEraUnitValidationSummary(
     const extinctTrackedUnitNames: string[] = [];
     let invalidYearFallbackUnits = 0;
     const invalidYearFallbackUnitNames: string[] = [];
+    const trackedUnitIds = new Set<string>();
+    const selectedEraUnitIds = availabilityContext.getVisibleEraUnitIds(era);
+    const extinctEraUnitIds = extinctFaction
+        ? availabilityContext.getFactionEraUnitIds(extinctFaction, era)
+        : new Set<string>();
+
+    for (const candidateEra of eras) {
+        for (const unitId of availabilityContext.getVisibleEraUnitIds(candidateEra)) {
+            trackedUnitIds.add(unitId);
+        }
+    }
 
     for (const forceUnit of units) {
         const unit = forceUnit.getUnit();
         const displayName = forceUnit.getDisplayName();
-        const isTrackedInAnyEra = eras.some(candidateEra => hasEraUnitMembership(candidateEra, unit.id));
+        const unitKey = availabilityContext.getUnitKey(unit);
+        const isTrackedInAnyEra = trackedUnitIds.has(unitKey);
 
         if (isTrackedInAnyEra) {
-            const existsInSelectedEra = hasEraUnitMembership(era, unit.id);
-            const isExtinctInSelectedEra = existsInSelectedEra
-                && hasFactionUnitMembership(extinctFaction, era.id, unit.id);
+            const existsInSelectedEra = selectedEraUnitIds.has(unitKey);
+            const isExtinctInSelectedEra = extinctEraUnitIds.has(unitKey);
 
             if (isExtinctInSelectedEra) {
                 extinctTrackedUnits++;
@@ -161,11 +196,13 @@ export class UnitGroup<TUnit extends ForceUnit = ForceUnit> {
     get force(): Force { return this._forceRef(); }
     set force(value: Force) { this._forceRef.set(value); }
 
-    id: string = generateUUID();
+    id: string = uuidv7();
     name = signal<string | undefined>(undefined);
     color?: string;
     formation = signal<FormationTypeDefinition | null>(null);
     formationLock?: boolean; // If true, the formation name will not be upgraded by the random generator (this is unset when we have automatic formation)
+    /** The concrete group whose formation bonus this group copies, when its formation requires one. */
+    formationTargetGroupId = signal<string | null>(null);
     formationHistory = new Set<string>(); // Temporarily stores previously assigned formation IDs for this group
     units: WritableSignal<TUnit[]> = signal([]);
 
@@ -175,7 +212,7 @@ export class UnitGroup<TUnit extends ForceUnit = ForceUnit> {
 
     constructor(force: Force) {
         this.force = force;
-        this.id = generateUUID();
+        this.id = uuidv7();
     }
 
     setName(name: string | undefined, emitChange: boolean = true) {
@@ -207,6 +244,12 @@ export class UnitGroup<TUnit extends ForceUnit = ForceUnit> {
     /** Insert a pre-existing ForceUnit at the given index (appends if omitted). Updates the unit's force reference. */
     insertUnit(unit: ForceUnit, index?: number): void {
         unit.force = this.force;
+        if (unit.commander()) {
+            const existingCommander = this.units().find((candidate) => candidate.commander());
+            if (existingCommander) {
+                unit.setFormationCommander(false);
+            }
+        }
         const units = [...this.units()];
         const insertAt = index !== undefined ? Math.min(Math.max(0, index), units.length) : units.length;
         units.splice(insertAt, 0, unit as TUnit);
@@ -226,7 +269,7 @@ export class UnitGroup<TUnit extends ForceUnit = ForceUnit> {
     }
 
     /** Create and add a new unit via the owning Force's factory. */
-    addUnit(unit: Unit): ForceUnit {
+    addUnit(unit: UnitSummary): ForceUnit {
         return this.force.addUnit(unit, this as UnitGroup);
     }
 
@@ -253,15 +296,15 @@ export class UnitGroup<TUnit extends ForceUnit = ForceUnit> {
         return this.formationDisplayName() ?? this.organizationalName();
     });
 
-    isFormationAlreadyInGroupName = computed<boolean>(() => {   
+    isFormationAlreadyInGroupName = computed<boolean>(() => {
         const formation = this.activeFormation();
         if (!formation) return true;
         const customName = this.name();
         // No custom name means display name is derived from the formation, so it's inherently included
         if (!customName) return true;
-        return customName.includes(formation.name);
+        return formationNameMatchesGroupName(formation, customName);
     });
-    
+
     formationDisplayName = computed<string | null>(() => {
         const formation = this.activeFormation();
         if (!formation) return null;
@@ -296,12 +339,18 @@ export class UnitGroup<TUnit extends ForceUnit = ForceUnit> {
     formationRequirementsFilterNotice = computed<string | null>(() => {
         return this._formationMatch()?.requirementsFilterNotice ?? null;
     });
+
+    formationRequirementsFilterCompositionName = computed<string | null>(() => {
+        return this._formationMatch()?.requirementsFilterCompositionName ?? null;
+    });
 }
 
 export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
     gameSystem: GameSystem = GameSystem.CLASSIC;
     instanceId: WritableSignal<string | null> = signal(null);
     _name: WritableSignal<string>;
+    _note: WritableSignal<string>;
+    _tags: WritableSignal<string[]>;
     timestamp: string | null = null;
     groups: WritableSignal<UnitGroup<TUnit>[]> = signal([]);
     _c3Networks: WritableSignal<SerializedC3NetworkGroup[]> = signal([]); // C3 network configurations
@@ -326,6 +375,8 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
         unitInitializer: UnitInitializerService,
         injector: Injector) {
         this._name = signal(name);
+        this._note = signal('');
+        this._tags = signal([]);
         this.dataService = dataService;
         this.unitInitializer = unitInitializer;
         this.injector = injector;
@@ -339,6 +390,15 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
         return this.groups().flatMap(g => g.units());
     });
 
+    /** One normalized, indexed structural/runtime snapshot per force revision. */
+    c3Network = computed(() => new C3Network(this.c3Networks(), this.units()));
+
+    /** One structural C3 tax snapshot shared by every unit in this force revision. */
+    c3TaxCalculator = computed(() => new C3TaxCalculator(
+        this.c3Networks(),
+        this.units() as unknown as readonly C3TaxUnit[],
+    ));
+
     /** Total BV (C3 tax is applied at unit level via adjustedBv, not here) */
     totalBv = computed(() => {
         return this.units().reduce((sum, unit) => sum + (unit.getBv()), 0);
@@ -346,6 +406,14 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
 
     get name(): string {
         return this._name();
+    }
+
+    get note(): string {
+        return this._note();
+    }
+
+    get tags(): string[] {
+        return this._tags();
     }
 
     displayName = computed<string>(() => {
@@ -363,6 +431,22 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
         }
     }
 
+    public setNote(note: string | null | undefined, emitChange: boolean = true) {
+        const nextNote = (note ?? '').slice(0, FORCE_NOTE_MAX_LENGTH);
+        this._note.set(nextNote);
+        if (this.instanceId() || emitChange) {
+            this.emitChanged();
+        }
+    }
+
+    public setTags(tags: readonly string[] | null | undefined, emitChange: boolean = true) {
+        const nextTags = sanitizeForceTags(tags);
+        this._tags.set(nextTags);
+        if (this.instanceId() || emitChange) {
+            this.emitChanged();
+        }
+    }
+
     organizationalResult = computed<OrgSizeResult>(() => {
         const result = getOrgFromForce(this, {
             displayOnlyTopLevel: true,
@@ -375,7 +459,7 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
     });
 
     techBase = computed((): TechBase => {
-        return getUnitsAverageTechBase(this.units().map(u => u.getUnit()).filter((u): u is Unit => u !== undefined));
+        return getUnitsAverageTechBase(this.units().map(u => u.getUnit()).filter((u): u is UnitSummary => u !== undefined));
     });
 
     eraWarning = computed<string | null>(() => {
@@ -386,13 +470,13 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
      * Factory method to create the appropriate ForceUnit subclass.
      * Must be implemented by subclasses to create CBTForceUnit, ASForceUnit, etc.
      */
-    protected abstract createForceUnit(unit: Unit): TUnit;
+    protected abstract createForceUnit(unit: UnitSummary): TUnit;
 
     /**
      * Creates a ForceUnit compatible with this force's game system,
      * without adding it to any group. Useful for cross-system unit conversion.
      */
-    public createCompatibleUnit(unit: Unit): TUnit {
+    public createCompatibleUnit(unit: UnitSummary): TUnit {
         return this.createForceUnit(unit);
     }
 
@@ -402,46 +486,24 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
      */
     protected abstract deserializeForceUnit(data: SerializedUnit): TUnit;
 
-    getEraWarningMessage(era: Era | null, faction: Faction | null): string | null {
-        if (!era) {
-            return null;
-        }
-
-        const warnings: string[] = [];
+    getEraWarningMessage(
+        era: Era | null,
+        faction: Faction | null,
+        availabilityContext: ForceAvailabilityContext = createMulForceAvailabilityContext(),
+    ): string | null {
         const eras = this.dataService.getEras();
-        const extinctFaction = this.dataService.getFactionById(FACTION_EXTINCT) ?? null;
-        const {
-            invalidTrackedUnits,
-            invalidTrackedUnitNames,
-            extinctTrackedUnits,
-            extinctTrackedUnitNames,
-            invalidYearFallbackUnits,
-            invalidYearFallbackUnitNames,
-        } = getEraUnitValidationSummary(this.units(), era, eras, extinctFaction);
-
-        if (faction && !hasFactionEraAvailability(faction, era.id)) {
-            warnings.push(`${faction.name} does not exist in this era.`);
-        }
-
-        if (invalidTrackedUnits > 0) {
-            const unitLabel = invalidTrackedUnits === 1 ? 'unit is' : 'units are';
-            warnings.push(`${invalidTrackedUnits} ${unitLabel} not listed in the ${era.name} era: ${formatEraWarningUnits(invalidTrackedUnitNames)}.`);
-        }
-
-        if (extinctTrackedUnits > 0) {
-            const unitLabel = extinctTrackedUnits === 1 ? 'unit is' : 'units are';
-            warnings.push(`${extinctTrackedUnits} ${unitLabel} extinct in the ${era.name} era: ${formatEraWarningUnits(extinctTrackedUnitNames)}.`);
-        }
-
-        if (invalidYearFallbackUnits > 0) {
-            const unitLabel = invalidYearFallbackUnits === 1 ? 'unit is' : 'units are';
-            warnings.push(`${invalidYearFallbackUnits} ${unitLabel} newer than this era ends in ${era.years.to}: ${formatEraWarningUnits(invalidYearFallbackUnitNames)}.`);
-        }
-
-        return warnings.length > 0 ? warnings.join(' ') : null;
+        const extinctFaction = this.dataService.getFactionById(MULFACTION_EXTINCT) ?? null;
+        return buildEraWarningMessage(
+            this.units(),
+            era,
+            faction,
+            eras,
+            extinctFaction,
+            availabilityContext,
+        );
     }
 
-    public addUnit(unit: Unit, targetGroup?: UnitGroup<TUnit>): TUnit {
+    public addUnit(unit: UnitSummary, targetGroup?: UnitGroup<TUnit>): TUnit {
         if (this.units().length >= MAX_UNITS) {
             throw new Error(`Cannot add more than ${MAX_UNITS} units to a single force`);
         }
@@ -502,6 +564,8 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
         const groups = [...this.groups()];
         if (index < 0 || index >= groups.length) return null;
         const [removed] = groups.splice(index, 1);
+        this.clearFormationTargetReferences(groups, new Set([removed.id]));
+        removed.formationTargetGroupId.set(null);
         this.groups.set(groups);
         return removed;
     }
@@ -539,15 +603,16 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
             }
         } else {
             // Destroy all units in the group and clean up C3 networks
-            const currentNetworks = this._c3Networks();
+            let networks = this._c3Networks();
             for (const unit of removed.units()) {
-                if (currentNetworks.length > 0 && C3NetworkUtil.isUnitConnected(unit.id, currentNetworks)) {
-                    const result = C3NetworkUtil.removeUnitFromAllNetworks(currentNetworks, unit.id);
-                    this._c3Networks.set(result.networks);
+                if (networks.length > 0 && new C3Network(networks).isUnitConnected(unit.id)) {
+                    networks = C3NetworkEditor.removeUnit(networks, unit.id).networks;
                 }
                 unit.destroy();
             }
+            this._c3Networks.set(networks);
         }
+        this.clearFormationTargetReferences(groups, new Set([removed.id]));
         this.groups.set(groups);
         if (this.instanceId()) this.emitChanged();
     }
@@ -564,8 +629,8 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
 
         // Clean up C3 networks - remove the unit from all networks it participates in
         const currentNetworks = this._c3Networks();
-        if (currentNetworks.length > 0 && C3NetworkUtil.isUnitConnected(unitToRemove.id, currentNetworks)) {
-            const result = C3NetworkUtil.removeUnitFromAllNetworks(currentNetworks, unitToRemove.id);
+        if (currentNetworks.length > 0 && new C3Network(currentNetworks).isUnitConnected(unitToRemove.id)) {
+            const result = C3NetworkEditor.removeUnit(currentNetworks, unitToRemove.id);
             this._c3Networks.set(result.networks);
         }
 
@@ -580,9 +645,20 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
         const groups = this.groups();
         const nonEmptyGroups = groups.filter(g => g.units().length > 0);
         if (nonEmptyGroups.length === groups.length) return; // No change
+        const removedGroupIds = new Set(groups.filter(g => g.units().length === 0).map(g => g.id));
+        this.clearFormationTargetReferences(nonEmptyGroups, removedGroupIds);
         this.groups.set(nonEmptyGroups);
         if (this.instanceId()) {
             this.emitChanged();
+        }
+    }
+
+    private clearFormationTargetReferences(groups: readonly UnitGroup<TUnit>[], removedGroupIds: ReadonlySet<string>): void {
+        for (const group of groups) {
+            const targetId = group.formationTargetGroupId();
+            if (targetId && removedGroupIds.has(targetId)) {
+                group.formationTargetGroupId.set(null);
+            }
         }
     }
 
@@ -597,13 +673,13 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
         const seenUnitIds = new Set<string>();
         for (const group of this.groups()) {
             if (seenGroupIds.has(group.id)) {
-                group.id = generateUUID();
+                group.id = uuidv7();
                 fixed = true;
             }
             seenGroupIds.add(group.id);
             for (const unit of group.units()) {
                 if (seenUnitIds.has(unit.id)) {
-                    unit.id = generateUUID();
+                    unit.id = uuidv7();
                     fixed = true;
                 }
                 seenUnitIds.add(unit.id);
@@ -638,7 +714,7 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
      * @param newUnitData The new Unit data to create the replacement from
      * @returns Object containing the new ForceUnit and the group it was placed in, or null if failed
      */
-    public replaceUnit(originalUnit: TUnit, newUnitData: Unit): { newUnit: TUnit; group: UnitGroup<TUnit> } | null {
+    public replaceUnit(originalUnit: TUnit, newUnitData: UnitSummary): { newUnit: TUnit; group: UnitGroup<TUnit> } | null {
         // Find the group containing the original unit
         const groups = this.groups();
         let originalGroup: UnitGroup<TUnit> | null = null;
@@ -672,8 +748,8 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
 
         // Remove old unit from C3 networks
         const currentNetworks = this._c3Networks();
-        if (currentNetworks.length > 0 && C3NetworkUtil.isUnitConnected(originalUnit.id, currentNetworks)) {
-            const result = C3NetworkUtil.removeUnitFromAllNetworks(currentNetworks, originalUnit.id);
+        if (currentNetworks.length > 0 && new C3Network(currentNetworks).isUnitConnected(originalUnit.id)) {
+            const result = C3NetworkEditor.removeUnit(currentNetworks, originalUnit.id);
             this._c3Networks.set(result.networks);
         }
 
@@ -706,17 +782,19 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
     public serialize(): SerializedForce {
         let instanceId = this.instanceId();
         if (!instanceId) {
-            instanceId = generateUUID();
+            instanceId = uuidv7();
             this.instanceId.set(instanceId);
         }
         const serializedGroups: SerializedGroup[] = this.groups().filter(g => g.units().length > 0).map(g => {
             const formation = g.activeFormation();
+            const formationTarget = resolveFormationTargetGroup(g);
             return {
                 id: g.id,
                 name: g.name() || undefined,
                 color: g.color,
                 formationId: formation?.id,
                 formationLock: g.formationLock || undefined,
+                formationTargetGroupId: formationTarget?.id,
                 units: g.units().map(u => u.serialize())
             };
         });
@@ -726,6 +804,8 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
             instanceId: instanceId,
             type: this.gameSystem,
             name: this.name,
+            note: this.note || undefined,
+            tags: this.tags.length > 0 ? [...this.tags] : undefined,
             factionId: this.faction()?.id,
             factionLock: this.factionLock || undefined,
             eraId: this.era()?.id,
@@ -807,6 +887,8 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
         try {
             this.instanceId.set(sanitizedData.instanceId);
             this.owned.set(sanitizedData.owned !== false);
+            this.setNote(sanitizedData.note ?? '', false);
+            this.setTags(sanitizedData.tags ?? [], false);
 
             // Resolve faction from factionId
             this.factionLock = sanitizedData.factionLock || false;
@@ -823,6 +905,7 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
             }
 
             const logger = this.injector.get(LoggerService);
+            const dialogs = this.injector.get(DialogsService);
             const parsedGroups: UnitGroup<TUnit>[] = [];
             for (const g of sanitizedData.groups) {
                 const groupUnits: TUnit[] = [];
@@ -831,6 +914,13 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
                         groupUnits.push(this.deserializeForceUnit(unitData));
                     } catch (err) {
                         logger.error(`Force.deserialize error on unit "${unitData.unit}": ${err}`);
+                        const errorDetail = err instanceof Error ? err.message : String(err);
+                        void dialogs.showError(
+                            `Unable to load unit "${unitData.unit}". The unit was skipped.\n\n${errorDetail}`,
+                            'Unit Load Error',
+                        ).catch(dialogError => {
+                            logger.error(`Unable to show unit load error dialog: ${dialogError}`);
+                        });
                         continue;
                     }
                 }
@@ -844,27 +934,18 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
                     group.setName(undefined, false);
                 }
                 group.color = g.color || '';
-                if (g.formationId) {
-                    group.formation.set(LanceTypeIdentifierUtil.getDefinitionById(g.formationId, this.gameSystem));
-                    group.formationLock = g.formationLock || undefined;
-                } else {
-                    group.formation.set(null);
-                    group.formationLock = undefined;
-                }
+                group.formationLock = g.formationLock || undefined;
+                group.formation.set(resolveSerializedFormation(g.formationId, group.formationLock, this.gameSystem));
+                group.formationTargetGroupId.set(g.formationTargetGroupId ?? null);
                 group.units.set(groupUnits);
                 parsedGroups.push(group);
             }
             this.groups.set(parsedGroups);
+            parsedGroups.forEach(clearInvalidFormationTargetSelection);
             this.timestamp = sanitizedData.timestamp ?? null;
             if (sanitizedData.c3Networks) {
                 const sanitizedNetworks = Sanitizer.sanitizeArray(sanitizedData.c3Networks, C3_NETWORK_GROUP_SCHEMA);
-                const unitMap = new Map<string, Unit>();
-                for (const group of parsedGroups) {
-                    for (const forceUnit of group.units()) {
-                        unitMap.set(forceUnit.id, forceUnit.getUnit());
-                    }
-                }
-                this.setNetwork(C3NetworkUtil.validateAndCleanNetworks(sanitizedNetworks, unitMap));
+                this.setNetwork(sanitizedNetworks);
             }
         } finally {
             this.loading = false;
@@ -877,6 +958,8 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
         this.loading = true;
         try {
             if (this.name !== sanitizedData.name) this.setName(sanitizedData.name, false);
+            if (this.note !== (sanitizedData.note ?? '')) this.setNote(sanitizedData.note ?? '', false);
+            if (!this.areTagsEqual(this.tags, sanitizedData.tags ?? [])) this.setTags(sanitizedData.tags ?? [], false);
             this.timestamp = sanitizedData.timestamp ?? null;
 
             // Resolve faction from factionId
@@ -924,10 +1007,9 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
                         }
                     }
                     group.color = groupData.color;
-                    group.formation.set(groupData.formationId
-                        ? LanceTypeIdentifierUtil.getDefinitionById(groupData.formationId, this.gameSystem)
-                        : null);
                     group.formationLock = groupData.formationLock || undefined;
+                    group.formation.set(resolveSerializedFormation(groupData.formationId, group.formationLock, this.gameSystem));
+                    group.formationTargetGroupId.set(groupData.formationTargetGroupId ?? null);
                     if (!group.formationLock && groupData.formationId) {
                         group.formationHistory.add(groupData.formationId);
                     }
@@ -939,15 +1021,11 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
                     }
                     group.id = groupData.id;
                     group.color = groupData.color;
-                    if (groupData.formationId) {
-                        group.formation.set(LanceTypeIdentifierUtil.getDefinitionById(groupData.formationId, this.gameSystem));
-                        group.formationLock = groupData.formationLock || undefined;
-                        if (!group.formationLock) {
-                            group.formationHistory.add(groupData.formationId);
-                        }
-                    } else {
-                        group.formation.set(null);
-                        group.formationLock = undefined;
+                    group.formationLock = groupData.formationLock || undefined;
+                    group.formation.set(resolveSerializedFormation(groupData.formationId, group.formationLock, this.gameSystem));
+                    group.formationTargetGroupId.set(groupData.formationTargetGroupId ?? null);
+                    if (groupData.formationId && !group.formationLock) {
+                        group.formationHistory.add(groupData.formationId);
                     }
                 }
 
@@ -968,23 +1046,26 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
 
             this.groups.set(updatedGroups);
             this.removeEmptyGroups();
+            this.groups().forEach(clearInvalidFormationTargetSelection);
 
             // Update C3 networks with sanitization and validation
             if (sanitizedData.c3Networks) {
                 const sanitizedNetworks = Sanitizer.sanitizeArray(sanitizedData.c3Networks, C3_NETWORK_GROUP_SCHEMA);
-                const unitMap = new Map<string, Unit>();
-                for (const group of this.groups()) {
-                    for (const forceUnit of group.units()) {
-                        unitMap.set(forceUnit.id, forceUnit.getUnit());
-                    }
-                }
-                this.setNetwork(C3NetworkUtil.validateAndCleanNetworks(sanitizedNetworks, unitMap));
+                this.setNetwork(sanitizedNetworks);
             } else {
                 this.setNetwork([]);
             }
         } finally {
             this.loading = false;
         }
+    }
+
+    private areTagsEqual(currentTags: readonly string[], nextTags: readonly string[]): boolean {
+        if (currentTags.length !== nextTags.length) {
+            return false;
+        }
+
+        return currentTags.every((tag, index) => tag === nextTags[index]);
     }
 
     /**
@@ -1001,16 +1082,24 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
     public clone(): Force {
         const serialized = this.serialize();
 
-        // Build old→new unit ID map
+        // Build old→new unit and group ID maps
         const unitIdMap = new Map<string, string>();
-        serialized.instanceId = generateUUID();
+        const groupIdMap = new Map<string, string>();
+        serialized.instanceId = uuidv7();
         if (serialized.groups) {
             for (const group of serialized.groups) {
-                group.id = generateUUID();
+                const previousGroupId = group.id;
+                group.id = uuidv7();
+                groupIdMap.set(previousGroupId, group.id);
                 for (const unit of group.units) {
-                    const newId = generateUUID();
+                    const newId = uuidv7();
                     unitIdMap.set(unit.id, newId);
                     unit.id = newId;
+                }
+            }
+            for (const group of serialized.groups) {
+                if (group.formationTargetGroupId) {
+                    group.formationTargetGroupId = groupIdMap.get(group.formationTargetGroupId);
                 }
             }
         }
@@ -1027,7 +1116,7 @@ export abstract class Force<TUnit extends ForceUnit = ForceUnit> {
                 return id;
             };
             for (const network of serialized.c3Networks) {
-                network.id = generateUUID();
+                network.id = uuidv7();
                 if (network.peerIds) {
                     network.peerIds = network.peerIds.map(remapId);
                 }

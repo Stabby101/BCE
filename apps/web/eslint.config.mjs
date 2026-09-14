@@ -33,6 +33,13 @@ const grandfatheredTs = {
     '@angular-eslint/no-output-on-prefix': 'warn', // [6]
     '@angular-eslint/no-input-rename': 'warn', // [2]
     '@angular-eslint/prefer-inject': 'warn', // [2]
+    // REBASE-1 (2026-09-11) — the pin's newly-vendored upstream code trips these recommended rules (0 violations
+    // at the fork). Demoted to warn under the SAME advisory-with-teeth posture as the grandfathered backlog above:
+    // BCE does not edit vendored MekBay code (fork-diff churn against the re-baseline). Burn down when the file is
+    // touched; escalate back to error if a BCE (non-vendored) file ever violates them.
+    'no-control-regex': 'warn', // [3] REBASE-1 — pin sanitizer regexes (collection-dialog, display-name.util, mul-file.util) carry \\x00-\\x1f
+    '@typescript-eslint/no-empty-object-type': 'warn', // [2] REBASE-1 — pin models/megamek/factions.model empty interfaces
+    '@typescript-eslint/no-this-alias': 'warn', // [1] REBASE-1 — pin mounted-equipment.model aliases `this`
 };
 
 export default tseslint.config(

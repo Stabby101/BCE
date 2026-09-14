@@ -33,26 +33,40 @@ export interface PairCtx {
      *  because FS borders TC somewhere ELSE. Soft: an empty intersection falls back to the full
      *  faction-level list (never a dead-end — the D-102 relax discipline). */
     localFactions?: ReadonlySet<string>;
+    /** ERA-1 (ruling 2) — does this faction HIRE mercenaries (hotspots-catalog `factionHiresMercenaries`)? A faction
+     *  that does not (an Invasion Clan) is never side A / the employer's flavor faction; on a world it HOLDS the
+     *  contract comes from the state fighting for it (the CLAN FRONT), and as an opponent it outweighs the
+     *  neighbors (the invasion is the existential threat). Optional: absent = everyone hires (pre-ERA-1 behavior). */
+    hiresMercs?: (name: string) => boolean;
     rng: () => number;
 }
 
 const combatOk = (ctx: PairCtx, name: string): boolean => ctx.factionOk(name) && ctx.mulOk(name);
+/** ERA-1 — a non-hiring opponent (an Invasion Clan on the front) is drawn this many times as often as a
+ *  hiring neighbor. Only consulted when such an opponent is actually in the local list, so every world
+ *  off the front draws byte-identically to before (plain `pick`, same RNG consumption). */
+const CLAN_FRONT_WEIGHT = 3;
 
 /** Draw the conflict pair for a world owned by `owner` at the era. Returns null when no archetype can
  *  produce a legal pair for this owner (the orchestrator then re-picks the world — never a silent degrade). */
 export function pickConflictPair(owner: string, archetypes: readonly EmployerArchetype[], ctx: PairCtx): ConflictPair | null {
     const eraOk = (a: EmployerArchetype): boolean =>
         !a.eraGroups?.length || a.eraGroups.includes('all') || a.eraGroups.includes(ctx.era.chamberTag);
+    const hires = (n: string): boolean => ctx.hiresMercs?.(n) ?? true;
+    const ownerHires = hires(owner);
     // Which archetypes CAN fire on this world? clan-internal needs a Clan owner; state archetypes need a
     // combat-legal owner + at least one plausible opponent; merc/pirate shapes need their fixed factions legal.
+    // ERA-1: every archetype whose EMPLOYER is the owner needs an owner that hires; a non-hiring owner (a Clan
+    // holding the world) can only be the ENEMY of a state-pair whose employer is a hiring opponent (never Pirates).
     const opponents = plausibleOpponents(owner, ctx);
+    const employers = ownerHires ? [] : opponents.filter((o) => o !== 'Pirates' && hires(o));
     const candidates = archetypes.filter((a) => {
         if (!eraOk(a)) return false;
         switch (a.combatFactionRule) {
-            case 'clan-internal': return ctx.isClanFaction(owner) && combatOk(ctx, owner);
-            case 'merc-both': return combatOk(ctx, 'Mercenary');
-            case 'pirates-attacker': return combatOk(ctx, owner) && combatOk(ctx, 'Pirates');
-            case 'state-pair': default: return combatOk(ctx, owner) && opponents.length > 0;
+            case 'clan-internal': return ownerHires && ctx.isClanFaction(owner) && combatOk(ctx, owner);
+            case 'merc-both': return ownerHires && combatOk(ctx, 'Mercenary');
+            case 'pirates-attacker': return ownerHires && combatOk(ctx, owner) && combatOk(ctx, 'Pirates');
+            case 'state-pair': default: return combatOk(ctx, owner) && (ownerHires ? opponents.length > 0 : employers.length > 0);
         }
     });
     if (!candidates.length) return null;
@@ -68,7 +82,12 @@ export function pickConflictPair(owner: string, archetypes: readonly EmployerArc
         case 'pirates-attacker': // a pirate raid on the owner's world: defender = owner, attacker = Pirates
             return { archetype, sameFaction: false, a: { faction: owner, employerFaction: owner }, b: { faction: 'Pirates', employerFaction: 'Pirates' } };
         case 'state-pair': default: { // house-vs-house (or corporate/noble/planetary-gov riding a state pair)
-            const opp = pick(opponents, ctx.rng);
+            if (!ownerHires) { // ERA-1 — the CLAN FRONT, held side: the world is Clan-held; the state fighting for it hires
+                const emp = pick(employers, ctx.rng);
+                return { archetype, sameFaction: false, a: { faction: emp, employerFaction: emp }, b: { faction: owner, employerFaction: owner } };
+            }
+            const front = opponents.some((o) => !hires(o)); // ERA-1 — the CLAN FRONT, threatened side: the Clan outweighs the neighbors
+            const opp = front ? pickWeighted(opponents, (o) => (hires(o) ? 1 : CLAN_FRONT_WEIGHT), ctx.rng) : pick(opponents, ctx.rng);
             return { archetype, sameFaction: false, a: { faction: owner, employerFaction: owner }, b: { faction: opp, employerFaction: opp } };
         }
     }

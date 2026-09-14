@@ -1,7 +1,12 @@
 <div class="roster-head">
     <span class="ph">Unit roster</span>
     @if (formationContext(); as fc) { <span class="formctx">{{ fc }}</span> }
-    <button type="button" class="acq-open" (click)="marketOpen.set(true)">+ Acquire / Market</button>
+    <!-- PD3 P4 (PD3-1) — in Hot Spots the button lands on the HS MARKET (SP); the Traditional C-bill overlay stays Traditional-only -->
+    @if (isHotspots()) {
+        <button type="button" class="acq-open" (click)="navigate.emit('chaos-market')" data-testid="ru-market">+ Market ▸</button>
+    } @else {
+        <button type="button" class="acq-open" (click)="marketOpen.set(true)">+ Acquire / Market</button>
+    }
     <span class="live"><span class="pulse" aria-hidden="true"></span>LIVE · server-authoritative</span>
 </div>
 <p class="note">Your command's <b>RNG-generated force</b> — era + faction + resource-appropriate 'Mechs. Cells reuse MekBay's <b>unit-icon</b> (sprite) + its own <b>Classic record sheet</b> (streamed as you scroll). Tap a sheet to explode it (read-only); the condition dropdown is the campaign layer.
@@ -31,7 +36,7 @@
             }
         </div>
         <div class="mc-bar">
-            <span>DEPLOYED <b>{{ readiness().deployed }}</b> · READY {{ readiness().ready }} · REPAIR {{ readiness().repair }}</span>
+            <span>DEPLOYED <b>{{ readiness().deployed }}</b> · READY {{ readiness().ready }} · REPAIR @if (isHotspots()) {<span data-testid="mc-repair">{{ repairBadge() }}</span>} @else {{{ readiness().repair }}}</span>
             <span class="mc-hint">deployed = condition set to DEPLOYED on the cell below</span>
             <span class="mc-tap">@if (deployFilter()) { showing deployed only — tap the count again to clear } @else { tap a count → filters the roster }</span>
         </div>
@@ -48,6 +53,11 @@
                 <div class="ct"><span class="n">{{ c.deployed }}<small>/{{ c.total }}</small></span><span class="t">{{ c.label }}</span></div>
             }
         </div>
+        <!-- PD3 P1 (PD3-12) — the REPAIR badge must OUTLIVE the mission: resolveBranch clears the spec, the active cell goes,
+             and the count that matters most (right after a played track) vanished with it. HS only; Traditional idle byte-identical. -->
+        @if (isHotspots()) {
+            <div class="mc-bar"><span>REPAIR <span data-testid="mc-repair">{{ repairBadge() }}</span></span><span class="mc-hint">@if (repairBadge()) { damaged units — Repair &amp; Infirmary on the rail } @else { the force is battle-ready }</span></div>
+        }
     </div>
 }
 
@@ -111,8 +121,14 @@
                                     <!-- HOTFIX-002.2: line 1 (pmain) = NAME (flex:1, ~12ch floor) + skills + ▾ — these always hold
                                          line 1; the flavor chips (callsign/kin) WRAP to line 2 before the name is crushed. -->
                                     <div class="pmain">
-                                        @if (u.pilotId) {
+                                        @if (u.pilotId && renamingId() === u.pilotId) {
+                                            <!-- PD3 P4 (PD3-5) — the row RENAME: an inline input, save/cancel; persists through pilot.service.rename -->
+                                            <input class="pname-in" [value]="renameDraft()" (input)="renameDraft.set($any($event.target).value)" (keydown.enter)="saveRename()" (keydown.escape)="cancelRename()" maxlength="40" aria-label="Pilot name" data-testid="ru-rename-input" />
+                                            <button type="button" class="pren save" (click)="saveRename()" data-testid="ru-rename-save" aria-label="Save name">✓</button>
+                                            <button type="button" class="pren" (click)="cancelRename()" aria-label="Cancel rename">✕</button>
+                                        } @else if (u.pilotId) {
                                             <button type="button" class="pname pbtn" (click)="detailPilot.set(u.pilotId)" [attr.aria-label]="'Open ' + u.pilotDisplayName + ' personnel file'">{{ u.pilotDisplayName }}</button>
+                                            @if (isHotspots()) { <button type="button" class="pren" (click)="startRename(u.pilotId)" data-testid="ru-rename" [attr.aria-label]="'Rename ' + u.pilotDisplayName" title="Rename pilot">✎</button> }
                                             <span class="skills">{{ u.pilotGp }}</span>
                                         } @else {
                                             <span class="pname">&mdash; no pilot assigned &mdash;</span>
@@ -160,6 +176,16 @@
                                             <option [value]="reserveKey" [selected]="u.lanceId === reserveKey">Reserve</option>
                                         </select>
                                     </div>
+                                    <!-- PD3 P4 (PD3-1) — HS only: Sell ▸ lands on the Market's sell (repair-first, SP); RELEASE is 0 SP, any condition -->
+                                    @if (isHotspots()) {
+                                        <div class="ctl ru-acts">
+                                            <label>Leave the roster</label>
+                                            <span class="ru-row">
+                                                <button type="button" class="rubtn" (click)="navigate.emit('chaos-market')" data-testid="ru-sell" [attr.aria-label]="'Sell ' + u.name + ' on the Market'">Sell ▸</button>
+                                                <button type="button" class="rubtn rel" [class.armed]="releaseArm() === u.id" (click)="release(u.id)" data-testid="ru-release" [attr.data-armed]="releaseArm() === u.id ? '1' : '0'" [attr.aria-label]="(releaseArm() === u.id ? 'Confirm release of ' : 'Release ') + u.name">{{ releaseArm() === u.id ? 'Confirm release' : 'Release' }}</button>
+                                            </span>
+                                        </div>
+                                    }
                                 </div>
                             }
                         </div>

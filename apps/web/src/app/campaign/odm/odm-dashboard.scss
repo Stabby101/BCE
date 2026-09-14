@@ -1,2 +1,46 @@
 /* DIRECTIVE-ODM-5 — fork-owned odm additions over the shared dashboard.scss (Classic sheet untouched).
    (The board window chrome moved into odm-flow with the Part D consolidation; this sheet stays for future odm-only rules.) */
+
+/* ODM-11 — STOCKS (the survival economy). Compact: rides the shared sheet's .econ/.el-warn chrome. */
+.stk-adj { float: right; font: 600 10px var(--mono); letter-spacing: .06em; color: var(--ink); background: transparent; border: 1px solid var(--ink2); border-radius: 3px; padding: 2px 7px; cursor: pointer; }
+.stk-head { font: 700 15px/1.3 var(--mono); margin: 6px 0 8px; }
+.stk-head .stk-sub, .stk-fuel .stk-sub { display: block; font: 10.5px/1.5 var(--mono); color: var(--ink2); font-weight: 400; }
+.stk-fuel { padding: 6px 0; border-top: 1px solid rgba(58,69,80,.25); }
+.stk-fuel .stk-l, .stk-bin .stk-l { font: 600 11px var(--mono); }
+.stk-fuel .stk-v { font: 700 13px var(--mono); margin-left: 8px; }
+.stk-fuel.amber .stk-v { color: #9a6a00; }
+.stk-fuel.red .stk-v, .stk-bin.breach .stk-v { color: var(--stamp); }
+.stk-warn { margin: 6px 0; padding: 6px 8px; font: 600 11px/1.5 var(--mono); color: var(--stamp); border: 1px solid var(--stamp); border-radius: 3px; }
+.stk-bins { border-top: 1px solid rgba(58,69,80,.25); padding-top: 4px; }
+.stk-bin { display: flex; align-items: baseline; gap: 7px; padding: 2px 0; font: 11.5px var(--mono); flex-wrap: wrap; }
+.stk-bin .stk-v { font-weight: 700; }
+.stk-fl { color: var(--ink2); font-weight: 400; font-size: 10.5px; }
+.stk-breach { font: 800 10px var(--mono); letter-spacing: .12em; color: #fff; background: var(--stamp); border-radius: 2px; padding: 1px 5px; }
+.stk-note { color: var(--ink2); font-size: 10.5px; font-style: italic; }
+.stk-form { display: grid; gap: 6px; margin: 8px 0; }
+.stk-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font: 600 11px var(--mono); }
+.stk-row input, .stk-row select { width: 110px; font: 12px var(--mono); padding: 3px 5px; }
+
+/* ── DIRECTIVE-ODM-17 P2-f — the Overview fleet card (one line per ship + the lift budget). ── */
+.flt { margin-top: 10px; }
+.flt-row { display: flex; align-items: center; gap: 8px; padding: 2px 0; font: 11.5px var(--mono); }
+.flt-row.dim, .flt-v.dim { color: var(--ink2); font-style: italic; }
+.flt-n { font-weight: 600; min-width: 150px; }
+.flt-s { font: 800 9.5px var(--mono); letter-spacing: .1em; border: 1.2px solid var(--ok, #3a7d44); color: var(--ok, #3a7d44); border-radius: 2px; padding: 0 5px; }
+.flt-s.bad { border-color: var(--stamp); color: var(--stamp); }
+.flt-bar { flex: 1; max-width: 160px; height: 7px; border: 1px solid var(--line, currentColor); border-radius: 2px; overflow: hidden; display: inline-block; }
+.flt-fill { display: block; height: 100%; }
+.flt-fill.f-ok { background: var(--ok, #3a7d44); }
+.flt-fill.f-amber { background: var(--warn, #b8860b); }
+.flt-fill.f-red { background: var(--stamp, #a33); }
+.flt-fill.f-kf { background: var(--acc, #4a6fa5); }
+.flt-v { font-weight: 700; font-size: 10.5px; }
+.flt-lift { margin-top: 6px; padding: 5px 8px; font: 600 10.5px var(--mono); border: 1.2px solid var(--line, currentColor); border-radius: 3px; }
+
+/* TABLE-2 T2-3 — the "picks unshared before Resolve" block: a real modal (solid panel + backdrop, per harness-assertions legibility). */
+.rw-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.55); padding: 16px; }
+.rw { max-width: 460px; width: 100%; background: var(--paper, #f5f1e6); color: var(--ink, #1a1a1a); border: 2px solid var(--ink, #1a1a1a); border-radius: 4px; padding: 18px 20px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4); }
+.rw-h { font: 700 15px var(--mono, monospace); margin-bottom: 8px; }
+.rw-p { font-size: 12.5px; line-height: 1.5; margin: 0 0 14px; }
+.rw-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.rw-btns .gobtn.danger { background: var(--stamp, #b23); color: var(--paper, #fff); border-color: var(--stamp, #b23); }

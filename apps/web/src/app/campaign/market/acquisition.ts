@@ -118,8 +118,8 @@ export class AcquisitionComponent {
         let rows = this.acq.marketRows();
         if (!gm) rows = rows.filter((r) => r.passes); // GM off: only gate-clean units
         if (wc) rows = rows.filter((r) => r.weightClass === wc);
-        if (tb === 'IS') rows = rows.filter((r) => r.techBase === 'Inner Sphere' || r.techBase === 'Mixed');
-        else if (tb === 'Clan') rows = rows.filter((r) => r.techBase === 'Clan' || r.techBase === 'Mixed'); // Mixed counts for both (MekBay convention)
+        if (tb === 'IS') rows = rows.filter((r) => r.techBase === 'Inner Sphere' || r.mixed); // REBASE-1: mixed-tech is the `mixed` flag now, not a techBase value
+        else if (tb === 'Clan') rows = rows.filter((r) => r.techBase === 'Clan' || r.mixed); // Mixed counts for both (MekBay convention)
         if (tlo != null) rows = rows.filter((r) => r.tons >= tlo);
         if (thi != null) rows = rows.filter((r) => r.tons <= thi);
         if (ylo != null) rows = rows.filter((r) => r.year >= ylo);

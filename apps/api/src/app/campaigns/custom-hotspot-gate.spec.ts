@@ -2,7 +2,7 @@
  * DIRECTIVE-IMPORT-1 Part A — the guest-gate decision (pure). Pins that only a guest carrying custom hotspots,
  * with auth required, is refused; every other combination passes.
  */
-import { snapshotCustomHotspotCount, guestCustomHotspotRefused } from './custom-hotspot-gate';
+import { snapshotCustomHotspotCount, guestCustomHotspotRefused, gmOnlyRefused } from './custom-hotspot-gate';
 
 describe('custom-hotspot-gate', () => {
     describe('snapshotCustomHotspotCount', () => {
@@ -15,6 +15,39 @@ describe('custom-hotspot-gate', () => {
             expect(snapshotCustomHotspotCount(null)).toBe(0);
             expect(snapshotCustomHotspotCount('a string')).toBe(0);
             expect(snapshotCustomHotspotCount(undefined)).toBe(0);
+        });
+        // ── GM-1 P2 — the gmOnly layout counts too (the smuggling bypass the panel caught) ──
+        it('counts customHotSpots UNDER gmOnly (a GM-session snapshot), and BOTH layouts summed', () => {
+            expect(snapshotCustomHotspotCount({ gmOnly: { customHotSpots: [{ id: 'a' }] } })).toBe(1);
+            expect(snapshotCustomHotspotCount({ customHotSpots: [{ id: 'a' }], gmOnly: { customHotSpots: [{ id: 'b' }, { id: 'c' }] } })).toBe(3);
+        });
+        it('a crafted {gmOnly:{customHotSpots:[...]}} from a GUEST is REFUSED (the chokepoint holds)', () => {
+            expect(guestCustomHotspotRefused('guest', true, { gmOnly: { customHotSpots: [{ id: 'smuggled', custom: true }] } })).toBe(true);
+        });
+        it('a malformed gmOnly (non-object / non-array list) still counts 0 — never throws', () => {
+            expect(snapshotCustomHotspotCount({ gmOnly: 'nope' })).toBe(0);
+            expect(snapshotCustomHotspotCount({ gmOnly: { customHotSpots: 'nope' } })).toBe(0);
+            expect(snapshotCustomHotspotCount({ gmOnly: null })).toBe(0);
+        });
+    });
+
+    describe('gmOnlyRefused (GM-1 — the gmOnly entitlement belt)', () => {
+        const withGmOnly = { gmOnly: { hotSpotOffer: ['hs-1'] } };
+        it('REFUSES a non-entitled account persisting a gmOnly-carrying snapshot (guest or gm)', () => {
+            expect(gmOnlyRefused('guest', true, false, withGmOnly)).toBe(true);
+            expect(gmOnlyRefused('gm', true, false, withGmOnly)).toBe(true);
+        });
+        it('allows the gm-mode-granted account and any admin', () => {
+            expect(gmOnlyRefused('gm', true, true, withGmOnly)).toBe(false);
+            expect(gmOnlyRefused('admin', true, false, withGmOnly)).toBe(false);
+        });
+        it('never gates a snapshot WITHOUT the key, and never parses the contents (any shape gates the same)', () => {
+            expect(gmOnlyRefused('guest', true, false, { hotSpotOffer: ['hs-1'] })).toBe(false);
+            expect(gmOnlyRefused('guest', true, false, { gmOnly: 'weird' })).toBe(true); // existence, not shape
+            expect(gmOnlyRefused('guest', true, false, null)).toBe(false);
+        });
+        it('does nothing when auth is OFF (dev/LAN — permissive, unchanged)', () => {
+            expect(gmOnlyRefused('guest', false, false, withGmOnly)).toBe(false);
         });
     });
 

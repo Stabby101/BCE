@@ -48,6 +48,36 @@
             <div><span class="k">Assignment</span><span class="vv">{{ v.assignment }}</span></div>
             @if (v.p.note) { <div><span class="k">Kin</span><span class="vv">{{ v.p.note }}</span></div> }
         </div>
+        @if (canPost()) {
+            <!-- ODM-25 — the posting is EDITABLE here, not just displayed. Options are trade-filtered and
+                 annotated with each machine's current crew by the host; picking one that is already crewed
+                 warns before it displaces anyone. -->
+            <div class="pd-postrow">
+                <span class="k">Change posting</span>
+                <select class="pd-postsel" data-testid="pd-posting" (change)="onPosting($any($event.target))"
+                        [attr.aria-label]="'Change ' + v.p.name + ' posting'">
+                    <option value="" [selected]="!v.p.assignedInstanceId">&mdash; stand down (no machine) &mdash;</option>
+                    @for (m of postingOptions(); track m.id) {
+                        <option [value]="m.id" [selected]="m.id === v.p.assignedInstanceId">{{ m.label }}</option>
+                    }
+                </select>
+            </div>
+        }
+        @if (canEditTrade()) {
+            <!-- ODM-25b — the TRADE, correctable. A posting no longer rewrites a profession, which means a
+                 profession the old re-stamp got wrong had nowhere to be fixed. This is a RECORD correction
+                 (it says who they always were), not retraining, and it writes to the campaign log. -->
+            <div class="pd-postrow">
+                <span class="k">Trade — record correction</span>
+                <select class="pd-postsel" data-testid="pd-trade" (change)="onTrade($any($event.target))"
+                        [attr.aria-label]="'Correct ' + v.p.name + ' trade'">
+                    @for (t of tradeOptions(); track t.id) {
+                        <option [value]="t.id" [selected]="t.id === (v.p.trade ?? '')">{{ t.label }}</option>
+                    }
+                </select>
+                <p class="pd-dim pd-tradenote">Their profession, not the machine they are in today. Corrections are logged.</p>
+            </div>
+        }
 
         <div class="pd-sec">Special pilot abilities <span class="pd-gov">{{ v.held.length }}/{{ v.slots }} slots · {{ v.pointsUsed }}/{{ v.pointCap }} pts · {{ v.fwLine }}</span></div>
         @for (a of v.held; track a.id) {

@@ -6,7 +6,7 @@
  * PLUS these gates; a GM override surfaces (not removes) the gate failures per row. All money/valuation is
  * flagged INTERIM until the cited CamOps/MekHQ valuation pass (T-022/T-025).
  */
-import type { Unit } from '../../models/units.model';
+import type { UnitSummary as Unit } from '../../models/unit-summary.model';
 
 export const MARKET_TUNABLES = {
     /** INTERIM flat resale (sticker × ratio). The cited CamOps/MekHQ sticker-vs-actual valuation is T-022/T-025. */
@@ -55,7 +55,9 @@ export function evalGates(u: Unit, ctx: MarketContext): GateFlags {
         faction: !ctx.factionIdSet.has(u.id),
         era: u.year > ctx.year,
         extinct: !ctx.eraUnion.has(u.id),
-        prototype: !MARKET_TUNABLES.marketLevels.includes(levelName(u.level)),
+        // REBASE-1 P1 c: UnitSummary.level is now the ComponentTechLevel NAME ('Introductory'|'Standard'|…),
+        // not the fork's numeric 0-3 rules level, so `levelName()` no longer applies — the name is compared directly.
+        prototype: !MARKET_TUNABLES.marketLevels.includes(u.level),
         hero: ctx.heroIdSet.has(u.id),
     };
 }

@@ -19,7 +19,9 @@
     </div>
     <p class="note">Outcome-gated branches — root at top, futures below. <b>Locked</b> nodes are veiled (name · threat · gate only). Tap a node for detail.@if (!isLive()) { <span class="fl-ro">archived · read-only</span> }</p>
 
-    <div class="flow-pan">
+    <!-- SPAWN-1 B5b — the board SCROLLS (overflow:auto + touch-action pan-x pan-y, flow.scss) and now PANS on a mouse drag: press on the
+         background (never on a node), drag, release. Pointer events, mouse only — touch keeps the native scroll. -->
+    <div class="flow-pan" [class.panning]="panning()" (pointerdown)="panStart($event)" (pointermove)="panMove($event)" (pointerup)="panEnd($event)" (pointercancel)="panEnd($event)" data-testid="odm-board">
         <div class="flow-canvas" [style.width.px]="layout().width" [style.height.px]="layout().height">
             <!-- ODM-5 — the NOW bar: semi-transparent, carries the campaign date, descends as the clock advances -->
             @if (layout().barY >= 0) {
@@ -130,12 +132,20 @@
                     }
                     @case ('AVAILABLE') {
                         @if (n.reducedSpoils) { <div class="fd-veil">Reached by grading down — your outcome out-graded the authored fork, so the command advances on a lesser branch (reduced spoils).</div> }
-                        <p class="fd-p">A hand-authored operation — its packet is the mission document.</p>
+                        @if (isComposed(n.branchId)) {
+                            <p class="fd-p" data-testid="tree-composed">A GM-composed operation — the brief on the mission card is the mission document.</p>
+                        } @else {
+                            <p class="fd-p">A hand-authored operation — its packet is the mission document.</p>
+                        }
                         @if (windowInfo(n.branchId); as w) { @if (w.closes) { <p class="fd-note" [class.warn]="w.soon">Window closes {{ w.closes }}@if (w.soon) { — this one dies if you jump elsewhere first }</p> } }
                         <!-- ODM-5 Part D: the tree IS the board — BEGIN OPERATION lives here (still never a Forge roll) -->
                         @if (packetOf(n.branchId)) {
                             <button type="button" class="fd-btn go" [disabled]="!canBegin()" (click)="doBegin(n.branchId)" data-testid="tree-begin">BEGIN OPERATION &raquo;</button>
                             <button type="button" class="fd-btn" (click)="doBriefing(n.branchId)" data-testid="tree-brief">View briefing &raquo;</button>
+                        } @else if (isComposed(n.branchId)) {
+                            <!-- a composed operation has no packet BY DESIGN and is fully playable: BEGIN must not
+                                 hang off packetOf(), and PACKET PENDING would be an affirmative falsehood here. -->
+                            <button type="button" class="fd-btn go" [disabled]="!canBegin()" (click)="doBegin(n.branchId)" data-testid="tree-begin">BEGIN OPERATION &raquo;</button>
                         } @else {
                             <p class="fd-note" data-testid="tree-packet-pending">PACKET PENDING — the briefing set for this operation is still being written.</p>
                         }

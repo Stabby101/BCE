@@ -1,58 +1,58 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import type { MultiStateOption, MultiStateSelection } from '../components/multi-select-dropdown/multi-select-dropdown.component';
-import type { Unit } from '../models/units.model';
-import { ADVANCED_FILTERS, AS_MOVEMENT_MODE_DISPLAY_NAMES, type AdvFilterConfig, AdvFilterType, type FilterState } from '../services/unit-search-filters.model';
+import type { UnitSummary } from '../models/unit-summary.model';
+import {
+    ADVANCED_FILTERS,
+    AS_MOVEMENT_MODE_DISPLAY_NAMES,
+    type AvailabilityFilterScope,
+    type AdvFilterConfig,
+    AdvFilterType,
+    type FilterState,
+    getBooleanFilterUnitValue,
+    normalizeTriStateBooleanFilterValue,
+} from '../services/unit-search-filters.model';
 import type { WildcardPattern } from './semantic-filter.util';
 import { wildcardToRegex } from './string.util';
-import { checkQuantityConstraint, getUnitComponentData } from './unit-search-shared.util';
+import {
+    checkQuantityConstraint,
+    getSelectedPositiveDropdownNames,
+    getUnitCountableFilterData,
+    normalizeMultiStateSelection,
+    unitMatchesRulesRefsSelection,
+} from './unit-search-shared.util';
+import { getUnitVariantGroupKey } from './unit-variant.util';
+import { isCountableBackedDropdown } from './unit-search-filter-config.util';
+import {
+    buildIndexedASSpecialSelectionCandidates,
+    unitMatchesASSpecialSelections,
+    type ParsedASSpecials,
+} from './as-special-filter.util';
 
 export interface UnitFilterKernelDependencies {
-    getProperty: (unit: Unit, key?: string) => unknown;
-    getAdjustedBV: (unit: Unit) => number;
-    getAdjustedPV: (unit: Unit) => number;
-    getUnitIdsForSelectedEras: (selectedEraNames: string[]) => Set<number> | null;
-    getUnitIdsForSelectedFactions: (
+    getProperty: (unit: UnitSummary, key?: string) => unknown;
+    getAdjustedBV: (unit: UnitSummary) => number;
+    getAdjustedPV: (unit: UnitSummary) => number;
+    getUnitIdsForExternalFilters: (
+        eraFilterState?: FilterState[string],
+        factionFilterState?: FilterState[string],
+    ) => Set<string> | null;
+    getPositiveFactionNames: (
         selectedFactionEntries: MultiStateSelection,
-        contextEraNames?: string[],
         wildcardPatterns?: WildcardPattern[],
-    ) => Set<number> | null;
-    getForcePackChassisTypeSet: (packName: string) => ReadonlySet<string> | undefined;
+    ) => string[];
+    unitMatchesAvailabilityFrom: (unit: UnitSummary, availabilityFromName: string, scope?: AvailabilityFilterScope) => boolean;
+    unitMatchesAvailabilityRarity: (unit: UnitSummary, rarityName: string, scope?: AvailabilityFilterScope) => boolean;
+    getForcePackLookupSet: (packName: string) => ReadonlySet<string> | undefined;
+    getAvailabilityLookupKey: (unit: UnitSummary) => string;
+    getIndexedUnitIds?: (filterKey: string, value: string) => ReadonlySet<string> | undefined;
+    getIndexedASSpecials?: (unitUuid: string) => ParsedASSpecials | undefined;
 }
 
 interface ApplyUnitFilterStateRequest {
-    units: Unit[];
+    units: UnitSummary[];
     state: FilterState;
     dependencies: UnitFilterKernelDependencies;
     skipKey?: string;
@@ -61,12 +61,12 @@ interface ApplyUnitFilterStateRequest {
 const ADVANCED_FILTER_CONFIG_BY_KEY = new Map(ADVANCED_FILTERS.map(conf => [conf.key, conf]));
 
 function filterUnitsByMultiState(
-    units: Unit[],
+    units: UnitSummary[],
     key: string,
     selection: MultiStateSelection,
     getProperty: UnitFilterKernelDependencies['getProperty'],
     wildcardPatterns?: WildcardPattern[],
-): Unit[] {
+): UnitSummary[] {
     const orList: MultiStateOption[] = [];
     const andList: MultiStateOption[] = [];
     const notList: MultiStateOption[] = [];
@@ -87,7 +87,7 @@ function filterUnitsByMultiState(
         item.countIncludeRanges || item.countExcludeRanges;
     const needsQuantityCounting = orList.some(hasQuantityConstraint) ||
         andList.some(hasQuantityConstraint) || notList.some(hasQuantityConstraint);
-    const isComponentFilter = key === 'componentName';
+    const isCountableFilter = isCountableBackedDropdown(ADVANCED_FILTER_CONFIG_BY_KEY.get(key));
     const compiledOrPatterns = wildcardPatterns?.filter(p => p.state === 'or').map(pattern => ({ pattern, regex: wildcardToRegex(pattern.pattern) })) ?? [];
     const compiledAndPatterns = wildcardPatterns?.filter(p => p.state === 'and').map(pattern => ({ pattern, regex: wildcardToRegex(pattern.pattern) })) ?? [];
     const compiledNotPatterns = wildcardPatterns?.filter(p => p.state === 'not').map(pattern => ({ pattern, regex: wildcardToRegex(pattern.pattern) })) ?? [];
@@ -95,11 +95,11 @@ function filterUnitsByMultiState(
     return units.filter(unit => {
         let unitData: { names: Set<string>; counts?: Map<string, number> };
 
-        if (isComponentFilter) {
-            const cached = getUnitComponentData(unit);
+        if (isCountableFilter) {
+            const cached = getUnitCountableFilterData(unit, key);
             unitData = {
-                names: cached.names,
-                counts: needsQuantityCounting ? cached.counts : undefined,
+                names: cached?.names ?? new Set<string>(),
+                counts: needsQuantityCounting ? cached?.counts : undefined,
             };
         } else {
             const propValue = getProperty(unit, key);
@@ -206,22 +206,7 @@ function filterUnitsByMultiState(
     });
 }
 
-function getSelectedDropdownNames(value: unknown): string[] {
-    if (Array.isArray(value)) {
-        return value.filter((entry): entry is string => typeof entry === 'string');
-    }
-
-    if (!value || typeof value !== 'object') {
-        return [];
-    }
-
-    const selection = value as MultiStateSelection;
-    return Object.entries(selection)
-        .filter(([, option]) => option.state === 'or' || option.state === 'and')
-        .map(([name]) => name);
-}
-
-export function applyFilterStateToUnits(request: ApplyUnitFilterStateRequest): Unit[] {
+export function applyFilterStateToUnits(request: ApplyUnitFilterStateRequest): UnitSummary[] {
     const { units, state, dependencies, skipKey } = request;
     let results = units;
     const activeFilters: Record<string, unknown> = {};
@@ -239,57 +224,121 @@ export function applyFilterStateToUnits(request: ApplyUnitFilterStateRequest): U
         }
     }
 
-    const selectedEraNames = getSelectedDropdownNames(activeFilters['era']);
-    const selectedFactionEntries = activeFilters['faction'] as MultiStateSelection || {};
+    const selectedEraNames = getSelectedPositiveDropdownNames(activeFilters['era']);
+    const selectedFactionEntries = normalizeMultiStateSelection(activeFilters['faction']);
+    const selectedAvailabilityFromNames = getSelectedPositiveDropdownNames(activeFilters['availabilityFrom']);
+    const selectedAvailabilityRarityNames = getSelectedPositiveDropdownNames(activeFilters['availabilityRarity']);
 
-    let eraUnitIds: Set<number> | null = null;
-    let factionUnitIds: Set<number> | null = null;
+    let externalUnitIds: Set<string> | null = null;
+    const eraFilterState = skipKey === 'era' ? undefined : state['era'];
     const factionFilterState = skipKey === 'faction' ? undefined : state['faction'];
     const factionWildcardPatterns = factionFilterState?.wildcardPatterns;
-    if (Object.values(selectedFactionEntries).some(selection => selection.state) || (factionWildcardPatterns && factionWildcardPatterns.length > 0)) {
-        factionUnitIds = dependencies.getUnitIdsForSelectedFactions(
-            selectedFactionEntries,
-            selectedEraNames.length > 0 ? selectedEraNames : undefined,
-            factionWildcardPatterns,
-        );
-    } else if (selectedEraNames.length > 0) {
-        eraUnitIds = dependencies.getUnitIdsForSelectedEras(selectedEraNames);
-    }
+    const positiveFactionNames = Object.values(selectedFactionEntries).some(selection => selection.state)
+        || (factionWildcardPatterns && factionWildcardPatterns.length > 0)
+        ? dependencies.getPositiveFactionNames(selectedFactionEntries, factionWildcardPatterns)
+        : [];
+    externalUnitIds = dependencies.getUnitIdsForExternalFilters(eraFilterState, factionFilterState);
 
-    if (eraUnitIds || factionUnitIds) {
-        let finalIds: Set<number>;
-        if (eraUnitIds && factionUnitIds) {
-            const [smaller, larger] = eraUnitIds.size <= factionUnitIds.size
-                ? [eraUnitIds, factionUnitIds]
-                : [factionUnitIds, eraUnitIds];
-            finalIds = new Set<number>();
-            for (const id of smaller) {
-                if (larger.has(id)) finalIds.add(id);
-            }
-        } else {
-            finalIds = (eraUnitIds || factionUnitIds)!;
-        }
-        results = results.filter(unit => finalIds.has(unit.id));
+    if (externalUnitIds) {
+        results = results.filter(unit => externalUnitIds.has(dependencies.getAvailabilityLookupKey(unit)));
     }
 
     const selectedForcePackNames = activeFilters['forcePack'] as string[] || [];
     if (selectedForcePackNames.length > 0) {
-        const chassisTypeSet = new Set<string>();
+        const lookupKeySet = new Set<string>();
         for (const packName of selectedForcePackNames) {
-            const packSet = dependencies.getForcePackChassisTypeSet(packName);
+            const packSet = dependencies.getForcePackLookupSet(packName);
             if (packSet) {
-                for (const key of packSet) chassisTypeSet.add(key);
+                for (const key of packSet) lookupKeySet.add(key);
             }
         }
-        results = results.filter(unit => chassisTypeSet.has(`${unit.chassis}|${unit.type}`));
+        results = results.filter(unit => lookupKeySet.has(getUnitVariantGroupKey(unit)));
+    }
+
+    const availabilityScope: AvailabilityFilterScope = {
+        ...(selectedEraNames.length > 0 ? { eraNames: selectedEraNames } : {}),
+        ...(positiveFactionNames.length > 0 ? { factionNames: positiveFactionNames } : {}),
+        ...(selectedAvailabilityFromNames.length > 0 ? { availabilityFromNames: selectedAvailabilityFromNames } : {}),
+    };
+
+    if (selectedAvailabilityFromNames.length > 0) {
+        results = results.filter(unit => (
+            selectedAvailabilityFromNames.some(availabilityFromName => (
+                dependencies.unitMatchesAvailabilityFrom(unit, availabilityFromName, availabilityScope)
+            ))
+        ));
+    }
+
+    if (selectedAvailabilityRarityNames.length > 0) {
+        results = results.filter(unit => (
+            selectedAvailabilityRarityNames.some(rarityName => (
+                dependencies.unitMatchesAvailabilityRarity(unit, rarityName, availabilityScope)
+            ))
+        ));
     }
 
     for (const { conf, filterState } of activeStandardFilters) {
         const val = filterState.value;
         const wildcardPatterns = filterState.wildcardPatterns;
 
-        if (conf.type === AdvFilterType.DROPDOWN && conf.multistate && val && typeof val === 'object') {
-            results = filterUnitsByMultiState(results, conf.key, val as MultiStateSelection, dependencies.getProperty, wildcardPatterns);
+        if (conf.type === AdvFilterType.BOOLEAN) {
+            const booleanFilterValue = normalizeTriStateBooleanFilterValue(val);
+            if (booleanFilterValue !== null) {
+                const expectedValue = booleanFilterValue === 'or';
+                results = results.filter(unit => (
+                    getBooleanFilterUnitValue(conf, dependencies.getProperty(unit, conf.key)) === expectedValue
+                ));
+            }
+            continue;
+        }
+
+        if (conf.type === AdvFilterType.DROPDOWN && conf.key === 'rulesRefs') {
+            const selectedRulesRefs = Array.isArray(val)
+                ? val.filter((value): value is string => typeof value === 'string')
+                : [];
+            if (selectedRulesRefs.length > 0) {
+                results = results.filter(unit => unitMatchesRulesRefsSelection(
+                    dependencies.getProperty(unit, conf.key),
+                    selectedRulesRefs,
+                ));
+            }
+            continue;
+        }
+
+        if (conf.type === AdvFilterType.DROPDOWN && conf.multistate) {
+            const selection = normalizeMultiStateSelection(val);
+            if (conf.key === 'as.specials') {
+                const specialSelections = [
+                    ...Object.values(selection),
+                    ...(wildcardPatterns ?? []).map(pattern => ({
+                        name: pattern.pattern,
+                        state: pattern.state,
+                    })),
+                ];
+                const indexedCandidates = dependencies.getIndexedUnitIds
+                    ? buildIndexedASSpecialSelectionCandidates(
+                        specialSelections,
+                        token => dependencies.getIndexedUnitIds?.('as.specials', token),
+                    )
+                    : null;
+                if (indexedCandidates) {
+                    results = results.filter(unit => indexedCandidates.has(unit.uuid));
+                }
+                results = results.filter(unit => unitMatchesASSpecialSelections(
+                    dependencies.getProperty(unit, conf.key),
+                    specialSelections,
+                    dependencies.getIndexedASSpecials?.(unit.uuid),
+                ));
+                continue;
+            }
+
+            results = filterUnitsByMultiState(
+                results,
+                conf.key,
+                selection,
+                dependencies.getProperty,
+                wildcardPatterns,
+            );
             continue;
         }
 
@@ -452,11 +501,12 @@ export function applyFilterStateToUnits(request: ApplyUnitFilterStateRequest): U
             } else {
                 results = results.filter(unit => {
                     const unitValue = dependencies.getProperty(unit, conf.key) as number;
+                    if (unitValue == null) return conf.includeMissing === true;
                     if (conf.ignoreValues && conf.ignoreValues.includes(unitValue)) {
                         return val[0] === 0;
                     }
                     if (isExcluded(unitValue)) return false;
-                    return unitValue != null && isIncluded(unitValue);
+                    return isIncluded(unitValue);
                 });
             }
         }

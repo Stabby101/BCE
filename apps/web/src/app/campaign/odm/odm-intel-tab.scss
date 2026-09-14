@@ -1,0 +1,26 @@
+/* DIRECTIVE-ODM-12 Part B — the fork-owned additions to the SHARED Classic intel sheet:
+   the KIA card treatment, the relationship line, and the underground CELL LADDER (world-slots). */
+
+/* Specificity, not order (C4): the KIA card also carries `.dead`, and the shared sheet's `.ctc.dead`
+   (0,2,0) ties a bare `.ctc.kia` (0,2,0) — a tie is decided purely by styleUrls ORDER, which is not a
+   guarantee. Out-specify it so the dead founder's card is solid-and-opaque by rule, not by luck. */
+.ctc.ctc.kia { border-color: var(--stamp); box-shadow: inset 3px 0 0 var(--stamp); opacity: 1; border-style: solid; }
+.ctc-kia { font-family: var(--mono); font-size: 8.5px; letter-spacing: 1.5px; color: var(--paper); background: var(--stamp); padding: 1px 6px; margin-left: 7px; vertical-align: 1px; }
+.ctc-rel { margin-left: auto; font-family: var(--mono); font-size: 10px; letter-spacing: .5px; color: var(--ink2); text-transform: uppercase; }
+
+/* Specificity, not order: the shared sheet's `.ph.flat` (0,3,0) beats a bare `.cells-h` (0,2,0) in the
+   SAME component style array, so every declaration here must out-specify it (panel catch). */
+.ph.flat.cells-h { margin-top: 22px; border-bottom: 1.4px solid var(--ink); padding-bottom: 5px; }
+.cells { display: flex; flex-direction: column; margin-top: 10px; }
+.cell { display: grid; grid-template-columns: 150px 110px 1fr; align-items: baseline; gap: 12px; padding: 8px 10px; border-bottom: 1px solid color-mix(in srgb, var(--ink2) 28%, transparent); }
+.cl-world { font-family: var(--label); font-weight: 600; letter-spacing: 1.2px; font-size: 12.5px; text-transform: uppercase; color: var(--ink); }
+.cl-status { font-family: var(--mono); font-size: 9.5px; letter-spacing: 1.4px; color: var(--ink2); }
+.cl-note { font-family: var(--type); font-size: 11.5px; line-height: 1.5; color: var(--ink2); }
+.cell.s-CONFIRMED { background: color-mix(in srgb, var(--ok, #3a7d44) 6%, transparent); }
+.cell.s-CONFIRMED .cl-status { color: var(--ok, #3a7d44); }
+.cell.s-SIGNALED { background: color-mix(in srgb, var(--warn, #c79a23) 7%, transparent); }
+.cell.s-SIGNALED .cl-status { color: #9a7615; }
+.cell.s-UNCONTACTED .cl-world { color: var(--ink2); }
+/* C3 — `.cell.s-UNCONTACTED .cl-status` DELETED: it can never match. The template gates `.cl-status`
+   behind `@if (cl.status !== 'UNCONTACTED')`, because an uncontacted slot renders the world name and
+   nothing else. It was a leftover of the pre-compliance template. */

@@ -1,49 +1,24 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { Directive, input, output, computed, inject, signal } from '@angular/core';
 import type { ASForceUnit, AbilitySelection } from '../../../models/as-force-unit.model';
-import type { AlphaStrikeUnitStats, Unit } from '../../../models/units.model';
+import type { ColorScheme } from '../../../models/options.model';
+import type { AlphaStrikeUnitStats, UnitSummary } from '../../../models/unit-summary.model';
 import type { Era } from '../../../models/eras.model';
 import { DataService } from '../../../services/data.service';
 import { AsAbilityLookupService } from '../../../services/as-ability-lookup.service';
+import { COMMAND_ABILITIES } from '../../../models/command-abilities.model';
 import { PILOT_ABILITIES, type PilotAbility, type ASCustomPilotAbility } from '../../../models/pilot-abilities.model';
 import { type CriticalHitsVariant, getLayoutForUnitType } from '../card-layout.config';
-import { PVCalculatorUtil } from '../../../utils/pv-calculator.util';
-import { formatMovement } from '../../../utils/as-common.util';
+import { adjustPointValueForSkill } from '../../../utils/pv-skill-adjustment.util';
+import { formatMovement, formatMovementWithAlternate } from '../../../utils/as-common.util';
+import { FormationAbilityAssignmentUtil, type FormationWideAbilityDescriptor } from '../../../utils/formation-ability-assignment.util';
+import type { SpecialAbilityState } from '../../../models/as-special-ability-state.model';
+import { DEFAULT_GUNNERY_SKILL } from '../../../models/crew-member.model';
 
 /*
- * Author: Drake
  *
  * Base class for Alpha Strike card layout components.
  * Contains common inputs, computed signals, and methods shared across layouts.
@@ -65,26 +40,24 @@ export interface PipState {
 }
 
 /**
- * Represents a special ability with both original and effective values.
- */
-export interface SpecialAbilityState {
-    original: string;
-    effective: string;
-    /** True if this ability is exhausted (should show strikethrough) */
-    isExhausted?: boolean;
-    /** For consumable abilities, how many have been consumed */
-    consumedCount?: number;
-    /** For consumable abilities, the max count */
-    maxCount?: number;
-}
-
-/**
  * Event data for special ability click.
  */
 export interface SpecialAbilityClickEvent {
     state: SpecialAbilityState;
     event: MouseEvent;
 }
+
+export interface PilotCardAbility {
+    readonly kind: 'pilot';
+    readonly selection: AbilitySelection;
+}
+
+export interface FormationWideCardAbility {
+    readonly kind: 'formation-wide';
+    readonly descriptor: FormationWideAbilityDescriptor;
+}
+
+export type CardAbility = PilotCardAbility | FormationWideCardAbility;
 
 @Directive()
 export abstract class AsLayoutBaseComponent {
@@ -95,11 +68,12 @@ export abstract class AsLayoutBaseComponent {
 
     // Common inputs
     forceUnit = input<ASForceUnit>();
-    unit = input.required<Unit>();
+    unit = input.required<UnitSummary>();
     useHex = input<boolean>(false);
-    cardStyle = input<'colored' | 'monochrome'>('colored');
+    cardStyle = input<ColorScheme>('default');
     imageUrl = input<string>('');
     interactive = input<boolean>(false);
+    skillOverride = input<number | undefined>(undefined);
 
     // Image loading state (hidden on error)
     protected imageLoadFailed = signal(false);
@@ -109,7 +83,7 @@ export abstract class AsLayoutBaseComponent {
 
     // Common outputs
     specialClick = output<SpecialAbilityClickEvent>();
-    pilotAbilityClick = output<AbilitySelection>();
+    abilityClick = output<CardAbility>();
     editPilotClick = output<void>();
     rollCriticalClick = output<void>();
 
@@ -125,13 +99,52 @@ export abstract class AsLayoutBaseComponent {
     });
 
     // Skill and PV
-    skill = computed<number>(() => this.forceUnit()?.getPilotStats() ?? 4);
+    isCommander = computed<boolean>(() => this.forceUnit()?.commander() ?? false);
+    skill = computed<number>(() => this.forceUnit()?.getPilotStats() ?? this.skillOverride() ?? DEFAULT_GUNNERY_SKILL);
     basePV = computed<number>(() => this.asStats().PV);
     adjustedPV = computed<number>(() => {
-        return PVCalculatorUtil.calculateAdjustedPV(this.asStats().PV, this.skill());
+        return adjustPointValueForSkill(this.asStats().PV, this.skill());
     });
-    pilotAbilities = computed<AbilitySelection[]>(() => {
-        return this.forceUnit()?.pilotAbilities() ?? [];
+    abilities = computed<CardAbility[]>(() => {
+        const forceUnit = this.forceUnit();
+        const abilities: CardAbility[] = (forceUnit?.pilotAbilities() ?? []).map((selection) => ({
+            kind: 'pilot' as const,
+            selection,
+        }));
+        if (!forceUnit) {
+            return abilities;
+        }
+
+        const group = forceUnit.getGroup() as import('../../../models/force.model').UnitGroup<ASForceUnit> | null;
+        if (!group) {
+            return abilities;
+        }
+
+        const preview = FormationAbilityAssignmentUtil.previewGroupFormationAssignments(group);
+        if (!preview.eligibleUnitIds.includes(forceUnit.id)) {
+            return abilities;
+        }
+
+        const seenAbilityIds = new Set(
+            abilities
+                .filter((ability): ability is PilotCardAbility => ability.kind === 'pilot')
+                .map(({ selection }) => selection)
+                .filter((selection): selection is string => typeof selection === 'string')
+        );
+
+        for (const abilityId of preview.assignmentsByUnitId.get(forceUnit.id) ?? []) {
+            if (seenAbilityIds.has(abilityId)) {
+                continue;
+            }
+            abilities.push({ kind: 'pilot', selection: abilityId });
+            seenAbilityIds.add(abilityId);
+        }
+
+        abilities.push(...preview.formationWideAbilities.map((descriptor) => ({
+            kind: 'formation-wide' as const,
+            descriptor,
+        })));
+        return abilities;
     });
 
     // Armor and structure
@@ -347,7 +360,7 @@ export abstract class AsLayoutBaseComponent {
     heatLevelToHitModifier = computed<number>(() => {
         const fu = this.forceUnit();
         if (!fu) return 0;
-        return Math.max(0, this.heatLevel() - (fu.hasHotDog() ? 1 : 0));
+        return fu.heatToHitModifier('committed');
     });
 
     // Heat level (committed)
@@ -376,7 +389,7 @@ export abstract class AsLayoutBaseComponent {
         };
 
         return entries
-            .map(([mode, inches]) => formatMovement(inches, mode, this.useHex()))
+            .map(([mode, inches]) => this.formatMovementDisplay(mode, inches))
             .join('/');
     });
 
@@ -450,16 +463,57 @@ export abstract class AsLayoutBaseComponent {
         return entries;
     }
 
+    protected formatMovementDisplay(mode: string, inches: number): string {
+        const fu = this.forceUnit();
+        if (!fu) {
+            return formatMovement(inches, mode, this.useHex());
+        }
+
+        const display = fu.movementDisplayValue(mode, inches);
+        const formatted = display.adjustedInches !== undefined
+            ? formatMovementWithAlternate(display.baseInches, display.adjustedInches, mode, this.useHex())
+            : formatMovement(display.baseInches, mode, this.useHex());
+
+        return formatted;
+    }
+
+    protected formatSprintMovementDisplay(mode: string, inches: number): string {
+        const fu = this.forceUnit();
+        if (!fu) {
+            return formatMovement(inches, mode, this.useHex());
+        }
+
+        const display = fu.movementDisplayValue(mode, inches, 'sprint');
+        const formatted = display.adjustedInches !== undefined
+            ? formatMovementWithAlternate(display.baseInches, display.adjustedInches, mode, this.useHex())
+            : formatMovement(display.baseInches, mode, this.useHex());
+
+        return formatted;
+    }
+
+    formatAbility(ability: CardAbility): string {
+        if (ability.kind === 'formation-wide') {
+            return ability.descriptor.ability.name;
+        }
+
+        return this.formatPilotAbility(ability.selection);
+    }
+
     formatPilotAbility(selection: AbilitySelection): string {
         if (typeof selection === 'string') {
             const ability = this.PILOT_ABILITIES.find(a => a.id === selection);
-            return ability ? `${ability.name} (${ability.cost})` : selection;
+            if (ability) {
+                return `${ability.name} (${ability.cost})`;
+            }
+
+            const commandAbility = COMMAND_ABILITIES.find((entry) => entry.id === selection);
+            return commandAbility?.name ?? selection;
         }
         return `${selection.name} (${selection.cost})`;
     }
 
-    onPilotAbilityClick(selection: AbilitySelection): void {
-        this.pilotAbilityClick.emit(selection);
+    onAbilityClick(ability: CardAbility): void {
+        this.abilityClick.emit(ability);
     }
 
     range(count: number): number[] {

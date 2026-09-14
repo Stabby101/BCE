@@ -1,43 +1,125 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
+import type { PickerChoice } from '../components/picker/picker.interface';
+import type { EquipmentFlag } from '../models/equipment-flags.type';
+import type { MountedEquipment } from '../models/mounted-equipment.model';
+import { EQUIPMENT_HEAT_SOURCE_GROUP, type UnitHeatSource } from '../models/rules/unit-type-rules';
+import {
+    hasFunctionalEcmForStealth,
+    isChameleonShieldActive,
+    isChameleonShieldEquipment,
+    isNullSignatureActive,
+    isNullSignatureEquipment,
+    isStealthEquipment,
+    isStealthEquipmentFunctioning,
+    isStealthSystemEquipment,
+    isSwitchableStealthEquipment,
+    isVoidSignatureEquipment,
+    isVoidSignatureFunctioning,
+    STEALTH_DISABLED_STATE,
+    STEALTH_DISABLING_STATE,
+    STEALTH_ENABLED_STATE,
+    STEALTH_ENABLING_STATE,
+    STEALTH_STATE_KEY,
+} from '../models/stealth-equipment.model';
+import type { TurnState } from '../models/turn-state.model';
+import type { HandlerCommandContext, HandlerQueryContext } from '../services/equipment-interaction-registry.service';
 import { ToggleHandler } from './base/toggle.handler';
 
 export class StealthHandler extends ToggleHandler {
     readonly id = 'stealth-handler';
-    readonly flags = ['F_STEALTH'];
+    override readonly flags: EquipmentFlag[] = [];
     override readonly priority = 10;
-    
-    protected override readonly enabledLabel = 'Enable Stealth';
-    protected override readonly disabledLabel = 'Disable Stealth';
-};
+    protected override readonly stateKey = STEALTH_STATE_KEY;
+    protected override readonly toggleMode = 'transient' as const;
+    protected override readonly enabledState = STEALTH_ENABLED_STATE;
+    protected override readonly enablingState = STEALTH_ENABLING_STATE;
+    protected override readonly disabledState = STEALTH_DISABLED_STATE;
+    protected override readonly disablingState = STEALTH_DISABLING_STATE;
+    protected override readonly enabledLabel = 'Stealth Active';
+    protected override readonly enablingLabel = 'Activating Stealth…';
+    protected override readonly disabledLabel = 'Stealth Deactivated';
+    protected override readonly disablingLabel = 'Deactivating Stealth…';
+
+    override applicableTo(equipment: MountedEquipment): boolean {
+        return isStealthSystemEquipment(equipment);
+    }
+
+    override getChoices(equipment: MountedEquipment, context: HandlerQueryContext): PickerChoice[] {
+        if (!isSwitchableStealthEquipment(equipment)) return [];
+        const choices = super.getChoices(equipment, context);
+        if (this.needsFunctionalEcm(equipment)
+            && choices[0]?.value === STEALTH_ENABLING_STATE
+            && !hasFunctionalEcmForStealth(equipment)) {
+            choices[0] = { ...choices[0], disabled: true };
+        }
+        return choices;
+    }
+
+    override handleSelection(
+        equipment: MountedEquipment,
+        choice: PickerChoice,
+        context: HandlerCommandContext,
+    ): boolean {
+        if (!isSwitchableStealthEquipment(equipment)) return true;
+        if (this.needsFunctionalEcm(equipment)
+            && choice.value === STEALTH_ENABLING_STATE
+            && !hasFunctionalEcmForStealth(equipment)) {
+            context.toastService.showToast(
+                isVoidSignatureEquipment(equipment)
+                    ? 'Void Signature System requires a functional ECM suite'
+                    : 'Stealth armor requires a functional ECM suite',
+                'error',
+            );
+            return true;
+        }
+        return super.handleSelection(equipment, choice, context);
+    }
+
+    override getInventoryHeatSources(
+        equipment: MountedEquipment,
+        _turnState: TurnState,
+        context: HandlerQueryContext,
+    ): UnitHeatSource[] {
+        if (!isSwitchableStealthEquipment(equipment) || !context.canProvidePassiveEffect(equipment)) return [];
+        const heat = isChameleonShieldEquipment(equipment)
+            ? (isChameleonShieldActive(equipment) ? 6 : 0)
+            : isNullSignatureEquipment(equipment)
+                ? (isNullSignatureActive(equipment) ? 10 : 0)
+                : isVoidSignatureEquipment(equipment)
+                    ? (isVoidSignatureFunctioning(equipment) ? 10 : 0)
+                : (isStealthEquipmentFunctioning(equipment) ? 10 : 0);
+        return heat > 0 ? [{
+            id: `stealth:${equipment.id}`,
+            label: isVoidSignatureEquipment(equipment) ? 'Void Signature' : 'Stealth',
+            value: heat,
+            group: EQUIPMENT_HEAT_SOURCE_GROUP,
+        }] : [];
+    }
+
+    override beforeEquipmentStateCommit(equipment: MountedEquipment): void {
+        this.forceOffWithoutEcm(equipment, true);
+    }
+
+    override onEndTurn(equipment: MountedEquipment): void {
+        if (this.forceOffWithoutEcm(equipment)) return;
+        super.onEndTurn(equipment);
+    }
+
+    private forceOffWithoutEcm(equipment: MountedEquipment, next = false): boolean {
+        if (!this.needsFunctionalEcm(equipment)
+            || !isSwitchableStealthEquipment(equipment)
+            || hasFunctionalEcmForStealth(equipment, next)) return false;
+        if (this.getToggleState(equipment) !== STEALTH_DISABLED_STATE
+            && equipment.setState(STEALTH_STATE_KEY, STEALTH_DISABLED_STATE)) {
+            equipment.owner.setInventoryEntry(equipment);
+        }
+        return true;
+    }
+
+    private needsFunctionalEcm(equipment: MountedEquipment): boolean {
+        return isStealthEquipment(equipment) || isVoidSignatureEquipment(equipment);
+    }
+}

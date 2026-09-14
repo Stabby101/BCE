@@ -16,15 +16,21 @@ import { Injectable, type WritableSignal, computed, inject, signal } from '@angu
 import { NewCampaignState } from '../new-campaign-state';
 import { WarchestService } from '../chaos/warchest.service';
 import { MissionTreeService } from '../mission/mission-tree.service';
-import { BattleReconcileService } from '../battle/battle-reconcile.service';
+import { BattleReconcileService, type ReconcileResult } from '../battle/battle-reconcile.service';
+import { hsDamaged } from '../battle/hs-damage'; // PD3 P1 — the one HS damage truth (what the reconcile actually hurt)
+import { ClaimRealtimeService } from '../claims/claim-realtime.service'; // ORDER-4 H18 — the engagement-close sender
 import { FieldWalkService } from '../walk/field-walk.service';
 import { ForgePackService } from '../mission/forge-pack.service';
 import { PilotService } from '../barracks/pilot.service';
 import { computeTier, twoSidedResolve, singleSidedResolve, resolveModelFor, type ResolveAnswers, type OutcomeGate } from '../mission/mission-tree'; // D-134 — two-sided VP resolve · IMPORT-6 — single-sided
 import { deployedSet } from '../force/deployed';
 import { readDamage } from '../walk/field-walk-core';
+import { CampaignSaveStore } from '../campaign-save-store'; // GM-1 P3 — the slip persists with the resolve
+import { newSlipId, type SlipUnitRow } from '../gm/results-slip'; // GM-1 P3 · ORDER-3 H16 — newSlipId moved to the shared shape (pure move)
 import { filledObjectives } from '../mission/forge-select';
-import { resolved } from '../chaos/chaos-contract'; // D-110c — the contract salvage % for the resolve estimate
+import { resolved, isSessionContract, GM_SELF_KEY, type ChaosContract } from '../chaos/chaos-contract'; // D-110c — the contract salvage % for the resolve estimate · GM-3 P1
+import { slipPayFor, participantPay } from '../gm/participant-pay'; // GM-2 P2a — per-player pay for the companies that signed their own contract · GM-3 P1 — the GM's own
+
 
 @Injectable()
 export class ResolveService {
@@ -32,6 +38,8 @@ export class ResolveService {
     private readonly warchest = inject(WarchestService);
     private readonly tree = inject(MissionTreeService);
     private readonly reconcile = inject(BattleReconcileService); // D-048 phase D — battle_state -> inst.damage at resolve
+    private readonly rt = inject(ClaimRealtimeService); // ORDER-4 H18 — the engagement-close sender
+    private readonly store = inject(CampaignSaveStore); // GM-1 P3 — the results slip persists with the resolve
     private readonly fieldWalk = inject(FieldWalkService);
     private readonly pilotSvc = inject(PilotService);
     private readonly pack = inject(ForgePackService);
@@ -40,7 +48,7 @@ export class ResolveService {
     readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots'); // D-110b (public — the modal template gates the Compromised row on it)
     private readonly missionSpec = computed(() => {
         const spec = this.state.missionSpec();
-        const ac = this.state.acceptedContract();
+        const ac = this.state.offerFor(); // GM-2 P2a — through the ONE accessor
         return spec && ac && spec.contractId === ac.id ? spec : null;
     });
     private readonly branches = computed(() => this.state.missionTree() ?? []);
@@ -72,9 +80,39 @@ export class ResolveService {
         this.dmgTaken.set(null);
         this.dmgGiven.set(null);
         this.resolveOpen.set(true);
+        this.reconcileNote.set(null);
         // D-121 — pull the battle end-state up-front so YOUR LOSSES can auto-flag destroyed units. reconcile mutates
         // inst.damage IN PLACE (D-030 mirror), so nudge the force signal to re-read the settlement computeds.
-        if (this.isHotspots()) { await this.reconcile.reconcileAtResolve(); this.state.setStartingForce([...(this.state.startingForce() ?? [])]); }
+        // PD3 P1 (PD3-12) — and SAY what it did: the count on the modal, a failure out loud (never a silent 0).
+        if (this.isHotspots()) { const r = await this.reconcile.reconcileAtResolve(); this.state.setStartingForce([...(this.state.startingForce() ?? [])]); this.surfaceReconcile(r, 'open'); }
+    }
+
+    // ── DIRECTIVE-PD3 P1 (PD3-12) — THE RECONCILE'S WITNESS. Both call sites used to discard the applied count, and a thrown
+    //    error or the 3 s socket timeout read exactly like "nobody took damage" (Pendragon's "REPAIR 0 · No damaged units"
+    //    after a played track). Now: the modal shows the count at open; the confirm toasts "N units damaged — record or
+    //    repair" (a Repair ▸ jump); a sync FAILURE toasts AND posts a ledger line under Hot Spots (a campaign-log notice under
+    //    Traditional) — loud in the record, never a 0. ──
+    readonly reconcileNote = signal<{ text: string; failed: boolean; damaged: number } | null>(null);
+    private surfaceReconcile(r: ReconcileResult, at: 'open' | 'confirm'): void {
+        const hs = this.isHotspots();
+        const force = this.state.startingForce() ?? [];
+        const opfor = this.state.missionSpec()?.opforForce ?? [];
+        const hurt = (r.applications ?? []).filter((id) => hsDamaged(force.find((u) => u.instanceId === id) ?? opfor.find((u) => u.instanceId === id))).length;
+        const plural = (n: number): string => `${n} unit${n === 1 ? '' : 's'}`;
+        if (!r.ok) {
+            const why = r.reason === 'timeout' ? 'the host did not answer in 3 s' : r.reason === 'no-socket' ? 'no live connection' : r.reason === 'no-campaign' ? 'no host campaign' : 'an error';
+            const text = `Battle-state sync FAILED (${why}) — digital sheet damage was NOT pulled. Record it on the tabletop in Repair & Refit.`;
+            this.reconcileNote.set({ text, failed: true, damaged: 0 });
+            if (hs) { this.warchest.announceNote(text, 'repair'); if (at === 'confirm') this.warchest.post('Battle-state sync failed — sheet damage not pulled (record it in Repair & Refit)', 0, 0, null, { silent: true }); }
+            else if (at === 'confirm') this.state.logNotice(text);
+            return;
+        }
+        const text = hurt > 0
+            ? `${plural(hurt)} damaged — record or repair (battle state synced: ${plural(r.applied)})`
+            : r.applied > 0 ? `Battle state synced (${plural(r.applied)}) — no repairable damage. Played on the table? Record it in Repair & Refit.`
+            : 'Battle state synced — no digital damage recorded. Played on the table? Record it in Repair & Refit.';
+        this.reconcileNote.set({ text, failed: false, damaged: hurt });
+        if (hs && at === 'confirm') this.warchest.announceNote(text, 'repair');
     }
     cancelResolve(): void {
         this.resolveOpen.set(false);
@@ -93,7 +131,7 @@ export class ResolveService {
     }
     /** The active Hot Spots contract's negotiated salvage % (0 if none / not hotspots / Exchange). */
     private readonly activeSalvagePct = computed(() => {
-        const c = this.state.activeChaosContract();
+        const c = this.state.contractFor(); // GM-2 P2a — through the ONE accessor
         if (!c) return 0;
         const salv = resolved(c.steps).salvage;
         return typeof salv === 'number' ? salv : 0;
@@ -126,12 +164,12 @@ export class ResolveService {
     //    IMPORT-6 Part B — the ONE dispatch rule (mission-tree.ts resolveModelFor) now also yields the SINGLE-SIDED
     //    model ('one': a single-sided custom's brief, or a preset track's authored list) — resolveBranch reads the same
     //    rule, so the live verdict and the posted tier can't drift. Two-sided + legacy branches are byte-identical. ──
-    readonly resolveModel = computed(() => resolveModelFor(this.missionSpec(), this.state.activeChaosContract()));
+    readonly resolveModel = computed(() => resolveModelFor(this.missionSpec(), this.state.contractFor()));
     readonly twoSided = computed(() => this.resolveModel() === 'two');
     readonly oneSided = computed(() => this.resolveModel() === 'one');
     /** The live two-sided view (role-filtered objectives + VP + tier) — drives the two-column checklist + verdict. */
     readonly twoSidedView = computed(() => {
-        const spec = this.missionSpec(); const c = this.state.activeChaosContract();
+        const spec = this.missionSpec(); const c = this.state.contractFor();
         return spec && c ? twoSidedResolve(spec, c, this.rAns()) : null;
     });
     /** IMPORT-6 — the live single-sided view (every authored objective, one column; VP-share tier). */
@@ -150,7 +188,7 @@ export class ResolveService {
         return t === 'FULL_SUCCESS' ? 'ALL OBJECTIVES' : t === 'SUCCESS' ? 'SUCCESS' : 'UNSUCCESSFUL';
     });
     /** D-134 — the combat pay the effective tier (override ?? computed) would post — a live preview (the actual post is unchanged). */
-    readonly combatPayPreview = computed(() => this.warchest.combatPay(this.rOverride() ?? this.computedTier(), this.state.contractScale() ?? 1));
+    readonly combatPayPreview = computed(() => this.warchest.combatPay(this.rOverride() ?? this.computedTier(), this.state.scaleFor() ?? 1));
     /** D-134 — mark a two-sided objective MET/NOT (writes rAns.ourMet[i] / rAns.oppMet[i]). */
     setObjMet(which: 'our' | 'opp', i: number, v: boolean): void {
         this.rAns.update((a) => { const arr = [...((which === 'our' ? a.ourMet : a.oppMet) ?? [])]; arr[i] = v; return which === 'our' ? { ...a, ourMet: arr } : { ...a, oppMet: arr }; });
@@ -160,6 +198,11 @@ export class ResolveService {
      *  forfeit/FAILURE (even a GM override cannot win with nothing on the field), breaking the no-deploy-win →
      *  escalation-balloon chain. `deployedCount` previously gated only prepareDeploy, never resolve. */
     readonly canResolveWin = computed(() => this.deployedCount() > 0);
+    // GM-3 P2 — a TABLE WITH NO COMPANY with NOTHING deployed cannot be resolved: it is not the GM's forfeit (he fields
+    // nobody by design) — the players simply have not deployed. Resolve REFUSES with a reason instead of forfeiting and
+    // minting no slip (R0.2 worst-five #5). A plain HS campaign / a GM with a company keeps the forfeit path (deployedCount 0
+    // there means the owner fielded nothing → a genuine loss). The modal shows this and withholds the confirm.
+    readonly companylessNoDeploy = computed(() => this.state.companylessTable() && this.deployedCount() === 0);
     // ── DIRECTIVE-121 — Hot Spots FIELD SETTLEMENT at resolve (losses + prize claims). HS-only; it replaces the C-bill
     //    field walk (killed under HS). Reuses field-walk-core destroyed-detection + the CLAIM_PRIZE shape via the tree
     //    service's applyHsSettlement. Salvage economy stays abstract SP; a claimed prize is physical + slot-limited. ──
@@ -174,16 +217,20 @@ export class ResolveService {
             return { id: i.instanceId, label: `${i.chassis} ${i.model}`.trim(), destroyed: !!i.damage?.destroyed || i.chaosDamage === 'destroyed', pilotName: pilot?.name ?? '', pilotId: pilot?.pilotId };
         });
     });
-    /** The defeated OpFor for the PRIZES claim list. */
+    /** The defeated OpFor for the PRIZES claim list. GM-1 P4 (panel finding): PLAYER-IMPORT units riding
+     *  opforForce in an A-vs-B track are NEVER prizes — a player's own machine goes home on the results
+     *  slip; claiming it would double-mint the instanceId ('captured' into the GM roster + slipped home). */
     readonly settleOpfor = computed(() => {
         if (!this.isHotspots()) return [] as { id: string; label: string; bv: number }[];
-        return (this.state.missionSpec()?.opforForce ?? []).map((o) => ({ id: o.instanceId, label: `${o.chassis} ${o.model}`.trim(), bv: o.bv }));
+        return (this.state.missionSpec()?.opforForce ?? [])
+            .filter((o) => o.provenance?.origin !== 'player-import')
+            .map((o) => ({ id: o.instanceId, label: `${o.chassis} ${o.model}`.trim(), bv: o.bv }));
     });
     /** Prize slots derived from the negotiated salvage term + Contract Scale ('None'/'Exchange' → 0). */
     readonly prizeSlots = computed(() => {
         const pct = this.activeSalvagePct();
         if (pct <= 0) return 0;
-        return Math.min(this.settleOpfor().length, Math.max(1, Math.round((pct / 100) * (this.state.contractScale() ?? 1) * 2)));
+        return Math.min(this.settleOpfor().length, Math.max(1, Math.round((pct / 100) * (this.state.scaleFor() ?? 1) * 2)));
     });
     readonly prizeCount = computed(() => this.prizeClaim().size);
     fateOf(id: string, destroyed: boolean): 'ok' | 'injured' | 'kia' { return this.lossFate()[id] ?? (destroyed ? 'injured' : 'ok'); }
@@ -212,10 +259,14 @@ export class ResolveService {
     setDmgGiven(v: string): void { this.dmgGiven.set(v.trim() === '' ? null : Math.max(0, Math.floor(Number(v) || 0))); }
 
     async confirmResolve(): Promise<void> {
+        // GM-3 P2 — a company-less table with nothing deployed REFUSES (never forfeits, never mints an empty slip). The guard
+        // is here as well as in the modal: no path resolves a table with an empty field.
+        if (this.companylessNoDeploy()) return;
         // D-048 phase D: pull player-entered damage from the host battle_state into inst.damage BEFORE
         // resolveBranch — so the walk reads the real player end-state EVEN IF the GM never opened MekBay
         // (the active engagement key still matches the players'; resolveBranch flips it to RESOLVED next).
-        await this.reconcile.reconcileAtResolve();
+        // PD3 P1 — and SURFACE it: the toast count / the LOUD failure (ledger line) — never a silent 0.
+        this.surfaceReconcile(await this.reconcile.reconcileAtResolve(), 'confirm');
         // D-121 — build the HS field-settlement plan from the dialog BEFORE resolveBranch (so the salvage estimate
         // subtracts claimed prizes — no double-dip) and apply it AFTER (roster + pilots + resolution.losses/prizes).
         const hs = this.isHotspots();
@@ -230,6 +281,72 @@ export class ResolveService {
             this.rAns.update((a) => ({ ...a, claimedPrizeBv: claimed.reduce((s, o) => s + (o.bv || 0), 0), damageTaken: this.dmgTakenShown(), damageGiven: this.dmgGiven() ?? undefined }));
             plan = { losses, prizes: claimed.map((o) => ({ instanceId: o.id, label: o.label })) };
         }
+        // GM-1 P3 — capture the RESULTS-SLIP rows BEFORE resolveBranch/applyHsSettlement: the settlement
+        // DELETES lost units (their damage envelopes with them) and resolveBranch clears the spec. Rows
+        // carry no tokens — the player device filters by its own claim rows.
+        let slipRows: SlipUnitRow[] | null = null;
+        // GM-2 P1 — the session's identity for the home campaign's ledger line, read BEFORE resolveBranch clears the spec:
+        // the hot spot's title off the persisted forge.hotspot brief, the save name off the host record.
+        let slipIdentity: { sessionName?: string; hotspotTitle?: string } = {};
+        let slipEconomy = { opforBv: 0, claimedPrizeBv: 0 }; // GM-2 P2a — the salvage pool the participants' estimates read (before the spec clears)
+        let slipMap: Record<string, ChaosContract> = {}; // GM-2 P2a — the participant map, read BEFORE resolveBranch: the contract's LAST track completes it and clears the map
+        let slipPrimary: ChaosContract | null = null; // GM-2 P2b — to tell a completing resolve (the primary gone after) for the participants' Rep +1
+        // ORDER-7 H21 — mint the RESULTS SLIP for ANY resolve with a deployed force, in EVERY mode. The `hs && gmSession`
+        // condition selected the per-participant pay path (GM-2 P2a), NOT whether a slip exists — a plain Traditional
+        // lobby's players must see their unit's end-state too. The participant economy below stays Hot-Spots-session only.
+        if (this.deployedCount() > 0 && branchId) {
+            const hotspotTitle = this.state.missionSpec()?.forge?.hotspot?.title;
+            if (hs && this.state.gmSession()) {
+                slipEconomy = { opforBv: this.state.missionSpec()?.opforBv ?? 0, claimedPrizeBv: this.rAns().claimedPrizeBv ?? 0 };
+                slipMap = this.state.participantContracts();
+                slipPrimary = this.state.activeChaosContract();
+            }
+            const campId = this.store.campaignId();
+            let sessionName: string | undefined;
+            try { sessionName = campId ? (await this.store.get(campId))?.name : undefined; } catch { sessionName = undefined; }
+            slipIdentity = { ...(sessionName ? { sessionName } : {}), ...(hotspotTitle ? { hotspotTitle } : {}) };
+            const lossOf = new Map((plan?.losses ?? []).map((l) => [l.instanceId, l]));
+            const row = (u: { instanceId: string; chassis: string; model: string; damage?: SlipUnitRow['damage']; chaosDamage?: SlipUnitRow['chaosDamage']; triage?: SlipUnitRow['triage']; provenance?: { sourceCampaignId?: string; originInstanceId?: string } }): SlipUnitRow => {
+                const loss = lossOf.get(u.instanceId);
+                const crew0 = (u.damage?.crew ?? []) as Array<{ hits?: number }>;
+                // ORDER-7 H21 — read damage.destroyed on BOTH sides in the fallback. A Traditional resolve builds no
+                // Hot Spots loss plan (the `loss` clause still wins for HS — every destroyed HS unit is in the plan via
+                // isLost = destroyed || abandoned — so HS stays byte-identical), so a destroyed BLUFOR unit must read its
+                // OWN reconciled end-state here, not collapse to 'ok' (which rendered a dead 'Mech as "operational").
+                const destroyed = loss ? loss.reason : ((u.damage as { destroyed?: boolean } | null | undefined)?.destroyed ? 'destroyed' : 'ok');
+                // GM-2 P1 — echo the identity cut: the mint's provenance (home campaign + home unit) and the cockpit pilot's home id
+                const prov = u.provenance;
+                const originPilotId = this.pilotSvc.pilotFor(u.instanceId)?.originPilotId;
+                return {
+                    instanceId: u.instanceId,
+                    label: `${u.chassis} ${u.model}`,
+                    status: destroyed as 'ok' | 'destroyed' | 'abandoned',
+                    ...(loss ? { pilotFate: loss.pilotFate } : {}),
+                    ...(crew0[0]?.hits ? { crewHits: Math.max(0, Math.min(6, crew0[0].hits)) } : {}),
+                    damage: u.damage ? JSON.parse(JSON.stringify(u.damage)) as SlipUnitRow['damage'] : null,
+                    // PD3 P1 (PD3-12) — the tabletop level / triage the GM recorded go home too (HS rows only; a Traditional slip is byte-identical)
+                    ...(hs && u.chaosDamage ? { chaosDamage: u.chaosDamage } : {}),
+                    ...(hs && u.triage ? { triage: u.triage } : {}),
+                    ...(prov?.sourceCampaignId ? { sourceCampaignId: prov.sourceCampaignId } : {}),
+                    ...(prov?.originInstanceId ? { originInstanceId: prov.originInstanceId } : {}),
+                    ...(originPilotId ? { originPilotId } : {}),
+                };
+            };
+            // P4 — BOTH sides go home: side A = the deployed roster; side B = the PLAYER-owned units riding
+            // opforForce in an A-vs-B track. GM-OpFor units (no player-import provenance) never slip.
+            // PANEL FINDING: the reconcile writes battle-state damage onto the STARTINGFORCE copy first
+            // (blufor-searched-first, same instanceId — the seeded units' Reserve rows live there), so the
+            // opfor slip row must read THAT copy's end-state, never opforForce's stale shallow copy.
+            const sf = this.state.startingForce() ?? [];
+            slipRows = [
+                ...deployedSet(this.state.startingForce(), this.state.quickMission()).map((u) => row(u)),
+                ...(this.state.missionSpec()?.opforForce ?? [])
+                    .filter((u) => u.provenance?.origin === 'player-import')
+                    .map((u) => row(sf.find((f) => f.instanceId === u.instanceId) ?? u)),
+            ];
+        }
+        // GM-2 P3 — the career SP the earn side credits THIS resolve, per brought pilot (read around resolveBranch)
+        const spBefore = new Map((this.state.pilots() ?? []).filter((p) => p.originPilotId).map((p) => [p.pilotId, p.campaignPilot?.careerSP ?? 0] as const));
         if (this.deployedCount() === 0) {
             // No force deployed → a forfeit/loss, never a default SUCCESS (GM override included). IMPORT-6 — under Hot
             // Spots the VP models (two-sided / single-sided) compute PARTIAL for blank marks, so mark the force BROKE too:
@@ -240,11 +357,58 @@ export class ResolveService {
         }
         // D-121 — apply the settlement only when there's something to record (a clean resolve records nothing extra).
         if (hs && plan && branchId && (plan.losses.length || plan.prizes.length)) this.tree.applyHsSettlement(branchId, plan);
+        // GM-1 P3 — stamp the slip AFTER settlement (fan-2 timing: the fanned snapshot is the final record)
+        // and read the settlement the tree just wrote. GM sessions only; replaced each resolve.
+        if (slipRows && branchId) {
+            const br = (this.state.missionTree() ?? []).find((b) => b.branchId === branchId);
+            // GM-2 P2a — each company that signed its OWN contract is paid by ITS terms; absent when the map is empty (P1's slip)
+            const pilotSp: Record<string, number> = {};
+            for (const p of this.state.pilots() ?? []) {
+                if (!p.originPilotId || !spBefore.has(p.pilotId)) continue;
+                const d = (p.campaignPilot?.careerSP ?? 0) - (spBefore.get(p.pilotId) ?? 0);
+                if (d > 0) pilotSp[p.originPilotId] = d;
+            }
+            const slipTier = br?.resolution?.outcomeTier as OutcomeGate | undefined;
+            // GM-2 P2a — per-participant pay is a Hot-Spots-session concept; a Traditional slip never computes one (ORDER-7 H21)
+            const slipPay = (hs && this.state.gmSession() && slipTier) ? slipPayFor(slipMap, slipRows.map((r) => r.sourceCampaignId).filter((k): k is string => !!k), slipTier, slipEconomy.opforBv, slipEconomy.claimedPrizeBv, !!slipPrimary && !this.state.activeChaosContract()) : undefined; // P2b — completed = the primary closed on this resolve
+            this.state.setResultsSlip({
+                slipId: newSlipId(), // GM-2 P1 — minted here, a uuid, never derived: the home campaign's idempotency key
+                ...slipIdentity,
+                branchId,
+                trackName: br?.name ?? 'the track',
+                resolvedAt: Date.now(),
+                ...(br?.resolution?.outcomeTier ? { outcome: String(br.resolution.outcomeTier) } : {}),
+                // ORDER-7 H21 — the team SP settlement is Hot Spots' (resolveBranch writes it under campaignSystem==='hotspots').
+                // HS always carries it (byte-identical); a Traditional resolve produces none → the fields are ABSENT, never a fabricated 0.
+                ...(br?.resolution?.settlement ? { combatPay: br.resolution.settlement.combatPay, salvageSp: br.resolution.settlement.salvageSp } : {}),
+                ...(slipPay ? { pay: slipPay } : {}), // GM-2 P2a — per-player pay, keyed by home campaign id
+                ...(Object.keys(pilotSp).length ? { pilotSp } : {}), // GM-2 P3 — career SP per brought pilot, keyed by the home pilot id
+                units: slipRows,
+            });
+            // GM-2 P2b — the signing settlement (transport + rep spent) rides ONE slip: mark each paid company settled
+            for (const key of Object.keys(slipPay ?? {})) { const c = this.state.participantContracts()[key]; if (c && !c.repSettled) this.state.setParticipantContract(key, { ...c, repSettled: true }); }
+            // GM-3 P1 — the GM's OWN participant contract (he fielded on a session contract): paid by ITS terms into THIS campaign's
+            // warchest as ONE line (the slip's shape — combat + salvage + one month's base pay − the net transport, the rep delta on
+            // the record), the way Apply lands a participant's at home. Nothing else pays the GM on a session (mission-tree).
+            const self = slipMap[GM_SELF_KEY];
+            if (self && slipTier && isSessionContract(slipPrimary)) {
+                const pay = participantPay(self, slipTier, slipEconomy.opforBv, slipEconomy.claimedPrizeBv, { settleSigning: !self.repSettled, completed: !this.state.activeChaosContract() });
+                const sp = Math.round(pay.combatPay + pay.salvageSp + pay.basePaySp - (pay.transportSp ?? 0));
+                this.warchest.post(`Your contract — ${br?.name ?? 'the track'}`, -sp, 0, null, { silent: true });
+                if (pay.repDelta) this.state.setReputation(Math.max(0, (this.state.reputation() ?? 0) + pay.repDelta));
+                const still = this.state.participantContracts()[GM_SELF_KEY]; if (still && !still.repSettled) this.state.setParticipantContract(GM_SELF_KEY, { ...still, repSettled: true });
+            }
+            void this.store.persistCurrent(); // coalesces with the settlement's debounced persist
+        }
         this.resolveOpen.set(false);
         this.packageOpen.set(false);
         // D-031: a resolved mission whose battle had engaged units → walk the field (skippable + resumable).
         // D-110b: the field walk credits C-bills (salvage/strip) — a Traditional mechanic. Hot Spots salvage is the
         // SP economy (estimated at resolve; the SP walk is D-110c), so never auto-open the C-bill walk under hotspots.
         if (this.fieldWalk.pendingBranch() && !this.isHotspots()) this.walkOpen.set(true);
+        // ORDER-4 H18 — LAST: tell the server the fight is over (Traditional AND Hot Spots ride this one path). The branch
+        // just resolved IS the engagement key; the server refuses every later battle write to it, claims untouched.
+        const campId = this.store.campaignId();
+        if (branchId && campId) this.rt.closeEngagement(campId, branchId);
     }
 }

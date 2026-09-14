@@ -1,69 +1,120 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import { EquipmentInteractionHandler, type HandlerContext } from '../../services/equipment-interaction-registry.service';
-import type { MountedEquipment } from '../../models/force-serialization';
-import type { PickerChoice, PickerValue } from '../../components/picker/picker.interface';
+import type { PickerChoice } from '../../components/picker/picker.interface';
+import type { MountedEquipment } from '../../models/mounted-equipment.model';
+import {
+    EquipmentInteractionHandler,
+    type HandlerCommandContext,
+    type HandlerQueryContext,
+} from '../../services/equipment-interaction-registry.service';
+
+export type ToggleMode = 'direct' | 'transient';
 
 /**
- * Base handler for simple on/off equipment
+ * Base handler for two-state equipment.
+ *
+ * Transient toggles keep their current effective state until the pending
+ * transition is completed in the End Phase.
  */
 export abstract class ToggleHandler extends EquipmentInteractionHandler {
     protected readonly stateKey: string = 'state';
+    protected readonly toggleMode: ToggleMode = 'direct';
+    protected readonly enabledState: string = 'enabled';
+    protected readonly enablingState: string = 'enabling';
+    protected readonly disabledState: string = 'disabled';
+    protected readonly disablingState: string = 'disabling';
+    protected readonly defaultEnabled: boolean = false;
     protected readonly enabledLabel: string = 'Enable';
+    protected readonly enablingLabel: string = 'Enabling…';
     protected readonly disabledLabel: string = 'Disable';
-    
-    getChoices(equipment: MountedEquipment, context: HandlerContext): PickerChoice[] {
-        const currentState = equipment.states?.get(this.stateKey) || 'disabled';
-        return [
-            {
-                label: this.enabledLabel,
-                value: 'enabled',
-                disabled: equipment.destroyed,
-                active: currentState === 'enabled',
-                displayType: 'toggle',
-            },
-        ];
+    protected readonly disablingLabel: string = 'Disabling…';
+    protected readonly enabledToastVerb: string = 'enabled';
+    protected readonly enablingToastVerb: string = 'enabling';
+    protected readonly disabledToastVerb: string = 'disabled';
+    protected readonly disablingToastVerb: string = 'disabling';
+
+    override getChoices(equipment: MountedEquipment, _context: HandlerQueryContext): PickerChoice[] {
+        const state = this.getToggleState(equipment);
+        return [{
+            label: this.labelFor(state),
+            value: this.nextState(state),
+            active: this.isEffectivelyEnabled(state),
+            displayType: 'toggle',
+        }];
     }
-    
-    handleSelection(equipment: MountedEquipment, value: PickerChoice, context: HandlerContext): boolean {
-        const newState = value.value === 'enabled' ? 'disabled' : 'enabled';
-        equipment.states?.set(this.stateKey, newState);
+
+    override handleSelection(
+        equipment: MountedEquipment,
+        choice: PickerChoice,
+        context: HandlerCommandContext,
+    ): boolean {
+        const nextState = this.nextState(this.getToggleState(equipment));
+        if (choice.value !== nextState || !equipment.setState(this.stateKey, nextState)) return true;
+
         equipment.owner.setInventoryEntry(equipment);
+        if (this.isTransientState(nextState)) {
+            equipment.owner.turnState().markEquipmentStateChanged();
+        }
         context.toastService.showToast(
-            `${equipment.equipment?.name||equipment.name} ${newState === 'enabled' ? this.enabledLabel : this.disabledLabel}`,
-            'info'
+            `${equipment.getDisplayName()} is ${this.toastVerbFor(nextState)}`,
+            'info',
         );
         return true;
+    }
+
+    override onEndTurn(equipment: MountedEquipment): void {
+        if (this.toggleMode !== 'transient') return;
+
+        const state = this.getToggleState(equipment);
+        const completedState = state === this.enablingState
+            ? this.enabledState
+            : state === this.disablingState ? this.disabledState : null;
+        if (completedState && equipment.setState(this.stateKey, completedState)) {
+            equipment.owner.setInventoryEntry(equipment);
+        }
+    }
+
+    protected getToggleState(equipment: MountedEquipment): string {
+        const storedState = equipment.states.get(this.stateKey);
+        if (storedState === this.enabledState || storedState === this.disabledState) return storedState;
+        if (this.toggleMode === 'transient'
+            && (storedState === this.enablingState || storedState === this.disablingState)) return storedState;
+        return this.defaultEnabled ? this.enabledState : this.disabledState;
+    }
+
+    private nextState(state: string): string {
+        if (this.toggleMode === 'direct') {
+            return state === this.enabledState ? this.disabledState : this.enabledState;
+        }
+        if (state === this.enabledState) return this.disablingState;
+        if (state === this.disablingState) return this.enabledState;
+        if (state === this.disabledState) return this.enablingState;
+        return this.disabledState;
+    }
+
+    private isEffectivelyEnabled(state: string): boolean {
+        return state === this.enabledState
+            || (this.toggleMode === 'transient' && state === this.disablingState);
+    }
+
+    private isTransientState(state: string): boolean {
+        return this.toggleMode === 'transient'
+            && (state === this.enablingState || state === this.disablingState);
+    }
+
+    private labelFor(state: string): string {
+        if (state === this.enabledState) return this.enabledLabel;
+        if (state === this.enablingState) return this.enablingLabel;
+        if (state === this.disablingState) return this.disablingLabel;
+        return this.disabledLabel;
+    }
+
+    private toastVerbFor(state: string): string {
+        if (state === this.enabledState) return this.enabledToastVerb;
+        if (state === this.enablingState) return this.enablingToastVerb;
+        if (state === this.disablingState) return this.disablingToastVerb;
+        return this.disabledToastVerb;
     }
 }

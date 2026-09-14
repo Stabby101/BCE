@@ -24,6 +24,7 @@ export interface AarArchiveItem {
     dateKey: number;       // y*10000 + m*100 + d for the newest-first sort
     context: string;       // contract/orders label this mission ran under
     pendingWalk: boolean;  // resolved, walk not yet completed
+    walked: boolean;       // TABLE-2 T2-4 — walk completed (badge reads WALKED)
     branch: MissionBranch; // carried for the document build
 }
 
@@ -42,6 +43,7 @@ export function aarArchive(liveTree: MissionBranch[], liveContext: string, archi
         dateKey: dateKey(b.resolution!.resolvedDate),
         context,
         pendingWalk: !!b.resolution!.engaged && !b.resolution!.fieldWalk,
+        walked: !!b.resolution!.fieldWalk, // TABLE-2 T2-4
         branch: b,
     });
     const resolved = (tree: MissionBranch[]): MissionBranch[] => tree.filter((b) => b.state === 'RESOLVED' && !!b.resolution);
@@ -100,7 +102,9 @@ export interface AarContext {
     commandName: string;
     unitSizeName: string;
     contextLabel: string;                          // contract/orders label
-    voices: { command: AarVoiceRef | null; intelligence: AarVoiceRef | null; engineering: AarVoiceRef | null };
+    /** ODM-14 — `personnel` is ADDITIVE-OPTIONAL: only the odm fork supplies it (the authored medic voice);
+     *  Classic/HS never set it and Section 4 falls back to command exactly as before. */
+    voices: { command: AarVoiceRef | null; intelligence: AarVoiceRef | null; engineering: AarVoiceRef | null; personnel?: AarVoiceRef | null };
     armorerClosing: string | null;                 // stable authored sampleLine pick (component supplies)
     /** D-037 — one accessor for the person record (name/status/live recovery/memorial date). */
     pilotInfoOf: (pilotId: string | undefined) => { name: string; status: string; recoveryDays: number | null; kiaDateText: string | null } | null;
@@ -117,12 +121,16 @@ export interface AarContext {
     /** D-038 — narrator-refined section prose (machine-diff-verified). A verified entry REPLACES that
      *  section's template paragraphs; tables/locked data stay. Absent/OFF = template, byte-identical. */
     refined?: Record<string, { text: string; verified: boolean }>;
+    /** ODM-13 P3 — SURVIVAL voice: a pack campaign's AAR speaks attrition, not payroll/contract (two branch
+     *  points + the materiel ledger line). Absent/false = the Classic voice, byte-identical. */
+    survival?: boolean;
 }
 
 const SEV_LABEL: Record<string, string> = { G: 'LIGHT', Y: 'MODERATE', R: 'HEAVY', B: 'DESTROYED' };
 const DISP_LABEL: Record<string, string> = {
     RECOVER: 'Recovered → bays', FIELD_STRIP: 'Field-stripped', ABANDON: 'Abandoned',
     CLAIM_PRIZE: 'Claimed as prize', SALVAGE: 'Salvaged', LEAVE: 'Left on the field',
+    STRIP: 'Stripped for materiel', // ODM-13 P3 — the odm walk's disposition, in voice (Classic never produces it)
 };
 const fmt = (n: number): string => n.toLocaleString('en-US');
 
@@ -158,7 +166,7 @@ export function buildAarDocument(branch: MissionBranch, ctx: AarContext): AarDoc
         const span = t?.hasTravel
             ? `${t.jumps} jump${t.jumps === 1 ? '' : 's'} ≈ ${t.jumpTransitDays}d transit + ${t.insertionDays}d insertion · operation ≈ ${t.operationDays}d`
             : `operation ≈ ${t?.operationDays ?? a.elapsedDays}d on-world (no transit recorded)`;
-        cmd.paragraphs.push(`Operation + transit consumed ${a.elapsedDays} days (${span}); the campaign clock is now ${a.advancedTo ?? '—'}. Repair bays, shop deliveries, hiring, and payroll have settled across the span.`);
+        cmd.paragraphs.push(`Operation + transit consumed ${a.elapsedDays} days (${span}); the campaign clock is now ${a.advancedTo ?? '—'}. ${ctx.survival ? 'Repair bays and the quartermaster’s stores have settled across the span.' : 'Repair bays, shop deliveries, hiring, and payroll have settled across the span.'}`);
     }
     if (a?.objectiveMarks?.length) {
         // IMPORT-6 FOLLOWUPS — a Hot Spots track resolved under a VP model: the AUTHORED objectives with the marks the GM
@@ -262,11 +270,17 @@ export function buildAarDocument(branch: MissionBranch, ctx: AarContext): AarDoc
                 rows: blu.map((w) => {
                     const h = histByInstance.get(w.instanceId);
                     const open = ctx.openJobs[w.instanceId];
+                    // ODM-13 P3 — survival: bench time and bays, never a bench rate (the fork's costs are structurally 0).
                     const record = h
-                        ? (h.outcome === 'completed' ? `${h.laborHours} h · ${fmt(h.cost)} C-bills · Bay ${h.bayName}` : 'WRITTEN OFF')
-                        : open ? `IN WORK — Bay ${open.bayName} (est. ${open.hours} h, ${fmt(open.cost)} C-bills)` : '—';
+                        ? (h.outcome === 'completed' ? (ctx.survival ? `${h.laborHours} h · Bay ${h.bayName}` : `${h.laborHours} h · ${fmt(h.cost)} C-bills · Bay ${h.bayName}`) : 'WRITTEN OFF')
+                        : open ? (ctx.survival ? `IN WORK — Bay ${open.bayName} (est. ${open.hours} h)` : `IN WORK — Bay ${open.bayName} (est. ${open.hours} h, ${fmt(open.cost)} C-bills)`) : '—';
                     return {
-                        cells: [w.label, SEV_LABEL[w.severity] ?? w.severity, DISP_LABEL[w.disposition] ?? w.disposition, record],
+                        // TESTER-ODM-1 #7 — an UNDAMAGED machine reads "Recovered → bays" today, which the
+                        // row's own record contradicts: no bay history and no open job means nothing entered
+                        // a bay. Uses data already in hand; the triage model is untouched.
+                        cells: [w.label, SEV_LABEL[w.severity] ?? w.severity,
+                            (w.disposition === 'RECOVER' && !h && !open) ? 'Returned under own power' : (DISP_LABEL[w.disposition] ?? w.disposition),
+                            record],
                         tone: w.severity === 'B' ? 'bad' as const : h?.outcome === 'completed' ? 'ok' as const : undefined,
                     };
                 }),
@@ -275,10 +289,17 @@ export function buildAarDocument(branch: MissionBranch, ctx: AarContext): AarDoc
             for (const w of blu) {
                 const h = histByInstance.get(w.instanceId);
                 if (!h) continue;
-                if (h.outcome === 'written-off') { blocks.push({ p: `${h.label} — struck from the rolls ${formatDate(h.date)}; beyond economical repair.` }); continue; }
+                if (h.outcome === 'written-off') { blocks.push({ p: `${h.label} — struck from the rolls ${formatDate(h.date)}; ${ctx.survival ? 'beyond repair.' : 'beyond economical repair.'}` }); continue; }
                 if (h.bill?.length) {
                     const comps = h.bill.map((l) => `${l.component} (${l.action}, ${l.hours} h)`).join(' · ');
-                    blocks.push({ p: `${h.label} — ${comps}. ${h.laborHours} hours of bench time, ${fmt(h.cost)} C-bills, Bay ${h.bayName}, completed ${formatDate(h.date)}.` });
+                    if (ctx.survival) {
+                        // ODM-13 P3 — render what Phase 2 recorded: the parts drawn from stores + any dry rearm.
+                        const drawn = h.partsUsed?.length ? ` Drawn from stores: ${h.partsUsed.join(', ')}.` : '';
+                        const short = h.rearmShort?.length ? ` REARMED SHORT — ${h.rearmShort.join('; ')}.` : '';
+                        blocks.push({ p: `${h.label} — ${comps}. ${h.laborHours} hours of bench time, Bay ${h.bayName}, completed ${formatDate(h.date)}.${drawn}${short}` });
+                    } else {
+                        blocks.push({ p: `${h.label} — ${comps}. ${h.laborHours} hours of bench time, ${fmt(h.cost)} C-bills, Bay ${h.bayName}, completed ${formatDate(h.date)}.` });
+                    }
                 } else {
                     blocks.push({ p: `${h.label} — restored to service ${formatDate(h.date)} (${h.laborHours} h, ${fmt(h.cost)} C-bills, Bay ${h.bayName}; itemized bill not on record — completed pre-D-037).` });
                 }
@@ -287,33 +308,55 @@ export function buildAarDocument(branch: MissionBranch, ctx: AarContext): AarDoc
         // (b) SALVAGE & PRIZES — the other side's machines, clause math shown from stored numbers only
         const opf = walk.rows.filter((w) => w.side === 'opfor');
         if (opf.length) {
-            const cl = ctx.salvageClause;
-            blocks.push({ p: `SALVAGE & PRIZES — settled under ${cl ? (cl.exchange ? 'the salvage-exchange share' : `the ${cl.pct}% salvage clause`) : 'the contract clause (not on record)'}:` });
-            blocks.push({
-                headers: ['UNIT', 'CONDITION', 'DISPOSITION', 'CLAUSE MATH', 'CREDIT'],
-                rows: opf.map((w) => {
-                    let math = '—';
-                    if (w.captured) math = 'ownership change — no credit';
-                    else if (w.credit && cl) math = cl.exchange ? `exchange share of ≈${fmt(w.credit * 2)} value` : cl.pct > 0 ? `${cl.pct}% of ≈${fmt(Math.round(w.credit / (cl.pct / 100)))} value` : '—';
-                    return {
-                        cells: [w.label, SEV_LABEL[w.severity] ?? w.severity, DISP_LABEL[w.disposition] ?? w.disposition, math, w.credit ? `+${fmt(w.credit)}` : '—'],
+            if (ctx.survival) {
+                // ODM-13 P3 — survival: no clause, no credit column; the field gives up machines, not value.
+                blocks.push({ p: 'FIELD RECOVERY — the other side’s machines, as the field gave them up:' });
+                blocks.push({
+                    headers: ['UNIT', 'CONDITION', 'DISPOSITION'],
+                    rows: opf.map((w) => ({
+                        cells: [w.label, SEV_LABEL[w.severity] ?? w.severity, DISP_LABEL[w.disposition] ?? w.disposition],
                         tone: w.captured ? 'ok' as const : w.severity === 'B' ? 'bad' as const : undefined,
-                    };
-                }),
-            });
+                    })),
+                });
+            } else {
+                const cl = ctx.salvageClause;
+                blocks.push({ p: `SALVAGE & PRIZES — settled under ${cl ? (cl.exchange ? 'the salvage-exchange share' : `the ${cl.pct}% salvage clause`) : 'the contract clause (not on record)'}:` });
+                blocks.push({
+                    headers: ['UNIT', 'CONDITION', 'DISPOSITION', 'CLAUSE MATH', 'CREDIT'],
+                    rows: opf.map((w) => {
+                        let math = '—';
+                        if (w.captured) math = 'ownership change — no credit';
+                        else if (w.credit && cl) math = cl.exchange ? `exchange share of ≈${fmt(w.credit * 2)} value` : cl.pct > 0 ? `${cl.pct}% of ≈${fmt(Math.round(w.credit / (cl.pct / 100)))} value` : '—';
+                        return {
+                            cells: [w.label, SEV_LABEL[w.severity] ?? w.severity, DISP_LABEL[w.disposition] ?? w.disposition, math, w.credit ? `+${fmt(w.credit)}` : '—'],
+                            tone: w.captured ? 'ok' as const : w.severity === 'B' ? 'bad' as const : undefined,
+                        };
+                    }),
+                });
+            }
         }
         // (c) MISSION LEDGER — render-derived from the walk + the joined bay records (DATA-003)
         const walkedIds = new Set(walk.rows.map((w) => w.instanceId));
         const settled = ctx.bayHistory.filter((h) => walkedIds.has(h.instanceId) && h.outcome === 'completed');
         const repairsCost = settled.reduce((s, h) => s + h.cost, 0);
         const openCost = walk.rows.reduce((s, w) => s + (ctx.openJobs[w.instanceId]?.cost ?? 0), 0);
-        const ledger = [
-            `Field credit +${fmt(walk.totalCredit)}`,
-            `repairs settled −${fmt(repairsCost)} (${settled.length} job${settled.length === 1 ? '' : 's'})`,
-            ...(openCost ? [`open estimates −${fmt(openCost)} pending`] : []),
-            `net to date ${walk.totalCredit - repairsCost >= 0 ? '+' : '−'}${fmt(Math.abs(walk.totalCredit - repairsCost))} C-bills`,
-        ];
-        blocks.push({ p: `MISSION LEDGER — ${ledger.join(' · ')}. Prizes claimed: ${walk.prizesClaimed}. Contract pay rides the monthly schedule, not this ledger.` });
+        if (ctx.survival) {
+            // ODM-13 P3 — the SURVIVAL ledger: materiel, never money (the walk's totalCredit is structurally 0).
+            const strips = walk.rows.filter((w) => w.disposition === 'STRIP').length;
+            // ODM-17 P2 — the LOAD MANIFEST the walk settled under (additive: pre-P2 records carry none).
+            const m = walk.manifest;
+            const lift = m ? ` Load manifest: ${m.componentTons} t components · ${m.ammoTons} t ammunition · ${m.hulks} hulk${m.hulks === 1 ? '' : 's'} (${m.hulkTons} t) — bays ${m.baysUsed}/${m.liftBays} · holds ${m.cargoUsed}/${m.cargoTons} t · field crew ${m.fieldHours}/${m.fieldHoursWindow} h.` : '';
+            blocks.push({ p: `FIELD MATERIEL — ${strips} machine${strips === 1 ? '' : 's'} stripped to the magazine and stores · ${settled.length} repair${settled.length === 1 ? '' : 's'} settled from stores · hulks recovered: ${walk.prizesClaimed}.${lift} The company fights on stocks, not pay.` });
+            if (m?.overrideReason) blocks.push({ p: `The lift went out over capacity on the GM's order — reason logged: "${m.overrideReason}".` });
+        } else {
+            const ledger = [
+                `Field credit +${fmt(walk.totalCredit)}`,
+                `repairs settled −${fmt(repairsCost)} (${settled.length} job${settled.length === 1 ? '' : 's'})`,
+                ...(openCost ? [`open estimates −${fmt(openCost)} pending`] : []),
+                `net to date ${walk.totalCredit - repairsCost >= 0 ? '+' : '−'}${fmt(Math.abs(walk.totalCredit - repairsCost))} C-bills`,
+            ];
+            blocks.push({ p: `MISSION LEDGER — ${ledger.join(' · ')}. Prizes claimed: ${walk.prizesClaimed}. Contract pay rides the monthly schedule, not this ledger.` });
+        }
         const overrides = walk.rows.filter((w) => w.overrides?.length).map((w) => `${w.label}: ${w.overrides!.join(', ')}`);
         if (overrides.length) blocks.push({ p: `GM overrides at the walk — ${overrides.join(' · ')}.` });
         arm.blocks = blocks;
@@ -325,7 +368,7 @@ export function buildAarDocument(branch: MissionBranch, ctx: AarContext): AarDoc
     if (ctx.voices.engineering && ctx.armorerClosing) arm.closingLine = ctx.armorerClosing;
 
     // ── Section 4 — personnel (D-037: live ETAs + the memorial) ──
-    const pers: AarSection = { id: 'personnel', title: ctx.isHotspots ? 'SECTION 4 — LOSSES & PERSONNEL' : 'SECTION 4 — PERSONNEL', author: ctx.voices.command, paragraphs: [] };
+    const pers: AarSection = { id: 'personnel', title: ctx.isHotspots ? 'SECTION 4 — LOSSES & PERSONNEL' : 'SECTION 4 — PERSONNEL', author: ctx.voices.personnel ?? ctx.voices.command, paragraphs: [] }; // ODM-14 — personnel voice when supplied; Classic falls back to command, byte-identical
     if (ctx.isHotspots) {
         // DIRECTIVE-121 — Hot Spots losses (own units retired + pilot fates), recorded at resolve (no field walk).
         const losses = r.losses ?? [];

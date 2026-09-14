@@ -53,8 +53,9 @@
                     [cardStyle]="cardStyle()"
                     [imageUrl]="imageUrl()"
                     [interactive]="interactive()"
+                    [skillOverride]="skillOverride()"
                     (specialClick)="onSpecialClick($event)"
-                    (pilotAbilityClick)="onPilotAbilityClick($event)"
+                    (abilityClick)="onAbilityClick($event)"
                     (editPilotClick)="onEditPilotClick()"
                     (rollCriticalClick)="onRollCriticalClick()"
                 />
@@ -67,8 +68,9 @@
                     [cardStyle]="cardStyle()"
                     [imageUrl]="imageUrl()"
                     [interactive]="interactive()"
+                    [skillOverride]="skillOverride()"
                     (specialClick)="onSpecialClick($event)"
-                    (pilotAbilityClick)="onPilotAbilityClick($event)"
+                    (abilityClick)="onAbilityClick($event)"
                     (editPilotClick)="onEditPilotClick()"
                     (rollCriticalClick)="onRollCriticalClick()"
                 />
@@ -79,6 +81,7 @@
                     [unit]="unit"
                     [useHex]="useHex()"
                     [cardStyle]="cardStyle()"
+                    [skillOverride]="skillOverride()"
                 />
             }
         }

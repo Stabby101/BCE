@@ -1,4 +1,7 @@
 <div class="mb-data-table"
+    [style.--mb-data-table-column-gap.px]="columnGapPx"
+    [style.--mb-data-table-padding-start.px]="paddingStartPx"
+    [style.--mb-data-table-padding-end.px]="paddingEndPx"
     [class.sort-asc]="sortDirection() === 'asc'"
     [class.sort-desc]="sortDirection() === 'desc'">
     <div class="mb-data-table-header-viewport">
@@ -21,19 +24,21 @@
 
     <cdk-virtual-scroll-viewport
         class="mb-data-table-viewport"
-        [itemSize]="itemSize()"
+        [mbVariableSizeVirtualScroll]="virtualRowKeys()"
+        [estimatedItemSize]="itemSize()"
         [style.--mb-data-table-item-size.px]="itemSize()"
         [minBufferPx]="minBufferPx()"
         [maxBufferPx]="maxBufferPx()"
         (scroll)="onViewportScroll()"
         tabindex="0">
-        <div class="mb-data-table-row-item"
+        <div class="mb-data-table-row-item variable-virtual-scroll-item"
             *cdkVirtualFor="let row of rows(); let i = index; trackBy: trackRow"
             [ngClass]="resolveRowClass(row, i)"
             longPress
             (shortPress)="onRowClick(row, i, $event)"
             (longPress)="onRowLongPress(row, i, $event)"
-            (pointerenter)="onRowPointerEnter(row, i, $event)">
+            (pointerenter)="onRowPointerEnter(row, i, $event)"
+            (pointermove)="onRowPointerMove(row, i, $event)">
             @if (isFullRowRow(row, i) && fullRowTemplate(); as rowTemplate) {
             <div class="mb-data-table-full-row"
                 [style.width]="tableWidth()"
@@ -49,11 +54,17 @@
                 <div class="mb-data-table-cell mb-data-table-body-cell"
                     [class.align-center]="column.align === 'center'"
                     [class.align-right]="column.align === 'right'"
+                    [class.tone-focus]="column.cellTone === 'focus'"
                     [ngClass]="resolveCellClass(column, row, i)">
                     @if (column.cellTemplate; as cellTemplate) {
                     <ng-container [ngTemplateOutlet]="cellTemplate" [ngTemplateOutletContext]="cellContext(row, column, i)"></ng-container>
                     } @else {
-                    {{ cellValue(column, row, i) }}
+                    @let value = cellValue(column, row, i);
+                    <span class="mb-data-table-cell-text"
+                        [mbAutoFitText]="value"
+                        [mbAutoFitTextMinScale]="0.8"
+                        [mbAutoFitTextObserveWidth]="false"
+                        [mbAutoFitTextRevision]="textFitKey()">{{ value }}</span>
                     }
                 </div>
                 }

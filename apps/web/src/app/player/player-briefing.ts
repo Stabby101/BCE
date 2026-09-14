@@ -22,7 +22,10 @@ import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None, // the @media print rule below must reach the whole page
     template: `
-        @if (spec(); as s) {
+        @if (phase() === 'complete') {
+            <!-- PD3 P2 (PD3-11) — the contract is COMPLETE: the brief says so instead of the last track (the phase gate, shared with the pick window) -->
+            <div class="pbrief pb-complete" data-testid="pb-complete"><div class="pb-tk-tag">HOT SPOT</div><p class="pb-tk-lead">Contract complete — {{ result() }}. Waiting for the GM's next contract.</p></div>
+        } @else if (spec(); as s) {
             @if (isHotspots()) {
               @if (hotspotBrief(); as hb) {
                 <!-- DIRECTIVE-124 — the AUTHORED premade-hotspot brief: the SAME single brief the GM deploy view shows,
@@ -263,6 +266,9 @@ import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
 export class PlayerBriefingComponent {
     private readonly state = inject(NewCampaignState);
     readonly spec = input<MissionSpec | null>(null);
+    /** PD3 P2 — the session phase (player-sheet computes it through the shared decider) + the last outcome for the terminal line. */
+    readonly phase = input<'none' | 'lobby' | 'committed' | 'complete'>('none');
+    readonly result = input<string>('resolved');
 
     protected readonly occupation = computed(() => this.spec()?.theater?.occupation || null);
     protected readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots');

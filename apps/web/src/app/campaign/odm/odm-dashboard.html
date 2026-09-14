@@ -11,7 +11,7 @@
         </div>
         <div class="clock">
             <div><b>CAMPAIGN</b> {{ dateText() }}</div>
-            <div><b>ERA</b> {{ eraText() }} &middot; <b>WK</b> 1</div>
+            <div><b>ERA</b> {{ eraText() }} &middot; <b>WK</b> <span data-testid="hdr-week">{{ weekText() }}</span></div>
         </div>
     </div>
 
@@ -83,41 +83,99 @@
                     <button type="button" class="cadvb" (click)="advance(s.id)">{{ s.label }}</button>
                 }
             </div>
+            <!-- ODM-22 — the GM clock CORRECTION. Deliberately NOT labelled "-1 Day": mirroring "+1 Day"
+                 implies a symmetry that does not exist. Advancing runs the campaign forward; this only moves
+                 the date. The note is not decoration — the GM who reads this as "rewind a day" will use it
+                 wrong, and the label is the only thing standing between them and that. -->
+            <div class="ccorr">
+                <button type="button" class="ccorrb" [disabled]="!canCorrectClock()"
+                        (click)="correctClockBack()" data-testid="odm-clock-correct">Correct date back a day</button>
+                <span class="ccorrn">Fixes an over-advanced clock. Moves the date only — repairs, ticks and recovery already banked stay banked. Every press is logged.</span>
+            </div>
         </div>
+        <!-- ODM-11 Part B — the survival stat cards: Treasury legible + narrowed (Part C), force/pilots state
+             the truth (no hiring hall on occupied Terra), EXPOSURE replaces the inert Threat meter (GM-set,
+             honestly labelled), and the Iron Covenant is named — she is the unit's spine, not a line item. -->
         <div class="stats">
-            <div class="stat"><div class="l">Treasury</div><div class="v">{{ treasuryShort() }}</div><div class="s">C-bills &middot; {{ treasuryTier() }}</div></div>
-            <div class="stat"><div class="l">Force</div><div class="v">{{ forceCount() }}</div><div class="s">’Mechs &middot; {{ forceCount() }} ready</div></div>
-            <div class="stat"><div class="l">Pilots</div><div class="v">{{ forceCount() }}</div><div class="s">0 in infirmary</div></div>
-            <div class="stat warn"><div class="l">Threat</div><div class="v">MOD</div><div class="s">Initial assessment</div></div>
-            <div class="stat"><div class="l">Transport</div><div class="v">{{ transport().value }}</div><div class="s">{{ transport().sub }}</div></div>
+            <div class="stat"><div class="l">Treasury</div><div class="v" data-testid="odm-treasury">{{ treasuryOdm() }}</div><div class="s">C-bills &middot; bribes &middot; black market &middot; silence</div></div>
+            <div class="stat"><div class="l">Force</div><div class="v">{{ forceCount() }}</div><div class="s">’Mechs &middot; irreplaceable &middot; no replacements</div></div>
+            <!-- TESTER-ODM-1 #3 — PEOPLE, not machines: this card read forceCount() (28 hulls) while the
+                 barracks holds 29 after the ODM-15b stables fold. It is the number a GM quotes out loud. -->
+            <div class="stat"><div class="l">Pilots</div><div class="v" data-testid="odm-pilot-count">{{ pilotCount() }}</div><div class="s">irreplaceable &middot; no replacements</div></div>
+            <div class="stat" [class.warn]="exposureV() !== 'LOW'" data-testid="odm-exposure"><div class="l">Exposure</div><div class="v">{{ exposureV() }}</div><div class="s">GM assessment</div></div>
+            <div class="stat"><div class="l">Transport</div><div class="v">Iron Covenant</div><div class="s">Union-class DropShip</div></div>
         </div>
+
+        <!-- ODM-18 P1 (ruling 3) — the TWO-KEY donor-strip queue: players raise; the GM approves/declines
+             here. Decline is an honest ack — the audit line fans to the requester's console log. -->
+        @if (intentApply.pendingStrips().length) {
+            <div class="strip-queue" data-testid="odm-pending-strips">
+                <div class="sq-h">PENDING DONOR STRIPS — player-raised, your call</div>
+                @for (s of intentApply.pendingStrips(); track s.instanceId) {
+                    <div class="sq-row">
+                        <span class="sq-who">{{ s.name }}</span> asks to break <b>{{ s.label }}</b> for parts
+                        <button type="button" class="sq-btn ok" (click)="intentApply.approveStrip(s.instanceId)" data-testid="odm-strip-approve">Approve</button>
+                        <button type="button" class="sq-btn no" (click)="intentApply.declineStrip(s.instanceId)" data-testid="odm-strip-decline">Decline</button>
+                    </div>
+                }
+            </div>
+        }
 
         <!-- DIRECTIVE-079 — Star Map Phase 1: current location line + GM setter (extracted → current-location.ts). -->
         <bce-current-location />
 
-        <!-- DIRECTIVE-074 — the monthly economy summary (reuses the D-058 ledger → same numbers as the inventory
-             tab, single source) + a transaction log of recent money in/out (date · what · ±amount · balance). -->
+        <!-- DIRECTIVE-ODM-11 — STOCKS replaces the merc P&L panel: a survival economy models ATTRITION, not
+             cash flow (stock − consumption = operations remaining; you cannot earn your way out). Numbers are
+             AUTHORED (the pack's own quartermaster ledger). v1 displays + GM-adjusts (R2); below-floor
+             WARNS and never gates BEGIN OPERATION (R1). The merc advice string is DELETED, not reworded —
+             there is no equivalent action to recommend. -->
         <div class="econ">
-            <div class="econ-led" data-testid="overview-ledger">
-                <div class="ph flat">Monthly economy</div>
-                <div class="el-row"><span class="el-l">Treasury</span><span class="el-v" data-econ="treasury">{{ money(ledger().treasury) }} C-bills</span></div>
-                <div class="el-row"><span class="el-l">Income / mo</span><span class="el-v pos" data-econ="income">@if (ledger().income) { +{{ money(ledger().income) }} } @else { — }</span></div>
-                <div class="el-row"><span class="el-l">Burn · payroll / mo</span><span class="el-v neg" data-econ="burn">−{{ money(ledger().payroll) }}</span></div>
-                <div class="el-row"><span class="el-l">Unit maintenance / mo</span><span class="el-v neg" data-econ="maintenance">−{{ money(ledger().maintenance) }}</span></div>
-                <div class="el-row net" [class.black]="ledger().net >= 0" [class.red]="ledger().net < 0">
-                    <span class="el-l">Net / month</span>
-                    <span class="el-v" data-econ="net">{{ ledger().net >= 0 ? 'IN THE BLACK +' : 'IN THE RED −' }}{{ money(absVal(ledger().net)) }}@if (ledger().runway != null) { · ~{{ ledger().runway }} mo runway }</span>
+            <div class="econ-led" data-testid="odm-stocks">
+                <div class="ph flat">Stocks <button type="button" class="stk-adj" data-testid="odm-stocks-adjust" (click)="openStocksAdjust()">⚙ Adjust (GM)</button></div>
+                <div class="stk-head" data-testid="odm-ops-remaining">~{{ opsRemainingV() }} operations at baseline burn
+                    <span class="stk-sub">usable fuel above the floor &divide; {{ fmtTons(stocks().missionBurnTons) }} t per operation</span></div>
+                <div class="stk-fuel" [class.amber]="fuelStateV() === 'amber'" [class.red]="fuelStateV() === 'red'" data-testid="odm-fuel">
+                    <span class="stk-l">Fuel (H2 &middot; Iron Covenant)</span>
+                    <span class="stk-v">{{ fmtTons(stocks().fuelTons) }} t &middot; {{ fuelPctV() }}%</span>
+                    <span class="stk-sub">floor {{ fmtTons(stocks().fuelFloorTons) }} t &middot; crackers +{{ fmtTons(stocks().crackerTonsPerDay) }} t/day &middot; one operation &asymp; {{ daysCrackingV() }} days of cracking</span>
                 </div>
-                <!-- D-075 — the monthly payroll cue (visible, not silent) + the next-month pre-warning + the shortfall flag -->
-                @if (lastPayroll(); as lp) {
-                    <div class="el-cue" data-testid="payroll-cue">Last payroll −{{ money(lp.amount) }} · {{ lp.date }}</div>
+                @if (fuelStateV() === 'red') {
+                    <div class="stk-warn" data-testid="odm-fuel-warn">⚠ Fuel below the {{ fmtTons(stocks().fuelFloorTons) }} t floor — {{ opsRemainingV() }} operations remaining at baseline burn.</div>
                 }
-                @if (costsAtRisk()) {
-                    <div class="el-warn" data-testid="payroll-prewarn">⚠ monthly costs (payroll + maintenance) not covered next month — sell stock, take a contract, cut staff, or mothball units to Cold storage before the month turns.</div>
+                <div class="stk-bins">
+                    @for (b of stockBins(); track b.name) {
+                        <div class="stk-bin" [class.breach]="b.breach" [attr.data-bin]="b.name">
+                            <span class="stk-l">{{ b.name }}</span>
+                            <span class="stk-v">{{ fmtTons(b.tons) }} t@if (b.floorTons != null) { <span class="stk-fl">/ floor {{ fmtTons(b.floorTons) }}</span> }</span>
+                            @if (b.breach) { <span class="stk-breach">BREACH</span> }
+                            @if (b.note) { <span class="stk-note">{{ b.note }}</span> }
+                        </div>
+                    }
+                </div>
+                @if (anyBreach()) {
+                    <div class="stk-warn" data-testid="odm-bin-warn">⚠ Stocks below floor.</div>
                 }
-                @if (payrollShortfall(); as ps) {
-                    <div class="el-short" data-testid="payroll-shortfall">⚠ Unpaid obligations — {{ money(ps.total) }} ({{ ps.kinds }})@if (ps.count > 1) { · {{ ps.count }} entries } @else { · {{ ps.lastMonth }} }. Staff/upkeep went unpaid (turnover risk).</div>
-                }
+                <!-- ODM-17 P2-f — fleet status on the Overview: one line per ship (the depth lives on the Force page). -->
+                <div class="flt" data-testid="odm-fleet-overview">
+                    <div class="ph flat">Fleet</div>
+                    @for (v of fleetVessels(); track v.id) {
+                        <div class="flt-row">
+                            <span class="flt-n">{{ v.name }}</span>
+                            <span class="flt-s" [class.bad]="v.status !== 'OPERATIONAL'">{{ v.status }}</span>
+                            @if (v.id === 'iron-covenant') {
+                                <span class="flt-bar"><span class="flt-fill f-{{ fuelStateV() }}" [style.width.%]="fuelPctV()"></span></span><span class="flt-v">{{ fuelPctV() }}%</span>
+                            } @else if (isJumpV(v)) {
+                                <span class="flt-bar"><span class="flt-fill f-kf" [style.width.%]="v.status === 'OPERATIONAL' ? 100 : 0"></span></span><span class="flt-v">K-F</span>
+                            } @else {
+                                <span class="flt-v dim">fuel cap {{ v.fuelCapacityTons }} t</span>
+                            }
+                        </div>
+                    }
+                    @if (!fleetVessels().length) { <div class="flt-row dim">fleet manifest loading…</div> }
+                    @if (liftBudget(); as lb) {
+                        <div class="flt-lift" data-testid="odm-lift-overview">LIFT: {{ lb.shortTons === 0 ? 'one-wave' : lb.waves + '-wave — ' + lb.shortTons + ' t short of one-wave' }} ({{ lb.requiredTons }} t needed / {{ lb.availableTons }} t of bay tonnage)</div>
+                    }
+                </div>
             </div>
             <div class="econ-log" data-testid="overview-txnlog">
                 <div class="ph flat">Transactions <span class="scaf">recent · {{ txnLog().length }}</span></div>
@@ -133,7 +191,7 @@
                         }
                     </div>
                 } @else {
-                    <p class="note thin">No money events yet — shop buy/sell, payroll, contract income, hiring and salvage land here as they happen.</p>
+                    <p class="note thin">No money events yet — bribes, black-market buys and other C-bill spends land here as they happen.</p>
                 }
             </div>
         </div>
@@ -158,44 +216,49 @@
         <bce-odm-roster />
     </section>
 
-    <!-- INVENTORY (D-056) — the rolled stockpile, by category, collapsible -->
+    <!-- INVENTORY (D-056; ODM-13 P3 fork) — the quartermaster's ledger: owned stock + donor hulks, no trade surface -->
     <section class="panel" [class.active]="activeTab() === 'inventory'">
-        @if (activeTab() === 'inventory') { <bce-inventory-tab /> }
+        @if (activeTab() === 'inventory') { <bce-odm-inventory-tab /> }
     </section>
 
     <!-- BARRACKS (D-020; people depth D-036) -->
     <section class="panel" [class.active]="activeTab() === 'barracks'">
         @if (hasBarracks()) {
             <div class="ph">Barracks <span class="scaf">{{ barracksCount().total }} personnel</span></div>
-            <p class="note">Your command's <b>MechWarriors</b> — every card explodes to the full file: <b>bio</b>, <b>service record</b>, <b>special pilot abilities</b> (GM-granted under the CamOps p.72 caps), injuries and recovery. Assignment mirrors the <b>Unit Roster</b> pull-down.</p>
+            <!-- ODM-15 — the barracks by trade: a tanker is not a MechWarrior; the register is people-first. -->
+            <p class="note">Your command's combat crews, by trade — <b>MechWarriors</b>, <b>vehicle crews</b>, <b>aerospace pilots</b>. Every card explodes to the full file: <b>bio</b>, <b>service record</b>, <b>special pilot abilities</b> (GM-granted under the CamOps p.72 caps), injuries and recovery. Assignment mirrors the <b>Unit Roster</b> pull-down.</p>
             <div class="bk-sum">
                 <span><b>{{ barracksCount().assigned }}</b> assigned</span>
                 <span><b>{{ barracksCount().spares }}</b> spare</span>
                 @if (barracksCount().kia) { <span><b>{{ barracksCount().kia }}</b> fallen</span> }
             </div>
-            <!-- HF-016: the combat-pilot group is collapsible + STARTS COLLAPSED (header + count, expand on click). -->
-            <button type="button" class="bk-grouphd" (click)="pilotsOpen.set(!pilotsOpen())" [attr.aria-expanded]="pilotsOpen()">
-                <span class="caret" [class.open]="pilotsOpen()">▸</span> MechWarriors <span class="scaf">{{ pilotRoster().length }}</span>
-            </button>
-            @if (pilotsOpen()) {
-            <div class="bk-grid">
-                @for (p of pilotRoster(); track p.id) {
-                    <button type="button" class="bk-card" [class.spare]="!p.assigned" [class.cmdr]="p.commander" (click)="openPilot(p.id)">
-                        <div class="bk-top">
-                            <div class="bk-name">{{ p.name }}@if (p.callsign) { <span class="bk-call">“{{ p.callsign }}”</span> }</div>
-                            <span class="bk-chips">
-                                @if (p.perks) { <span class="bk-perk" title="special pilot abilities">★{{ p.perks }}</span> }
-                                @if (p.commander) { <span class="bk-badge" title="Commanding officer">★&nbsp;CO</span> }
-                            </span>
-                        </div>
-                        <div class="bk-skills"><span class="bk-gp">{{ p.skills }}</span><span class="bk-gplbl">G / P</span><span class="bk-msn">{{ p.missions }} msn</span></div>
-                        <div class="bk-foot">
-                            <span class="bk-assign" [class.bk-bench]="!p.assigned">{{ p.assignment }}</span>
-                            <span class="bk-status" [class.inj]="p.injured">{{ p.status }}</span>
-                        </div>
-                    </button>
+            <!-- ODM-15 Part B — one HF-016 collapsible per trade PRESENT (zero-member groups never render);
+                 "Unassigned — awaiting posting" trails for stampless pilots (ruling A4 — an honest gap,
+                 never a MechWarriors default). Same card markup; all groups start collapsed. -->
+            @for (g of pilotGroups(); track g.key) {
+                <button type="button" class="bk-grouphd" [attr.data-trade]="g.key" (click)="toggleTrade(g.key)" [attr.aria-expanded]="tradeOpen(g.key)">
+                    <span class="caret" [class.open]="tradeOpen(g.key)">▸</span> {{ g.label }} <span class="scaf">{{ g.people.length }}</span>
+                </button>
+                @if (tradeOpen(g.key)) {
+                <div class="bk-grid">
+                    @for (p of g.people; track p.id) {
+                        <button type="button" class="bk-card" [class.spare]="!p.assigned" [class.cmdr]="p.commander" (click)="openPilot(p.id)">
+                            <div class="bk-top">
+                                <div class="bk-name">{{ p.name }}@if (p.callsign) { <span class="bk-call">“{{ p.callsign }}”</span> }</div>
+                                <span class="bk-chips">
+                                    @if (p.perks) { <span class="bk-perk" title="special pilot abilities">★{{ p.perks }}</span> }
+                                    @if (p.commander) { <span class="bk-badge" title="Commanding officer">★&nbsp;CO</span> }
+                                </span>
+                            </div>
+                            <div class="bk-skills"><span class="bk-gp">{{ p.skills }}</span><span class="bk-gplbl">G / P</span><span class="bk-msn">{{ p.missions }} msn</span></div>
+                            <div class="bk-foot">
+                                <span class="bk-assign" [class.bk-bench]="!p.assigned">{{ p.assignment }}</span>
+                                <span class="bk-status" [class.inj]="p.injured">{{ p.status }}</span>
+                            </div>
+                        </button>
+                    }
+                </div>
                 }
-            </div>
             }
 
             <!-- D-036 INFIRMARY — the D-031 injuries + the clock tick, surfaced at last -->
@@ -204,7 +267,7 @@
                 <div class="inf-rows">
                     @for (w of infirmary(); track w.id) {
                         <button type="button" class="inf-row" (click)="openPilot(w.id)">
-                            <span class="ir-name">{{ w.name }}@if (w.callsign) { <span class="bk-call">“{{ w.callsign }}”</span> }</span>
+                            <span class="ir-name">{{ w.name }}@if (w.callsign) { <span class="bk-call">“{{ w.callsign }}”</span> }@if (tradeChip(w.id)) { <span class="bk-trade">{{ tradeChip(w.id) }}</span> }</span>
                             <span class="ir-hits">{{ w.hits ?? '—' }} hit{{ w.hits === 1 ? '' : 's' }}</span>
                             <span class="ir-eta">recovery ETA <b>{{ w.recoveryDays }}</b> campaign days</span>
                         </button>
@@ -218,7 +281,7 @@
                 <div class="inf-rows">
                     @for (k of fallen(); track k.id) {
                         <button type="button" class="mem-row" (click)="openPilot(k.id)">
-                            <span class="ir-name">{{ k.name }}@if (k.callsign) { <span class="bk-call">“{{ k.callsign }}”</span> }</span>
+                            <span class="ir-name">{{ k.name }}@if (k.callsign) { <span class="bk-call">“{{ k.callsign }}”</span> }@if (tradeChip(k.id)) { <span class="bk-trade">{{ tradeChip(k.id) }}</span> }</span>
                             <span class="mr-line">KILLED IN ACTION{{ k.date ? ' — ' + k.date : '' }} · {{ k.missions }} mission{{ k.missions === 1 ? '' : 's' }} on the record</span>
                         </button>
                     }
@@ -226,20 +289,23 @@
             }
 
             @if (detailPilot()) {
-                <bce-pilot-detail [pilotId]="detailPilot()!" (close)="detailPilot.set(null)" />
+                <bce-pilot-detail [pilotId]="detailPilot()!" [notesText]="gmNoteFor(detailPilot()!)" (notesSaved)="saveGmNote(detailPilot()!, $event)"
+                                  [postingOptions]="postingOptions()" (postingChange)="changePosting(detailPilot()!, $event)"
+                                  [tradeOptions]="tradeOptions" (tradeChange)="changeTrade(detailPilot()!, $event)"
+                                  (close)="detailPilot.set(null)" />
             }
         } @else {
             <div class="ph">Barracks</div>
             <p class="note">Pilots &amp; crew — skills, callsigns, injuries, and infirmary recovery.</p>
             <div class="bk-empty">
-                <div class="bk-empty-h">No MechWarriors on the roster yet</div>
-                <p class="note">A build-your-own command musters pilots as you acquire 'Mechs. Support staff — techs, admins, medics — hire from the Hiring Hall below.</p>
+                <div class="bk-empty-h">No combat crews on the roster yet</div>
+                <p class="note">Crews muster as machines come onto the roster — MechWarriors with the 'Mechs, vehicle crews with the tanks. Support staff — techs, admins, medics — are the company's own; no replacements arrive on this world.</p>
             </div>
         }
 
-        <!-- HOTFIX-023 (2): support staff + the D-059 hiring hall render for ALL commands incl. custom / no-starting-force — the support-hire path is independent of the pilot roster (was previously inside the hasBarracks() guard → custom commands had a blank hall). -->
-        <bce-support-personnel />
-        <bce-hiring-hall />
+        <!-- ODM-13 P3 — the survival barracks: the fork roster (no wage column, no dismiss). The Classic
+             staff-for-C-bills hall does NOT mount here (Ruling 3c / ODM-11: nobody is hired, nobody replaced). -->
+        <bce-odm-support-personnel />
     </section>
 
     <!-- MISSIONS -->
@@ -255,7 +321,9 @@
              Traditional (isHotspots false) is unaffected: the new clause + contract block are false, so it renders as before. -->
         <!-- ODM-1 FORK: HS chaos-contracts mount STRIPPED (the contract layer / HS never comes along) -->
         <div class="msub" role="tablist">
-            <button type="button" class="msub-b" [class.on]="missionsSub() === 'brief'" (click)="selectMissionSub('brief')">Contract / Brief</button>
+            <!-- ODM-12b C1 — was "Contract / Brief": live merc copy on an ODM surface. There is no contract
+                 under this pack; the operation IS the order. (Sub-tab id 'brief' unchanged — deep links stable.) -->
+            <button type="button" class="msub-b" [class.on]="missionsSub() === 'brief'" (click)="selectMissionSub('brief')">Operation brief</button>
             <button type="button" class="msub-b" [class.on]="missionsSub() === 'force'" (click)="selectMissionSub('force')">Force Preview</button>
             <!-- HOTFIX-029 — Claims moved to the Lobby tab (join QR + roster + claim board together). -->
             <button type="button" class="msub-b" [class.on]="missionsSub() === 'aar'" (click)="selectMissionSub('aar')">AAR</button>
@@ -269,7 +337,10 @@
                 <!-- D-110b — the C-bill field walk (salvage/strip) is Traditional; Hot Spots salvage is SP (estimated at resolve; SP walk is D-110c). -->
                 <div class="walk-banner">
                     <span class="wb-t">⚠ Field walk pending</span>
-                    <span class="wb-s">A resolved engagement awaits dispositions — recover, salvage, claim prizes off the live end-state.</span>
+                    <!-- ODM-12b C1 — stale Traditional walk copy: ODM-13 P1 replaced the C-bill dispositions
+                         with the survival trio (RECOVER · STRIP · LEAVE). Nothing is "claimed as a prize" for
+                         credit here; a hulk is stores on legs. -->
+                    <span class="wb-s">A resolved engagement awaits dispositions — recover, strip, or leave what fell, off the live end-state.</span>
                     <button type="button" class="gobtn" (click)="openWalk()">Walk the field &raquo;</button>
                 </div>
             }
@@ -281,7 +352,21 @@
                     <!-- ODM-3 addendum A — the AUTHORED operation zone: no forge, no rolled spec. The briefing
                          packet IS the mission document; deploy + play + resolve ride the Classic machinery. -->
                     <div class="brief">
-                        <div class="bsec"><div class="bsl">Operation</div><p class="bp">{{ nodeSystem(ab.branchId) }} · THREAT {{ ab.threat }} — hand-authored engagement; the briefing packet is the mission document. OpFor runs from the OPFOR packet (GM).</p></div>
+                        @if (activeGmMission(); as gm) {
+                            <!-- ODM-18 P3 §S-3/§S-7 — a GM-COMPOSED operation: the GM's own prose IS the mission
+                                 document. No packet sentence (there is no packet), and no narrator fallthrough:
+                                 odmIsAuthored() reads the MERGED node set, so NONE_NARRATOR's merc-contract copy
+                                 ("has engaged the command…", "Contract pay N C-bills") is unreachable here. -->
+                            <div class="bsec" data-testid="odm-composed-op"><div class="bsl">Operation</div><p class="bp">{{ nodeSystem(ab.branchId) }} · THREAT {{ ab.threat }} — GM-composed operation; the brief below is the mission document.</p></div>
+                            @if (gm.brief) { <div class="bsec" data-testid="odm-composed-brief"><div class="bsl">Brief</div><p class="bp" style="white-space:pre-wrap">{{ gm.brief }}</p></div> }
+                            <div class="bsec"><div class="bsl">Objectives</div><ul class="bobj">
+                                <li>{{ gm.objectives.primary }}</li>
+                                @if (gm.objectives.secondary) { <li>{{ gm.objectives.secondary }}</li> }
+                                @if (gm.objectives.bonus) { <li>{{ gm.objectives.bonus }}</li> }
+                            </ul></div>
+                        } @else {
+                            <div class="bsec"><div class="bsl">Operation</div><p class="bp">{{ nodeSystem(ab.branchId) }} · THREAT {{ ab.threat }} — hand-authored engagement; the briefing packet is the mission document. OpFor runs from the OPFOR packet (GM).</p></div>
+                        }
                         <div class="bsec"><div class="bsl">Deploy to this operation</div><bce-deploy-roster /></div>
                         <div class="msn-actions">
                             <button type="button" class="gobtn primary" [disabled]="!deployedCount()" (click)="playMission()">&#9654; Play mission &raquo;</button>
@@ -323,7 +408,10 @@
                  fork remounts HERE; BEGIN OPERATION ▸ + View briefing live on the node drawers; the mission
                  state & gates rail rides inside the component, below the tree. The Flow tab is gone. -->
             <div class="ph flat" style="margin-top:18px">Operations — the campaign calendar</div>
-            <bce-odm-flow [odmTree]="odmTreeData()" (begin)="beginFromTree($event)" (briefing)="briefingFromTree($event)"
+            <!-- ODM-18 P3 — the GM MISSION COMPOSER (GM-side only; drafts ride gmOnly, publish derives the
+                 player-safe record). The board below renders published operations as ordinary cards. -->
+            <bce-odm-composer [tree]="odmTreeData()" />
+            <bce-odm-flow [odmTree]="odmTreeAll()" (begin)="beginFromTree($event)" (briefing)="briefingFromTree($event)"
                           (openPackage)="openPackage()" (navigate)="goToStep($event)" (advancePhase)="advancePhase()"></bce-odm-flow>
 
             <!-- ZONE 3 — MISSION HISTORY -->
@@ -345,7 +433,7 @@
         <!-- D-072: the relocated lifecycle surfaces (unchanged behavior, just folded under Missions in order) -->
         @if (missionsSub() === 'force') { <bce-odm-battle-view /> }
         <!-- HOTFIX-029: Claims moved to the Lobby tab. -->
-        @if (missionsSub() === 'aar') { <bce-aar-tab /> }
+        @if (missionsSub() === 'aar') { <bce-odm-aar-tab (walkMission)="openWalk($event)" /> }
         }
     </section>
 
@@ -367,15 +455,15 @@
         }
     </section>
 
-    <!-- AAR (D-034) — the after-action archive: resolved missions render classified documents FROM stored records.
+    <!-- AAR (D-034; ODM-14 fork) — the after-action archive in the AUTHORED crew's voices.
          D-072: ALSO reachable inside Missions (dual-placed); the front-row AAR tab stays for now. -->
     <section class="panel" [class.active]="activeTab() === 'aar'">
-        <bce-aar-tab />
+        <bce-odm-aar-tab (walkMission)="openWalk($event)" />
     </section>
 
     <!-- INTEL (D-034, T-031 slice 1) — contacts met through play + the campaign notebook -->
     <section class="panel" [class.active]="activeTab() === 'intel'">
-        <bce-intel-tab />
+        <bce-odm-intel-tab />
     </section>
 
     <!-- FLOW (D-028) — the native branching-tree view -->
@@ -409,11 +497,17 @@
     <!-- SETTINGS (D-038) — the narrator controls (OFF/LOCAL), TEST CONNECTION, toggles, SPA-cap knob -->
     <section class="panel" [class.active]="activeTab() === 'settings'">
         <bce-settings-tab />
+        <!-- ODM-22 — the GM facts card: the campaign id in plain sight, copyable. A missing id LABEL cost
+             four hours on 2026-08-30; this is the cheapest possible answer to "which campaign is this?" -->
+        <bce-odm-gm-facts />
+        <!-- ODM-18 P2 — the GM rollback list (ODM-only mount; the shared settings tab stays untouched) -->
+        <bce-odm-rollback />
     </section>
 
     <!-- REPAIR & SALVAGE (D-033) — the canon-timed bays: queue, assignment, clock-driven burn, prize refit -->
     <section class="panel" [class.active]="activeTab() === 'repair'">
-        <bce-repair-bays />
+        <!-- ODM-13 P2 — the survival bays fork (R3 parts consumption · rearm-from-bins · donor yard) -->
+        <bce-odm-repair-bays />
     </section>
 
     <footer>
@@ -434,15 +528,55 @@
         <bce-save-dialog (saved)="onSaved()" (cancel)="onSaveCancel()"></bce-save-dialog>
     }
     @if (walkOpen()) {
-        <bce-field-walk (close)="walkOpen.set(false)"></bce-field-walk>
+        <!-- ODM-13 — the survival walk fork (R2 trio; materiel to both stores; no money path exists) -->
+        <bce-odm-field-walk (close)="walkOpen.set(false)"></bce-odm-field-walk>
     }
     <!-- ODM-1 FORK: accept-contract modal STRIPPED (the contract layer / HS never comes along) -->
     <!-- ODM-1 FORK: renegotiate modal STRIPPED (the contract layer / HS never comes along) -->
     <!-- ODM-1 FORK: complete-contract modal STRIPPED (the contract layer / HS never comes along) -->
     <!-- ODM-9b FORK STRIP: the Reroll confirm modal removed (dead markup — its opener button was stripped in
          ODM-3 addendum A; a confirm would have re-rolled the ACTIVE branch over the authored carrier). -->
+    <!-- ODM-11 — the GM manual stocks adjust (R2: v1 numbers are driven by hand; Save materializes + persists). -->
+    @if (stocksAdjustOpen()) {
+        <div class="cmodal" role="dialog" aria-modal="true" (click)="cancelStocksAdjust()">
+            <div class="cbox" (click)="$event.stopPropagation()">
+                <div class="ph flat">Adjust stocks (GM)</div>
+                <div class="stk-form">
+                    <label class="stk-row"><span>Fuel (t)</span>
+                        <input type="number" min="0" step="0.1" [value]="stocksDraft.fuelTons" (input)="stocksDraft.fuelTons = $any($event.target).valueAsNumber" data-testid="odm-adj-fuel"></label>
+                    @for (b of stocksDraft.bins; track b.name) {
+                        <label class="stk-row"><span>{{ b.name }} (t)</span>
+                            <input type="number" min="0" step="0.1" [value]="b.tons" (input)="b.tons = $any($event.target).valueAsNumber" [attr.data-testid]="'odm-adj-bin-' + b.name"></label>
+                    }
+                    <label class="stk-row"><span>Exposure</span>
+                        <!-- NG-SELECT gotcha: [selected] per option, never [value] on the select -->
+                        <select data-testid="odm-adj-exposure" (change)="stocksDraft.exposure = $any($event.target).value">
+                            @for (lv of exposureLevels; track lv) { <option [value]="lv" [selected]="lv === stocksDraft.exposure">{{ lv }}</option> }
+                        </select></label>
+                </div>
+                <div class="cbtns">
+                    <button type="button" class="cbtn" (click)="cancelStocksAdjust()">Cancel</button>
+                    <button type="button" class="cbtn go" data-testid="odm-adj-save" (click)="saveStocksAdjust()">Save &raquo;</button>
+                </div>
+            </div>
+        </div>
+    }
     <!-- DIRECTIVE-HARDEN-4 — the resolve modal → resolve-modal.ts (dashboard-provided ResolveService). -->
     <bce-odm-resolve-modal />
+    <!-- TABLE-2 T2-3 — Resolve is BLOCKED while deployed devices still have un-ended (unshared) picks. The GM
+         waits for END PHASE, or takes the logged "Resolve anyway" override (ledger names the participants). -->
+    @if (res.pendingResolveWarn(); as w) {
+        <div class="rw-overlay" (click)="res.cancelResolveWarn()">
+            <div class="rw" (click)="$event.stopPropagation()" role="alertdialog" aria-modal="true" aria-label="Unshared picks before resolve" data-testid="odm-resolve-warn">
+                <div class="rw-h">⏳ {{ w.count }} pick{{ w.count === 1 ? '' : 's' }} unshared</div>
+                <p class="rw-p">These players have not ended their phase, so their damage — including pilot hits — has not reached the table: <b>{{ w.names.join(', ') }}</b>. Resolving now may lose it. Ask them to <b>END PHASE</b>, or resolve anyway (logged to the ledger).</p>
+                <div class="rw-btns">
+                    <button type="button" class="gobtn" (click)="res.cancelResolveWarn()" data-testid="odm-resolve-wait">Wait for END PHASE</button>
+                    <button type="button" class="gobtn danger" (click)="res.resolveAnyway()" data-testid="odm-resolve-anyway">Resolve anyway — {{ w.count }} unshared &raquo;</button>
+                </div>
+            </div>
+        </div>
+    }
     <!-- DIRECTIVE-139 — the SP transaction toast (HS-only; Traditional never calls warchest.post so it stays silent). -->
 </main>
 @if (packageOpen()) {

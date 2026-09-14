@@ -1,8 +1,12 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
 import { DEFAULT_ORG_RULE_REGISTRY } from '../org-facts.util';
 import type {
     OrgCIFormationRule,
     OrgComposedCountRule,
-    OrgDefinitionSpec,
+    OrgDefinition,
     OrgLeafCountRule,
 } from '../org-types';
 
@@ -37,15 +41,15 @@ export const MH_CENTURY_INFANTRY: OrgCIFormationRule = {
     commandRank: 'Centurion',
     tier: 1,
     entries: [
-        { moveClass: 'foot', troopers: 10, counts: { '': 10 } },
-        { moveClass: 'motorized', troopers: 10, counts: { '': 10 } },
-        { moveClass: 'scuba', troopers: 10, counts: { '': 3 } },
-        { moveClass: 'jump', troopers: 10, counts: { '': 5 } },
-        { moveClass: 'mechanized-vtol', troopers: 5, counts: { '': 4 } },
-        { moveClass: 'mechanized-hover', troopers: 5, counts: { '': 4 } },
-        { moveClass: 'mechanized-wheeled', troopers: 5, counts: { '': 4 } },
-        { moveClass: 'mechanized-tracked', troopers: 5, counts: { '': 4 } },
-        { moveClass: 'mechanized-submarine', troopers: 5, counts: { '': 4 } },
+        { moveClass: 'foot', counts: { '': 10 } },
+        { moveClass: 'motorized', counts: { '': 10 } },
+        { moveClass: 'scuba', counts: { '': 3 } },
+        { moveClass: 'jump', counts: { '': 5 } },
+        { moveClass: 'mechanized-vtol', counts: { '': 4 } },
+        { moveClass: 'mechanized-hover', counts: { '': 4 } },
+        { moveClass: 'mechanized-wheeled', counts: { '': 4 } },
+        { moveClass: 'mechanized-tracked', counts: { '': 4 } },
+        { moveClass: 'mechanized-submarine', counts: { '': 4 } },
     ],
 };
 
@@ -79,7 +83,7 @@ export const MH_LEGION: OrgComposedCountRule = {
     childBucketBy: 'promotionBasic',
 };
 
-export const MH_CORE_ORG: OrgDefinitionSpec = {
+export const MH_CORE_ORG: OrgDefinition = {
     rules: [
         MH_CONTUBERNIUM_NON_INFANTRY,
         MH_CENTURY_NON_INFANTRY,

@@ -25,6 +25,14 @@ export function isLocalOrLanEngineUrl(url: string | null | undefined): boolean {
     try { return classifyHost(new URL(url).hostname) !== 'public'; } catch { return true; }
 }
 
+/** GM-1c — does the join page's per-host note ("campaigns live on the host you joined") apply? Only when the engine
+ *  is NOT a public host: on the cloud host the note is noise that reads as a technical failure (the directive's rule),
+ *  on a dev/LAN host it is the truth. Same classification as isLocalOrLanEngineUrl, named for what it decides;
+ *  pinned by host-env.spec.ts (the browser harness can only stand up a local engine). */
+export function perHostNoteApplies(engineUrl: string | null | undefined): boolean {
+    return isLocalOrLanEngineUrl(engineUrl);
+}
+
 /** On a PUBLIC origin, is the stored engine URL replaceable with the prod default? Yes when it is:
  *   - empty / malformed, or a localhost/private-LAN host (unreachable from public), OR
  *   - the OLD BAD DERIVE: the serving public host itself with an explicit api port (e.g. bcengine.org:3000) —

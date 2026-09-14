@@ -1,37 +1,8 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import type { Unit } from '../models/units.model';
+import type { UnitSummary } from '../models/unit-summary.model';
 import type { Force, UnitGroup } from '../models/force.model';
 import type { ForceUnit } from '../models/force-unit.model';
 import { ASForceUnit } from '../models/as-force-unit.model';
@@ -40,12 +11,17 @@ import { DEFAULT_GUNNERY_SKILL, DEFAULT_PILOTING_SKILL } from '../models/crew-me
 import type { GameSystem } from '../models/common.model';
 import type { ForceSlot } from '../models/force-slot.model';
 import { LanceTypeIdentifierUtil } from './lance-type-identifier.util';
+import { FactionId } from '../models/factions.model';
 
 /**
  * Minimal logger interface for URL parsing warnings.
  */
 export interface UrlParseLogger {
     warn(message: string): void;
+}
+
+function getUnitNameKey(name: string): string {
+    return name.toLowerCase();
 }
 
 /**
@@ -58,7 +34,7 @@ export interface ForceQueryParams {
     name: string | null;
     instance: string | null;
     operation: string | null;
-    factionId: number | null;
+    factionId: FactionId | null;
     eraId: number | null;
 }
 
@@ -133,6 +109,7 @@ export function buildMultiForceQueryParams(slots: ForceSlot[]): ForceQueryParams
     let unsavedForce: Force | null = null;
 
     for (const slot of slots) {
+        if (slot.persistInUrl === false) continue;
         const id = slot.force.instanceId();
         if (id) {
             instanceEntries.push(slot.alignment === 'enemy' ? `enemy:${id}` : id);
@@ -146,7 +123,7 @@ export function buildMultiForceQueryParams(slots: ForceSlot[]): ForceQueryParams
     let gs: GameSystem | null = null;
     let units: string | null = null;
     let name: string | null = null;
-    let factionId: number | null = null;
+    let factionId: FactionId | null = null;
     let eraId: number | null = null;
 
     if (unsavedForce) {
@@ -262,13 +239,13 @@ export function generateUnitUrlParams(units: ForceUnit[]): string[] {
 export function parseForceFromUrl(
     force: Force,
     unitsParam: string,
-    allUnits: Unit[],
+    allUnits: UnitSummary[],
     logger?: UrlParseLogger,
     lookupMode: ForceUrlUnitLookupMode = 'name'
 ): ForceUnit[] {
-    const unitMap = new Map<string, Unit>();
+    const unitMap = new Map<string, UnitSummary>();
     for (const unit of allUnits) {
-        const key = lookupMode === 'mulId' ? `${unit.id}` : unit.name;
+        const key = lookupMode === 'mulId' ? `${unit.id}` : getUnitNameKey(unit.name);
         if (!unitMap.has(key)) {
             unitMap.set(key, unit);
         }
@@ -346,7 +323,7 @@ export function parseForceFromUrl(
 export function parseUnitUrlParams(
     force: Force,
     unitsStr: string,
-    unitMap: Map<string, Unit>,
+    unitMap: Map<string, UnitSummary>,
     group?: UnitGroup,
     logger?: UrlParseLogger,
     lookupMode: ForceUrlUnitLookupMode = 'name'
@@ -360,7 +337,7 @@ export function parseUnitUrlParams(
         if (!unitParam.trim()) continue;
 
         const parts = unitParam.split(':');
-        const lookupValue = parts[0];
+        const lookupValue = lookupMode === 'mulId' ? parts[0] : getUnitNameKey(parts[0]);
         const unit = unitMap.get(lookupValue);
 
         if (!unit) {

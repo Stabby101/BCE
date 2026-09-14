@@ -1,44 +1,22 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import type { MultiState, MultiStateSelection } from '../components/multi-select-dropdown/multi-select-dropdown.component';
 import { DEFAULT_GUNNERY_SKILL, DEFAULT_PILOTING_SKILL } from '../models/crew-member.model';
 import type { GameSystem } from '../models/common.model';
 import { getAvailableDropdownValuesMap, type UnitSearchDropdownValuesDependencies } from './unit-search-dropdown-values.util';
-import { AdvFilterType, type FilterState, SORT_OPTIONS } from '../services/unit-search-filters.model';
-import { getAdvancedFilterConfigByKey } from './unit-search-filter-config.util';
+import { AdvFilterType, normalizeTriStateBooleanFilterValue, type FilterState, SORT_OPTIONS } from '../services/unit-search-filters.model';
+import { getAdvancedFilterConfigByKey, getPublicUnitSearchPropertyKey, normalizeUnitSearchPropertyKey } from './unit-search-filter-config.util';
+import { parseValues } from './semantic-filter.util';
+import { normalizeMultiStateSelection } from './unit-search-shared.util';
+import type { UnitSearchViewMode } from '../models/options.model';
+import { DEFAULT_CLASSIC_BV_NORMALIZATION_MAX_DELTA, type BvNormalizationSettings, type PvNormalizationSettings, type UnitSearchBudgetMode } from '../models/unit-search-result.model';
+import { isValidBvNormalizationSettings } from './bv-normalization.util';
+import { isValidPvNormalizationSettings } from './pv-normalization.util';
+import { getASSpecialToken } from './as-special-filter.util';
 
-interface ParsedUnitSearchScalarUrlState {
+export interface ParsedUnitSearchScalarUrlState {
     searchText: string | null;
     sortKey: string | null;
     sortDirection: 'asc' | 'desc' | null;
@@ -46,7 +24,11 @@ interface ParsedUnitSearchScalarUrlState {
     gunnery: number | null;
     piloting: number | null;
     bvLimit: number | null;
+    budgetMode: UnitSearchBudgetMode;
+    bvNormalization: BvNormalizationSettings | null;
+    pvNormalization: PvNormalizationSettings | null;
     hasFilters: boolean;
+    viewMode: UnitSearchViewMode | null;
 }
 
 interface UnitSearchQueryParametersArgs {
@@ -59,7 +41,11 @@ interface UnitSearchQueryParametersArgs {
     gunnery: number;
     piloting: number;
     bvLimit: number;
+    budgetMode?: UnitSearchBudgetMode;
+    bvNormalization?: BvNormalizationSettings;
+    pvNormalization?: PvNormalizationSettings;
     publicTagsParam: string | null;
+    viewMode?: UnitSearchViewMode;
 }
 
 interface UnitSearchQueryParameters {
@@ -72,17 +58,94 @@ interface UnitSearchQueryParameters {
     gunnery: number | null;
     piloting: number | null;
     bvLimit: number | null;
+    bvMode: 'limit' | 'normalize' | null;
+    bvMin: number | null;
+    bvMax: number | null;
+    gMin: number | null;
+    gMax: number | null;
+    pMin: number | null;
+    pMax: number | null;
+    maxDelta: number | null;
+    pvMode: 'normalize' | null;
+    pvMin: number | null;
+    pvMax: number | null;
+    skillMin: number | null;
+    skillMax: number | null;
     expanded: 'true' | null;
+    view: Exclude<UnitSearchViewMode, 'list'> | null;
     gs?: GameSystem | null;
 }
 
+export function parseUnitSearchViewMode(value: string | null | undefined): UnitSearchViewMode | null {
+    return value === 'list' || value === 'card' || value === 'chassis' || value === 'table'
+        ? value
+        : null;
+}
+
+function quoteCompactFilterValue(value: string): string {
+    return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
+function serializeCompactFilterValue(value: string): string {
+    const needsQuoting = value.includes(',') || value.includes('|') || value.includes(':') ||
+        value.includes('"') || value.includes('\\') || value.includes('~') ||
+        value.endsWith('.') || value.endsWith('!');
+
+    return needsQuoting ? quoteCompactFilterValue(value) : value;
+}
+
+function splitCompactFilterValues(valueStr: string): string[] {
+    return parseValues(valueStr).filter(value => value.trim() !== '');
+}
+
+function serializeASSpecialMinimumSuffix(values: readonly (number | null)[] | undefined): string {
+    if (!values?.some(value => value !== null && value !== undefined)) {
+        return '';
+    }
+
+    let lastValueIndex = values.length - 1;
+    while (lastValueIndex >= 0 && (values[lastValueIndex] === null || values[lastValueIndex] === undefined)) {
+        lastValueIndex--;
+    }
+
+    return '^' + values.slice(0, lastValueIndex + 1)
+        .map(value => value === null || value === undefined ? '' : String(value))
+        .join('/');
+}
+
+function parseASSpecialMinimumSuffix(value: string): { name: string; minimumValues?: (number | null)[] } {
+    const markerIndex = value.lastIndexOf('^');
+    if (markerIndex === -1) {
+        return { name: value };
+    }
+
+    const parts = value.slice(markerIndex + 1).split('/');
+    const minimumValues: (number | null)[] = [];
+    for (const part of parts) {
+        if (part === '') {
+            minimumValues.push(null);
+            continue;
+        }
+
+        const parsed = Number(part);
+        if (!Number.isFinite(parsed) || parsed < 0) {
+            return { name: value };
+        }
+        minimumValues.push(parsed);
+    }
+
+    return minimumValues.some(entry => entry !== null)
+        ? { name: value.slice(0, markerIndex), minimumValues }
+        : { name: value.slice(0, markerIndex) };
+}
+
 function parseBoundedInteger(value: string | null | undefined, min: number, max: number): number | null {
-    if (!value) {
+    if (value === null || value === undefined || value === '') {
         return null;
     }
 
-    const parsed = parseInt(value, 10);
-    if (isNaN(parsed) || parsed < min || parsed > max) {
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
         return null;
     }
 
@@ -102,27 +165,94 @@ function parsePositiveInteger(value: string | null | undefined): number | null {
     return parsed;
 }
 
+function parseNonnegativeInteger(value: string | null | undefined): number | null {
+    if (value === null || value === undefined || value === '') {
+        return null;
+    }
+
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed < 0) {
+        return null;
+    }
+
+    return parsed;
+}
+
 export function parseUnitSearchScalarUrlState(
     params: URLSearchParams,
     opts: { expandView?: boolean } = {},
 ): ParsedUnitSearchScalarUrlState {
     const searchText = params.get('q');
-    const sortParam = params.get('sort');
+    const rawSortParam = params.get('sort');
+    const sortParam = rawSortParam ? normalizeUnitSearchPropertyKey(rawSortParam) : null;
     const sortDirectionParam = params.get('sortDir');
     const filtersParam = params.get('filters');
+    const viewMode = parseUnitSearchViewMode(params.get('view'));
 
     const hasFilters = Boolean(searchText || filtersParam);
     const shouldExpand = opts.expandView ?? (!params.has('instance') && !params.has('units') && hasFilters);
+    const normalization: BvNormalizationSettings = {
+        targetBv: {
+            min: parseNonnegativeInteger(params.get('bvMin')) ?? -1,
+            max: parseNonnegativeInteger(params.get('bvMax')) ?? -1,
+        },
+        gunnery: {
+            min: parseBoundedInteger(params.get('gMin'), 0, 8) ?? -1,
+            max: parseBoundedInteger(params.get('gMax'), 0, 8) ?? -1,
+        },
+        piloting: {
+            min: parseBoundedInteger(params.get('pMin'), 0, 8) ?? -1,
+            max: parseBoundedInteger(params.get('pMax'), 0, 8) ?? -1,
+        },
+        maxDelta: params.has('maxDelta')
+            ? parseBoundedInteger(params.get('maxDelta'), 0, 8) ?? -1
+            : DEFAULT_CLASSIC_BV_NORMALIZATION_MAX_DELTA,
+    };
+    const rawBudgetMode = params.get('bvMode');
+    const bvNormalization = rawBudgetMode === 'normalize'
+        && isValidBvNormalizationSettings(normalization)
+        ? normalization
+        : null;
+    const pvSettings: PvNormalizationSettings = {
+        targetPv: {
+            min: parseNonnegativeInteger(params.get('pvMin')) ?? -1,
+            max: parseNonnegativeInteger(params.get('pvMax')) ?? -1,
+        },
+        skill: {
+            min: parseBoundedInteger(params.get('skillMin'), 0, 8) ?? -1,
+            max: parseBoundedInteger(params.get('skillMax'), 0, 8) ?? -1,
+        },
+    };
+    const pvNormalization = params.get('pvMode') === 'normalize'
+        && isValidPvNormalizationSettings(pvSettings)
+        ? pvSettings
+        : null;
+    const hasConflictingBudgetModes = rawBudgetMode !== null && params.get('pvMode') === 'normalize';
+    const resolvedBvNormalization = hasConflictingBudgetModes ? null : bvNormalization;
+    const resolvedPvNormalization = hasConflictingBudgetModes ? null : pvNormalization;
+    const budgetMode: UnitSearchBudgetMode = hasConflictingBudgetModes
+        ? null
+        : resolvedPvNormalization
+        ? 'pv-normalization'
+        : resolvedBvNormalization
+        ? 'bv-normalization'
+        : rawBudgetMode === 'limit'
+            ? 'force-limit'
+            : null;
 
     return {
         searchText,
         sortKey: sortParam && SORT_OPTIONS.some(opt => opt.key === sortParam) ? sortParam : null,
         sortDirection: sortDirectionParam === 'asc' || sortDirectionParam === 'desc' ? sortDirectionParam : null,
-        expanded: params.get('expanded') === 'true' || shouldExpand,
+        expanded: params.get('expanded') === 'true' || (viewMode !== 'table' && shouldExpand),
         gunnery: parseBoundedInteger(params.get('gunnery'), 0, 8),
         piloting: parseBoundedInteger(params.get('piloting'), 0, 8),
-        bvLimit: parsePositiveInteger(params.get('bvLimit')),
+        bvLimit: budgetMode === 'force-limit' ? parsePositiveInteger(params.get('bvLimit')) : null,
+        budgetMode,
+        bvNormalization: resolvedBvNormalization,
+        pvNormalization: resolvedPvNormalization,
         hasFilters,
+        viewMode,
     };
 }
 
@@ -134,32 +264,41 @@ function generateCompactFiltersParam(state: FilterState): string | null {
 
         const conf = getAdvancedFilterConfigByKey(key);
         if (!conf) continue;
+        const publicKey = getPublicUnitSearchPropertyKey(key);
 
         if (conf.type === AdvFilterType.RANGE) {
             const [min, max] = filterState.value;
-            parts.push(`${key}:${min}-${max}`);
+            parts.push(`${publicKey}:${min}-${max}`);
+        } else if (conf.type === AdvFilterType.BOOLEAN) {
+            const value = normalizeTriStateBooleanFilterValue(filterState.value);
+            if (value !== null) {
+                parts.push(`${publicKey}:${value === 'or' ? 'yes' : 'no'}`);
+            }
         } else if (conf.type === AdvFilterType.DROPDOWN) {
             if (conf.multistate) {
-                const selection = filterState.value as MultiStateSelection;
+                const selection = normalizeMultiStateSelection(filterState.value);
                 const subParts: string[] = [];
 
                 for (const [name, selectionValue] of Object.entries(selection)) {
                     if (selectionValue.state !== false) {
-                        let part = name;
+                        let part = serializeCompactFilterValue(name);
                         if (selectionValue.state === 'and') part += '.';
                         else if (selectionValue.state === 'not') part += '!';
                         if (selectionValue.count > 1) part += `~${selectionValue.count}`;
+                        if (key === 'as.specials') {
+                            part += serializeASSpecialMinimumSuffix(selectionValue.minimumValues);
+                        }
                         subParts.push(part);
                     }
                 }
 
                 if (subParts.length > 0) {
-                    parts.push(`${key}:${subParts.join(',')}`);
+                    parts.push(`${publicKey}:${subParts.join(',')}`);
                 }
             } else {
                 const values = filterState.value as string[];
                 if (values.length > 0) {
-                    parts.push(`${key}:${values.join(',')}`);
+                    parts.push(`${publicKey}:${values.map(serializeCompactFilterValue).join(',')}`);
                 }
             }
         }
@@ -178,7 +317,11 @@ export function buildUnitSearchQueryParameters({
     gunnery,
     piloting,
     bvLimit,
+    budgetMode = null,
+    bvNormalization,
+    pvNormalization,
     publicTagsParam,
+    viewMode = 'list',
 }: UnitSearchQueryParametersArgs): UnitSearchQueryParameters {
     const uiOnlyFilters: FilterState = {};
     for (const [key, state] of Object.entries(filterState)) {
@@ -188,21 +331,41 @@ export function buildUnitSearchQueryParameters({
     }
 
     const filtersParam = generateCompactFiltersParam(uiOnlyFilters);
+    const forceLimitActive = budgetMode === 'force-limit';
+    const normalizationActive = budgetMode === 'bv-normalization' && bvNormalization != null;
+    const pvNormalizationActive = budgetMode === 'pv-normalization' && pvNormalization != null;
 
     return {
         q: searchText.trim() || null,
         filters: filtersParam || null,
         pt: publicTagsParam,
-        sort: selectedSort || null,
+        sort: selectedSort ? getPublicUnitSearchPropertyKey(selectedSort) : null,
         sortDir: selectedSortDirection !== 'asc' ? selectedSortDirection : null,
         gunnery: gunnery !== DEFAULT_GUNNERY_SKILL ? gunnery : null,
         piloting: piloting !== DEFAULT_PILOTING_SKILL ? piloting : null,
-        bvLimit: bvLimit > 0 ? bvLimit : null,
+        bvLimit: forceLimitActive && bvLimit > 0 ? bvLimit : null,
+        bvMode: normalizationActive ? 'normalize' : forceLimitActive ? 'limit' : null,
+        bvMin: normalizationActive ? bvNormalization.targetBv.min : null,
+        bvMax: normalizationActive ? bvNormalization.targetBv.max : null,
+        gMin: normalizationActive ? bvNormalization.gunnery.min : null,
+        gMax: normalizationActive ? bvNormalization.gunnery.max : null,
+        pMin: normalizationActive ? bvNormalization.piloting.min : null,
+        pMax: normalizationActive ? bvNormalization.piloting.max : null,
+        maxDelta: normalizationActive ? bvNormalization.maxDelta : null,
+        pvMode: pvNormalizationActive ? 'normalize' : null,
+        pvMin: pvNormalizationActive ? pvNormalization.targetPv.min : null,
+        pvMax: pvNormalizationActive ? pvNormalization.targetPv.max : null,
+        skillMin: pvNormalizationActive ? pvNormalization.skill.min : null,
+        skillMax: pvNormalizationActive ? pvNormalization.skill.max : null,
         expanded: expanded ? 'true' : null,
+        view: viewMode === 'list' ? null : viewMode,
     };
 }
 
-function parseCompactFiltersFromUrl(filtersParam: string): FilterState {
+function parseCompactFiltersFromUrl(
+    filtersParam: string,
+    dropdownValuesDependencies?: UnitSearchDropdownValuesDependencies,
+): FilterState {
     const filterState: FilterState = {};
     const parts = filtersParam.split('|');
 
@@ -210,7 +373,7 @@ function parseCompactFiltersFromUrl(filtersParam: string): FilterState {
         const colonIndex = part.indexOf(':');
         if (colonIndex === -1) continue;
 
-        const key = part.substring(0, colonIndex);
+        const key = normalizeUnitSearchPropertyKey(part.substring(0, colonIndex));
         const valueStr = part.substring(colonIndex + 1);
 
         const conf = getAdvancedFilterConfigByKey(key);
@@ -228,15 +391,48 @@ function parseCompactFiltersFromUrl(filtersParam: string): FilterState {
                     };
                 }
             }
+        } else if (conf.type === AdvFilterType.BOOLEAN) {
+            const value = normalizeTriStateBooleanFilterValue(valueStr);
+            if (value !== null) {
+                filterState[key] = {
+                    value,
+                    interactedWith: true,
+                };
+            }
         } else if (conf.type === AdvFilterType.DROPDOWN) {
+            const availableValuesMap = dropdownValuesDependencies
+                ? getAvailableDropdownValuesMap(conf, dropdownValuesDependencies)
+                : null;
+            const legacyCompositeSpecial = key === 'as.specials' && /^TUR\s*\(.*\)$/i.test(valueStr)
+                ? valueStr
+                : undefined;
+            const exactValueMatch = availableValuesMap?.get(valueStr.toLowerCase()) ?? legacyCompositeSpecial;
+
             if (conf.multistate) {
+                if (exactValueMatch) {
+                    filterState[key] = {
+                        value: {
+                            [exactValueMatch]: { name: exactValueMatch, state: 'or', count: 1 },
+                        },
+                        interactedWith: true,
+                    };
+                    continue;
+                }
+
                 const selection: MultiStateSelection = {};
-                const items = valueStr.split(',');
+                const items = splitCompactFilterValues(valueStr);
 
                 for (const item of items) {
                     let name = item;
                     let state: MultiState = 'or';
                     let count = 1;
+                    let minimumValues: (number | null)[] | undefined;
+
+                    if (key === 'as.specials') {
+                        const parsedMinimum = parseASSpecialMinimumSuffix(name);
+                        name = parsedMinimum.name;
+                        minimumValues = parsedMinimum.minimumValues;
+                    }
 
                     const starIndex = name.indexOf('~');
                     if (starIndex !== -1) {
@@ -252,7 +448,14 @@ function parseCompactFiltersFromUrl(filtersParam: string): FilterState {
                         name = name.slice(0, -1);
                     }
 
-                    selection[name] = { name, state, count };
+                    name = conf.valueNormalizer?.(name) ?? name;
+
+                    selection[name] = {
+                        name,
+                        state,
+                        count,
+                        ...(minimumValues ? { minimumValues } : {}),
+                    };
                 }
 
                 if (Object.keys(selection).length > 0) {
@@ -262,7 +465,9 @@ function parseCompactFiltersFromUrl(filtersParam: string): FilterState {
                     };
                 }
             } else {
-                const values = valueStr.split(',').filter(Boolean);
+                const values = exactValueMatch
+                    ? [exactValueMatch]
+                    : splitCompactFilterValues(valueStr);
                 if (values.length > 0) {
                     filterState[key] = {
                         value: values,
@@ -296,12 +501,23 @@ function validateParsedFiltersFromUrl(
             const availableValuesMap = getAvailableDropdownValuesMap(conf, dropdownValuesDependencies);
 
             if (conf.multistate) {
-                const selection = state.value as MultiStateSelection;
+                const selection = normalizeMultiStateSelection(state.value);
                 const validSelection: MultiStateSelection = {};
                 for (const [name, selectionValue] of Object.entries(selection)) {
-                    const properCase = availableValuesMap.get(name.toLowerCase());
+                    const normalizedName = conf.valueNormalizer?.(name) ?? name;
+                    const properCase = availableValuesMap.get(normalizedName.toLowerCase());
                     if (properCase) {
                         validSelection[properCase] = { ...selectionValue, name: properCase };
+                        continue;
+                    }
+
+                    // Preserve old shared URLs that selected one concrete TUR
+                    // string before the specials index switched to tokens.
+                    if (key === 'as.specials') {
+                        const token = getASSpecialToken(normalizedName);
+                        if (token && availableValuesMap.has(token.toLowerCase())) {
+                            validSelection[normalizedName] = { ...selectionValue, name: normalizedName };
+                        }
                     }
                 }
                 if (Object.keys(validSelection).length > 0) {
@@ -330,7 +546,23 @@ export function parseAndValidateCompactFiltersFromUrl(
     dropdownValuesDependencies: UnitSearchDropdownValuesDependencies,
 ): FilterState {
     return validateParsedFiltersFromUrl(
-        parseCompactFiltersFromUrl(filtersParam),
+        parseCompactFiltersFromUrl(filtersParam, dropdownValuesDependencies),
         dropdownValuesDependencies,
     );
+}
+
+/** Resolve startup view state without allowing local preferences to alter shared search URLs. */
+export function resolveInitialUnitSearchViewMode(
+    params: URLSearchParams,
+    persistedViewMode: UnitSearchViewMode,
+): UnitSearchViewMode {
+    const explicitViewMode = parseUnitSearchViewMode(params.get('view'));
+    if (explicitViewMode) {
+        return explicitViewMode === 'table' && params.get('expanded') !== 'true'
+            ? 'list'
+            : explicitViewMode;
+    }
+
+    const hasSearchState = params.has('q') || params.has('filters');
+    return hasSearchState || persistedViewMode === 'table' ? 'list' : persistedViewMode;
 }

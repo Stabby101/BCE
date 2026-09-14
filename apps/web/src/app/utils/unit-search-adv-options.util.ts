@@ -1,73 +1,45 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import type { Unit } from '../models/units.model';
-import { getProperty, getUnitComponentData } from './unit-search-shared.util';
+import type { UnitSummary } from '../models/unit-summary.model';
+import { getProperty, getUnitComponentData, getUnitCountableFilterData } from './unit-search-shared.util';
 
 export interface AdvOptionsContextSnapshot {
     unitIds?: Set<string>;
     forcePackNames?: Set<string>;
     namesByFilterKey: Map<string, string[]>;
     availabilityNamesByFilterKey: Map<string, Set<string>>;
-    componentCounts?: Map<string, number>;
+    countsByFilterKey?: Map<string, Map<string, number>>;
 }
 
 export function getAdvOptionsContextSnapshot(
-    cache: WeakMap<Unit[], AdvOptionsContextSnapshot>,
-    units: Unit[],
+    cache: WeakMap<UnitSummary[], AdvOptionsContextSnapshot>,
+    units: UnitSummary[],
 ): AdvOptionsContextSnapshot {
     let snapshot = cache.get(units);
     if (!snapshot) {
         snapshot = {
             namesByFilterKey: new Map<string, string[]>(),
             availabilityNamesByFilterKey: new Map<string, Set<string>>(),
+            countsByFilterKey: new Map<string, Map<string, number>>(),
         };
         cache.set(units, snapshot);
     }
     return snapshot;
 }
 
-export function getSnapshotUnitIds(snapshot: AdvOptionsContextSnapshot, units: Unit[]): Set<string> {
+export function getSnapshotUnitIds(snapshot: AdvOptionsContextSnapshot, units: UnitSummary[]): Set<string> {
     if (!snapshot.unitIds) {
-        snapshot.unitIds = new Set(units.map(unit => unit.name));
+        snapshot.unitIds = new Set(units.map(unit => unit.uuid));
     }
     return snapshot.unitIds;
 }
 
 export function getSnapshotForcePackNames(
     snapshot: AdvOptionsContextSnapshot,
-    units: Unit[],
-    getForcePacksForUnit: (unit: Unit) => Iterable<string>,
+    units: UnitSummary[],
+    getForcePacksForUnit: (unit: UnitSummary) => Iterable<string>,
 ): Set<string> {
     if (!snapshot.forcePackNames) {
         const packNames = new Set<string>();
@@ -84,7 +56,7 @@ export function getSnapshotForcePackNames(
 function ensureSnapshotFilterNames(
     snapshot: AdvOptionsContextSnapshot,
     filterKey: string,
-    units: Unit[],
+    units: UnitSummary[],
     isComponentFilter: boolean,
 ): void {
     if (snapshot.namesByFilterKey.has(filterKey) && snapshot.availabilityNamesByFilterKey.has(filterKey)) {
@@ -133,7 +105,7 @@ function ensureSnapshotFilterNames(
 export function getSnapshotAvailableNames(
     snapshot: AdvOptionsContextSnapshot,
     filterKey: string,
-    units: Unit[],
+    units: UnitSummary[],
     isComponentFilter: boolean,
 ): string[] {
     ensureSnapshotFilterNames(snapshot, filterKey, units, isComponentFilter);
@@ -143,26 +115,32 @@ export function getSnapshotAvailableNames(
 export function getSnapshotAvailabilityNames(
     snapshot: AdvOptionsContextSnapshot,
     filterKey: string,
-    units: Unit[],
+    units: UnitSummary[],
     isComponentFilter: boolean,
 ): Set<string> {
     ensureSnapshotFilterNames(snapshot, filterKey, units, isComponentFilter);
     return snapshot.availabilityNamesByFilterKey.get(filterKey) ?? new Set<string>();
 }
 
-export function getSnapshotComponentCounts(snapshot: AdvOptionsContextSnapshot, units: Unit[]): Map<string, number> {
-    if (!snapshot.componentCounts) {
-        const counts = new Map<string, number>();
+export function getSnapshotCountableValues(
+    snapshot: AdvOptionsContextSnapshot,
+    filterKey: string,
+    units: UnitSummary[],
+): Map<string, number> {
+    snapshot.countsByFilterKey ??= new Map<string, Map<string, number>>();
+    let counts = snapshot.countsByFilterKey.get(filterKey);
+    if (!counts) {
+        counts = new Map<string, number>();
 
         for (const unit of units) {
-            const cached = getUnitComponentData(unit);
-            for (const [name, count] of cached.counts) {
+            const data = getUnitCountableFilterData(unit, filterKey);
+            for (const [name, count] of data?.counts ?? []) {
                 counts.set(name, (counts.get(name) || 0) + count);
             }
         }
 
-        snapshot.componentCounts = counts;
+        snapshot.countsByFilterKey.set(filterKey, counts);
     }
 
-    return snapshot.componentCounts;
+    return counts;
 }

@@ -1,0 +1,2975 @@
+{
+  "_meta": {
+    "title": "Hot Spots — The Hinterlands (BCE premade hotspots, ilClan era 3151–3152: the collapsed Jade Falcon Occupation Zone)",
+    "era": "ilclan",
+    "region": "hinterlands",
+    "packNote": "One pack of the multi-pack hotspot catalog (D-124). era + region tag the whole file; its hotspots inherit them. The `hinterlands` theater (hsforge-regions.json) is this pack's build item — anchor Skye or Arc-Royal, ~120 LY, era-6/ilClan owner column. The sibling pack CLAUDE.md always named ('Hinterlands + general-per-era ship as sibling hotspots-*.json packs').",
+    "authoredBy": "PM (Fable) — direct-authored 2026-09-02/03 overnight at James's order ('do ALL the work on this while I sleep'). Not Forge-generated.",
+    "consumes": "DIRECTIVE-124 (hotspots-catalog ingestion) + IMPORT-5 Part C (singleSided) + D-133 (two-sided `sides` on hs-hin-10 only). Each track → a preset seed; forks link tracks by nextTrackId.",
+    "ipPosture": "System stats are FACTS cited to Sarna.net (page per world; absent fields ABSENT, never guessed). Historical events 3134–3152 (which Clan took what, when, who defended, the uprisings, the League, the Coalition) are canonical facts. All situations, every named character the player meets or fights, and all prose are ORIGINAL BCE writing. Canon people (Malvina Hazen, Alaric Ward, Heather GioAvanti, Callandre Kell, Factor Marena, Star Colonel Riss) appear ONLY as historical context, never voiced, never fielded. No book prose reproduced.",
+    "writingBar": "HOTSPOT-BRIEF v1.0.1 budgets + FORGE-BRIEF v3 prose law. A reader gets each field on one pass; situation carries texture, instructions stay plain.",
+    "setting": "3151 is a COLLAPSE, not a front. The Jade Falcon touman went to Terra and died there with Malvina Hazen; the Occupation Zone fragmented into a vacuum that small successor polities are carving up — the Isle of Skye (Dec 3151 uprising), the Arc-Royal Liberty Coalition (the Kell Hounds, Oct 3151), the Alyina Mercantile League (the Falcon merchant caste under Factor Marena, July 3151), Hell's Horses on Tamar since 3137, Falcon warrior remnants on Sudeten, Wolf Empire garrisons refusing to leave. EVERY FRAGMENT HIRES MERCENARIES. That is the pack's whole premise.",
+    "singleSided": "Non-hiring Clan enemies (Wolf Empire/Clan Wolf, Jade Falcon remnant, Hell's Horses) → `singleSided: true`, side A only. hs-hin-10 Bolan is the pack's ONE authored two-sided pair (Lyran vs Free Worlds League — both hire) — the thing this pack can do that the corridor could not.",
+    "employerMapping": "REQUIRED CODE at ingest (see DIRECTIVE-HIN-1): hsFactionToMulFaction maps only 8 DM-era names. This pack's employers — Lyran Commonwealth, Isle of Skye, Free Worlds League — resolve to NULL today (side A → 'Local / planetary forces'). ARLC strings carry '(mercenary command)' → Mercenary; AML strings carry '(Sea Fox-backed)' → Clan Sea Fox, which also hires. OpFor strings use MekBay's Clan names: Clan Wolf · Clan Jade Falcon · Clan Hell's Horses. Adding aliases is the H13 moment — split the hiring predicate from the MUL allowlist first.",
+    "status": "10 authored (hs-hin-01..10) — the launch set; forge floor 8 cleared. Rotating-chamber target 24; 11–24 follow. Employers: Isle of Skye ×2 · ARLC ×1 · AML ×3 · Lyran ×3 · Lyran/FWL two-sided ×1. Enemies: Clan Wolf ×3 · Clan Jade Falcon ×4 · Clan Hell's Horses ×1 · FWL ×1 · Wolf-in-Exile ally ×1. Roots: Pushback · Defend · Objective Raid · Recon · Defend · Strike · Defend · Breakthrough · Flank · Meeting Engagement. Idea-registry: hotspots-IDEA-LEDGER.md (Hinterlands section).",
+    "roster": [
+      "01 Skye",
+      "02 Arc-Royal",
+      "03 Sudeten",
+      "04 Tamar",
+      "05 Alyina",
+      "06 Twycross",
+      "07 Hesperus II",
+      "08 Coventry",
+      "09 Donegal",
+      "10 Bolan (two-sided)"
+    ]
+  },
+  "hotspots": [
+    {
+      "id": "hs-hin-01",
+      "title": "New London Rising",
+      "world": "Skye",
+      "employer": "Isle of Skye — provisional government (the December rising)",
+      "type": "Garrison / Urban Rising",
+      "singleSided": true,
+      "blurb": "Skye has thrown off the Wolf garrison and declared itself. The provisional government hires you to hold New London's ministry quarter until the Wolves decide whether it was worth keeping.",
+      "systemProfile": {
+        "starType": "G8V, M0V",
+        "rechargeHours": 191,
+        "positionInSystem": "4th",
+        "timeToJumpPointDays": 4.48,
+        "satellites": "1 (Luna)",
+        "surfaceGravity": 1.03,
+        "atmPressure": "Standard (Breathable)",
+        "equatorialTempC": 30,
+        "climate": "Warm-Temperate",
+        "surfaceWaterPct": 70,
+        "rechargeStation": "Zenith, Nadir",
+        "hpgClass": "A",
+        "highestNativeLife": "Mammals",
+        "population": 3012000000,
+        "populationYear": 3130,
+        "landmasses": [
+          "New Scotland"
+        ],
+        "capitalCity": "New London"
+      },
+      "situation": "Skye has changed hands three times in seventeen years and never once by its own choice. The Jade Falcons took it from the Republic in 3134. Clan Wolf took it from the Falcons in 3150, in two weeks, and when the Republic asked for it back the Wolf Khan did not bother to answer. Then the Wolves went to Terra, and the world of fog-wreathed hills and one enormous continent found itself with a garrison, no Galaxy behind the garrison, and a population that had been waiting for exactly that.\n\nIn December 3151 New London rose. The provisional government that came out of it calls itself the Isle of Skye and has, at the moment, a militia, a parliament that meets in a school, and the Galatean League's promise of friendship. What it does not have is an army. The Wolf garrison is out of the ministry quarter but not off the world — two Trinaries are dug in at Base Shetland waiting for orders from an Empire that has bigger problems. When those orders come, they will be one of two things: withdraw, or take the city back.\n\nThe Isle of Skye is paying you to make the second option expensive. Your command holds the ministry quarter of New London — the parliament, the broadcast center, the records the new state is built on — for as long as it takes the Wolves to decide. If they come, you meet them in the streets of a capital that has finally picked a side. If they go, you have earned a retainer from a nation that will remember who stood in the fog with it.",
+      "contract": {
+        "scale": 2,
+        "intensity": 3,
+        "lengthMonths": 3,
+        "steps": {
+          "basePay": 6,
+          "support": 5,
+          "transport": 5,
+          "salvage": 4,
+          "command": 6
+        },
+        "enemyFaction": "Clan Wolf",
+        "constraints": "Command House — the provisional government's military committee directs the defense through a militia liaison. Salvage Shared: the Isle claims Wolf hardware for the army it does not have yet; your share is real.",
+        "additionalRequirements": "Track Scale 2 or higher; minimum fielded force 5,500 BV / 220 PV. Urban — every unit must fight inside a city; no artillery inside the ministry quarter.",
+        "bonus": "The Isle stands — if the ministry quarter is still the Isle's at contract end, +2 Reputation with the Isle of Skye and a standing retainer from a state that will need mercenaries for a decade."
+      },
+      "missionBrief": {
+        "behindScenes": "Star Colonel Kerensky at Base Shetland has no orders and a garrison that outnumbers the militia three to one. She will probe the quarter first (Track 1) to see whether the rising has teeth. If it does, she pulls back and waits for the Empire (2a — and the militia wants the broadcast center's approach cleared while she waits). If the probe finds soft ground, she commits both Trinaries (2b). Track 3 is the Wolf counter-landing from orbit — the Empire's answer, whichever way it goes.",
+        "complications": [
+          {
+            "roll": "1-3",
+            "effect": "None."
+          },
+          {
+            "roll": "4",
+            "effect": "Zellbrigen. A Wolf warrior challenges your commander. Accept: one-on-one until one is crippled. Refuse or interfere: the Wolves drop honor rules for the track."
+          },
+          {
+            "roll": "5",
+            "effect": "Skye fog. Visibility 6 hexes all track, +1 to-hit at long range, both sides. The hills breathe it every morning."
+          },
+          {
+            "roll": "6",
+            "effect": "Rising militia. Two militia 'Mechs (Regular, second-line) join your line from a side street on Turn 3 under your command. They will not leave the quarter."
+          },
+          {
+            "roll": "7",
+            "effect": "Elementals in the parliament. A Point of five Elementals begins hidden in any Level 2+ building on the Wolf side; reveals when adjacent to a friendly unit."
+          },
+          {
+            "roll": "8+",
+            "effect": "Roll twice, ignore repeats."
+          }
+        ],
+        "contractVictory": "The ministry quarter of New London is the Isle of Skye's at contract end. Hold it through the probe, whatever the second track brings, and the counter-landing. The contract pays on the quarter; the bonus pays on the Isle still existing.",
+        "tally": "Quarter Held — each track you win counts 1. At 2+, the Isle stands and the bonus pays. At 0, the Wolves retake New London: -2 Reputation, and the Isle of Skye is a footnote.",
+        "namedCharacters": [
+          {
+            "name": "Star Colonel Ilse Kerensky",
+            "role": "OpFor commander — Wolf Empire garrison, Base Shetland",
+            "chassis": "Timber Wolf (Mad Cat)",
+            "skill": "Gunnery 2 / Piloting 3",
+            "rule": "Joins from Track 1. Will accept zellbrigen. If crippled, the garrison does not commit its second Trinary in Track 2b and the counter-landing (Track 3) enters 2 turns late."
+          },
+          {
+            "name": "Kommandant Ewan Kirkbride",
+            "role": "Isle of Skye militia — liaison, provisional military committee",
+            "chassis": "Wolfhound",
+            "skill": "Gunnery 4 / Piloting 4",
+            "rule": "On the field from Track 1. If destroyed, the militia is -2 Initiative for the rest of the track and the rising-militia complication cannot occur."
+          }
+        ],
+        "purchaseOptions": "Between tracks, what the Isle can find — light and medium 'Mechs from the Shipil and Cyclops works, on a 2D6 roll of 8+. After a track win, one captured Wolf machine may be bought at the Isle's cost."
+      },
+      "tracks": [
+        {
+          "id": "t1",
+          "name": "The Probe",
+          "templateId": "Pushback",
+          "root": true,
+          "situation": "Kerensky sends a Trinary down the boulevards to test the quarter. The militia holds the parliament; you push the Wolves back out of the broadcast-center block before they learn how thin the line is.\n\nPushback: you (Defender) clear an enemy already inside your ground, block by block.",
+          "deployment": "Long edges. The Wolves (Attacker) set up within 4 hexes of the broadcast-center block — four Medium buildings (Level 2) on their side of center — having pushed in overnight. You (Defender) enter Turn 1 from your home edge with the militia. Streets paved; no artillery inside the quarter.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Push — hold two of the four broadcast-block buildings at end of Turn 5.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Clear the Block — no non-crippled Wolf unit within 2 hexes of any broadcast building at end of Turn 8.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Kerensky's Timber Wolf.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Hold the Block — a Wolf unit within 2 hexes of a broadcast building at end of Turn 8.",
+              "vp": 300,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "A track win adds to Quarter Held.",
+          "trackEnd": "End of Turn 8.",
+          "salvagePolicy": "Shared — the Isle's claim first; your share as SP.",
+          "opfor": {
+            "faction": "Clan Wolf",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 0.9
+          },
+          "forks": [
+            {
+              "outcomeGate": "SUCCESS",
+              "nextTrackId": "t2a",
+              "trigger": "The probe found teeth. Kerensky pulled back to Shetland to wait for the Empire.",
+              "consequence": "The committee wants the Shetland road cleared before the Wolves get their answer.",
+              "threat": "MEDIUM"
+            },
+            {
+              "outcomeGate": "FAILURE",
+              "nextTrackId": "t2b",
+              "trigger": "The probe found soft ground. Kerensky is committing both Trinaries.",
+              "consequence": "Hold the parliament. The rising lives or dies on that block.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2a",
+          "name": "The Shetland Road",
+          "templateId": "Pursuit",
+          "situation": "Kerensky is falling back down the Shetland road with the Trinary that probed you. The committee wants the road cut before she can bring the second Trinary up it — catch the column in the hills.",
+          "deployment": "Long edges. The Wolves (Defender) set up in a column on the road in the northern third moving toward their home edge; you (Attacker) enter Turn 1 from the south. Road paved; hills either side Level 1 rough with Light Woods. Skye fog: visibility 8 hexes.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Run Them Down — engage half the Wolf force before it reaches the Wolf home edge.",
+              "vp": 100,
+              "side": "attacker"
+            },
+            {
+              "text": "Cut the Road — hold two road hexes in the northern third at end of Turn 6.",
+              "vp": 200,
+              "side": "attacker"
+            },
+            {
+              "text": "Hammer — first side to cripple 25% of the enemy scores it; simultaneous, both score.",
+              "vp": 100,
+              "side": "both"
+            },
+            {
+              "text": "Reach Shetland — exit half the Wolf force by BV off the Wolf home edge.",
+              "vp": 250,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "A track win adds to Quarter Held.",
+          "trackEnd": "End of Turn 6, or when the Wolves have no non-crippled unit on the road.",
+          "salvagePolicy": "Pool-draft; the Isle's claim first, your share as SP.",
+          "opfor": {
+            "faction": "Clan Wolf",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 0.8
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "The Empire has answered. DropShips are inbound over New London.",
+              "consequence": "The counter-landing. Hold the quarter against what comes down.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2b",
+          "name": "The Parliament Block",
+          "templateId": "Defend",
+          "situation": "Both Trinaries are coming for the parliament — the building where the Isle of Skye votes. If it falls, the rising is a riot that got out of hand. Hold it.",
+          "deployment": "Short edges. You (Defender) and the militia set up within 6 hexes of the parliament — a Heavy building (Level 3) at center of your half; the Wolves (Attacker) enter Turn 1 down two boulevards. Streets paved; no artillery inside the quarter.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Hold the House — half your force within 3 hexes of the parliament at end of Turn 4.",
+              "vp": 100,
+              "side": "defender"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV within 6 hexes of the parliament than the Wolves at end of Turn 8.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Kerensky's Timber Wolf.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Take the House — a Wolf unit adjacent to the parliament at end of any turn from Turn 5.",
+              "vp": 300,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "The parliament building is not a target for either side — the Wolves want it standing. A track win adds to Quarter Held.",
+          "trackEnd": "End of Turn 8, or when a Wolf unit holds a hex adjacent to the parliament at end of a turn.",
+          "salvagePolicy": "Winner-all (paid as SP at your salvage %); the Isle's claim first.",
+          "opfor": {
+            "faction": "Clan Wolf",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.2
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "The Empire has answered. DropShips are inbound over New London.",
+              "consequence": "The counter-landing, with the quarter already bloodied.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t3",
+          "name": "The Counter-Landing",
+          "templateId": "Meeting Engagement",
+          "situation": "The Wolf Empire's answer: a Cluster off the DropShips onto the parkland north of the ministry quarter, in the fog, at dawn. Nobody dictates this one. The Isle of Skye finds out what it is in the next eight turns.",
+          "deployment": "Long edges. You (Defender) set up within 8 hexes of your home edge — the quarter's northern buildings; the Wolves (Attacker) set up within 6 hexes of theirs on the parkland (clear, Light Woods). Skye fog: visibility 6 hexes. The Wolves enter all at once on Turn 1; if Kerensky was crippled earlier, Turn 3.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Hold the Park Edge — half your force within 3 hexes of the northern buildings at end of Turn 4.",
+              "vp": 100,
+              "side": "both"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV within 6 hexes of the park edge than the enemy at end of Turn 10.",
+              "vp": 300,
+              "side": "both"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy the landing commander's unit.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Into the Quarter — exit a third of the Wolf force by BV off your home edge.",
+              "vp": 300,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "At contract close: quarter held = the Isle stands, +2 Reputation, the retainer offered. Quarter lost = -2 Reputation and the Isle of Skye ends.",
+          "trackEnd": "End of Turn 10, or when one side has no non-crippled 'Mechs within 6 hexes of the park edge.",
+          "salvagePolicy": "Pool-draft; the Isle's claim first, your share as SP.",
+          "opfor": {
+            "faction": "Clan Wolf",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.1
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "The fog lifts on whoever holds New London.",
+              "consequence": "Contract closes; settle Quarter Held and Reputation.",
+              "threat": "LOW"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hs-hin-02",
+      "title": "The Coalition's First Contract",
+      "world": "Arc-Royal",
+      "employer": "Arc-Royal Liberty Coalition — Kell Hounds (mercenary command)",
+      "type": "Garrison / Reactive Defense",
+      "singleSided": true,
+      "blurb": "The Hounds took Arc-Royal back in October. The Falcons who surrendered were not all the Falcons. The new Coalition hires you to hold the Lupis Majoris landing fields against the ones who came back.",
+      "systemProfile": {
+        "starType": "G3V",
+        "rechargeHours": 184,
+        "positionInSystem": "4th",
+        "timeToJumpPointDays": 8.53,
+        "satellites": "2 (Deven, Thorwatch)",
+        "surfaceGravity": 1.01,
+        "atmPressure": "Standard (Breathable)",
+        "equatorialTempC": 32,
+        "climate": "Mild-Temperate",
+        "surfaceWaterPct": 74,
+        "rechargeStation": "Zenith, Nadir",
+        "hpgClass": "A",
+        "highestNativeLife": "Mammals",
+        "population": 2118000000,
+        "populationYear": 3150,
+        "landmasses": [
+          "Gerechtland",
+          "Grunwald",
+          "Gutheim"
+        ],
+        "capitalCity": "Old Connaught"
+      },
+      "situation": "Arc-Royal was the Kell Hounds' home for two centuries and the Wolves-in-Exile's for one, until the Jade Falcons came in 3146 and it was neither. Five years under a Falcon Star Colonel who executed a thousand civilians a day when the Hounds came back. In October 3151 the Hounds stormed Old Connaught, the Star Colonel died, the garrison surrendered, and the world declared itself the capital of something new — the Arc-Royal Liberty Coalition, a state built by mercenaries, run by mercenaries, and paying mercenaries.\n\nThe surrender was real. It was also not the whole Falcon force on Arc-Royal. A Trinary that had been posted to the Gutheim continent when the Hounds landed did not surrender, did not fight, and did not leave. It went dark in the northern forests with its DropShips, and in the weeks since it has been raiding the Lupis Majoris landing fields — the ground link to the orbital shipyards the Hounds seized on the way in. Whoever holds those fields holds the yards. The Falcons know it, and they have decided that a Coalition of mercenaries is a thing a Clan can still take back.\n\nThe Coalition's first contract with an outside command is yours. Hold the landing fields. The Hounds are stretched across three continents and the shipyards cannot be defended from the ground by anyone but you. When the Gutheim Trinary comes out of the trees, you meet it — and if you break it, the Coalition has its first victory that was not the Hounds' alone.",
+      "contract": {
+        "scale": 2,
+        "intensity": 3,
+        "lengthMonths": 3,
+        "steps": {
+          "basePay": 7,
+          "support": 7,
+          "transport": 6,
+          "salvage": 5,
+          "command": 7
+        },
+        "enemyFaction": "Clan Jade Falcon",
+        "constraints": "Command Liaison — a Hounds officer rides with your command; the Coalition directs, you fight. Salvage Shared: the Coalition claims Falcon hardware for the fleet it is building; your share is honored, mercenary to mercenary.",
+        "additionalRequirements": "Track Scale 2 or higher; minimum fielded force 5,500 BV / 220 PV. Field-capable — the landing fields are open ground; no urban-only units.",
+        "bonus": "The yards stay ours — if the Lupis Majoris fields are the Coalition's at contract end, +2 Reputation with the Arc-Royal Liberty Coalition and Kell Refit Facilities service at cost for your next refit."
+      },
+      "missionBrief": {
+        "behindScenes": "Star Captain Roshak's Trinary refused the surrender because surrendering to mercenaries is, to a Falcon, worse than dying. He has been raiding to draw the Hounds north. If Track 1 holds the fields, he commits to a full assault on the ground link (2a); if the fields fall, the Hounds pull you back to the yard-control station and you hold that instead (2b). Track 3 is the Trinary's last throw at the DropShip pads.",
+        "complications": [
+          {
+            "roll": "1-3",
+            "effect": "None."
+          },
+          {
+            "roll": "4",
+            "effect": "Zellbrigen. A Falcon warrior challenges your commander. Accept: one-on-one until one is crippled. Refuse or interfere: the Falcons drop honor rules for the track."
+          },
+          {
+            "roll": "5",
+            "effect": "The Hounds' reserve. A Kell Hounds lance (Veteran) is released to your sector on Turn 4 under your command. They fight like people who own the ground."
+          },
+          {
+            "roll": "6",
+            "effect": "Elementals in the tree line. A Point of five Elementals begins hidden in any Heavy Woods hex on the Falcon side; reveals when adjacent to a friendly unit."
+          },
+          {
+            "roll": "7",
+            "effect": "Falcon aerospace. One Falcon fighter makes a single strafing pass on Turn 3 against your densest hex (5 damage to each unit in it); no friendly aerospace to answer."
+          },
+          {
+            "roll": "8+",
+            "effect": "Roll twice, ignore repeats."
+          }
+        ],
+        "contractVictory": "The Lupis Majoris landing fields are the Coalition's at contract end and the ground link to the shipyards is intact. The contract pays on the fields; the bonus pays on the yards.",
+        "tally": "Fields Held — each track you win counts 1. At 2+, the yards are safe and the bonus pays. At 0, the Falcons cut the ground link: -1 Reputation, and the Coalition's fleet is stranded in orbit.",
+        "namedCharacters": [
+          {
+            "name": "Star Captain Roshak",
+            "role": "OpFor commander — the Gutheim Trinary, Jade Falcon holdout",
+            "chassis": "Turkina",
+            "skill": "Gunnery 2 / Piloting 2",
+            "rule": "Joins from Track 1. Will accept zellbrigen — but ONLY from your commander, never from a Hounds unit. If crippled, the Trinary withdraws into the forest and Track 3 does not occur."
+          },
+          {
+            "name": "Captain Nia Bhattacharya",
+            "role": "Kell Hounds liaison — Coalition command",
+            "chassis": "Wolfhound",
+            "skill": "Gunnery 3 / Piloting 3",
+            "rule": "Rides with your command from Track 1. Carries the Hounds' reserve release; if destroyed, the reserve complication cannot occur and Track 2b is unavailable — the tree goes to 2a regardless."
+          }
+        ],
+        "purchaseOptions": "Between tracks, Arc-Royal MechWorks and the Kell Refit Facilities — any 'Mech up to heavy, on a 2D6 roll of 7+. Mercenary rates for a mercenary contract."
+      },
+      "tracks": [
+        {
+          "id": "t1",
+          "name": "The Landing Fields",
+          "templateId": "Defend",
+          "root": true,
+          "situation": "Open ground between the forest edge and the DropShip pads. Roshak's Trinary comes out of the trees at dawn. You hold the fields; the yards above depend on it.\n\nDefend: you (Defender) hold ground against a stronger enemy in the open.",
+          "deployment": "Short edges. You (Defender) set up within 8 hexes of your home edge — the pads are three Level 3 buildings on your edge. The Falcons (Attacker) enter Turn 1 from the forest edge (Heavy Woods for the first 3 hexes of their side). Artillery permitted both sides from Turn 3.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Hold the Fields — half your force within 6 hexes of the pads at end of Turn 4.",
+              "vp": 100,
+              "side": "defender"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV in your half than the Falcons at end of Turn 8.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Captain Roshak's Turkina.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Reach the Pads — a Falcon unit adjacent to a pad building at end of any turn.",
+              "vp": 300,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "A track win adds to Fields Held.",
+          "trackEnd": "End of Turn 8, or when one side has no non-crippled 'Mechs in the defender's half.",
+          "salvagePolicy": "Shared — the Coalition's claim first; your share as SP.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.0
+          },
+          "forks": [
+            {
+              "outcomeGate": "SUCCESS",
+              "nextTrackId": "t2a",
+              "trigger": "The fields held. Roshak is committing everything to the ground link.",
+              "consequence": "The rail line to the yard elevator — hold it or the yards go dark.",
+              "threat": "HIGH"
+            },
+            {
+              "outcomeGate": "FAILURE",
+              "nextTrackId": "t2b",
+              "trigger": "The fields fell. The Hounds are pulling you back to the yard-control station.",
+              "consequence": "Hold the station. It is the last thing between the Falcons and the shipyards.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2a",
+          "name": "The Ground Link",
+          "templateId": "Defend",
+          "situation": "The rail line from the fields to the orbital elevator's ground station is the yards' only supply. Roshak has stopped raiding and is coming for it in force. Hold the line's four bridges.",
+          "deployment": "Long edges. You (Defender) set up within 4 hexes of the rail line — four Medium bridge structures (Level 2) across the center; the Falcons (Attacker) enter Turn 1 from their home edge. Destroying a bridge cuts the link.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Hold the Bridges — three of four bridge structures standing at end of Turn 8.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV within 4 hexes of the rail line than the Falcons at end of Turn 8.",
+              "vp": 200,
+              "side": "defender"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Captain Roshak's Turkina.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Cut the Link — destroy two of the four bridges.",
+              "vp": 300,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "Bridges take 30 damage to destroy. A track win adds to Fields Held.",
+          "trackEnd": "End of Turn 8, or when two bridges are destroyed.",
+          "salvagePolicy": "Pool-draft; the Coalition's claim first.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.1
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "Roshak has one Trinary left and one target: the DropShip pads themselves.",
+              "consequence": "The last throw. Break it and the Coalition's first outside contract ends in a victory.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2b",
+          "name": "Yard Control",
+          "templateId": "Defend",
+          "situation": "The fields are Roshak's. The Hounds have pulled you back to the elevator's ground station — the building that talks to the shipyards. If the Falcons take it, the yards are cut off from the world below. Hold it.",
+          "deployment": "Short edges. You (Defender) set up within 6 hexes of the ground station — a Heavy building (Level 3) at center of your half; the Falcons (Attacker) enter Turn 1. The station's approach is Level 1 rough with scattered Light buildings.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Hold the Station — half your force within 3 hexes of the ground station at end of Turn 4.",
+              "vp": 100,
+              "side": "defender"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV within 6 hexes of the station than the Falcons at end of Turn 8.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Captain Roshak's Turkina.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Take the Station — a Falcon unit adjacent to the ground station at end of any turn from Turn 5.",
+              "vp": 300,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "The station is not a target — Roshak wants it intact. A track win adds to Fields Held.",
+          "trackEnd": "End of Turn 8, or when a Falcon unit holds a hex adjacent to the station at end of a turn.",
+          "salvagePolicy": "Winner-all (paid as SP at your salvage %); the Coalition's claim first.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.2
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "Roshak has one Trinary left and one target: the DropShip pads.",
+              "consequence": "The last throw, with the fields already his.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t3",
+          "name": "The Pads",
+          "templateId": "Assault",
+          "situation": "Roshak's last Trinary is dug in on the DropShip pads he took or is coming for the ones you kept. Either way it ends here: retake the pads, or hold them, and the Gutheim holdout is finished. The Hounds are watching.",
+          "deployment": "If Fields Held is 1+: you (Defender) hold the pads (three Level 3 buildings on your edge), the Falcons (Attacker) enter Turn 1. If Fields Held is 0: the Falcons (Defender) hold the pads on THEIR edge and you (Attacker) enter Turn 1 to retake them. Short edges either way.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "The Pads — hold two of three pad buildings at end of Turn 8.",
+              "vp": 300,
+              "side": "both"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV within 6 hexes of the pads than the enemy at end of Turn 8.",
+              "vp": 200,
+              "side": "both"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Captain Roshak's Turkina.",
+              "vp": 200,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "At contract close: pads and ground link the Coalition's = the bonus pays and the Hounds add your name to their list. Pads lost = -1 Reputation; the Coalition's fleet is stranded until the Hounds come north themselves.",
+          "trackEnd": "End of Turn 8, or when one side holds all three pads at end of a turn.",
+          "salvagePolicy": "Pool-draft; the Coalition's claim first, your share as SP.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.0
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "The Gutheim Trinary is broken, or the pads are Falcon.",
+              "consequence": "Contract closes; settle Fields Held and Reputation.",
+              "threat": "LOW"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hs-hin-03",
+      "title": "The Crater at Hammarr",
+      "world": "Sudeten",
+      "employer": "Alyina Mercantile League — Factor's expedition (Sea Fox-backed)",
+      "type": "Raid / Recovery",
+      "singleSided": true,
+      "blurb": "Hammarr is a crater — a Khan dropped a WarShip on it. The Falcon remnant still holds the mines and the Trellshire plant on Holcomb. The League hires you to take the plant's tooling out from under them.",
+      "systemProfile": {
+        "starType": "K5V",
+        "rechargeHours": 196,
+        "positionInSystem": "4th",
+        "timeToJumpPointDays": 4.12,
+        "satellites": "2 (Saar, Sule)",
+        "surfaceGravity": 1.0,
+        "atmPressure": "Standard (Breathable)",
+        "equatorialTempC": 30,
+        "climate": "Cool-Temperate",
+        "surfaceWaterPct": 70,
+        "rechargeStation": "Zenith",
+        "hpgClass": "A",
+        "highestNativeLife": "Mammals",
+        "population": 3133000000,
+        "populationYear": 3150,
+        "landmasses": [
+          "Dargoth",
+          "Holcomb",
+          "Jarho Islands"
+        ],
+        "capitalCity": "Hammarr"
+      },
+      "situation": "Sudeten was the Jade Falcon Occupation Zone's capital for the better part of a century, and then, in 3136, it was where the Falcons fought their own civil war. The winner ended it by dropping a crippled WarShip onto Hammarr. The capital and everyone in it ceased to exist. The Falcons kept the world anyway; the Raptor Keshik has garrisoned it ever since, and in 3152 it is one of the last places in the old Zone where a Falcon banner still flies over anything.\n\nWhat it flies over is worth having. The Compton iron mines on Holcomb are the deepest in the region. Trellshire Heavy Industries' Eldron plant still stands beside them, and its tooling — the jigs, the presses, the assembly line that built OmniMechs for the Falcons — is the kind of thing that makes a state. The Alyina Mercantile League is trying to become a state. It has factories on Alyina and buyers in every Sea Fox enclave in the Hinterlands. It does not have Trellshire's tooling, and the Falcons on Sudeten will not sell it, because they are warriors and the League is merchants and there is nothing a Falcon warrior despises more.\n\nThe Factor's expedition is your contract. Land on Holcomb, reach the Eldron plant, and get the tooling onto the League's DropShips while the Raptor Keshik is looking at the mines. It is a raid, not a conquest; the League does not want Sudeten and could not hold it. It wants the machines that make machines. The Falcons will fight for them the way they fight for anything — hard, by their own rules, and to the end.",
+      "contract": {
+        "scale": 2,
+        "intensity": 2,
+        "lengthMonths": 2,
+        "steps": {
+          "basePay": 7,
+          "support": 5,
+          "transport": 8,
+          "salvage": 4,
+          "command": 8
+        },
+        "enemyFaction": "Clan Jade Falcon",
+        "constraints": "Command Independent — the Factor's expedition manager is a merchant, not a soldier; you run the raid. Salvage Shared: the tooling is the League's; Falcon wrecks are split by share, and the League pays cash for its half.",
+        "additionalRequirements": "Track Scale 2 or higher; minimum fielded force 5,000 BV / 200 PV. Recovery-capable — at least two units able to load and carry heavy tooling (engineering vehicles, or 'Mechs with hands and a flatbed).",
+        "bonus": "The line comes home — if the Eldron tooling reaches the League's ships, +2 Reputation with the Alyina Mercantile League and Clan-grade purchase access at League prices for the rest of the campaign."
+      },
+      "missionBrief": {
+        "behindScenes": "Star Colonel Mattlov's Keshik is a Trinary of veterans who chose to stay on a crater rather than follow the touman to Terra. They guard the mines because the mines feed the plant, and the plant is the last thing on Sudeten that makes them warriors rather than caretakers. If Track 1 gets the tooling loaded, Mattlov comes down on the loading yard (2a). If the plant holds, the League orders you at the mine head instead — the ore stockpile is worth something too (2b).",
+        "complications": [
+          {
+            "roll": "1-3",
+            "effect": "None."
+          },
+          {
+            "roll": "4",
+            "effect": "Zellbrigen. A Falcon warrior challenges your commander. Accept: one-on-one until one is crippled. Refuse or interfere: the Falcons drop honor rules for the track."
+          },
+          {
+            "roll": "5",
+            "effect": "The crater wind. Ash from the Hammarr impact still blows across Holcomb: visibility 8 hexes, +1 to-hit at long range, both sides, all track."
+          },
+          {
+            "roll": "6",
+            "effect": "Plant workers. The Eldron line is still staffed by the Falcon laborer caste. Any tooling loaded while workers are in the hall costs -1 Reputation with the League unless the hall is cleared first (a friendly unit ends a move adjacent before loading)."
+          },
+          {
+            "roll": "7",
+            "effect": "Elementals in the mine head. A Point of five Elementals begins hidden in any building hex on the Falcon side; reveals when adjacent to a friendly unit."
+          },
+          {
+            "roll": "8+",
+            "effect": "Roll twice, ignore repeats."
+          }
+        ],
+        "contractVictory": "The Eldron plant's tooling is loaded onto the League's DropShips and lifted. The contract pays on tooling recovered (Track 1); the bonus pays on it reaching orbit (Track 2a).",
+        "tally": "Tooling Out — the plant's tooling counts as three loads. Each load lifted counts 1. At 3, the bonus pays. At 0, -1 Reputation: the Factor's expedition was for nothing.",
+        "namedCharacters": [
+          {
+            "name": "Star Colonel Dahl Mattlov",
+            "role": "OpFor commander — Raptor Keshik remnant, Sudeten garrison",
+            "chassis": "Turkina",
+            "skill": "Gunnery 1 / Piloting 2",
+            "rule": "Joins from Track 1. Will accept zellbrigen. Fights to protect the plant: will not fire on a target if the line passes through the Eldron hall. If crippled, the Keshik withdraws to the mines and Track 2a is unopposed for 2 turns."
+          },
+          {
+            "name": "Factor Sennet Kalasa",
+            "role": "Employer — Alyina Mercantile League expedition manager",
+            "chassis": "None (aboard the League DropShip)",
+            "skill": "—",
+            "rule": "Not on the field. Confirms each load by radio. If two or more loads are lost after being loaded, she withholds the bonus and pays base only."
+          }
+        ],
+        "purchaseOptions": "None on Sudeten. The League's ships carry ammunition and armor at League cost, loaded at the yard."
+      },
+      "tracks": [
+        {
+          "id": "t1",
+          "name": "The Eldron Hall",
+          "templateId": "Objective Raid",
+          "root": true,
+          "situation": "The Trellshire plant on Holcomb — one assembly hall, three tooling bays inside it, and a Falcon garrison at the mine head two kilometers off. Get in, load the tooling, get it moving before the Keshik reacts.\n\nObjective raid: you (Attacker) must reach, hold, and recover from a specific building.",
+          "deployment": "Long edges. The Falcons (Defender) set up within 4 hexes of the mine head — a Heavy building (Level 3) on their edge; the Eldron hall is a Heavy building (Level 3) at center. You (Attacker) enter Turn 1. LOADING: a recovery-capable unit ends its move adjacent to the hall and does not fire; at end of the next turn one load is aboard it. Three loads total.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Reach the Hall — a recovery-capable unit adjacent to the Eldron hall by end of Turn 3.",
+              "vp": 100,
+              "side": "attacker"
+            },
+            {
+              "text": "Load the Line — two of three loads aboard friendly units by end of Turn 8.",
+              "vp": 250,
+              "side": "attacker"
+            },
+            {
+              "text": "All Three — all three loads aboard by end of Turn 8.",
+              "vp": 100,
+              "side": "attacker"
+            },
+            {
+              "text": "Hold the Plant — half the Falcon force within 3 hexes of the hall at end of Turn 6.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Drop the Load — cripple or destroy a friendly unit carrying a load.",
+              "vp": 250,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "Falcons will not fire through the hall. A crippled carrier drops its load in place; another carrier may re-load it (one turn). Plant-workers complication applies here.",
+          "trackEnd": "End of Turn 8.",
+          "salvagePolicy": "Shared — Falcon wrecks split by share; the League pays cash for its half.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 0.9
+          },
+          "forks": [
+            {
+              "outcomeGate": "SUCCESS",
+              "nextTrackId": "t2a",
+              "trigger": "The tooling is loaded. Mattlov has seen the carriers and is coming for the yard.",
+              "consequence": "Get the loads to the League's DropShips with the Keshik on you.",
+              "threat": "HIGH"
+            },
+            {
+              "outcomeGate": "FAILURE",
+              "nextTrackId": "t2b",
+              "trigger": "The plant held. The Factor orders a second try at the mine head — the ore stockpile.",
+              "consequence": "Strike the stockpile. Not the machines that make machines; the iron that feeds them.",
+              "threat": "MEDIUM"
+            }
+          ]
+        },
+        {
+          "id": "t2a",
+          "name": "The Loading Yard",
+          "templateId": "Retreat",
+          "situation": "Three carriers with the Eldron tooling aboard, six kilometers of Holcomb road to the League's DropShips, and the Raptor Keshik behind you. The ships lift with what reaches them.",
+          "deployment": "Short edges, same-edge start. You (Defender) and the three carriers enter from the Falcon edge Turn 1; the Falcons (Attacker) enter their own edge Turn 2. The League DropShips are Level 3 buildings on your home edge; a carrier adjacent to one has delivered its load. Road paved; crater ash rules if rolled.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Two Loads Home — deliver two of three loads to the DropShips.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "The Whole Line — deliver all three loads by end of Turn 8.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Gauntlet — exit half your force by count into the DropShips; crippled units that make it count.",
+              "vp": 100,
+              "side": "defender"
+            },
+            {
+              "text": "Drop the Load — cripple or destroy a carrier before it delivers.",
+              "vp": 250,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "Each load delivered adds to Tooling Out. If Mattlov was crippled in Track 1, the Falcons do not enter until Turn 4. The ships lift at end of Turn 8.",
+          "trackEnd": "End of Turn 8.",
+          "salvagePolicy": "Defender keeps none unless the Attacker fails to win; then owners recover their own.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.1
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "The League's ships lift.",
+              "consequence": "Contract closes; settle Tooling Out and Reputation.",
+              "threat": "LOW"
+            }
+          ]
+        },
+        {
+          "id": "t2b",
+          "name": "The Compton Head",
+          "templateId": "Strike",
+          "situation": "The plant is Mattlov's. The Factor will take the mine's ore stockpile instead — refined iron the League can sell, sitting in four storage domes at the Compton mine head with the Keshik quartered beside them. Wreck what you cannot carry.",
+          "deployment": "Long edges. The Falcons (Defender) set up within 4 hexes of four Medium domes (Level 2) at the mine head on their side of center; one is secretly the refined-ore store (HQ). You (Attacker) enter Turn 1. Scans identify domes (Strike reveal rules). A recovery-capable unit adjacent to the identified ore store for a full turn loads one load.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Case the Head — scan 2 domes, or find the ore store.",
+              "vp": 50,
+              "side": "attacker"
+            },
+            {
+              "text": "Load or Burn — load one load from the ore store, OR destroy it after scanning.",
+              "vp": 250,
+              "side": "attacker"
+            },
+            {
+              "text": "Rough Up the Head — destroy half the domes.",
+              "vp": 100,
+              "side": "attacker"
+            },
+            {
+              "text": "Hold the Head — half the Falcon force within reach of the domes at end of Turn 6.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Isorla — cripple or destroy a third of your force before end of Turn 10.",
+              "vp": 250,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "One ore load counts 1 toward Tooling Out (the Factor takes what she can get). Falcons will not fire through a dome.",
+          "trackEnd": "End of Turn 10, or when the ore store is loaded or destroyed and no friendly unit is within 3 hexes of a standing dome.",
+          "salvagePolicy": "Shared — Falcon wrecks split by share.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.1
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "The mine head is decided and the League's ships will not wait.",
+              "consequence": "Contract closes; settle Tooling Out and Reputation.",
+              "threat": "LOW"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hs-hin-04",
+      "title": "The Horses' Tithe",
+      "world": "Tamar",
+      "employer": "Isle of Skye — provisional government (reconnaissance in force)",
+      "type": "Expedition / Armed Reconnaissance",
+      "singleSided": true,
+      "blurb": "Hell's Horses took Tamar in 3137 without firing a shot and have never been tested there. The Isle of Skye wants to know whether they would fight for it. You are the question.",
+      "systemProfile": {
+        "starType": "G6V",
+        "rechargeHours": 187,
+        "positionInSystem": "3rd",
+        "timeToJumpPointDays": 7.01,
+        "satellites": "2 (Karachi, Islamabad)",
+        "surfaceGravity": 1.2,
+        "atmPressure": "Standard (Breathable)",
+        "equatorialTempC": 36,
+        "climate": "Temperate",
+        "surfaceWaterPct": 32,
+        "rechargeStation": "Zenith",
+        "hpgClass": "A",
+        "highestNativeLife": "Plants",
+        "population": 2194686000,
+        "populationYear": 3079,
+        "landmasses": [
+          "Dilis",
+          "Amirani",
+          "Kopala",
+          "Zadeni"
+        ],
+        "capitalCity": "Tamar City"
+      },
+      "situation": "Tamar is a big, heavy, mined-out world with no ozone layer and a population whose skin has gone red from a century of raw sunlight. Clan Wolf held it for eighty years and then, in 3137, the Wolf warrior caste simply left — packed the touman onto DropShips and went to build an Empire somewhere the sun was kinder. Clan Hell's Horses walked in behind them. Epsilon Galaxy annexed the world without a fight, because there was nobody left to fight, and has garrisoned it ever since as the Horses' southern anchor against a Wolf Empire that has never come back for it.\n\nThe Isle of Skye is thirty light-years away and three months old. It has a parliament, a militia, and a border it does not understand. The Horses on Tamar are the nearest Clan force to New London that is not a Wolf garrison, and nobody in the new government knows whether Epsilon Galaxy is a threat, a neighbor, or a Galaxy that would rather be somewhere else. The Horses have not said. The Horses do not, as a rule, say.\n\nYou are the Isle's reconnaissance in force. Land on Kopala, where the Horses keep their Industriplex and the old Wolf sites, and find out what Epsilon Galaxy does when a mercenary command walks onto its ground. Map their dispositions, count their Points, and — this is the part the committee wrote in smaller type — see whether they fight for Tamar or merely occupy it. Tamar's gravity is 1.2 g. Everything you do here, you do carrying a fifth more than you are used to.",
+      "contract": {
+        "scale": 2,
+        "intensity": 3,
+        "lengthMonths": 3,
+        "steps": {
+          "basePay": 6,
+          "support": 6,
+          "transport": 7,
+          "salvage": 4,
+          "command": 8
+        },
+        "enemyFaction": "Clan Hell's Horses",
+        "constraints": "Command Independent — the Isle has no officer to send and says so. Salvage Full: whatever you bring back from Tamar is yours; the committee wants the intelligence, not the metal.",
+        "additionalRequirements": "Track Scale 2 or higher; minimum fielded force 5,000 BV / 200 PV. Recon-capable — at least one unit with an active probe or a recon designation. High-gravity capable: every unit fights at 1.2 g, all tracks.",
+        "bonus": "The neighbor's measure — if the Isle receives Epsilon Galaxy's dispositions (Track 1 scans complete) AND you have engaged and survived a Horses combat Trinary, +2 Reputation with the Isle of Skye and their next contract is a retainer."
+      },
+      "missionBrief": {
+        "behindScenes": "Galaxy Commander Tova Cobb of Epsilon commands a Galaxy that has not fought a real battle on Tamar in fifteen years and knows it. She will let you land (Track 1) and watch — because a Horses commander tests before she commits. If you get your scans, she comes out to meet you in force on the Kopala plain (2a); if the recon fails and you are caught inside her lines, she runs you down (2b). Track 3 is the answer to the committee's small-type question — the Horses hold their Industriplex against you, and you learn whether they would.",
+        "complications": [
+          {
+            "roll": "1-3",
+            "effect": "None."
+          },
+          {
+            "roll": "4",
+            "effect": "Zellbrigen. A Horses warrior challenges your commander. Accept: one-on-one until one is crippled. Refuse or interfere: the Horses drop honor rules for the track."
+          },
+          {
+            "roll": "5",
+            "effect": "Horses combined arms. Epsilon fields the way the Horses do: two Points of Clan vehicles (Regular) join the OpFor from Turn 2. Their 'Mechs will not fire on a target a vehicle is already engaging."
+          },
+          {
+            "roll": "6",
+            "effect": "The Tamar sun. No ozone: any unit that ends two consecutive turns in the open (no woods, no building) takes +1 heat from Turn 4 on, all sides."
+          },
+          {
+            "roll": "7",
+            "effect": "Elementals on the Industriplex. A Point of five Elementals begins hidden in any building hex on the Horses side; reveals when adjacent to a friendly unit."
+          },
+          {
+            "roll": "8+",
+            "effect": "Roll twice, ignore repeats."
+          }
+        ],
+        "contractVictory": "The Isle receives Epsilon Galaxy's dispositions and a report on whether the Horses fight for Tamar. The contract pays on the scans (Track 1); the bonus pays on the scans plus an engagement survived.",
+        "tally": "Measure Taken — Track 1 scans complete count 1; each later track you survive with half your force counts 1. At 2+, the bonus pays. At 0, -1 Reputation: the Isle learned nothing but your losses.",
+        "namedCharacters": [
+          {
+            "name": "Galaxy Commander Tova Cobb",
+            "role": "OpFor commander — Clan Hell's Horses Epsilon Galaxy, Tamar",
+            "chassis": "Kodiak",
+            "skill": "Gunnery 2 / Piloting 3",
+            "rule": "Joins from Track 2. Will accept zellbrigen only after her vehicles have engaged (she tests first). If crippled, Epsilon does not contest Track 3 — the Industriplex is held by its garrison Trinary alone."
+          },
+          {
+            "name": "Star Captain Rennick",
+            "role": "Epsilon Galaxy — the watching Trinary",
+            "chassis": "Stone Rhino",
+            "skill": "Gunnery 3 / Piloting 3",
+            "rule": "On the field in Track 1 as observer. Will not fire until fired upon or until a scan is complete. If your force fires first, the Horses drop honor rules for the contract."
+          }
+        ],
+        "purchaseOptions": "None on Tamar. The Isle's transport carries ammunition at cost. Salvage is full share — Horses vehicles and 'Mechs recovered are yours."
+      },
+      "tracks": [
+        {
+          "id": "t1",
+          "name": "The Kopala Sites",
+          "templateId": "Recon",
+          "root": true,
+          "situation": "Land, walk, and scan. The old Wolf Clan sites and the HH Industriplex on Kopala are what the Isle wants mapped. Rennick's Trinary is watching from the ridge — and will not fire unless you do.\n\nRecon: you (Attacker) gather information and get out; the enemy denies it.",
+          "deployment": "Long edges. The Horses (Defender) set up within 4 hexes of the Industriplex — three Heavy buildings (Level 3) on their side of center; the old Wolf sites are four Medium buildings (Level 2) scattered across center. You (Attacker) enter Turn 1. SCAN: a unit ends its move adjacent to a site or the Industriplex and does not fire; it is scanned. 1.2 g: all units -1 MP running, jump range -1.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Map the Sites — scan three of the four old Wolf sites.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Read the Plex — scan the Industriplex.",
+              "vp": 200,
+              "side": "attacker"
+            },
+            {
+              "text": "Walk Out — exit half your force by count off your home edge after scanning.",
+              "vp": 100,
+              "side": "attacker"
+            },
+            {
+              "text": "Deny — no scan of the Industriplex by end of Turn 8.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "Isorla — cripple or destroy a third of your force.",
+              "vp": 150,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "Rennick's Trinary does not fire until fired upon OR the Industriplex is scanned. Scans complete count toward Measure Taken.",
+          "trackEnd": "End of Turn 8, or when all scans are complete and no friendly unit remains on the map.",
+          "salvagePolicy": "Full — yours.",
+          "opfor": {
+            "faction": "Clan Hell's Horses",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 0.8
+          },
+          "forks": [
+            {
+              "outcomeGate": "SUCCESS",
+              "nextTrackId": "t2a",
+              "trigger": "The scans are the Isle's. Cobb is coming out to meet you on the plain.",
+              "consequence": "Epsilon Galaxy's answer to a recon in force: a meeting in the open, at 1.2 g.",
+              "threat": "HIGH"
+            },
+            {
+              "outcomeGate": "FAILURE",
+              "nextTrackId": "t2b",
+              "trigger": "The recon failed and you are inside the Horses' lines. Cobb is running you down.",
+              "consequence": "Get off Kopala with what you have. The Horses pursue.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2a",
+          "name": "The Kopala Plain",
+          "templateId": "Meeting Engagement",
+          "situation": "Cobb brings a combat Trinary onto the open plain south of the Industriplex and waits. It is the Horses' way — meet the question with the answer. Nobody dictates this one.",
+          "deployment": "Long edges. Both sides set up within 6 hexes of their home edge on open ground with scattered Level 1 hills and Light Woods. 1.2 g: all units -1 MP running, jump range -1. If the Horses combined-arms complication is rolled, the vehicles enter Turn 2 from the Horses edge.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Hold the Center — half your force within 4 hexes of map center at end of Turn 4.",
+              "vp": 100,
+              "side": "both"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV within 6 hexes of center than the enemy at end of Turn 10.",
+              "vp": 300,
+              "side": "both"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Galaxy Commander Cobb's Kodiak.",
+              "vp": 200,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "Surviving with half your force counts toward Measure Taken.",
+          "trackEnd": "End of Turn 10, or when one side has no non-crippled 'Mechs within 6 hexes of center.",
+          "salvagePolicy": "Full — yours.",
+          "opfor": {
+            "faction": "Clan Hell's Horses",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.1
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "The committee's small-type question remains. Do the Horses hold the Industriplex?",
+              "consequence": "Strike the plex. The answer is whether they fight for it.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2b",
+          "name": "Off Kopala",
+          "templateId": "Retreat",
+          "situation": "The scans failed, Rennick's Trinary has your measure, and Cobb has sent a second Trinary to close the road to your DropShips. Get off Kopala with what you have — the Isle learns from survivors.",
+          "deployment": "Short edges, same-edge start. You (Defender) enter from the Horses edge Turn 1; the Horses (Attacker) enter their own edge Turn 2. Your DropShips are Level 3 buildings on your home edge. 1.2 g: all units -1 MP running, jump range -1. Road paved down the center; rough hills either side.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Gauntlet — exit half your force by count into the DropShips; crippled units that make it count.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "Bring the Wounded — exit a crippled unit into a DropShip.",
+              "vp": 100,
+              "side": "defender"
+            },
+            {
+              "text": "Bite Back — cripple or destroy 25% of the Horses force.",
+              "vp": 100,
+              "side": "defender"
+            },
+            {
+              "text": "Run Them Down — cripple or destroy half your force before it exits.",
+              "vp": 300,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "Surviving with half your force counts toward Measure Taken. The DropShips lift at end of Turn 8.",
+          "trackEnd": "End of Turn 8.",
+          "salvagePolicy": "Defender keeps none unless the Attacker fails to win; then owners recover their own.",
+          "opfor": {
+            "faction": "Clan Hell's Horses",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.2
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "The Isle wants one more try at the question before the transport leaves orbit.",
+              "consequence": "Strike the Industriplex from a second landing. Find out if they hold it.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t3",
+          "name": "The Industriplex",
+          "templateId": "Strike",
+          "situation": "The last question. Hit the HH Industriplex — the one thing on Tamar the Horses built themselves — and see whether Epsilon Galaxy defends it like a possession or like a home. The committee will read the difference in your losses.",
+          "deployment": "Long edges. The Horses (Defender) set up within 4 hexes of the Industriplex — three Heavy buildings (Level 3) on their side of center; one is secretly the Galaxy command post (HQ). You (Attacker) enter Turn 1. Scans identify buildings (Strike reveal rules). 1.2 g: all units -1 MP running, jump range -1.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Case the Plex — scan 2 buildings, or find the command post.",
+              "vp": 50,
+              "side": "attacker"
+            },
+            {
+              "text": "Hit the Post — destroy the command post after scanning it.",
+              "vp": 250,
+              "side": "attacker"
+            },
+            {
+              "text": "Walk Out Again — exit half your force by count off your home edge after Turn 6.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Hold the Plex — half the Horses force within reach of the buildings at end of Turn 6.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Isorla — cripple or destroy a third of your force before end of Turn 10.",
+              "vp": 250,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "If Cobb was crippled in Track 2a, only the garrison Trinary defends (bvRatio 0.8). At contract close: Measure Taken 2+ = the bonus and the retainer; the Isle knows its neighbor.",
+          "trackEnd": "End of Turn 10, or when the command post is destroyed and no friendly unit is within 3 hexes of the plex.",
+          "salvagePolicy": "Full — yours.",
+          "opfor": {
+            "faction": "Clan Hell's Horses",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.1
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "The Isle has its answer, whatever it cost.",
+              "consequence": "Contract closes; settle Measure Taken and Reputation.",
+              "threat": "LOW"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hs-hin-05",
+      "title": "The Factor's Coup",
+      "world": "Alyina",
+      "employer": "Alyina Mercantile League — Factory Zone 4 security (Sea Fox-backed)",
+      "type": "Garrison / Factory Defense",
+      "singleSided": true,
+      "blurb": "The Falcon merchants took Alyina while the warriors were on Terra. Not every warrior went. The League hires you to hold Factory Zone 4 against the ones who stayed and want it back.",
+      "systemProfile": {
+        "starType": "K2V",
+        "rechargeHours": 193,
+        "positionInSystem": "1st",
+        "timeToJumpPointDays": 4.85,
+        "satellites": "None",
+        "surfaceGravity": 0.91,
+        "atmPressure": "High (Breathable)",
+        "equatorialTempC": 34,
+        "climate": "Warm-Temperate",
+        "surfaceWaterPct": 80,
+        "rechargeStation": "Nadir",
+        "hpgClass": "A",
+        "highestNativeLife": "Mammals",
+        "population": 57322000,
+        "populationYear": 3150,
+        "landmasses": [
+          "Noida",
+          "Hapur",
+          "Gurugram",
+          "Palwal",
+          "Jewar",
+          "Aligahr",
+          "Soron",
+          "Cinque Terre",
+          "Monterosso"
+        ],
+        "capitalCity": "New Delhi"
+      },
+      "situation": "Alyina is nine small continents on a world that is four-fifths ocean, and for forty years its whole economy was one thing: CJF Factory Zone 4, the Jade Falcons' industrial heart, moved here after the Jihad and fed until it was the only thing on the planet that mattered. The civilian towns went hungry so the assembly lines could eat. Then, in 3151, the Falcon touman lifted for Terra, and the warriors who ran Alyina went with it — and the merchant caste, which had been counting the cost of forty years of that, did the arithmetic and took the planet.\n\nFactor Marena's League was proclaimed in July. It has Sea Fox money behind it, a promise of diversification in front of it, and the Factory Zone in the middle. What it also has is a Binary of Falcon warriors who did not go to Terra — a garrison unit that was left behind because it was not good enough for the ilKhan's war, and which has spent the months since deciding that a merchant's coup is a thing a warrior can undo. They have a Star Colonel, a grudge, and the old Zone 4 test range in the Riscaldamento Mountains to plan from.\n\nThe League has no warriors of its own. It has you. Hold Factory Zone 4 — the assembly halls on the Mar Negro coast — against the warriors who built it. They will come through Tedesco Pass because it is the only way a Binary comes, and they will fight the way Falcons fight, and if they take the Zone back the Alyina Mercantile League is a footnote that lasted one summer.",
+      "contract": {
+        "scale": 2,
+        "intensity": 3,
+        "lengthMonths": 3,
+        "steps": {
+          "basePay": 7,
+          "support": 8,
+          "transport": 6,
+          "salvage": 5,
+          "command": 7
+        },
+        "enemyFaction": "Clan Jade Falcon",
+        "constraints": "Command Liaison — the League's security director is a former Falcon technician caste supervisor; she knows the Zone and directs the defense. Salvage Shared: Falcon wrecks are Zone 4 raw material; the League pays cash for its half.",
+        "additionalRequirements": "Track Scale 2 or higher; minimum fielded force 5,500 BV / 220 PV. Industrial — no unit may fire on an assembly hall; the Zone is the point.",
+        "bonus": "The line runs — if Factory Zone 4's halls are intact and the League's at contract end, +2 Reputation with the Alyina Mercantile League and Clan-grade purchase access at League prices for the rest of the campaign."
+      },
+      "missionBrief": {
+        "behindScenes": "Star Colonel Yael Malthus commands the Binary that was left behind and has never forgiven it. She wants the Zone intact — it is proof she was right to stay — so she attacks the halls' approaches, never the halls. Track 1 is her push through Tedesco Pass. If it holds, she goes around by the Bolliti Swamp (2a). If it breaks, the League pulls you into the halls themselves (2b). Track 3 is her last stand at the test range, or her last assault — whichever the tree earns.",
+        "complications": [
+          {
+            "roll": "1-3",
+            "effect": "None."
+          },
+          {
+            "roll": "4",
+            "effect": "Zellbrigen. A Falcon warrior challenges your commander. Accept: one-on-one until one is crippled. Refuse or interfere: the Falcons drop honor rules for the track."
+          },
+          {
+            "roll": "5",
+            "effect": "The technicians' 'Mechs. Two Zone 4 test-line OmniMechs (Green pilots, technician caste) join your side on Turn 3. They are fresh off the line and their pilots have never fought."
+          },
+          {
+            "roll": "6",
+            "effect": "Warrior sympathizers. One assembly hall's laborers side with Malthus: a hall on your side counts as a Falcon-controlled building for LOS and hidden units this track."
+          },
+          {
+            "roll": "7",
+            "effect": "Elementals in the pass. A Point of five Elementals begins hidden in any Level 1+ hex on the Falcon side; reveals when adjacent to a friendly unit."
+          },
+          {
+            "roll": "8+",
+            "effect": "Roll twice, ignore repeats."
+          }
+        ],
+        "contractVictory": "Factory Zone 4's assembly halls are intact and the League's at contract end, and Malthus's Binary is broken or gone. The contract pays on the halls; the bonus pays on the League still owning them.",
+        "tally": "Zone Held — each track you win counts 1. At 2+, the League stands and the bonus pays. At 0, Malthus retakes the Zone: -2 Reputation, and the Alyina Mercantile League ends.",
+        "namedCharacters": [
+          {
+            "name": "Star Colonel Yael Malthus",
+            "role": "OpFor commander — the Falcon Binary that stayed",
+            "chassis": "Gyrfalcon",
+            "skill": "Gunnery 2 / Piloting 2",
+            "rule": "Joins from Track 1. Will accept zellbrigen. Will NOT fire on an assembly hall or on a target if the line passes through one. If crippled, the Binary does not attack in Track 3 — it holds the test range instead."
+          },
+          {
+            "name": "Director Adaeze Okonkwo-Hazen",
+            "role": "League security director — liaison, former Zone 4 technician supervisor",
+            "chassis": "None (Zone 4 control room)",
+            "skill": "—",
+            "rule": "Not on the field. Knows the halls: once per track, she may reveal one hidden Falcon unit within the Zone by radio. If the technicians' 'Mechs complication is rolled, they are hers."
+          }
+        ],
+        "purchaseOptions": "Between tracks, Factory Zone 4 itself — any Falcon OmniMech the line makes, at League prices, on a 2D6 roll of 7+. After a track win, one captured Falcon machine may be bought at League cost."
+      },
+      "tracks": [
+        {
+          "id": "t1",
+          "name": "Tedesco Pass",
+          "templateId": "Defend",
+          "root": true,
+          "situation": "The only road from the mountains to the coast. Malthus brings her Binary down it at dawn. Hold the pass mouth and the halls behind you never see a Falcon.\n\nDefend: you (Defender) hold a chokepoint against a stronger enemy.",
+          "deployment": "Short edges. You (Defender) set up within 6 hexes of the pass mouth — a 3-hex-wide gap between Level 3 hills at center of your half; the Falcons (Attacker) enter Turn 1 from the mountain edge (Level 2 rough). The assembly halls are three Heavy buildings (Level 3) on your home edge.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Hold the Mouth — half your force within 3 hexes of the pass mouth at end of Turn 4.",
+              "vp": 100,
+              "side": "defender"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV within 6 hexes of the pass mouth than the Falcons at end of Turn 8.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Malthus's Gyrfalcon.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Through the Pass — exit a third of the Falcon force by BV off your home edge.",
+              "vp": 300,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "No unit may fire on an assembly hall. A track win adds to Zone Held.",
+          "trackEnd": "End of Turn 8, or when one side has no non-crippled 'Mechs within 6 hexes of the pass mouth.",
+          "salvagePolicy": "Shared — the League pays cash for its half.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.1
+          },
+          "forks": [
+            {
+              "outcomeGate": "SUCCESS",
+              "nextTrackId": "t2a",
+              "trigger": "The pass held. Malthus is going around — through the Bolliti Swamp.",
+              "consequence": "Meet her on the swamp's far side before she reaches the coast road.",
+              "threat": "MEDIUM"
+            },
+            {
+              "outcomeGate": "FAILURE",
+              "nextTrackId": "t2b",
+              "trigger": "The pass broke. The Director is pulling you into the halls.",
+              "consequence": "Hold the Zone from inside it. Malthus will not fire on the halls; you may not either.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2a",
+          "name": "The Bolliti Swamp",
+          "templateId": "Flank",
+          "situation": "Malthus is taking the Binary through the Bolliti Swamp to come at the coast road from the south. Catch her on the far bank while the swamp still has her — hit the flank before it becomes a front.",
+          "deployment": "Long edges. The Falcons (Defender) set up in march order on the swamp's far bank — the northern third is Swamp (Level 0, movement cost 2, no running); you (Attacker) enter Turn 1 from the south on firm ground. Light Woods along the bank.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Hit the Flank — engage the Falcon rear third before it clears the swamp.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Roll Them Up — cripple or destroy a third of the Falcon force by end of Turn 8.",
+              "vp": 250,
+              "side": "attacker"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Malthus's Gyrfalcon.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Clear the Swamp — exit half the Falcon force by BV off the coast-road edge.",
+              "vp": 300,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "Swamp hexes: no running, movement cost 2, a 'Mech that falls in one must make a PSR to stand. A track win adds to Zone Held.",
+          "trackEnd": "End of Turn 8, or when the Falcons have no non-crippled unit in the swamp.",
+          "salvagePolicy": "Pool-draft; the League pays cash for its half.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.0
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "Malthus has fallen back to the old test range with what she has left.",
+              "consequence": "Finish it at the range. Or let her hold it — the Director wants her gone, not martyred.",
+              "threat": "MEDIUM"
+            }
+          ]
+        },
+        {
+          "id": "t2b",
+          "name": "The Halls",
+          "templateId": "Pushback",
+          "situation": "The Binary is inside the Zone — on the approaches between the halls, not in them. Neither side will fire on the buildings. Push the Falcons back out onto the coast road, hall by hall, without wrecking the thing you are both fighting for.",
+          "deployment": "Long edges. The Falcons (Attacker) set up within 4 hexes of the halls — six Heavy buildings (Level 3) across center — having pushed in overnight. You (Defender) enter Turn 1 from your home edge. NO unit may fire on a hall or through one; LOS is blocked by halls for both sides.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Push — hold three of the six halls' adjacent hexes at end of Turn 5.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Clear the Zone — no non-crippled Falcon unit within 2 hexes of any hall at end of Turn 8.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Malthus's Gyrfalcon.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Hold the Zone — a Falcon unit within 2 hexes of a hall at end of Turn 8.",
+              "vp": 300,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "Any hall damaged by either side: that side loses 100 VP. A track win adds to Zone Held.",
+          "trackEnd": "End of Turn 8.",
+          "salvagePolicy": "Shared — the League pays cash for its half.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.2
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "Malthus has pulled the Binary back to the old test range.",
+              "consequence": "Finish it at the range, with the Zone already fought through.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t3",
+          "name": "The Test Range",
+          "templateId": "Assault",
+          "situation": "The old Zone 4 test range in the Riscaldamento foothills — where the Falcons proved the machines the halls built. Malthus holds it with what is left of her Binary. Take it, and the warriors who stayed are finished on Alyina.",
+          "deployment": "Short edges. The Falcons (Defender) set up within 6 hexes of the range — four Medium buildings (Level 2) and a Level 2 hill on their side; you (Attacker) enter Turn 1. If Malthus was crippled earlier, the Falcons are at bvRatio 0.7 and will not sortie.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Take the Range — hold three of the four range buildings at end of Turn 8.",
+              "vp": 300,
+              "side": "attacker"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV within 6 hexes of the range than the Falcons at end of Turn 8.",
+              "vp": 200,
+              "side": "attacker"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Malthus's Gyrfalcon.",
+              "vp": 200,
+              "side": "attacker"
+            },
+            {
+              "text": "Hold the Range — two of four range buildings Falcon at end of Turn 8.",
+              "vp": 300,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "At contract close: Zone Held 2+ = the bonus and Clan-grade access; the League has a summer that lasts. Zone Held 0 = -2 Reputation and Malthus's flag over the halls.",
+          "trackEnd": "End of Turn 8, or when one side holds three range buildings at end of a turn.",
+          "salvagePolicy": "Pool-draft; the League pays cash for its half.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.0
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "The warriors who stayed are broken, or the merchants are.",
+              "consequence": "Contract closes; settle Zone Held and Reputation.",
+              "threat": "LOW"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hs-hin-06",
+      "title": "Camora by Contract",
+      "world": "Twycross",
+      "employer": "Alyina Mercantile League — Twycross administration (Sea Fox-backed)",
+      "type": "Raid / Holdout Clearance",
+      "singleSided": true,
+      "blurb": "Twycross joined the League by handshake. The Falcon warriors in Doom Valley did not shake. The League hires you to clear the subterranean factory of the Star that will not sell.",
+      "systemProfile": {
+        "starType": "F0IV",
+        "rechargeHours": 171,
+        "positionInSystem": "3rd",
+        "timeToJumpPointDays": 21.94,
+        "satellites": "1 (Twycross III)",
+        "surfaceGravity": 1.0,
+        "atmPressure": "Standard (Breathable)",
+        "equatorialTempC": 65,
+        "climate": "Desert",
+        "surfaceWaterPct": 40,
+        "rechargeStation": "Zenith, Nadir",
+        "hpgClass": "A",
+        "highestNativeLife": "Mammals",
+        "population": 1237735000,
+        "populationYear": 3079,
+        "landmasses": [
+          "Twycross North",
+          "Twycross South",
+          "Big Island"
+        ],
+        "capitalCity": "Camora"
+      },
+      "situation": "A hundred years ago the Jade Falcons lost a Galaxy in the Great Gash on Twycross, and every Falcon since has been raised on the story. In 3151 they lost the world a second time without a shot — the touman left for Terra, the Zone fell apart behind it, and the Merchant Factor of Alyina sent an offer to the Merchant Factor of Camora. Administer Twycross for the League, keep the Sea Fox enclaves happy, and the Diabolis will blow over whatever flag you like. Camora shook on it. Twycross was one of the League's first three worlds.\n\nThe handshake did not reach Doom Valley. Trellshire Heavy Industries' subterranean plant on Big Island — the factory built under the desert so the Diabolis could not scour it — is held by a Star of Falcon warriors who were its test pilots and are now its owners, by their own reckoning. They have OmniMechs off the line, the plant's stores, and a hundred kilometers of tunnel. They will not sell. They will not leave. And the League cannot run a factory it cannot enter.\n\nYour contract is the clearance. Go into Doom Valley, take the plant's surface works, and then go under — into the assembly galleries where a Star of Falcons has decided to make its stand for a Clan that no longer exists here. The League wants the plant running. The Falcons want the story to end differently this time. The Diabolis, as ever, does not care.",
+      "contract": {
+        "scale": 2,
+        "intensity": 2,
+        "lengthMonths": 2,
+        "steps": {
+          "basePay": 7,
+          "support": 6,
+          "transport": 7,
+          "salvage": 5,
+          "command": 8
+        },
+        "enemyFaction": "Clan Jade Falcon",
+        "constraints": "Command Independent — the Camora administration has no soldiers and no opinions. Salvage Shared: what the Falcons wreck underground is the plant's; what you take from the Falcons is split, and the League buys its half.",
+        "additionalRequirements": "Track Scale 2 or higher; minimum fielded force 5,000 BV / 200 PV. Underground-capable for Track 2b — no unit over 75 tons enters the galleries; jump jets useless below.",
+        "bonus": "The plant runs — if Doom Valley's assembly galleries are the League's at contract end, +2 Reputation with the Alyina Mercantile League and one Trellshire OmniMech off the first League production run, at cost."
+      },
+      "missionBrief": {
+        "behindScenes": "Star Commander Reyes Chistu leads the test-pilot Star. They know every meter of the plant and will fight the surface works to keep you out of the tunnels (Track 1). If the surface falls, they go under and you follow (2a). If the surface holds, the League orders you to cut the plant's power instead — the Plain of Curtains relay farm (2b) — and starve them out.",
+        "complications": [
+          {
+            "roll": "1-3",
+            "effect": "None."
+          },
+          {
+            "roll": "4",
+            "effect": "Zellbrigen. A Falcon warrior challenges your commander. Accept: one-on-one until one is crippled. Refuse or interfere: the Falcons drop honor rules for the track."
+          },
+          {
+            "roll": "5",
+            "effect": "The Diabolis. The great sandstorm crosses the valley: from Turn 3, visibility 4 hexes, +2 to-hit beyond, both sides, surface tracks only."
+          },
+          {
+            "roll": "6",
+            "effect": "Test-line 'Mechs. The Falcons field two fresh OmniMechs off the Doom Valley line (Regular pilots) in addition to the OpFor. They are unpainted and their ammunition is short: one reload only."
+          },
+          {
+            "roll": "7",
+            "effect": "Sea Fox observers. A Sea Fox enclave lance (Veteran) watches from the valley rim. If you damage the surface works beyond the objectives, they report it: -1 Reputation with the League."
+          },
+          {
+            "roll": "8+",
+            "effect": "Roll twice, ignore repeats."
+          }
+        ],
+        "contractVictory": "Doom Valley's plant — surface works and galleries — is the League's at contract end with the Falcon Star broken or gone. The contract pays on the surface; the bonus pays on the galleries.",
+        "tally": "Plant Cleared — surface works taken counts 1; galleries cleared or power cut counts 1. At 2, the bonus pays. At 0, -1 Reputation: Camora administers a factory it still cannot enter.",
+        "namedCharacters": [
+          {
+            "name": "Star Commander Reyes Chistu",
+            "role": "OpFor commander — Doom Valley test-pilot Star",
+            "chassis": "Shrike",
+            "skill": "Gunnery 2 / Piloting 2",
+            "rule": "Joins from Track 1. Will accept zellbrigen. Fights to keep the galleries: if the surface falls, withdraws underground rather than die on it. If crippled underground, the Star surrenders the plant."
+          },
+          {
+            "name": "Merchant Factor Geran Vashti",
+            "role": "Employer — Camora administration for the League",
+            "chassis": "None (Camora)",
+            "skill": "—",
+            "rule": "Not on the field. Pays on the plant, not the bodies. If the assembly galleries are damaged beyond the objectives, he withholds the bonus."
+          }
+        ],
+        "purchaseOptions": "Between tracks, the Sea Fox enclaves in Camora — any Clan 'Mech up to heavy at enclave prices, on a 2D6 roll of 8+. After clearance, the Doom Valley line at League cost."
+      },
+      "tracks": [
+        {
+          "id": "t1",
+          "name": "The Surface Works",
+          "templateId": "Strike",
+          "root": true,
+          "situation": "Doom Valley's surface — the freight lifts, the power house, the test pads, and the vault door down to the galleries. Chistu's Star holds it to keep you out of the tunnels. Take the lifts, and you can go under.\n\nStrike: you (Attacker) hit a specific target inside an enemy position.",
+          "deployment": "Long edges. The Falcons (Defender) set up within 4 hexes of the works — five Medium buildings (Level 2) on their side of center; one is secretly the lift control (HQ). You (Attacker) enter Turn 1 from the valley floor (Level 0 sand, Level 1 dunes). Scans identify buildings (Strike reveal rules).",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Case the Works — scan 2 buildings, or find the lift control.",
+              "vp": 50,
+              "side": "attacker"
+            },
+            {
+              "text": "Take the Lifts — a friendly unit adjacent to the identified lift control at end of any turn from 4.",
+              "vp": 250,
+              "side": "attacker"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Commander Chistu's Shrike.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Hold the Works — half the Falcon force within reach of the buildings at end of Turn 6.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Isorla — cripple or destroy a third of your force before end of Turn 10.",
+              "vp": 250,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "The lift control must be taken, not destroyed — destroying it seals the galleries and Track 2a is unavailable. A track win adds to Plant Cleared.",
+          "trackEnd": "End of Turn 10, or when a friendly unit holds the lift control for two consecutive turns.",
+          "salvagePolicy": "Shared — the League buys its half.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.0
+          },
+          "forks": [
+            {
+              "outcomeGate": "SUCCESS",
+              "nextTrackId": "t2a",
+              "trigger": "The lifts are yours. Chistu has taken the Star underground.",
+              "consequence": "Into the galleries. No unit over 75 tons, no jump jets, and a Star that knows every turn.",
+              "threat": "HIGH"
+            },
+            {
+              "outcomeGate": "FAILURE",
+              "nextTrackId": "t2b",
+              "trigger": "The surface held. The Factor wants the plant's power cut instead.",
+              "consequence": "The relay farm on the Plain of Curtains. Starve them out.",
+              "threat": "MEDIUM"
+            }
+          ]
+        },
+        {
+          "id": "t2a",
+          "name": "The Galleries",
+          "templateId": "Objective Raid",
+          "situation": "The assembly galleries under Big Island — a hundred kilometers of tunnel and one Star of Falcons who tested every machine in them. Reach the main assembly hall and hold it. The plant is whoever stands in that hall.",
+          "deployment": "Short edges. The Falcons (Defender) set up within 4 hexes of the main assembly hall — a Heavy building (Level 3) at center of their half; the galleries are 2-hex-wide corridors between Level 4 rock. You (Attacker) enter Turn 1 from the lift shaft. Underground: no jumping; no unit over 75 tons; LOS blocked by rock; no artillery.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Reach the Hall — a friendly unit adjacent to the assembly hall by end of Turn 5.",
+              "vp": 100,
+              "side": "attacker"
+            },
+            {
+              "text": "Hold the Hall — more non-crippled BV/PV within 3 hexes of the hall than the Falcons, end of Turn 8.",
+              "vp": 250,
+              "side": "attacker"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Commander Chistu's Shrike.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Keep the Hall — half the Falcon force within 3 hexes of the hall at end of Turn 8.",
+              "vp": 300,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "Any damage to the assembly hall by either side: that side loses 100 VP. If Chistu is crippled here, the Star surrenders — the track ends as a win. A track win adds to Plant Cleared.",
+          "trackEnd": "End of Turn 8, or when Chistu is crippled.",
+          "salvagePolicy": "Shared — the League buys its half; what is wrecked below stays below.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.0
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "The galleries are decided.",
+              "consequence": "Contract closes; settle Plant Cleared and Reputation.",
+              "threat": "LOW"
+            }
+          ]
+        },
+        {
+          "id": "t2b",
+          "name": "The Relay Farm",
+          "templateId": "Objective Raid",
+          "situation": "Doom Valley runs on power relayed across the Plain of Curtains from Camora. Cut the relay farm and the galleries go dark — no lifts, no air, no line. The Falcons know it and have sent a Binary's worth of what they have to hold the farm.",
+          "deployment": "Long edges. The Falcons (Defender) set up within 4 hexes of the relay farm — four Light buildings (Level 1, the relay pylons) in a line across their side of center. You (Attacker) enter Turn 1 across open sand. Diabolis rules if rolled. A pylon takes 15 damage to destroy.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Cut the Line — destroy two of four relay pylons.",
+              "vp": 250,
+              "side": "attacker"
+            },
+            {
+              "text": "Dark — destroy all four pylons by end of Turn 8.",
+              "vp": 100,
+              "side": "attacker"
+            },
+            {
+              "text": "Walk Out — exit half your force by count off your home edge after the line is cut.",
+              "vp": 100,
+              "side": "attacker"
+            },
+            {
+              "text": "Keep the Lights — three of four pylons standing at end of Turn 8.",
+              "vp": 300,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "Cutting the line counts toward Plant Cleared — the Falcons cannot hold the galleries without power and surrender within the month.",
+          "trackEnd": "End of Turn 8, or when two pylons are destroyed and no friendly unit is within 3 hexes of the farm.",
+          "salvagePolicy": "Shared — the League buys its half.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 0.9
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "The plain is decided, and the Diabolis is coming back.",
+              "consequence": "Contract closes; settle Plant Cleared and Reputation.",
+              "threat": "LOW"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hs-hin-07",
+      "title": "Above the Barrens",
+      "world": "Hesperus II",
+      "employer": "Lyran Commonwealth — Defiance Industries security contract (LCAF-brokered)",
+      "type": "Garrison / Factory Defense",
+      "singleSided": true,
+      "blurb": "The largest 'Mech factory in the Inner Sphere sits above a jungle that kills at 80 degrees. The Wolf Empire wants it. The Lyrans hire you to hold the Myoo Mountains approaches — again.",
+      "systemProfile": {
+        "starType": "F2IV",
+        "rechargeHours": 173,
+        "positionInSystem": "2nd",
+        "timeToJumpPointDays": 18.75,
+        "satellites": "1 (Hesperus II-Alpha)",
+        "surfaceGravity": 1.01,
+        "atmPressure": "Standard (Breathable)",
+        "equatorialTempC": 85,
+        "climate": "Jungle",
+        "surfaceWaterPct": 40,
+        "rechargeStation": "Zenith, Nadir",
+        "hpgClass": "A",
+        "highestNativeLife": "Reptiles",
+        "population": 345600,
+        "populationYear": 3079,
+        "landmasses": [
+          "North Whitman",
+          "South Whitman",
+          "East Barrens",
+          "West Barrens"
+        ],
+        "capitalCity": "Maria's Elegy"
+      },
+      "situation": "Hesperus II has been invaded more times than any world in the Commonwealth, and every invader has wanted the same thing: Defiance Industries, in the Myoo Mountains of South Whitman, the largest BattleMech factory anywhere. In 3145 the Jade Falcons and Hell's Horses came together, the Wolves came a day behind them, and for two months three Clans fought each other above the jungle while the LCAF regrouped — and then the Lyrans came back from Canonbie and threw all of them off in a week. It is the kind of story Hesperus tells about itself, and it is true.\n\nIt is 3152 and the Wolf Empire is no longer a Clan on a raid. It is a state with Terra in it and an ilKhan on the throne, and it has not forgotten that Defiance builds the machines every enemy it has will fight it with. The LCAF garrison is two RCTs and the Jägers, and they are good — but the Wolves have been here before and know the mountain roads, and the Commonwealth has decided that the passes below Defiance need a mobile command that can move through jungle without waiting for orders from Tharkad.\n\nThe contract is Defiance's, brokered through the LCAF. Hold the southern approaches to the Myoo Mountains — the roads up from the Barrens' edge, where the habitable heights above three thousand meters give way to the jungle that reaches three bars of pressure and eighty degrees. Nothing survives long down there. The Wolves will come up through it anyway, because they always have. Meet them on the roads before they reach the plant, and Hesperus II tells one more story about itself.",
+      "contract": {
+        "scale": 2,
+        "intensity": 3,
+        "lengthMonths": 3,
+        "steps": {
+          "basePay": 8,
+          "support": 8,
+          "transport": 6,
+          "salvage": 4,
+          "command": 6
+        },
+        "enemyFaction": "Clan Wolf",
+        "constraints": "Command House — LCAF Fourth Royal Guards liaison; the Commonwealth directs the mountain defense. Salvage Exchange: Defiance claims every Wolf wreck (they will reverse-engineer it); you take cash at full value.",
+        "additionalRequirements": "Track Scale 2 or higher; minimum fielded force 6,000 BV / 240 PV. Jungle-capable — heat management matters below the tree line; no unit may enter the Barrens (instant loss to the environment).",
+        "bonus": "Defiance stands — if no Wolf unit reaches the Defiance perimeter during the contract, +2 Reputation with the Lyran Commonwealth and Defiance factory access: one 'Mech of any weight class off the line, at cost."
+      },
+      "missionBrief": {
+        "behindScenes": "Star Colonel Oleg Vickers commands a Wolf Empire Cluster that landed on the Barrens' edge — where nobody expects a landing — and is coming up the southern roads through the jungle. He has been on Hesperus before, in 3145, and lost. Track 1 is his lead Trinary on the Melrose road. If you hold, he flanks through the East Barrens tree line (2a). If the road falls, the Guards pull you back to the Defiance perimeter itself (2b). Track 3 is the Cluster's push on the plant — or its retreat back into the jungle.",
+        "complications": [
+          {
+            "roll": "1-3",
+            "effect": "None."
+          },
+          {
+            "roll": "4",
+            "effect": "Zellbrigen. A Wolf warrior challenges your commander. Accept: one-on-one until one is crippled. Refuse or interfere: the Wolves drop honor rules for the track."
+          },
+          {
+            "roll": "5",
+            "effect": "The jungle's edge. Any unit that ends its turn in a jungle hex (Heavy Woods below the road line) takes +3 heat that turn. Both sides."
+          },
+          {
+            "roll": "6",
+            "effect": "Defiance test pilots. Two Defiance factory 'Mechs (Regular, fresh off the line — Lyran assault designs) join your side on Turn 3. They may not leave the road."
+          },
+          {
+            "roll": "7",
+            "effect": "Elementals in the canopy. A Point of five Elementals begins hidden in any Heavy Woods hex on the Wolf side; reveals when adjacent to a friendly unit."
+          },
+          {
+            "roll": "8+",
+            "effect": "Roll twice, ignore repeats."
+          }
+        ],
+        "contractVictory": "No Wolf unit reaches the Defiance perimeter and the Cluster is broken or withdrawn at contract end. The contract pays on the roads; the bonus pays on the perimeter unbroken.",
+        "tally": "Roads Held — each track you win counts 1. At 2+, the perimeter never fell and the bonus pays. At 0, the Wolves reach Defiance: -2 Reputation, and the LCAF asks why they hired you.",
+        "namedCharacters": [
+          {
+            "name": "Star Colonel Oleg Vickers",
+            "role": "OpFor commander — Wolf Empire Cluster, the southern roads",
+            "chassis": "Warwolf",
+            "skill": "Gunnery 1 / Piloting 2",
+            "rule": "Joins from Track 1. Will accept zellbrigen. Was here in 3145 and knows the roads: Wolf units ignore the first jungle-heat penalty each track. If crippled, the Cluster withdraws in Track 3 rather than push."
+          },
+          {
+            "name": "Hauptmann Reinhardt Ostrowski",
+            "role": "LCAF Fourth Royal Guards — liaison",
+            "chassis": "Atlas",
+            "skill": "Gunnery 3 / Piloting 4",
+            "rule": "On the field from Track 1. Carries the Defiance release: if destroyed, the test-pilot complication cannot occur and Track 2b's perimeter garrison is -1 Initiative."
+          }
+        ],
+        "purchaseOptions": "Between tracks, Defiance Industries — any Lyran 'Mech the line makes, on a 2D6 roll of 6+ (it is the largest factory in the Sphere). At factory cost with the LCAF liaison's signature."
+      },
+      "tracks": [
+        {
+          "id": "t1",
+          "name": "The Melrose Road",
+          "templateId": "Defend",
+          "root": true,
+          "situation": "The road up from the Barrens' edge to Melrose Valley — the first paved ground above the jungle. Vickers's lead Trinary comes up it at dawn with the heat still climbing. Hold the switchbacks.\n\nDefend: you (Defender) hold ground against a stronger enemy coming uphill.",
+          "deployment": "Short edges. You (Defender) set up within 6 hexes of the upper switchback — Level 2 hills either side of a paved road climbing from Level 0 to Level 3 across the map; the Wolves (Attacker) enter Turn 1 from the jungle edge (Heavy Woods, jungle-heat if rolled). No unit may enter the Barrens (off the map's low edge).",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Hold the Switchback — half your force within 3 hexes of the upper switchback at end of Turn 4.",
+              "vp": 100,
+              "side": "defender"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV in the upper half than the Wolves at end of Turn 8.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Vickers's Warwolf.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Up the Road — exit a third of the Wolf force by BV off the upper edge.",
+              "vp": 300,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "A track win adds to Roads Held.",
+          "trackEnd": "End of Turn 8, or when one side has no non-crippled 'Mechs in the upper half.",
+          "salvagePolicy": "Exchange — Defiance claims the wrecks; cash at full value.",
+          "opfor": {
+            "faction": "Clan Wolf",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.1
+          },
+          "forks": [
+            {
+              "outcomeGate": "SUCCESS",
+              "nextTrackId": "t2a",
+              "trigger": "The road held. Vickers is flanking through the East Barrens tree line.",
+              "consequence": "Catch him at the tree line before he reaches the upper roads.",
+              "threat": "HIGH"
+            },
+            {
+              "outcomeGate": "FAILURE",
+              "nextTrackId": "t2b",
+              "trigger": "The road fell. The Guards are pulling you back to the Defiance perimeter.",
+              "consequence": "The last line. If a Wolf touches the fence, the bonus is gone.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2a",
+          "name": "The Tree Line",
+          "templateId": "Flank",
+          "situation": "Vickers has pulled the Cluster into the East Barrens tree line — the last strip of jungle a 'Mech can survive — and is working east to come at the upper roads from the side. Hit his column in the trees while the heat has it.",
+          "deployment": "Long edges. The Wolves (Defender) set up in march order along the tree line — the southern third is Heavy Woods (jungle-heat rules apply); you (Attacker) enter Turn 1 from the north on Level 1–2 hills. The Wolves ignore the first heat penalty (Vickers's rule).",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Hit the Flank — engage the Wolf rear third before it clears the tree line.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Roll Them Up — cripple or destroy a third of the Wolf force by end of Turn 8.",
+              "vp": 250,
+              "side": "attacker"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Vickers's Warwolf.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Clear the Trees — exit half the Wolf force by BV off the eastern edge.",
+              "vp": 300,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "Jungle heat: +3 heat per turn ended in the southern third, both sides. A track win adds to Roads Held.",
+          "trackEnd": "End of Turn 8, or when the Wolves have no non-crippled unit in the tree line.",
+          "salvagePolicy": "Exchange — Defiance claims the wrecks; cash at full value.",
+          "opfor": {
+            "faction": "Clan Wolf",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.0
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "Vickers has one push left in him, or one retreat. The Cluster is massing below the plant.",
+              "consequence": "The Defiance road. Everything the Wolves have, or everything they can carry out.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2b",
+          "name": "The Perimeter",
+          "templateId": "Defend",
+          "situation": "The Defiance perimeter — the outer fence of the largest factory in the Inner Sphere, on the Myoo Mountains' shoulder. The Guards hold the plant; you hold the fence. If a Wolf touches it, the Commonwealth's bonus is gone and the story changes.",
+          "deployment": "Short edges. You (Defender) set up within 6 hexes of the perimeter fence — a line of Light buildings (Level 1, the fence towers) across your half; the Wolves (Attacker) enter Turn 1 up the road. Defiance's outbuildings (Heavy, Level 3) are behind the fence on your home edge.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Hold the Fence — half your force within 3 hexes of the fence line at end of Turn 4.",
+              "vp": 100,
+              "side": "defender"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV within 6 hexes of the fence than the Wolves at end of Turn 8.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Vickers's Warwolf.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Touch the Fence — a Wolf unit adjacent to a fence tower at end of any turn from Turn 5.",
+              "vp": 300,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "If a Wolf unit ever ends a turn adjacent to the fence, the contract bonus is forfeit regardless of the track result. A track win adds to Roads Held.",
+          "trackEnd": "End of Turn 8, or when a Wolf unit holds a hex adjacent to the fence at end of a turn.",
+          "salvagePolicy": "Exchange — Defiance claims the wrecks; cash at full value.",
+          "opfor": {
+            "faction": "Clan Wolf",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.2
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "Vickers is massing the Cluster below the plant for one push or one retreat.",
+              "consequence": "The Defiance road, with the fence already tested.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t3",
+          "name": "The Defiance Road",
+          "templateId": "Pursuit",
+          "situation": "If the roads held, the Cluster is going back down into the jungle and you run it to the tree line. If they fell, Vickers is coming up the last kilometer to the plant and this is a Defend in a Pursuit's clothing. Either way it ends on the Defiance road.",
+          "deployment": "Long edges. If Roads Held is 1+: the Wolves (Defender) set up in a column on the road in the lower third heading for the jungle; you (Attacker) enter Turn 1 from above. If Roads Held is 0: swap — you (Defender) hold the upper third, the Wolves (Attacker) enter from below. Road paved; jungle-heat below the road line.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Run Them Down — engage half the enemy force before it reaches its home edge.",
+              "vp": 100,
+              "side": "both"
+            },
+            {
+              "text": "Hold the Road — hold two road hexes in the enemy's third at end of Turn 6.",
+              "vp": 200,
+              "side": "both"
+            },
+            {
+              "text": "Hammer — first side to cripple 25% of the enemy scores it; simultaneous, both score.",
+              "vp": 100,
+              "side": "both"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Vickers's Warwolf.",
+              "vp": 200,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "If Vickers was crippled earlier, the Wolves withdraw regardless of Roads Held — this track is the pursuit shape. At contract close: perimeter untouched = the bonus and Defiance access.",
+          "trackEnd": "End of Turn 6, or when the pursued side has no non-crippled unit on the road.",
+          "salvagePolicy": "Exchange — Defiance claims the wrecks; cash at full value.",
+          "opfor": {
+            "faction": "Clan Wolf",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 0.9
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "Hesperus II tells one more story about itself.",
+              "consequence": "Contract closes; settle Roads Held and Reputation.",
+              "threat": "LOW"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hs-hin-08",
+      "title": "The Cross-Divide",
+      "world": "Coventry",
+      "employer": "Lyran Commonwealth — Seventeenth Arcturan Guards (reconstituting)",
+      "type": "Raid / Counter-Raid",
+      "singleSided": true,
+      "blurb": "A Falcon Cluster that never went to Terra has landed on Veracruz and dug into the Cross-Divide Mountains. The Arcturan Guards are still rebuilding from 3148. They hire you to break through and root it out.",
+      "systemProfile": {
+        "starType": "F4V",
+        "rechargeHours": 175,
+        "positionInSystem": "3rd",
+        "timeToJumpPointDays": 16.1,
+        "satellites": "1 (Wellston)",
+        "surfaceGravity": 1.01,
+        "atmPressure": "Standard (Breathable)",
+        "equatorialTempC": 35,
+        "climate": "Mild-Temperate",
+        "surfaceWaterPct": 80,
+        "rechargeStation": "Nadir, Zenith",
+        "hpgClass": "A",
+        "highestNativeLife": "Mammals",
+        "population": 3623000000,
+        "populationYear": 3079,
+        "landmasses": [
+          "Auckland",
+          "Dunnigan",
+          "Sydnallia",
+          "Veracruz"
+        ],
+        "capitalCity": "Port St. William"
+      },
+      "situation": "In 3148 seven Jade Falcon Clusters landed on Coventry and the Seventeenth Arcturan Guards met them alone until the Fifteenth and the Second Royal came. A Hauptmann-General died in the fighting. The Falcons accepted hegira in the end — not because they lost, but because Clan Wolf was closing on their holdings and Malvina Hazen wanted her Clusters for Terra. Coventry stayed Lyran. The Seventeenth has spent four years rebuilding and is still not what it was.\n\nOne of those seven Clusters did not go to Terra. It was gutted at Coventry, left behind to recover, and forgotten when the touman lifted — and in 3152, with the Falcon OZ in pieces and nowhere to go home to, its Star Colonel has done the thing Falcons do when the world stops making sense: picked a fight with the enemy that hurt them. The Cluster landed on Veracruz, the southern continent, and dug into the Cross-Divide Mountains that split it from Dunnigan. From there it raids the Coventry Metal Works' outlying plants and the farms that feed Port St. William. The Seventeenth cannot dislodge it and hold the capital both.\n\nThe Guards hire you to do the part they cannot spare a regiment for. Break through the Cross-Divide — the Falcons hold the passes — and get onto the Veracruz plateau where their DropShips and their base camp are. It is a raid to end a raid. The Cluster is under strength and far from anywhere it can call home. It is also Jade Falcon, and it has already beaten the Seventeenth once.",
+      "contract": {
+        "scale": 2,
+        "intensity": 3,
+        "lengthMonths": 3,
+        "steps": {
+          "basePay": 7,
+          "support": 7,
+          "transport": 6,
+          "salvage": 5,
+          "command": 6
+        },
+        "enemyFaction": "Clan Jade Falcon",
+        "constraints": "Command House — the Seventeenth's operations officer sets the axis; you choose the pass. Salvage Shared: Coventry Metal Works claims half of every Falcon wreck for its refit line; your half is real.",
+        "additionalRequirements": "Track Scale 2 or higher; minimum fielded force 5,500 BV / 220 PV. Mountain-capable — the Cross-Divide passes are Level 3+ terrain; jump-capable units strongly advised.",
+        "bonus": "The Cluster broken — if the Falcon base camp on the Veracruz plateau is destroyed or abandoned by contract end, +2 Reputation with the Lyran Commonwealth and the Seventeenth's refit line at cost for your next two repairs."
+      },
+      "missionBrief": {
+        "behindScenes": "Star Colonel Marta Icaza commands a Cluster that is two Trinaries in truth and has nothing to lose. She holds the Cross-Divide's northern pass with one and keeps the other on the plateau. Track 1 is your breakthrough at the pass. If you get through, you hit the plateau camp from the flank while she is still turning to face you (2a). If the pass holds, the Guards find you the southern route — longer, and she will be waiting (2b). Track 3 is the camp itself.",
+        "complications": [
+          {
+            "roll": "1-3",
+            "effect": "None."
+          },
+          {
+            "roll": "4",
+            "effect": "Zellbrigen. A Falcon warrior challenges your commander. Accept: one-on-one until one is crippled. Refuse or interfere: the Falcons drop honor rules for the track."
+          },
+          {
+            "roll": "5",
+            "effect": "The Seventeenth's lance. A Guards lance (Regular, still rebuilding — two mediums, two lights) is released to your command on Turn 3. They want this more than you do."
+          },
+          {
+            "roll": "6",
+            "effect": "Mountain weather. Cloud on the Cross-Divide: visibility 8 hexes, Level 3+ hexes count as Light Woods for LOS, all track."
+          },
+          {
+            "roll": "7",
+            "effect": "Elementals in the rocks. A Point of five Elementals begins hidden in any Level 2+ hex on the Falcon side; reveals when adjacent to a friendly unit."
+          },
+          {
+            "roll": "8+",
+            "effect": "Roll twice, ignore repeats."
+          }
+        ],
+        "contractVictory": "The Falcon base camp on the Veracruz plateau is destroyed or abandoned and the Cluster's raids on Dunnigan stop. The contract pays on the breakthrough; the bonus pays on the camp.",
+        "tally": "Divide Crossed — each track you win counts 1. At 2+, the camp falls and the bonus pays. At 0, the Falcons keep the Cross-Divide: -1 Reputation, and the Seventeenth's raids go on.",
+        "namedCharacters": [
+          {
+            "name": "Star Colonel Marta Icaza",
+            "role": "OpFor commander — the forgotten Cluster, Cross-Divide",
+            "chassis": "Turkina",
+            "skill": "Gunnery 2 / Piloting 2",
+            "rule": "Joins from Track 1. Will accept zellbrigen. Fights with nothing to lose: the Falcons never withdraw voluntarily in this contract. If crippled, the Cluster's second Trinary does not reinforce Track 3."
+          },
+          {
+            "name": "Kommandant Sigrid Aalberg",
+            "role": "Seventeenth Arcturan Guards — operations officer, liaison",
+            "chassis": "Zeus",
+            "skill": "Gunnery 3 / Piloting 3",
+            "rule": "On the field from Track 1. Was at Coventry in 3148. Carries the Guards' lance release; if destroyed, the lance complication cannot occur and Track 2b is unavailable — the tree goes to 2a regardless."
+          }
+        ],
+        "purchaseOptions": "Between tracks, Coventry Metal Works — any 'Mech up to heavy, on a 2D6 roll of 7+. After a track win, one captured Falcon machine may be bought from the Works' refit line at cost."
+      },
+      "tracks": [
+        {
+          "id": "t1",
+          "name": "The Northern Pass",
+          "templateId": "Breakthrough",
+          "root": true,
+          "situation": "The Cross-Divide's northern pass — a kilometer of switchbacks between Level 4 peaks. Icaza holds it with a Trinary and the high ground. Get through, and the plateau is behind them.\n\nBreakthrough: you (Attacker) must push through an enemy holding a chokepoint.",
+          "deployment": "Short edges. The Falcons (Defender) set up within 6 hexes of the pass — a 2-hex-wide gap between Level 4 rock at map center, Level 2–3 slopes either side; you (Attacker) enter Turn 1 from the north. Mountain-weather rules if rolled.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Break Through — exit a third of your force by BV off the Falcon home edge.",
+              "vp": 250,
+              "side": "attacker"
+            },
+            {
+              "text": "Hold the Pass — hold both pass hexes at end of Turn 6.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Icaza's Turkina.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Seal the Pass — no friendly unit exits the Falcon edge by end of Turn 8.",
+              "vp": 300,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "A track win adds to Divide Crossed.",
+          "trackEnd": "End of Turn 8, or when a third of your force has exited.",
+          "salvagePolicy": "Shared — the Works claims half; your half as SP.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.0
+          },
+          "forks": [
+            {
+              "outcomeGate": "SUCCESS",
+              "nextTrackId": "t2a",
+              "trigger": "You are through. Icaza is turning the plateau Trinary to face you — and her flank is open.",
+              "consequence": "Hit the plateau camp's flank before she finishes the turn.",
+              "threat": "MEDIUM"
+            },
+            {
+              "outcomeGate": "FAILURE",
+              "nextTrackId": "t2b",
+              "trigger": "The pass held. Aalberg has found the southern route — longer, and Icaza will be waiting.",
+              "consequence": "The southern col. A meeting on the plateau's edge.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2a",
+          "name": "The Plateau Flank",
+          "templateId": "Flank",
+          "situation": "The Falcon camp Trinary is wheeling to face the pass you just came through. For two turns its flank is open on the plateau's western scarp. Hit it there, hard, before it finishes turning.",
+          "deployment": "Long edges. The Falcons (Defender) set up in march order along the scarp facing the northern edge — Level 1 plateau, scattered Level 2 outcrops; you (Attacker) enter Turn 1 from the western edge. The Falcons may not turn to face you until Turn 3 (they are wheeling).",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Hit the Flank — engage the Falcon rear third by end of Turn 2.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Roll Them Up — cripple or destroy a third of the Falcon force by end of Turn 8.",
+              "vp": 250,
+              "side": "attacker"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Icaza's Turkina.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Finish the Wheel — half the Falcon force facing west, no friendly unit within 3 hexes, end of Turn 8.",
+              "vp": 300,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "Falcons may not move toward the western edge on Turns 1–2. A track win adds to Divide Crossed.",
+          "trackEnd": "End of Turn 8.",
+          "salvagePolicy": "Shared — the Works claims half; your half as SP.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.0
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "Icaza has pulled everything back to the base camp. Nothing to lose, nowhere to go.",
+              "consequence": "The camp. Break it, and the Cluster that beat the Seventeenth is finished.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2b",
+          "name": "The Southern Col",
+          "templateId": "Meeting Engagement",
+          "situation": "The southern route over the Cross-Divide — longer, higher, and Icaza has moved the pass Trinary to meet you at the col where it opens onto the plateau. Nobody dictates this one. The mountain does.",
+          "deployment": "Short edges. Both sides set up within 6 hexes of their home edge — the col is a Level 3 saddle at center between Level 5 peaks; slopes are Level 2–4. Mountain-weather rules if rolled. The Falcons hold the higher ground on their side (Level 4 shelf).",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Hold the Col — half your force within 3 hexes of the saddle at end of Turn 4.",
+              "vp": 100,
+              "side": "both"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV within 6 hexes of the saddle than the enemy at end of Turn 10.",
+              "vp": 300,
+              "side": "both"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Icaza's Turkina.",
+              "vp": 200,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "A track win adds to Divide Crossed.",
+          "trackEnd": "End of Turn 10, or when one side has no non-crippled 'Mechs within 6 hexes of the saddle.",
+          "salvagePolicy": "Shared — the Works claims half; your half as SP.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.1
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "Icaza has pulled everything back to the base camp.",
+              "consequence": "The camp, with the Cross-Divide already paid for twice.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t3",
+          "name": "The Veracruz Camp",
+          "templateId": "Assault",
+          "situation": "The Falcon base camp on the plateau — the DropShips, the field repair bays, the supply that has fed four months of raids. Icaza holds it with whatever the Cross-Divide left her. Take it, and the Cluster that beat the Seventeenth in 3148 ends on Coventry after all.",
+          "deployment": "Short edges. The Falcons (Defender) set up within 6 hexes of the camp — two Level 3 DropShips and four Medium buildings (Level 2) on their side; you (Attacker) enter Turn 1 across the plateau. If Icaza was crippled earlier, the second Trinary is absent (bvRatio 0.7).",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Take the Camp — hold three of the four camp buildings at end of Turn 8.",
+              "vp": 300,
+              "side": "attacker"
+            },
+            {
+              "text": "Ground the Ships — a friendly unit adjacent to a DropShip at end of any turn from Turn 5.",
+              "vp": 100,
+              "side": "attacker"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Icaza's Turkina.",
+              "vp": 200,
+              "side": "attacker"
+            },
+            {
+              "text": "Hold the Camp — two of four camp buildings Falcon at end of Turn 8.",
+              "vp": 300,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "The Falcons never withdraw. At contract close: Divide Crossed 2+ = the camp destroyed or abandoned, the bonus and the refit line; 0 = -1 Reputation and the raids go on.",
+          "trackEnd": "End of Turn 8, or when one side holds three camp buildings at end of a turn.",
+          "salvagePolicy": "Shared — the Works claims half; your half as SP.",
+          "opfor": {
+            "faction": "Clan Jade Falcon",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.0
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "The forgotten Cluster is remembered, one way or the other.",
+              "consequence": "Contract closes; settle Divide Crossed and Reputation.",
+              "threat": "LOW"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hs-hin-09",
+      "title": "The Exiles' Ground",
+      "world": "Donegal",
+      "employer": "Lyran Commonwealth — Third Royal Guards, with Clan Wolf-in-Exile attached",
+      "type": "Garrison / Combined Defense",
+      "singleSided": true,
+      "blurb": "The Wolves-in-Exile have lived on Donegal since Arc-Royal fell. Now the Wolf Empire has come to settle a family argument. The Lyrans hire you to stand beside the Exiles when their cousins land.",
+      "systemProfile": {
+        "starType": "F0V",
+        "rechargeHours": 171,
+        "positionInSystem": "4th",
+        "timeToJumpPointDays": 21.94,
+        "satellites": "1 (Seth's Jewel)",
+        "surfaceGravity": 1.01,
+        "atmPressure": "Standard (Breathable)",
+        "equatorialTempC": 40,
+        "climate": "Warm-Temperate",
+        "surfaceWaterPct": 80,
+        "rechargeStation": "Zenith, Nadir",
+        "hpgClass": "A",
+        "highestNativeLife": "Reptiles",
+        "population": 5994000000,
+        "populationYear": 3079,
+        "landmasses": [
+          "Dunellan",
+          "Hinterlands",
+          "Lockenar"
+        ],
+        "capitalCity": "New Marsdenville"
+      },
+      "situation": "Donegal is a rich, warm, well-defended world that the Wolves have raided once and threatened twice, and the third time is different. In 3143 Clan Wolf hit it on the way to Tharkad and left after three weeks. In 3150 the Falcons massed for it and were called away to Terra. Both times the Commonwealth held, and both times the Wolves-in-Exile were somewhere else — but since 3146, when Arc-Royal fell and the Exiles lost the home they had held for a century, what was left of them has lived on Donegal's Hinterlands continent as the Third Royal Guards' most dangerous neighbors.\n\nThe Wolf Empire knows they are here. Alaric Ward's Clan has an ilKhan, a throne, and one loose end it has wanted tied off for three generations: the Wolves who chose Phelan Kell's road over the Crusade and never came back. In 3152 a Wolf Empire Cluster landed on the Hinterlands with a batchall addressed not to the Lyran Commonwealth but to the Exiles by name. The Exiles answered it. The Commonwealth, which owns the ground and would like to keep it, has decided that a family argument fought with a Cluster on each side needs somebody in the middle who is on the Lyran payroll.\n\nThat is your contract. Fight beside the Wolves-in-Exile — a Trinary of them, the last of the Arc-Royal Wolves, with a hundred years of grudge in every Point — against the Empire Cluster that came for them. The Third Royal Guards hold New Marsdenville. You and the Exiles hold the Hinterlands, and the rules will be the Wolves' own rules, because both sides of this are Wolves and neither will fight it any other way.",
+      "contract": {
+        "scale": 2,
+        "intensity": 3,
+        "lengthMonths": 3,
+        "steps": {
+          "basePay": 7,
+          "support": 8,
+          "transport": 6,
+          "salvage": 4,
+          "command": 5
+        },
+        "enemyFaction": "Clan Wolf",
+        "constraints": "Command Liaison — the Wolf-in-Exile Star Colonel commands the Hinterlands defense; the Lyrans pay, the Exiles lead. Salvage Shared: the Exiles claim Empire hardware by isorla, the Lyrans claim half of what is left; your share is the remainder, honored.",
+        "additionalRequirements": "Track Scale 2 or higher; minimum fielded force 5,500 BV / 220 PV. Zellbrigen-capable — your commander will be challenged and the Exiles expect the challenge answered.",
+        "bonus": "The Exiles stand — if the Wolf-in-Exile Trinary survives the contract with half its strength and the Hinterlands is Lyran, +2 Reputation with the Lyran Commonwealth and +1 with Clan Wolf-in-Exile: a Clan that remembers."
+      },
+      "missionBrief": {
+        "behindScenes": "Star Colonel Anastasia Ward commands the Empire Cluster and the batchall. She wants the Exiles, not Donegal — she will break off from any engagement where they are not present. Track 1 is her landing on the Hinterlands plain. If it fails, she pursues the Exiles into the Lockenar hills (2a). If it succeeds, the Exiles fall back on the Guards and she follows (2b). Track 3 is the Trial — Ward against the Exile Star Colonel, one on one, with everything that is left watching.",
+        "complications": [
+          {
+            "roll": "1-3",
+            "effect": "None."
+          },
+          {
+            "roll": "4",
+            "effect": "Zellbrigen, always. Every track: the Empire Wolves fight by honor rules from Turn 1. Any friendly unit that fires on a Wolf already engaged one-on-one costs -1 Reputation with the Exiles and drops honor rules for the track."
+          },
+          {
+            "roll": "5",
+            "effect": "The Exiles' Star. A Wolf-in-Exile Star (Veteran) fights beside you under the Exile Star Colonel's command. They will not retreat while an Empire unit stands within 6 hexes."
+          },
+          {
+            "roll": "6",
+            "effect": "Donegal Guards. A Seventeenth Donegal Guards lance (Regular) holds the road behind you. They will not enter the fight unless a friendly unit is crippled within 3 hexes of them."
+          },
+          {
+            "roll": "7",
+            "effect": "Elementals of the Empire. A Point of five Elementals begins hidden in any Light Woods hex on the Empire side; reveals when adjacent to a friendly unit."
+          },
+          {
+            "roll": "8+",
+            "effect": "Roll twice, ignore repeats."
+          }
+        ],
+        "contractVictory": "The Wolf Empire Cluster withdraws or is broken and the Hinterlands is Lyran at contract end. The contract pays on the ground; the bonus pays on the Exiles surviving it.",
+        "tally": "Exiles Stand — each track you win counts 1; the Trial (Track 3) counts 2 if your side wins it. At 2+, the bonus pays. At 0, the Empire takes the Exiles: -2 Reputation, and a Clan ends on Donegal.",
+        "namedCharacters": [
+          {
+            "name": "Star Colonel Anastasia Ward",
+            "role": "OpFor commander — Wolf Empire Cluster, the batchall",
+            "chassis": "Timber Wolf (Mad Cat)",
+            "skill": "Gunnery 1 / Piloting 2",
+            "rule": "Joins from Track 1. Will accept zellbrigen from your commander OR the Exile Star Colonel. Breaks off any engagement where no Exile unit is present. Fights the Trial in Track 3 personally."
+          },
+          {
+            "name": "Star Colonel Radek Kell",
+            "role": "Clan Wolf-in-Exile — the last Arc-Royal Trinary, your commander",
+            "chassis": "Wolfhound IIC",
+            "skill": "Gunnery 2 / Piloting 2",
+            "rule": "Commands the Hinterlands defense from Track 1. If destroyed before Track 3, your commander fights the Trial in his place. If he wins the Trial, the Exiles claim the Empire Cluster's survivors as bondsmen."
+          }
+        ],
+        "purchaseOptions": "Between tracks, the Donegal works — Assault Tech and Independence Weaponry, any 'Mech up to assault on a 2D6 roll of 8+. After a track win, one Empire machine may be bought from the Exiles' isorla at their price."
+      },
+      "tracks": [
+        {
+          "id": "t1",
+          "name": "The Hinterlands Plain",
+          "templateId": "Flank",
+          "root": true,
+          "situation": "Ward's Cluster is landing on the plain in the open, the Wolf way. Kell wants its flank while the DropShips are still unloading — hit the landing before it becomes a line.\n\nFlank: you (Attacker) strike an enemy that has not yet faced you.",
+          "deployment": "Long edges. The Empire (Defender) sets up in landing order around two Level 3 DropShips on the plain's eastern third — Level 0–1, scattered Light Woods; you (Attacker) and the Exiles enter Turn 1 from the west. The Empire may not move on Turn 1 (unloading).",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Hit the Landing — engage the Empire rear third by end of Turn 2.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Roll Them Up — cripple or destroy a third of the Empire force by end of Turn 8.",
+              "vp": 250,
+              "side": "attacker"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Ward's Timber Wolf.",
+              "vp": 150,
+              "side": "attacker"
+            },
+            {
+              "text": "Form the Line — half the Empire force facing west, no friendly unit within 3 hexes, end of Turn 8.",
+              "vp": 300,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "Zellbrigen-always complication if rolled. A track win adds to Exiles Stand.",
+          "trackEnd": "End of Turn 8.",
+          "salvagePolicy": "Shared — Exile isorla first, Lyran half of the rest, your share the remainder.",
+          "opfor": {
+            "faction": "Clan Wolf",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.1
+          },
+          "forks": [
+            {
+              "outcomeGate": "SUCCESS",
+              "nextTrackId": "t2a",
+              "trigger": "The landing was bloodied. Ward is pursuing the Exiles into the Lockenar hills.",
+              "consequence": "Turn and hold the hills. The Exiles will not run further.",
+              "threat": "HIGH"
+            },
+            {
+              "outcomeGate": "FAILURE",
+              "nextTrackId": "t2b",
+              "trigger": "The Empire formed its line. Kell is falling back on the Guards.",
+              "consequence": "Cover the Exiles' retreat to New Marsdenville. Ward follows.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2a",
+          "name": "The Lockenar Hills",
+          "templateId": "Defend",
+          "situation": "The Exiles have drawn Ward into the Lockenar hills — broken ground where a Trinary can hold a Cluster if it chooses the ridge. Kell has chosen it. Hold the ridge with him.",
+          "deployment": "Short edges. You (Defender) and the Exiles set up on a Level 2–3 ridge across your half, Light Woods on the crest; the Empire (Attacker) enters Turn 1 from the plain edge below. If the Exiles' Star complication is rolled, they hold the ridge center.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Hold the Ridge — half your force on Level 2+ hexes at end of Turn 4.",
+              "vp": 100,
+              "side": "defender"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV on the ridge than the Empire at end of Turn 8.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy Star Colonel Ward's Timber Wolf.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Take the Ridge — an Empire unit on a Level 3 crest hex with no friendly unit adjacent, Turn 8.",
+              "vp": 300,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "A track win adds to Exiles Stand.",
+          "trackEnd": "End of Turn 8, or when one side has no non-crippled 'Mechs on the ridge.",
+          "salvagePolicy": "Shared — Exile isorla first, Lyran half of the rest, your share the remainder.",
+          "opfor": {
+            "faction": "Clan Wolf",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.2
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "Ward has sent a second batchall: a Trial, Star Colonel to Star Colonel, on the plain.",
+              "consequence": "The Trial. Kell has accepted. Everything left on Donegal watches.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2b",
+          "name": "The Road to Marsdenville",
+          "templateId": "Retreat",
+          "situation": "The Exiles are falling back on the Third Royal Guards at New Marsdenville, and Ward is on them. Cover the retreat. The Exiles will not leave a crippled Point behind, which means neither can you.",
+          "deployment": "Short edges, same-edge start. You (Defender) and the Exiles enter from the Empire edge Turn 1; the Empire (Attacker) enters its own edge Turn 2. The Guards' picket line is on your home edge (Donegal Guards complication if rolled). Road paved; farmland either side.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Gauntlet — exit half your force by count off your home edge; crippled units that make it count.",
+              "vp": 250,
+              "side": "defender"
+            },
+            {
+              "text": "Bring the Wounded — exit a crippled Exile or friendly unit off your home edge.",
+              "vp": 100,
+              "side": "defender"
+            },
+            {
+              "text": "Bite Back — cripple or destroy 25% of the Empire force.",
+              "vp": 100,
+              "side": "defender"
+            },
+            {
+              "text": "Run Them Down — cripple or destroy half your force before it exits.",
+              "vp": 300,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "Exile units will not exit while a crippled friendly is within 3 hexes of an Empire unit. A track win adds to Exiles Stand.",
+          "trackEnd": "End of Turn 8.",
+          "salvagePolicy": "Defender keeps none unless the Attacker fails to win; then owners recover their own.",
+          "opfor": {
+            "faction": "Clan Wolf",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.2
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "Ward has sent a second batchall: a Trial, Star Colonel to Star Colonel, before the Guards' lines.",
+              "consequence": "The Trial. Kell has accepted, whatever the road cost.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t3",
+          "name": "The Trial of the Exiles",
+          "templateId": "Duel",
+          "situation": "Ward against Kell, or Ward against you if Kell is down — one on one, on the plain, with both Clusters standing off to watch. The Wolves' way to end a family argument. Whoever wins the Trial wins Donegal's Hinterlands; the Exiles' survival rides on it.",
+          "deployment": "Both champions set up 10 hexes apart at map center on open ground (Level 0–1, no woods). All other units set up on their own home edge and MAY NOT move or fire until the Trial ends. Trial ends when one champion is crippled or destroyed. Then, if both sides have units left, the watching forces may engage for the remaining turns.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Win the Trial — your champion cripples or destroys Star Colonel Ward's Timber Wolf.",
+              "vp": 400,
+              "side": "attacker"
+            },
+            {
+              "text": "Hold the Field — more non-crippled BV/PV within 6 hexes of center than the Empire at end of Turn 10.",
+              "vp": 200,
+              "side": "both"
+            },
+            {
+              "text": "Win the Trial — Ward cripples or destroys your champion.",
+              "vp": 400,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "Any unit that interferes in the Trial: its side forfeits the Trial objective and -2 Reputation with the Exiles. If your side wins, the Exiles claim the Cluster's survivors as bondsmen and Exiles Stand +2. At contract close: 2+ = the bonus; 0 = a Clan ends on Donegal.",
+          "trackEnd": "End of Turn 10, or when one side has no non-crippled 'Mechs within 6 hexes of center after the Trial ends.",
+          "salvagePolicy": "Winner-all — the Trial's winner claims the field; the Exiles' isorla first.",
+          "opfor": {
+            "faction": "Clan Wolf",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.0
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "The family argument is settled, for a generation.",
+              "consequence": "Contract closes; settle Exiles Stand and Reputation.",
+              "threat": "LOW"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hs-hin-10",
+      "title": "The Sabari Wastes",
+      "world": "Bolan",
+      "employer": "Lyran Commonwealth — Eighth Lyran Regulars (Bolan Province)",
+      "type": "Garrison / Border Defense",
+      "blurb": "Bolan came back to the Commonwealth in June with water purifiers and a regiment. The Free Worlds League wants it back. Two employers, one desert world, and a border that has moved four times in fifteen years.",
+      "sides": {
+        "a": {
+          "key": "a",
+          "role": "defender",
+          "employer": "Lyran Commonwealth — Eighth Lyran Regulars (Bolan Province)",
+          "faction": "Lyran Commonwealth",
+          "contract": {
+            "scale": 2,
+            "intensity": 3,
+            "lengthMonths": 3,
+            "steps": {
+              "basePay": 7,
+              "support": 7,
+              "transport": 6,
+              "salvage": 4,
+              "command": 6
+            },
+            "enemyFaction": "Free Worlds League",
+            "constraints": "Command House — the Eighth Lyran Regulars direct the province's defense. Salvage Shared: the Regulars claim half of every League wreck for the Bolan Jaegers they are raising; your half is real.",
+            "additionalRequirements": "Track Scale 2 or higher; minimum fielded force 5,500 BV / 220 PV. Desert-capable — 0.78 g and 80°C interiors; heat management matters.",
+            "bonus": "The province holds — if Bolan City and the water works are Lyran at contract end, +2 Reputation with the Lyran Commonwealth and the Melissa Steiner Martial Academy's graduating lance offered to your command at no cost."
+          },
+          "blurb": "Hold Bolan for the Commonwealth — the League's Tamarind-Abbey regiment is coming back for the world it lost in June, and the Eighth Regulars cannot hold the city and the wastes both.",
+          "situation": "Bolan was League for five years and Lyran for five months, and the people chose Lyran because the Eighth Regulars brought water purifiers when the League brought garrison troops. Now Duke Marik's Tamarind-Abbey regiment is in-system to reverse it. The Regulars hold Bolan City; you hold the Sabari approach — the desert road the League must come up — and the water works that decided the last vote."
+        },
+        "b": {
+          "key": "b",
+          "role": "attacker",
+          "employer": "Free Worlds League — Tamarind-Abbey expeditionary command (Duke Marik's regiment)",
+          "faction": "Free Worlds League",
+          "contract": {
+            "scale": 2,
+            "intensity": 3,
+            "lengthMonths": 3,
+            "steps": {
+              "basePay": 7,
+              "support": 6,
+              "transport": 7,
+              "salvage": 3,
+              "command": 6
+            },
+            "enemyFaction": "Lyran Commonwealth",
+            "constraints": "Command House — the Duke's regimental commander sets the axis; the League wants the city, not a desert. Salvage Exchange: the League claims the Lyran hardware; you take cash.",
+            "additionalRequirements": "Track Scale 2 or higher; a force that can move fast across desert — the Sabari road is the only way in and the Regulars will hold it.",
+            "bonus": "Bolan returned — take the water works (Track 2b) or win two of three tracks, and the League pays a province bonus: +1 Reputation with the Free Worlds League and priority refit at the Tamarind yards."
+          },
+          "blurb": "Fight for the League — retake Bolan from the Regulars who took it with water purifiers and a smile, before the Commonwealth digs in for another fifteen years.",
+          "situation": "The Commonwealth took Bolan in June with a regiment and a humanitarian shipment, and the people let them. Duke Marik does not accept a vote held at the barrel of a purifier. Land on the Sabari Wastes, force the desert road, and take the water works the Regulars used to buy the world — then Bolan City, before the Lyrans can reinforce from York."
+        }
+      },
+      "systemProfile": {
+        "starType": "G4V",
+        "rechargeHours": 185,
+        "positionInSystem": "2nd",
+        "timeToJumpPointDays": 7.96,
+        "satellites": "None",
+        "surfaceGravity": 0.78,
+        "atmPressure": "Standard (Breathable)",
+        "equatorialTempC": 54,
+        "climate": "Desert",
+        "surfaceWaterPct": 44,
+        "rechargeStation": "Zenith",
+        "hpgClass": "B",
+        "highestNativeLife": "Birds",
+        "population": 4553000000,
+        "populationYear": 3150,
+        "landmasses": [
+          "Sakété",
+          "Kashmir",
+          "Sabari"
+        ],
+        "capitalCity": "Bolan City"
+      },
+      "situation": "Bolan is a desert world of mountains and salt oceans where everyone lives on the polar coasts because the equatorial interior reaches eighty degrees and the third continent has been uninhabitable since the First Succession War. It has changed hands four times since 3137. The Lyrans staged an invasion of the League from it. The Wolves broke a regiment on it and left. The League took it in 3146. And in May 3151 the Eighth Lyran Regulars landed with a water-purification convoy and a general who understood that on Bolan, water is the vote — and by June the League's garrison had gone and the population had, without anyone quite asking them, chosen the Commonwealth.\n\nDuke Fontaine Marik's Tamarind-Abbey command does not consider a vote bought with purifiers to be a vote. In 3152 it is back in-system with a regiment and a plan: land on the Sabari Wastes, where nobody can stop a landing, force the desert road north to the water works, and take back the thing the Lyrans used to buy the world. The Eighth Regulars can hold Bolan City or the road, not both. The Commonwealth has hired for the road. The League has hired for the assault.\n\nThis is the contract, from either side. The Sabari road — the only route up from the wastes to the coast — and the water works at its head that decided the last vote and will decide the next. The ground is 0.78 g and the interior is an oven. Both employers are paying for the same three tracks, and only one of them gets Bolan.",
+      "contract": {
+        "scale": 2,
+        "intensity": 3,
+        "lengthMonths": 3,
+        "steps": {
+          "basePay": 7,
+          "support": 7,
+          "transport": 6,
+          "salvage": 4,
+          "command": 6
+        },
+        "enemyFaction": "Free Worlds League",
+        "constraints": "Command House — the Eighth Lyran Regulars direct the province's defense. Salvage Shared: the Regulars claim half of every League wreck; your half is real.",
+        "additionalRequirements": "Track Scale 2 or higher; minimum fielded force 5,500 BV / 220 PV. Desert-capable — 0.78 g and 80°C interiors.",
+        "bonus": "The province holds — if Bolan City and the water works are Lyran at contract end, +2 Reputation with the Lyran Commonwealth and a Melissa Steiner Martial Academy lance offered at no cost."
+      },
+      "missionBrief": {
+        "behindScenes": "Colonel Ansel Halas commands the League regiment; Leutnant-General Ruth Ludwig-Steiner the Regulars. Track 1 is the meeting on the road — the League coming up, the Lyrans coming down to stop them. If the Lyran side wins, the League falls back to the wastes and the Lyrans pursue (2a). If the League wins, the water works are next (2b). Track 3 is Bolan City's southern gate, whichever side is attacking it.",
+        "complications": [
+          {
+            "roll": "1-3",
+            "effect": "None."
+          },
+          {
+            "roll": "4",
+            "effect": "Desert heat. Any unit that ends its turn on open sand (no building, no Level 2+ hex) takes +2 heat from Turn 3, both sides, all track."
+          },
+          {
+            "roll": "5",
+            "effect": "Bolan militia. Two Bolan militia 'Mechs (Green) join the LYRAN side on Turn 3 — the population picked. They will not leave the water works' vicinity."
+          },
+          {
+            "roll": "6",
+            "effect": "Low gravity. 0.78 g: all units +1 MP running and +1 jump this track. Falls from Level 2+ do no damage."
+          },
+          {
+            "roll": "7",
+            "effect": "The Academy. A Melissa Steiner Martial Academy cadet lance (Green) holds the Sabari Wastes campus on the LEAGUE's approach. They fight for the Lyrans if attacked; otherwise they watch."
+          },
+          {
+            "roll": "8+",
+            "effect": "Roll twice, ignore repeats."
+          }
+        ],
+        "contractVictory": "LYRAN: Bolan City and the water works are Lyran at contract end. LEAGUE: the water works are taken or two of three tracks won. The contract pays on the road; the bonus pays on the works.",
+        "tally": "Road Held — each track your side wins counts 1. At 2+, your employer's bonus pays. At 0, -1 Reputation with your employer: Bolan changed hands a fifth time, and not your way.",
+        "namedCharacters": [
+          {
+            "name": "Colonel Ansel Halas",
+            "role": "Free Worlds League — Tamarind-Abbey regiment commander",
+            "chassis": "Awesome",
+            "skill": "Gunnery 2 / Piloting 3",
+            "rule": "League side commander from Track 1. If crippled, the League does not attack Bolan City in Track 3 — it holds the works if it has them, or withdraws."
+          },
+          {
+            "name": "Leutnant-General Ruth Ludwig-Steiner",
+            "role": "Lyran Commonwealth — Eighth Lyran Regulars commander",
+            "chassis": "Atlas",
+            "skill": "Gunnery 2 / Piloting 3",
+            "rule": "Lyran side commander from Track 1. If crippled, the Regulars hold the city only; the works are yours to hold or lose in Track 2b/3 alone."
+          }
+        ],
+        "purchaseOptions": "Between tracks, what Bolan City has — light and medium 'Mechs on a 2D6 roll of 9+ (the province was League five years ago and the depots went with it). League side: the Tamarind yards by DropShip, heavies on 8+."
+      },
+      "tracks": [
+        {
+          "id": "t1",
+          "name": "The Sabari Road",
+          "templateId": "Meeting Engagement",
+          "root": true,
+          "situation": "The League is coming up the desert road from the wastes; the Regulars are coming down it to stop them. They meet at the Sakété escarpment where the road climbs off the sand. Nobody dictates this one. The desert does.\n\nMeeting engagement: both sides arrive at once; neither has prepared the ground.",
+          "deployment": "Long edges. Both sides set up within 6 hexes of their home edge — the road climbs from Level 0 sand (League edge) to a Level 2 escarpment (Lyran edge) across the map. Desert-heat and low-gravity rules if rolled. Academy campus (three Light buildings) on the League's left flank if rolled.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Hold the Escarpment — half your force within 4 hexes of the escarpment crest at end of Turn 4.",
+              "vp": 100,
+              "side": "both"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV within 6 hexes of the crest than the enemy at end of Turn 10.",
+              "vp": 300,
+              "side": "both"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy the enemy commander's 'Mech.",
+              "vp": 200,
+              "side": "both"
+            }
+          ],
+          "specialRules": "A track win adds to Road Held.",
+          "trackEnd": "End of Turn 10, or when one side has no non-crippled 'Mechs within 6 hexes of the crest.",
+          "salvagePolicy": "Lyran: Shared. League: Exchange.",
+          "opfor": {
+            "faction": "Free Worlds League",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.0
+          },
+          "forks": [
+            {
+              "outcomeGate": "SUCCESS",
+              "nextTrackId": "t2a",
+              "trigger": "The road is decided. The loser is falling back and the winner is on them.",
+              "consequence": "The pursuit across the wastes — or the retreat, depending on your side.",
+              "threat": "MEDIUM"
+            },
+            {
+              "outcomeGate": "FAILURE",
+              "nextTrackId": "t2b",
+              "trigger": "The road is decided. The water works are next.",
+              "consequence": "The works that bought the world. Hold them or take them.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2a",
+          "name": "Across the Wastes",
+          "templateId": "Pursuit",
+          "situation": "The road's loser is falling back across the Sabari Wastes to its DropShips; the winner is running it down before it can regroup. Open sand, no cover, and an interior that kills 'Mechs that stand still.",
+          "deployment": "Long edges. The pursued side (Defender) sets up in a column in the northern third heading for its home edge; the pursuer (Attacker) enters Turn 1 from the south. All open sand (Level 0), scattered Level 1 dunes. Desert-heat rules if rolled.",
+          "playerRole": "attacker",
+          "objectives": [
+            {
+              "text": "Run Them Down — engage half the enemy force before it reaches its home edge.",
+              "vp": 100,
+              "side": "attacker"
+            },
+            {
+              "text": "Cut the Road — hold two road hexes in the northern third at end of Turn 6.",
+              "vp": 200,
+              "side": "attacker"
+            },
+            {
+              "text": "Hammer — first side to cripple 25% of the enemy scores it; simultaneous, both score.",
+              "vp": 100,
+              "side": "both"
+            },
+            {
+              "text": "Reach the Ships — exit half the pursued force by BV off its home edge.",
+              "vp": 250,
+              "side": "defender"
+            }
+          ],
+          "specialRules": "The side that won Track 1 is the Attacker here. A track win adds to Road Held.",
+          "trackEnd": "End of Turn 6, or when the pursued side has no non-crippled unit on the road.",
+          "salvagePolicy": "Lyran: Shared. League: Exchange.",
+          "opfor": {
+            "faction": "Free Worlds League",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 0.9
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "Whoever holds the road holds the approach to Bolan City's southern gate.",
+              "consequence": "The gate. The city, and the province.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t2b",
+          "name": "The Water Works",
+          "templateId": "Objective Raid",
+          "situation": "The purification works at the head of the Sabari road — the plant that decided the last vote. The League wants it taken intact; the Lyrans want it kept. Whoever holds the control house at the end holds Bolan's argument.",
+          "deployment": "Short edges. The Lyran side (Defender) sets up within 6 hexes of the works — a Heavy control house (Level 3) and four Medium tanks (Level 2) at center of its half; the League (Attacker) enters Turn 1. No unit may fire on the control house — both sides need it working.",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "Hold the House — more non-crippled BV/PV within 3 hexes of the control house than the enemy, Turn 8.",
+              "vp": 300,
+              "side": "both"
+            },
+            {
+              "text": "Keep the Tanks — three of four tanks standing at end of Turn 8.",
+              "vp": 150,
+              "side": "defender"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy the enemy commander's 'Mech.",
+              "vp": 150,
+              "side": "both"
+            },
+            {
+              "text": "Reach the House — a League unit adjacent to the control house at end of any turn from Turn 5.",
+              "vp": 150,
+              "side": "attacker"
+            }
+          ],
+          "specialRules": "Any side that damages the control house loses 200 VP. Bolan-militia complication joins the Lyran side here. A track win adds to Road Held.",
+          "trackEnd": "End of Turn 8.",
+          "salvagePolicy": "Lyran: Shared. League: Exchange.",
+          "opfor": {
+            "faction": "Free Worlds League",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.1
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": "t3",
+              "trigger": "The works are decided. Bolan City's southern gate is the last thing on the road.",
+              "consequence": "The gate. Whoever attacks it is attacking the province.",
+              "threat": "HIGH"
+            }
+          ]
+        },
+        {
+          "id": "t3",
+          "name": "The Southern Gate",
+          "templateId": "Assault",
+          "situation": "Bolan City's southern gate — where the Sabari road enters the capital. If the League holds the road, it assaults; if the Lyrans do, the League makes one last try from the wastes. Either way the province is decided at the gate.",
+          "deployment": "Short edges. The Lyran side (Defender) sets up within 6 hexes of the gate — a Heavy gatehouse (Level 3) and the city's outer buildings (Medium, Level 2) on its edge; the League (Attacker) enters Turn 1 up the road. If the League's commander was crippled earlier, the League does not attack — this track is a League withdrawal (Pursuit shape, Lyran attacking).",
+          "playerRole": "defender",
+          "objectives": [
+            {
+              "text": "The Gate — hold the gatehouse and two outer buildings at end of Turn 8.",
+              "vp": 300,
+              "side": "both"
+            },
+            {
+              "text": "Overpower — more non-crippled BV/PV within 6 hexes of the gate than the enemy at end of Turn 8.",
+              "vp": 200,
+              "side": "both"
+            },
+            {
+              "text": "Cut Off the Head — cripple or destroy the enemy commander's 'Mech.",
+              "vp": 200,
+              "side": "both"
+            }
+          ],
+          "specialRules": "At contract close: Road Held 2+ = your employer's bonus. Lyran side: the province holds and the Academy lance. League side: Bolan returned and the Tamarind refit.",
+          "trackEnd": "End of Turn 8, or when one side holds the gatehouse and both outer buildings at end of a turn.",
+          "salvagePolicy": "Lyran: Shared. League: Exchange.",
+          "opfor": {
+            "faction": "Free Worlds League",
+            "armsMix": "MECH_ONLY",
+            "vehicleShare": 0,
+            "bvRatio": 1.0
+          },
+          "forks": [
+            {
+              "outcomeGate": "ANY",
+              "nextTrackId": null,
+              "trigger": "Bolan has changed hands a fifth time, or not.",
+              "consequence": "Contract closes; settle Road Held and Reputation with your employer.",
+              "threat": "LOW"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

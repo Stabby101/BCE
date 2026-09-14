@@ -1,40 +1,10 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import type { InputSignal, OutputEmitterRef, WritableSignal } from '@angular/core';
 
 /*
- * Author: Drake
  * Picker interface for all picker components
  * 
  * Architecture:
@@ -55,7 +25,7 @@ export interface PickerPosition {
 }
 
 /** Target context for picker styling/behavior hints */
-export type PickerTargetType = 'skill' | 'crit' | 'armor' | 'inventory' | 'heatsinks';
+export type PickerTargetType = 'skill' | 'crit' | 'armor' | 'inventory' | 'heatsinks' | 'motive';
 
 /** Choice value type - string or number */
 export type PickerValue = string | number;
@@ -66,6 +36,21 @@ export type PickerValue = string | number;
 
 /** Display type for choice rendering */
 export type PickerDisplayType = 'button' | 'dropdown' | 'label' | 'state-button' | 'toggle';
+
+/** Active-choice visual tone. Selected is the strong/default active state; muted is a softer active state. */
+export type PickerChoiceSelectionTone = 'selected' | 'muted';
+
+/** Optional background and text colors for renderer states. */
+export interface PickerChoiceColors {
+    normal?: string;
+    normalText?: string;
+    selected?: string;
+    selectedText?: string;
+    mutedSelected?: string;
+    mutedSelectedText?: string;
+    disabled?: string;
+    disabledText?: string;
+}
 
 /** Option for dropdown-type choices */
 export interface PickerDropdownOption {
@@ -81,6 +66,8 @@ export interface PickerChoice {
     value: PickerValue;
     disabled?: boolean;
     active?: boolean;
+    selectionTone?: PickerChoiceSelectionTone;
+    colors?: PickerChoiceColors;
     keepOpen?: boolean;
     displayType?: PickerDisplayType;
     choices?: PickerDropdownOption[];

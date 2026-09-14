@@ -1,62 +1,26 @@
-/*
- * Copyright (C) 2026 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
-import type { LoadForceEntry, LoadForceGroup } from '../../models/load-force-entry.model';
-import { FactionImgPipe } from '../../pipes/faction-img.pipe';
-import { CleanModelStringPipe } from '../../pipes/clean-model-string.pipe';
-import { UnitIconComponent } from '../unit-icon/unit-icon.component';
-import { OptionsService } from '../../services/options.service';
-import { LanceTypeIdentifierUtil } from '../../utils/lance-type-identifier.util';
-import { NO_FORMATION_ID } from '../../utils/formation-type.model';
-import { DialogsService } from '../../services/dialogs.service';
-import { UnitDetailsDialogComponent, type UnitDetailsDialogData } from '../unit-details-dialog/unit-details-dialog.component';
-import type { Unit } from '../../models/units.model';
+import type { LoadForceEntry } from '../../models/load-force-entry.model';
+import type { Options } from '../../models/options.model';
 import { ForceBuilderService } from '../../services/force-builder.service';
 import { ToastService } from '../../services/toast.service';
 import { type ForceAddModePickerData, ForceAddModePickerDialogComponent, type ForceAddModePickerResult } from '../force-add-mode-picker-dialog/force-add-mode-picker-dialog.component';
 import { firstValueFrom } from 'rxjs';
-import { getOrgFromForce, getOrgFromGroup } from '../../utils/org/org-namer.util';
-import { getUnitsAverageTechBase } from '../../models/tech.model';
+import { DialogsService } from '../../services/dialogs.service';
+import { ForcePreviewPanelComponent } from '../force-preview-panel/force-preview-panel.component';
+import { ConfirmDialogComponent, type ConfirmDialogData } from '../confirm-dialog/confirm-dialog.component';
 
 export interface ForceEntryPreviewDialogData {
     force: LoadForceEntry;
+    unitDisplayNameOverride?: Options['unitDisplayName'];
 }
 
 /**
- * Author: Drake
  * 
  * Dialog component that shows a detailed preview of a force entry, including its name, faction icon,
  * and other relevant details.
@@ -65,7 +29,7 @@ export interface ForceEntryPreviewDialogData {
     selector: 'force-entry-preview-dialog',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CommonModule, CleanModelStringPipe, UnitIconComponent],
+    imports: [CommonModule, ForcePreviewPanelComponent],
     host: {
         class: 'fullscreen-dialog-host glass'
     },
@@ -78,72 +42,47 @@ export class ForceEntryPreviewDialogComponent {
     private dialogsService = inject(DialogsService);
     private forceBuilderService = inject(ForceBuilderService);
     private toastService = inject(ToastService);
-    optionsService = inject(OptionsService);
-    force: LoadForceEntry;
-    forceOrgName: string | null = null;
-    groupDisplayData: { group: LoadForceGroup; name: string; orgName: string | null; formationName: string | null }[];
-    private allUnits: Unit[];
+    readonly displayMode = this.data.unitDisplayNameOverride ?? null;
+    readonly force: LoadForceEntry = this.data.force;
 
-    isForceLoaded = signal(false);
+    private loadedForce = computed(() => this.forceBuilderService.loadedForces()
+        .find(slot => slot.force.instanceId() === this.force.instanceId)?.force);
+    isForceLoaded = computed(() => !!this.loadedForce());
+    busy = signal(false);
 
-    constructor() {
-        this.force = this.data.force;
-        this.allUnits = this.force.groups
-            .flatMap(g => g.units)
-            .map(u => u.unit)
-            .filter((u): u is Unit => !!u);
-
-        this.groupDisplayData = this.force.groups.map(group => {
-            const sizeResult = getOrgFromGroup(group);
-            const orgName = (sizeResult.name && sizeResult.name !== 'Force') ? sizeResult.name : null;
-
-            let name: string;
-            if (!group.name) {
-                name = LanceTypeIdentifierUtil.getFormationName(group.formationId) || '';
-            } else {
-                name = group.name;
-            }
-
-            let formationName: string | null = null;
-            if (group.formationId && group.formationId !== NO_FORMATION_ID && group.name) {
-                const fName = LanceTypeIdentifierUtil.getFormationName(group.formationId);
-                if (fName && !group.name.includes(fName)) {
-                    formationName = fName;
+    async onDeploy(): Promise<void> {
+        if (this.busy() || this.isForceLoaded()) return;
+        this.busy.set(true);
+        try {
+            if (this.forceBuilderService.hasUserLoadedForces()) {
+                const ref = this.dialogsService.createDialog<string>(ConfirmDialogComponent, {
+                    disableClose: true,
+                    data: {
+                        title: 'Deploy Force',
+                        message: 'You already have forces deployed. Would you like to replace them or add this force alongside them?',
+                        buttons: [
+                            { label: 'REPLACE', value: 'replace' },
+                            { label: 'ADD', value: 'add' },
+                            { label: 'CANCEL', value: 'cancel' },
+                        ],
+                    } satisfies ConfirmDialogData<string>,
+                });
+                const answer = await firstValueFrom(ref.closed);
+                if (answer === 'add') {
+                    await this.onAdd();
+                    return;
                 }
+                if (answer !== 'replace') return;
             }
 
-            return { group, name, orgName, formationName };
-        });
-
-        const forceResult = getOrgFromForce(this.force);
-        if (forceResult.name !== 'Force') {
-            this.forceOrgName = forceResult.name;
+            const loaded = await this.forceBuilderService.loadForceEntry(this.force, 'load');
+            if (loaded) this.toastService.showToast(`"${this.force.name}" deployed.`, 'success');
+        } finally {
+            this.busy.set(false);
         }
-
-        this.isForceLoaded.set(
-            this.forceBuilderService.loadedForces().some(s => s.force.instanceId() === this.force.instanceId)
-        );
     }
 
-    onUnitClick(unit: Unit | undefined): void {
-        if (!unit) return;
-        const unitIndex = this.allUnits.findIndex(u => u.name === unit.name);
-        this.dialogsService.createDialog(UnitDetailsDialogComponent, {
-            data: {
-                unitList: this.allUnits,
-                unitIndex: unitIndex >= 0 ? unitIndex : 0,
-                hideAddButton: true,
-                gameSystem: this.force.type
-            } as UnitDetailsDialogData
-        });
-    }
-
-    async onLoad(): Promise<void> {
-        const loaded = await this.forceBuilderService.loadForceEntry(this.force, 'load');
-        if (loaded) this.close();
-    }
-
-    async onAdd(): Promise<void> {
+    private async onAdd(): Promise<void> {
         const currentForce = this.forceBuilderService.smartCurrentForce();
         const showInsert = !!currentForce && currentForce.owned();
         const ref = this.dialogsService.createDialog<ForceAddModePickerResult>(
@@ -166,10 +105,22 @@ export class ForceEntryPreviewDialogComponent {
         } else {
             const added = await this.forceBuilderService.loadForceEntry(this.force, 'add', result, { activate: false });
             if (added) {
-                this.isForceLoaded.set(true);
                 this.toastService.showToast(`"${this.force.name}" added to loaded forces.`, 'success');
-                this.close();
             }
+        }
+    }
+
+    async onRecall(): Promise<void> {
+        const force = this.loadedForce();
+        if (this.busy() || !force) return;
+        this.busy.set(true);
+        try {
+            await this.forceBuilderService.removeLoadedForce(force);
+            if (!this.isForceLoaded()) {
+                this.toastService.showToast(`"${this.force.name}" recalled.`, 'success');
+            }
+        } finally {
+            this.busy.set(false);
         }
     }
 

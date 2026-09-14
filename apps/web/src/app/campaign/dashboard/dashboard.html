@@ -1,6 +1,11 @@
 <main class="sheet">
     <div class="classbar">{{ classbar() }}</div>
 
+    <!-- GM-3 P3 — the hand-off return: the root app was opened at this home campaign FROM a GM's table. One tap goes back to
+         the join link (campaign + engine intact); the session stays joined. Only when the returnTo survived the client gate. -->
+    @if (tableReturn.returnTo()) {
+        <button type="button" class="table-back" (click)="tableReturn.back()" data-testid="back-to-table">&#9668; Back to the table</button>
+    }
     <div class="head">
         <div>
             <span class="bce">BATTLETECH CAMPAIGN ENGINE</span>
@@ -8,7 +13,7 @@
         </div>
         <div class="clock">
             <div><b>CAMPAIGN</b> {{ dateText() }}</div>
-            <div><b>ERA</b> {{ eraText() }} &middot; <b>WK</b> 1</div>
+            <div><b>ERA</b> {{ eraText() }} &middot; <b>WK</b> <span data-testid="hdr-week">{{ weekText() }}</span></div>
         </div>
     </div>
 
@@ -189,7 +194,7 @@
 
     <!-- UNIT ROSTER -->
     <section class="panel" [class.active]="activeTab() === 'roster'">
-        <bce-unit-roster />
+        <bce-unit-roster (navigate)="select($event)" />
     </section>
 
     <!-- INVENTORY (D-056) — the rolled stockpile, by category, collapsible -->
@@ -431,6 +436,9 @@
                     <div class="brief">
                         <div class="bsec"><div class="bsl">Situation</div><p class="bp">{{ b.situation }}</p></div>
                         <div class="bsec"><div class="bsl">Objectives</div><ul class="bobj">@for (o of b.objectives; track $index) { <li>{{ o }}</li> }</ul></div>
+                        @if (emptyField()) {
+                            <div class="msn-banner" data-testid="gm-empty-field">OpFor sized against an empty field &mdash; regenerate after players join, or Build / Edit OpFor.</div>
+                        }
                         @if (missionSpec(); as m) {
                             <div class="bsec"><div class="bsl">OpFor</div><div class="ofsum">{{ m.opforForce.length }} ’Mechs &middot; {{ m.opforBv }} BV (vs your {{ m.playerBv }} BV) &middot; {{ m.terrain.biome }}</div></div>
                         }
@@ -442,7 +450,8 @@
                             <button type="button" class="gobtn primary" [disabled]="!deployedCount()" (click)="playMission()">&#9654; Play mission &raquo;</button>
                             <button type="button" class="gobtn" [disabled]="!deployedCount()" (click)="prepareDeploy()">Prepare &amp; deploy &raquo;</button>
                             @if (hasPackage()) { <button type="button" class="gobtn" (click)="openPackage()">Open full package &raquo;</button> }
-                            <button type="button" class="gobtn" (click)="res.askResolve()">Resolve mission &raquo;</button>
+                            <!-- GM-1 P1 — table mode blanks resolve from the projected screen (tableMode.on() is constant false outside a GM session) -->
+                            @if (!tableMode.on()) { <button type="button" class="gobtn" (click)="res.askResolve()">Resolve mission &raquo;</button> }
                             <button type="button" class="gobtn" (click)="askReroll()">Reroll &raquo;</button>
                         </div>
                         @if (!deployedCount()) { <div class="gate-note">no deployed units — set conditions on the roster to take the field in <b>Force Preview</b></div> }
@@ -658,6 +667,14 @@
         }
     </section>
 
+    <!-- GM-1 P1 — the MASTER GM panel (gmSession-only tab: session controls in one place; P2 adds Present/sides) -->
+    <section class="panel" [class.active]="activeTab() === 'gm'">
+        @if (activeTab() === 'gm') {
+            <div class="ph">Game Master &middot; session controls</div>
+            <bce-gm-panel (jump)="goToStep($event)" />
+        }
+    </section>
+
     <!-- SETTINGS (D-038) — the narrator controls (OFF/LOCAL), TEST CONNECTION, toggles, SPA-cap knob -->
     <section class="panel" [class.active]="activeTab() === 'settings'">
         <bce-settings-tab />
@@ -737,9 +754,10 @@
         </div>
     }
     <!-- DIRECTIVE-HARDEN-4 — the resolve modal → resolve-modal.ts (dashboard-provided ResolveService). -->
-    <bce-resolve-modal />
+    <!-- GM-1 P1 — unmounted in table mode: blanking the triggers alone still leaves the modal reachable via seams. -->
+    @if (!tableMode.on()) { <bce-resolve-modal /> }
     <!-- DIRECTIVE-139 — the SP transaction toast (HS-only; Traditional never calls warchest.post so it stays silent). -->
-    <bce-sp-toast (viewLedger)="select('warchest')" />
+    <bce-sp-toast (viewLedger)="select('warchest')" (viewRepair)="select('chaos-repair')" />
 </main>
 @if (packageOpen()) {
     <bce-mission-package (close)="closePackage()"></bce-mission-package>

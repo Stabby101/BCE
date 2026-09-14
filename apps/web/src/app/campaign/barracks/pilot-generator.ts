@@ -36,9 +36,24 @@ export interface Pilot {
     hits?: number;           // last recorded wound level (walk-applied; cleared on recovery)
     kiaDate?: { y: number; m: number; d: number };      // the memorial date (walk-applied)
     named?: boolean;         // D-112: a Chaos "Named Pilot" (improvement-eligible, capped at 4). Optional/additive.
+    trade?: string;          // ODM-15: the crew trade ('mechwarrior' | 'vehicle-crew' | 'aero'), stamped at muster
+                             // from the machine's catalog type + re-derived on reassignment. ODM-only writer;
+                             // Classic pilots are never stamped (the D-036 optional/additive pattern, no version bump).
+    primaryHull?: string;    // ODM-25 (ruling 4): the CHASSIS this crew member calls their own — familiarity is
+                             // per-hull, and an instanceId dies with the machine. DELIBERATELY NOT `pilotPrimary`
+                             // (ODM-15b's stables/mint marker answers a different question; one field answering
+                             // two is the bay bug). One per pilot — setting REPLACES. NO mechanic reads it yet;
+                             // ODM-16 is where it earns a number. ODM-only writer; additive; no version bump.
+    stableHulls?: string[];  // ODM-15b ADDENDUM: a stable pilot's owned hulls (instanceIds, primary first) —
+                             // the recoverable person→both-hulls linkage, PRESERVED not modeled (the seed of a
+                             // future hull-familiarity mechanic whose trigger is James's, not ours). ODM-only
+                             // writer; additive; no version bump; NO mechanic reads it yet.
     // ── DIRECTIVE-125 — the Hot Spots Campaign Pilot Card (SP career + advancement). Optional/additive, HS-only;
     //    absent on Traditional pilots (no card, no behavior change). Persists with the pilot object (no version bump). ──
     campaignPilot?: CampaignPilot;
+    /** GM-2 P1 — on a pilot minted by the GM-1 P3 import: the HOME campaign's pilot id (the re-minted `impp-` id is the
+     *  live one). Echoed onto the results slip so a fate lands on the right home pilot. Absent on every other pilot. */
+    originPilotId?: string;
 }
 
 /** DIRECTIVE-125 — per-pilot campaign progression (Draconis Reach p.159). SP career ledger + invested SP + the

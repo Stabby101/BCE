@@ -1,40 +1,10 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import type { ASUnitTypeCode, Unit } from '../../models/units.model';
+import type { ASUnitTypeCode, UnitSummary } from '../../models/unit-summary.model';
 
 /*
- * Author: Drake
  *
  * Pure type / interface definitions for the force-org system.
  * No runtime code — only types and interfaces live here.
@@ -52,6 +22,7 @@ export type OrgType =
     // Generic
     | 'Force'
     | 'Mercenary'
+    | 'Unit'
 
     // IS-specific types
     | 'Squad'
@@ -59,7 +30,7 @@ export type OrgType =
     | 'Flight'
     | 'Squadron'
     | 'Wing'
-    | 'Single'
+    | 'Aero Lance'
     | 'Lance'
     | 'Air Lance'
     | 'Company'
@@ -101,10 +72,26 @@ export type OrgType =
     | 'Legion'
 
     // CC-specific types
+    | 'Element'
+    | 'Triple'
+    | 'Fleet Regiment'
     | 'Augmented Lance'
     | 'Augmented Company'
     | 'Augmented Battalion'
-    | 'Augmented Regiment';
+    | 'Augmented Regiment'
+
+    // SLDF-specific types
+    | 'Division'
+    | 'Corps'
+    | 'Army'
+    | 'Army Group'
+    | 'Group'
+    | 'Vessel'
+    | 'Flotilla'
+    | 'Naval Division'
+    | 'Naval Squadron'
+    | 'Fleet'
+    ;
 
 export interface PointRange {
     min: number;
@@ -118,20 +105,23 @@ export interface GroupSizeResult {
     countsAsType: OrgType | null;
     tier: number;
     count?: number;
+    isFragment?: boolean;
     provenance?: OrgGroupProvenance;
     foreignDisplayName?: string;
+    displayName?: string;
     children?: GroupSizeResult[];
-    units?: Unit[];
+    units?: UnitSummary[];
     unitAllocations?: GroupUnitAllocation[];
-    leftoverUnits?: Unit[];
+    formationMatchingIgnoredUnits?: UnitSummary[];
+    leftoverUnits?: UnitSummary[];
     leftoverUnitAllocations?: GroupUnitAllocation[];
     tag?: OrgGroupTag;
     priority?: number;
 }
 
 export interface GroupUnitAllocation {
-    readonly unit: Unit;
-    readonly troopers: number;
+    readonly unit: UnitSummary;
+    readonly squads?: number;
 }
 
 export type OrgGroupProvenance = 'input-group' | 'produced-group';
@@ -147,21 +137,8 @@ export interface OrgTypeModifier {
     tier?: number;
 }
 
-export interface OrgTypeRuleBase {
-    readonly type: OrgType;
-    readonly modifiers: Record<string, number | OrgTypeModifier>;
-    readonly commandRank?: string;
-    readonly strict?: boolean;
-    readonly tier: number;
-    readonly dynamicTier?: number;
-    readonly filter?: (unit: Unit) => boolean;
-    readonly countsAs?: OrgType;
-    readonly priority?: number;
-    readonly tag?: OrgGroupTag;
-}
-
 // -----------------------------------------------------------------------------
-// Next-generation declarative org model
+// Declarative org model
 // -----------------------------------------------------------------------------
 
 export type OrgFactScalar = string | number | boolean;
@@ -214,7 +191,7 @@ export type BuiltInUnitClassKey =
     | 'CV'
     | 'CV:omni'
     | 'PM';
-export type DerivedUnitClassKey = Lowercase<Unit['type']>;
+export type DerivedUnitClassKey = Lowercase<UnitSummary['type']>;
 export type UnitClassKey = BuiltInUnitClassKey | DerivedUnitClassKey;
 export type CIMoveClass =
     | 'foot'
@@ -305,12 +282,12 @@ export interface UnitFactScalars {
 /**
  * Normalized facts derived once from a Unit.
  *
- * This is the unit-level input to the next-generation solver. Rules should
+ * This is the unit-level input to the declarative solver. Rules should
  * primarily consume named selectors, buckets, and fact paths rather than raw
  * Unit callbacks.
  */
 export interface UnitFacts {
-    readonly unit: Unit;
+    readonly unit: UnitSummary;
     readonly factId: number;
     readonly classKey: UnitClassKey;
     readonly tags: ReadonlySet<UnitFactTag>;
@@ -330,6 +307,7 @@ export interface GroupFacts {
     readonly countsAsType: OrgType | null;
     readonly modifierKey: string;
     readonly tier: number;
+    readonly isFragment: boolean;
     readonly provenance: OrgGroupProvenance;
     readonly tag?: OrgGroupTag;
     readonly priority?: number;
@@ -348,13 +326,23 @@ export interface OrgConstraintSpec {
     readonly right: OrgFactPath | number | boolean | string;
 }
 
-export interface OrgRuleMetadata extends Omit<OrgTypeRuleBase, 'filter' | 'strict'> {
+export interface OrgRuleMetadata {
+    readonly type: OrgType;
+    readonly displayName?: string;
+    readonly modifiers: Record<string, number | OrgTypeModifier>;
+    readonly commandRank?: string;
+    readonly tier: number;
+    readonly dynamicTier?: number;
+    readonly countsAs?: OrgType;
+    readonly priority?: number;
+    readonly tag?: OrgGroupTag;
     readonly description?: string;
     readonly formationMatching?: OrgFormationMatchingSpec;
 }
 
 export interface OrgFormationMatchingSpec {
-    readonly ignoredChildRoles: readonly OrgChildRoleSpec[];
+    readonly ignoredChildRoles?: readonly OrgChildRoleSpec[];
+    readonly ignoredPatternRefs?: readonly OrgPatternReferenceName[];
     readonly notice?: string;
 }
 
@@ -378,7 +366,6 @@ export interface OrgComposedCountAlternativeSpec {
 
 export interface OrgCIFormationEntry {
     readonly moveClass: CIMoveClass;
-    readonly troopers: number;
     readonly counts: Readonly<Record<string, number>>;
 }
 
@@ -447,6 +434,8 @@ export interface OrgLeafCountRule extends OrgRuleMetadata {
     readonly unitSelector: OrgSelectorName | readonly OrgSelectorName[];
     readonly pointModel: 'fixed' | 'range';
     readonly bucketBy?: OrgUnitBucketName;
+    readonly fragmentType?: OrgType;
+    readonly fragmentTier?: number;
 }
 
 /**
@@ -522,13 +511,11 @@ export interface OrgRuleRegistry {
 }
 
 /**
- * Future org definition shape for the count-based solver.
+ * Canonical org definition shape for the declarative solver.
  *
- * This lives alongside the legacy OrgDefinition during migration. The existing
- * public API can continue to accept legacy rules until the new solver fully
- * replaces the old path.
+ * Faction registries and solver entry points operate directly on this type.
  */
-export interface OrgDefinitionSpec {
+export interface OrgDefinition {
     readonly rules: readonly OrgRuleDefinition[];
     readonly registry: OrgRuleRegistry;
     readonly distanceFactor: number;

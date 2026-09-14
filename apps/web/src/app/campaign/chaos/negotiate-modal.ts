@@ -27,6 +27,7 @@ import { NegotiationService } from './negotiation.service';
                         <div class="cng-world">{{ h.world }}</div>
                         <!-- IMPORT-5 Part E — per-side title/type (falls back to the shared top-level for authored packs). -->
                         <div class="cng-title">{{ neg.negTitle() }}</div>
+                        @if (neg.forParticipant(); as fp) { <div class="cng-for" data-testid="cng-for">Negotiating for <b>{{ fp.label }}</b> — this company's own terms on the shared track, against its reputation ({{ neg.rep() }}); Command Rights are locked to the session's contract. Nothing here touches the session's contract.</div> }
                         <!-- IMPORT-6 Part A — surface the contract's INTENSITY (the track count it completes at) where it is decided. -->
                         <div class="cng-type">{{ neg.negType() }} &middot; Scale {{ h.contract.scale }} &middot; Intensity {{ neg.intensity() }} <span data-testid="cc-neg-intensity" class="cng-int">({{ h.tracks.length }} authored track{{ h.tracks.length === 1 ? '' : 's' }})</span></div>
                         <!-- DIRECTIVE-133 — the chosen SIDE's employer + role + the opposing faction. -->
@@ -78,7 +79,11 @@ import { NegotiationService } from './negotiation.service';
                                 <span class="ct-l">{{ neg.colLabel(col) }}</span>
                                 <span class="ct-v">{{ neg.displayValue(col) }}</span>
                                 <span class="ct-raised" [class.on]="neg.raises()[col] > 0">+{{ neg.raises()[col] }}</span>
-                                <button type="button" class="ct-raise" [disabled]="!neg.canRaise(col)" (click)="neg.repRaise(col)">&#9650; Rep@if (neg.repCost(col) != null) { ({{ neg.repCost(col) }}) }</button>
+                                @if (col === 'command' && neg.forParticipant()) {
+                                    <button type="button" class="ct-raise ct-locked" disabled data-testid="cc-raise-command" title="Command Rights are locked to the session's contract for every company on the track">&#128274; locked</button>
+                                } @else {
+                                    <button type="button" class="ct-raise" [disabled]="!neg.canRaise(col)" (click)="neg.repRaise(col)" [attr.data-testid]="'cc-raise-' + col">&#9650; Rep@if (neg.repCost(col) != null) { ({{ neg.repCost(col) }}) }</button>
+                                }
                             </div>
                         }
                     </div>
@@ -192,6 +197,8 @@ import { NegotiationService } from './negotiation.service';
         .cc-sac .l { font-family:var(--label); font-weight:600; letter-spacing:1px; font-size:10.5px; text-transform:uppercase; color:var(--ink2); }
         .cc-sac select { font-family:var(--type); font-size:12px; padding:5px 7px; border:1.3px solid var(--ink2); background:var(--paper); color:var(--ink); min-height:34px; }
         .cc-arrow { color:var(--ink2); }
+        .cng-for { font-family:var(--type); font-size:12.5px; color:var(--stamp); margin-top:5px; }
+        .ct-locked { opacity:.7; cursor:not-allowed; }
         .cng-prov { font-family:var(--type); font-size:11.5px; font-style:italic; color:var(--warn, #c2622a); margin-top:5px; }
         .cpv-role { font-family:var(--mono); font-size:11px; color:var(--ink2); text-transform:capitalize; }
         .cpv-prov { font-family:var(--mono); font-size:8.5px; letter-spacing:1px; text-transform:uppercase; color:var(--warn, #c2622a); border:1px solid var(--warn, #c2622a); padding:0 4px; margin-left:6px; }

@@ -11,13 +11,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
+import { DEPLOY_ELIGIBLE, deployBlocker } from '../force/deployed'; // ODM-18 P1 — the single-sourced deploy gate (ruling 5) · TESTER-ODM-1 #2 — + crew
 import { DataService } from '../../services/data.service';
 import { BceUnitSpriteComponent } from '../sprite/unit-sprite';
 import { GameSystem } from '../../models/common.model';
 import type { Pilot } from '../barracks/pilot-generator';
 
-/** Conditions a unit can be deployed FROM (and toggled between). In repair / Cold storage can't take the field. */
-const ELIGIBLE = new Set(['Active', 'Reserve', 'Deployed']);
+/** Conditions a unit can be deployed FROM (and toggled between). In repair / Cold storage can't take the field.
+ *  ODM-18 P1 — single-sourced from force/deployed.ts (ruling 5: the intent adapter shares the SAME gate). */
+const ELIGIBLE = DEPLOY_ELIGIBLE;
 
 @Component({
     selector: 'bce-deploy-roster',
@@ -95,7 +97,10 @@ export class DeployRosterComponent {
         const as = this.isAs();
         return force.map((i) => {
             const pilot = pilots.get(i.instanceId) ?? null;
-            const eligible = ELIGIBLE.has(i.condition);
+            // TESTER-ODM-1 #2 — condition AND crew, from the one shared gate: an empty cockpit was fielded
+            // silently (and ODM-18's deploy intent made that reachable by players too).
+            const blocker = deployBlocker(i.condition, !!pilot);
+            const eligible = !blocker;
             return {
                 id: i.instanceId,
                 sprite: this.data.getUnitByName(i.unitRef) ?? { chassis: i.chassis, model: i.model, tons: i.tons },
@@ -106,7 +111,7 @@ export class DeployRosterComponent {
                 skills: pilot ? (as ? `AS ${pilot.gunnery}` : `G${pilot.gunnery} · P${pilot.piloting}`) : '',
                 deployed: i.condition === 'Deployed',
                 eligible,
-                condTag: eligible ? '' : i.condition, // 'In repair' / 'Cold storage'
+                condTag: blocker ?? '', // 'In repair' / 'Cold storage' / 'no crew' — the same words everywhere
             };
         });
     });

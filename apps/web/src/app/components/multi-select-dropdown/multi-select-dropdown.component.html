@@ -1,5 +1,17 @@
 <div class="multi-select-container corner-borders" [class.open]="isOpen()" [class.disabled]="semanticOnly()" [class.semantic-only]="semanticOnly()">
-    <div class="display-area" (pointerdown)="onPointerDown($event)" (click)="toggleDropdown($event)">
+    <div
+        #displayArea
+        class="display-area"
+        cdkOverlayOrigin
+        #overlayOrigin="cdkOverlayOrigin"
+        role="button"
+        [attr.tabindex]="semanticOnly() ? -1 : 0"
+        [attr.aria-haspopup]="'listbox'"
+        [attr.aria-expanded]="isOpen()"
+        [attr.aria-controls]="optionsListId"
+        (pointerdown)="onPointerDown($event)"
+        (click)="toggleDropdown()"
+        (keydown)="onTriggerKeydown($event)">
         <span class="label" [class.semantic-only]="semanticOnly()">{{ label() }}</span>
         <div class="pills-container">
             @if (semanticOnly() && displayItems()?.length) {
@@ -15,8 +27,13 @@
             } @else if (semanticOnly() && displayText()) {
                 <!-- Semantic-only mode fallback: show plain text -->
                 <span class="semantic-display-text">{{ displayText() }}</span>
-            } @else if (selectedOptions().length === 0) {
+            } @else if (!semanticOnly() && selectedOptions().length === 0) {
                 <span class="placeholder">Any</span>
+            } @else if (!multiselect() && singleSelectedOption(); as selectedOption) {
+                <span class="single-selected-value pill or">
+                    {{ getDisplayName(selectedOption.name) }}
+                    <button type="button" class="remove-pill" aria-label="Remove {{ getDisplayName(selectedOption.name) }}" (click)="removeOption(selectedOption.name, $event)">&#10005;</button>
+                </span>
             } @else if (compressedPills(); as compressed) {
                 @for (cp of compressed; track cp.state) {
                     <span class="pill"
@@ -48,6 +65,9 @@
                             'pill-not': option.state === 'not'
                           }">
                         {{ getDisplayName(option.name) }}{{ (option.count > 1) ? ' (' + option.count + ')' : '' }}
+                        @if (formatMinimumSummary(option.minimumValues); as minimumSummary) {
+                            @if (minimumSummary) { ({{ minimumSummary }}) }
+                        }
                         <button type="button" class="remove-pill" (click)="removeOption(option.name, $event)">&#10005;</button>
                     </span>
                 }
@@ -61,8 +81,28 @@
         }
     </div>
 
-    <div #optionsDropdown class="options-dropdown framed-borders has-shadow" [hidden]="!isOpen()">
-        <div class="filter-container" [hidden]="!(options().length > 20 || showUnavailableToggle())" (click)="$event.stopPropagation()">
+    <ng-template
+        cdkConnectedOverlay
+        [cdkConnectedOverlayOrigin]="overlayOrigin"
+        [cdkConnectedOverlayOpen]="isOpen()"
+        [cdkConnectedOverlayPositions]="overlayPositions()"
+        [cdkConnectedOverlayPush]="false"
+        [cdkConnectedOverlayFlexibleDimensions]="false"
+        [cdkConnectedOverlayViewportMargin]="8"
+        [cdkConnectedOverlayWidth]="overlayWidth()"
+        [cdkConnectedOverlayPanelClass]="'multi-select-dropdown-overlay-pane'"
+        [cdkConnectedOverlayScrollStrategy]="repositionScrollStrategy"
+        (attach)="onOverlayAttached()"
+        (detach)="onOverlayDetached()"
+        (positionChange)="onOverlayPositionChange($event)">
+    <div
+        #optionsDropdown
+        class="options-dropdown framed-borders has-shadow"
+        [class.options-dropdown-below]="overlayPlacement() === 'below'"
+        [class.options-dropdown-above]="overlayPlacement() === 'above'"
+        (click)="$event.stopPropagation()"
+        (keydown)="onDropdownKeydown($event)">
+        <div class="filter-container" [hidden]="!showFilterControls()" (click)="$event.stopPropagation()">
             <div class="filter-row">
                 <input 
                     #filterInput
@@ -70,7 +110,9 @@
                     class="filter-input" 
                     placeholder="Filter..."
                     [value]="filterText()"
-                    (input)="onFilterInput($event)">
+                    [attr.aria-activedescendant]="keyboardFocusedOptionId()"
+                    (input)="onFilterInput($event)"
+                    (keydown)="onFilterKeydown($event)">
                 <button type="button" class="unavailable-toggle" [hidden]="!showUnavailableToggle()" (click)="toggleUnavailable($event)" aria-label="Toggle unavailable options" title="Toggle unavailable options">
                     @if (showUnavailable()) {
                         <!-- show eye -->
@@ -99,13 +141,29 @@
             <cdk-virtual-scroll-viewport
                 #optionsViewport
                 class="options-list options-viewport"
+                role="listbox"
+                [id]="optionsListId"
+                tabindex="0"
+                [attr.aria-activedescendant]="keyboardFocusedOptionId()"
+                (pointerdown)="onOptionsPointerDown($event)"
+                (focus)="onOptionsListFocus($event)"
                 [itemSize]="optionItemSize"
-                [style.height.px]="maxHeightOptions()">
+                [style.--virtual-option-height]="optionItemSize + 'px'"
+                [style.height.px]="viewportHeight()">
                 <label class="option-item"
-                    *cdkVirtualFor="let option of filteredOptions(); trackBy: trackOptionName"
+                    *cdkVirtualFor="let option of filteredOptions(); let optionIndex = index; trackBy: trackOptionName"
+                    role="option"
+                    [id]="optionId(optionIndex)"
                     [attr.data-option-name]="option.name"
+                    [attr.aria-selected]="isSelected(option.name) ? 'true' : 'false'"
+                    [class.keyboard-focused]="optionIndex === keyboardFocusedIndex()"
+                    [class.option-section-start]="optionSectionBreakIndexes().has(optionIndex)"
                     [class.unavailable]="option.available === false"
                     [class.selected-single]="!multiselect() && isSelected(option.name)"
+                    [class.has-minimum-fields]="!!option.minimumFieldLabels?.length && (getState(option.name) === 'and' || getState(option.name) === 'or')"
+                    (pointerenter)="onOptionPointerHover(option.name)"
+                    (pointermove)="onOptionPointerHover(option.name)"
+                    (pointerleave)="onOptionPointerLeave(option.name)"
                     (click)="!multiselect() ? onSingleSelect(option.name) : null">
                     @if (multiselect()) {
                         <input type="checkbox" [checked]="isSelected(option.name)" (change)="onOptionToggle(option.name)" />
@@ -138,7 +196,29 @@
                     @if (option.img) {
                         <img [src]="option.img" class="option-img" alt="">
                     }
-                    <span [innerHTML]="highlight(option.displayName ?? option.name)"></span>
+                    <span
+                        class="option-label"
+                        [style.fontSize.px]="getVirtualOptionLabelFontSize(option)"
+                        [innerHTML]="highlight(option.displayName ?? option.name)"></span>
+                    @if (option.minimumFieldLabels; as fieldLabels) {
+                        @if (getState(option.name) === 'and' || getState(option.name) === 'or') {
+                            <div class="minimum-inputs">
+                                @for (fieldLabel of fieldLabels; let fieldIndex = $index; track fieldIndex) {
+                                    <input type="number"
+                                        min="0"
+                                        step="any"
+                                        class="minimum-field"
+                                        [value]="getMinimumValue(option.name, fieldIndex)"
+                                        [placeholder]="fieldLabel"
+                                        [attr.aria-label]="option.name + ' ' + fieldLabel + ' minimum'"
+                                        [title]="option.name + ' ' + fieldLabel + ' minimum (at least)'"
+                                        (input)="onMinimumInput(option.name, fieldIndex, fieldLabels.length, $event)"
+                                        (click)="$event.stopPropagation()"
+                                        (wheel)="onMinimumWheel($event)" />
+                                }
+                            </div>
+                        }
+                    }
                     @if (countable() && (getState(option.name) === 'and' || getState(option.name) === 'or')) {
                         <div class="quantity-input">
                             <input type="number"
@@ -154,12 +234,27 @@
             </cdk-virtual-scroll-viewport>
         } @else {
             <div #optionsEl class="options-list"
+                role="listbox"
+                [id]="optionsListId"
+                tabindex="0"
+                [attr.aria-activedescendant]="keyboardFocusedOptionId()"
+                (pointerdown)="onOptionsPointerDown($event)"
+                (focus)="onOptionsListFocus($event)"
                 [style.maxHeight.px]="maxHeightOptions()">
                 @for (option of filteredOptions(); let i = $index; track option.name) {
                         <label class="option-item"
+                            role="option"
+                            [id]="optionId(i)"
                             [attr.data-option-name]="option.name"
+                            [attr.aria-selected]="isSelected(option.name) ? 'true' : 'false'"
+                            [class.keyboard-focused]="i === keyboardFocusedIndex()"
+                            [class.option-section-start]="optionSectionBreakIndexes().has(i)"
                             [class.unavailable]="option.available === false"
                             [class.selected-single]="!multiselect() && isSelected(option.name)"
+                            [class.has-minimum-fields]="!!option.minimumFieldLabels?.length && (getState(option.name) === 'and' || getState(option.name) === 'or')"
+                            (pointerenter)="onOptionPointerHover(option.name)"
+                            (pointermove)="onOptionPointerHover(option.name)"
+                            (pointerleave)="onOptionPointerLeave(option.name)"
                             (click)="!multiselect() ? onSingleSelect(option.name) : null"
                             >
                             @if (multiselect()) {
@@ -193,10 +288,29 @@
                             @if (option.img) {
                                 <img [src]="option.img" class="option-img" alt="">
                             }
-                            <span [innerHTML]="highlight(option.displayName ?? option.name)"></span>
+                            <span class="option-label" [innerHTML]="highlight(option.displayName ?? option.name)"></span>
+                            @if (option.minimumFieldLabels; as fieldLabels) {
+                                @if (getState(option.name) === 'and' || getState(option.name) === 'or') {
+                                    <div class="minimum-inputs">
+                                        @for (fieldLabel of fieldLabels; let fieldIndex = $index; track fieldIndex) {
+                                            <input type="number"
+                                                min="0"
+                                                step="any"
+                                                class="minimum-field"
+                                                [value]="getMinimumValue(option.name, fieldIndex)"
+                                                [placeholder]="fieldLabel"
+                                                [attr.aria-label]="option.name + ' ' + fieldLabel + ' minimum'"
+                                                [title]="option.name + ' ' + fieldLabel + ' minimum (at least)'"
+                                                (input)="onMinimumInput(option.name, fieldIndex, fieldLabels.length, $event)"
+                                                (click)="$event.stopPropagation()"
+                                                (wheel)="onMinimumWheel($event)" />
+                                        }
+                                    </div>
+                                }
+                            }
                             @if (countable() && (getState(option.name) === 'and' || getState(option.name) === 'or')) {
                                 <div class="quantity-input">
-                                <input type="number" 
+                                    <input type="number"
                                         [value]="getCount(option.name)"
                                         min="1"
                                         class="quantity-field"
@@ -220,4 +334,5 @@
             </div>
         }
         </div>
+    </ng-template>
 </div>

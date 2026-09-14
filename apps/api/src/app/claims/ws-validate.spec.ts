@@ -5,7 +5,8 @@
  * malformed is rejected. If one fails after a refactor, the refactor changed a validation rule — do not loosen
  * the guard to match; compare against the shipped behavior.
  */
-import { vJoin, vClaim, vRelease, vLobbyJoin, vLobbyMut, vBattle, vFavorite, MAX_BATTLE_STATE_BYTES } from './ws-validate';
+import { vJoin, vClaim, vRelease, vLobbyJoin, vLobbyMut, vBattle, vFavorite, vSidePref, vImportForce, vOdmIntent, ODM_INTENT_VERBS, MAX_BATTLE_STATE_BYTES, MAX_IMPORT_FORCE_BYTES, MAX_IMPORT_UNITS } from './ws-validate';
+import { vSignContract, vEngagementClose } from './ws-validate';
 
 const ok = (v: { ok: boolean }) => expect(v.ok).toBe(true);
 const bad = (v: { ok: boolean; reason?: string }) => { expect(v.ok).toBe(false); expect(typeof v.reason).toBe('string'); };
@@ -116,6 +117,106 @@ describe('vBattle — the state gate (shape + non-serializable + 256 KB bound)',
     });
 });
 
+describe('vOdmIntent (ODM-18 P1 — the allowlist LAW)', () => {
+    const base = { campaignId: 'c', token: 't' };
+    it('accepts every allowlisted verb with its shape', () => {
+        ok(vOdmIntent({ ...base, verb: 'reassign-pilot', payload: { instanceId: 'u1', pilotId: 'p1' } }));
+        ok(vOdmIntent({ ...base, verb: 'reassign-pilot', payload: { instanceId: 'u1', pilotId: '' } })); // '' = unassign
+        ok(vOdmIntent({ ...base, verb: 'set-deploy', payload: { instanceId: 'u1', deployed: true } }));
+        ok(vOdmIntent({ ...base, verb: 'bay-assign', payload: { instanceId: 'u1', bayId: 'b1' } }));
+        ok(vOdmIntent({ ...base, verb: 'bay-unassign', payload: { bayId: 'b1' } }));
+        ok(vOdmIntent({ ...base, verb: 'bay-priority', payload: { bayId: 'b1', p: 2 } }));
+        ok(vOdmIntent({ ...base, verb: 'bay-type', payload: { bayId: 'b1', type: 'SALVAGE' } }));
+        ok(vOdmIntent({ ...base, verb: 'bench-assess', payload: { label: 'Medium Laser', outcome: { a: 1, b: 0, c: 0 } } }));
+        ok(vOdmIntent({ ...base, verb: 'bench-inspect', payload: { label: 'Medium Laser', n: 2 } }));
+        ok(vOdmIntent({ ...base, verb: 'bench-repair', payload: { label: 'Medium Laser', n: 1 } }));
+        ok(vOdmIntent({ ...base, verb: 'bench-ammo-clear', payload: { bin: 'Narc' } }));
+        ok(vOdmIntent({ ...base, verb: 'donor-strip-request', payload: { instanceId: 'u1' } }));
+        expect(ODM_INTENT_VERBS.length).toBe(11); // the pinned vocabulary — growth is a deliberate act
+    });
+    it('THE NEGATIVE LAW: burnDays / writeOff / clock / resolve / QM verbs are NOT in the allowlist', () => {
+        for (const verb of ['burn-days', 'burnDays', 'write-off', 'writeOff', 'advance-month', 'advance', 'resolve', 'stocks-adjust', 'depot-adjust', 'settle-attempt', 'donor-strip']) {
+            bad(vOdmIntent({ ...base, verb, payload: { instanceId: 'u1' } }));
+        }
+    });
+    it('rejects malformed payloads per verb + missing identity', () => {
+        bad(vOdmIntent({ ...base, verb: 'set-deploy', payload: { instanceId: 'u1', deployed: 'yes' } }));
+        bad(vOdmIntent({ ...base, verb: 'bay-priority', payload: { bayId: 'b1', p: 5 } }));
+        bad(vOdmIntent({ ...base, verb: 'bench-assess', payload: { label: 'ML', outcome: { a: -1, b: 0, c: 0 } } }));
+        bad(vOdmIntent({ ...base, verb: 'bay-type', payload: { bayId: 'b1', type: 'ENGINE' } }));
+        bad(vOdmIntent({ token: 't', verb: 'set-deploy', payload: { instanceId: 'u1', deployed: true } }));
+        bad(vOdmIntent({ ...base, verb: 'reassign-pilot', payload: null }));
+        bad(vOdmIntent(null));
+    });
+    // ── the panel fixes (same-commit): integer bounds, the payload byte gate, the correlation nonce ──
+    it('bench counts are INTEGERS 1..999 (2^31 wrapped negative through the apply-side |0 — bound at the door)', () => {
+        bad(vOdmIntent({ ...base, verb: 'bench-repair', payload: { label: 'ML', n: 2 ** 31 } }));
+        bad(vOdmIntent({ ...base, verb: 'bench-inspect', payload: { label: 'ML', n: 2.5 } }));
+        bad(vOdmIntent({ ...base, verb: 'bench-inspect', payload: { label: 'ML', n: 1000 } }));
+        bad(vOdmIntent({ ...base, verb: 'bench-assess', payload: { label: 'ML', outcome: { a: 2 ** 31, b: 0, c: 0 } } }));
+        bad(vOdmIntent({ ...base, verb: 'bench-assess', payload: { label: 'ML', outcome: { a: 1.5, b: 0, c: 0 } } }));
+        ok(vOdmIntent({ ...base, verb: 'bench-repair', payload: { label: 'ML', n: 999 } }));
+    });
+    it('the payload object is byte-gated at 32 KB (extra keys ride the GM fan verbatim — the vBattle posture)', () => {
+        bad(vOdmIntent({ ...base, verb: 'bay-unassign', payload: { bayId: 'b1', junk: 'x'.repeat(33 * 1024) } }));
+        ok(vOdmIntent({ ...base, verb: 'bay-unassign', payload: { bayId: 'b1', junk: 'x'.repeat(1024) } }));
+    });
+    it('nonce: optional string ≤40 (per-send ack correlation); anything else rejects', () => {
+        ok(vOdmIntent({ ...base, verb: 'bay-unassign', payload: { bayId: 'b1' }, nonce: 'abc123' }));
+        bad(vOdmIntent({ ...base, verb: 'bay-unassign', payload: { bayId: 'b1' }, nonce: 'x'.repeat(41) }));
+        bad(vOdmIntent({ ...base, verb: 'bay-unassign', payload: { bayId: 'b1' }, nonce: 42 }));
+    });
+});
+
+describe('vImportForce (GM-1 P3)', () => {
+    const unit = { unitRef: 'Atlas AS7-D', chassis: 'Atlas', model: 'AS7-D', mulId: 31, tons: 100, bv: 1897 };
+    const base = { campaignId: 'c', token: 't', units: [unit] };
+    it('accepts a well-formed import (units only; pilots + engagementKey + name optional)', () => {
+        ok(vImportForce(base));
+        ok(vImportForce({ ...base, engagementKey: '', name: 'Pendragon', pilots: [{ name: 'Sasha', gunnery: 3, piloting: 4, assignedInstanceId: 'x' }] }));
+        ok(vImportForce({ ...base, units: [{ ...unit, unitType: 'vehicle', damage: { crits: [] } }] }));
+    });
+    it('rejects missing campaignId/token, empty/oversized unit lists, and malformed units', () => {
+        // GM-2 P1 — the identity cut's keys are accepted (strings) and rejected when malformed
+        ok(vImportForce({ ...base, sourceCampaignId: 'home-pen', units: [{ ...unit, instanceId: 'h-1' }], pilots: [{ pilotId: 'hp-1', name: 'Sasha', gunnery: 3, piloting: 4, assignedInstanceId: 'h-1' }] }));
+        bad(vImportForce({ ...base, sourceCampaignId: 42 }));
+        bad(vImportForce({ ...base, units: [{ ...unit, instanceId: { not: 'a string' } }] }));
+        bad(vImportForce({ ...base, pilots: [{ pilotId: 7, name: 'Sasha', gunnery: 3, piloting: 4 }] }));
+        bad(vImportForce({ token: 't', units: [unit] }));
+        bad(vImportForce({ campaignId: 'c', units: [unit] }));
+        bad(vImportForce({ ...base, units: [] }));
+        bad(vImportForce({ ...base, units: Array.from({ length: MAX_IMPORT_UNITS + 1 }, () => unit) }));
+        bad(vImportForce({ ...base, units: [{ ...unit, tons: 'heavy' }] }));
+        bad(vImportForce({ ...base, units: [{ ...unit, unitType: 'aerospace' }] }));
+        bad(vImportForce({ ...base, units: [{ ...unit, damage: 'broken' }] }));
+        bad(vImportForce({ ...base, pilots: [{ name: 'X', gunnery: 'good', piloting: 4 }] }));
+        bad(vImportForce(null));
+    });
+    it('gates the WHOLE {units, pilots} payload at 128 KB with a clean reject (never the silent frame drop)', () => {
+        expect(MAX_IMPORT_FORCE_BYTES).toBe(128 * 1024);
+        const fat = { ...unit, damage: { blob: 'x'.repeat(MAX_IMPORT_FORCE_BYTES) } };
+        bad(vImportForce({ ...base, units: [fat] }));
+        const under = { ...unit, damage: { blob: 'x'.repeat(1024) } };
+        ok(vImportForce({ ...base, units: [under] }));
+    });
+});
+
+describe('vSidePref (GM-1 P2)', () => {
+    it("accepts { campaignId, token, pref } with pref 'a' | 'b' | null", () => {
+        ok(vSidePref({ campaignId: 'c', token: 't', pref: 'a' }));
+        ok(vSidePref({ campaignId: 'c', token: 't', pref: 'b' }));
+        ok(vSidePref({ campaignId: 'c', token: 't', pref: null }));
+    });
+    it('rejects missing campaignId/token and any pref outside the closed set (absent included)', () => {
+        bad(vSidePref({ token: 't', pref: 'a' }));
+        bad(vSidePref({ campaignId: 'c', pref: 'a' }));
+        bad(vSidePref({ campaignId: 'c', token: 't' }));           // pref is REQUIRED (null = explicit clear)
+        bad(vSidePref({ campaignId: 'c', token: 't', pref: 'x' }));
+        bad(vSidePref({ campaignId: 'c', token: 't', pref: 1 }));
+        bad(vSidePref(null));
+    });
+});
+
 describe('vFavorite', () => {
     it('accepts { campaignId, token } with string|null instanceId/pilotId (or absent)', () => {
         ok(vFavorite({ campaignId: 'c', token: 't', instanceId: 'u1', pilotId: null }));
@@ -127,5 +228,42 @@ describe('vFavorite', () => {
         bad(vFavorite({ campaignId: 'c' }));
         bad(vFavorite({ campaignId: 'c', token: 't', instanceId: 5 }));
         bad(vFavorite({ campaignId: 'c', token: 't', pilotId: {} }));
+    });
+});
+
+describe('GM-2 P2b — the reputation on the handshake + vSignContract', () => {
+    const base = { campaignId: 'c1', token: 't1', units: [{ chassis: 'Atlas', model: 'AS7-D', unitRef: 'Atlas AS7-D', mulId: 31, tons: 100, bv: 1897 }], sourceCampaignId: 'home-a' };
+    it('vImportForce: reputation optional, finite 0..99', () => {
+        expect(vImportForce({ ...base, reputation: 4 }).ok).toBe(true);
+        expect(vImportForce({ ...base }).ok).toBe(true);
+        expect(vImportForce({ ...base, reputation: -1 }).ok).toBe(false);
+        expect(vImportForce({ ...base, reputation: 'high' }).ok).toBe(false);
+        expect(vImportForce({ ...base, reputation: Number.NaN }).ok).toBe(false);
+    });
+    const contract = { id: 'pc-home-a-hs', type: 'garrison', scale: 2, intensity: 2, steps: { basePay: 3, command: 1, salvage: 2, support: 1, transport: 2 }, status: 'active', acceptedDate: { y: 3151, m: 2, d: 1 }, tracksDone: 0, hotspotId: 'hs-1', side: 'a', sideRole: 'attacker', employer: 'FS', enemyFaction: 'DC', repSpent: 1, transportSp: 420 };
+    const msg = { campaignId: 'c1', token: 't1', key: 'home-a', contract, nonce: 'n1' };
+    it('accepts a well-formed signing', () => { expect(vSignContract(msg)).toEqual({ ok: true }); });
+    it('rejects: missing key · bad scale · a tampered steps column · an unknown column · an unknown contract key · tracksDone ≠ 0 · repSpent out of range · over the byte bound', () => {
+        expect(vSignContract({ ...msg, key: '' }).ok).toBe(false);
+        expect(vSignContract({ ...msg, contract: { ...contract, scale: 4 } }).ok).toBe(false);
+        expect(vSignContract({ ...msg, contract: { ...contract, steps: { ...contract.steps, basePay: 99 } } }).ok).toBe(false);
+        expect(vSignContract({ ...msg, contract: { ...contract, steps: { ...contract.steps, bonus: 1 } } }).ok).toBe(false);
+        expect(vSignContract({ ...msg, contract: { ...contract, offerSnapshot: ['hs-9'] } }).ok).toBe(false);
+        expect(vSignContract({ ...msg, contract: { ...contract, tracksDone: 1 } }).ok).toBe(false);
+        expect(vSignContract({ ...msg, contract: { ...contract, repSpent: 21 } }).ok).toBe(false);
+        expect(vSignContract({ ...msg, contract: { ...contract, employer: 'x'.repeat(40 * 1024) } }).ok).toBe(false);
+    });
+});
+
+describe('vEngagementClose — ORDER-4 H18', () => {
+    it('accepts { campaignId, engagementKey } with both non-empty', () => {
+        expect(vEngagementClose({ campaignId: 'c', engagementKey: 'PALE_CANDLE' }).ok).toBe(true);
+    });
+    it('rejects a missing/empty key, a missing campaign, and a non-object', () => {
+        expect(vEngagementClose({ campaignId: 'c', engagementKey: '' }).ok).toBe(false);
+        expect(vEngagementClose({ campaignId: 'c' }).ok).toBe(false);
+        expect(vEngagementClose({ engagementKey: 'k' }).ok).toBe(false);
+        expect(vEngagementClose('nope').ok).toBe(false);
+        expect(vEngagementClose(null).ok).toBe(false);
     });
 });

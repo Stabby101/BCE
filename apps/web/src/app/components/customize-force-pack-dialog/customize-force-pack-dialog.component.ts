@@ -1,35 +1,6 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { Component, inject, signal, ChangeDetectionStrategy, computed, Injector, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -47,16 +18,15 @@ import { TaggingService } from '../../services/tagging.service';
 import { UnitCardCompactComponent } from '../unit-card-compact/unit-card-compact.component';
 import { UnitDetailsDialogComponent, type UnitDetailsDialogData } from '../unit-details-dialog/unit-details-dialog.component';
 import { VariantDropdownPanelComponent } from './variant-dropdown-panel.component';
-import type { Unit } from '../../models/units.model';
-import type { PackUnitEntry, ResolvedPack } from '../../utils/force-pack.util';
+import type { UnitSummary } from '../../models/unit-summary.model';
+import { type PackUnitEntry, type ResolvedPack } from '../../utils/force-pack.util';
+import { isSameVariantGroup } from '../../utils/unit-variant.util';
 import { compareUnitsByName } from '../../utils/sort.util';
 import type { TagClickEvent } from '../unit-tags/unit-tags.component';
 import { GameSystem } from '../../models/common.model';
 import { GameService } from '../../services/game.service';
 
-/*
- * Author: Drake
- */
+
 
 export interface CustomizeForcePackDialogData {
     pack: ResolvedPack;
@@ -67,7 +37,7 @@ export interface CustomizeForcePackDialogResult {
 }
 
 interface CustomizableUnit extends PackUnitEntry {
-    originalUnit: Unit | null;  // The original unit from the force pack
+    originalUnit: UnitSummary | null;  // The original unit from the force pack
     index: number;              // Position in the pack
 }
 
@@ -108,18 +78,14 @@ export class CustomizeForcePackDialogComponent {
     openDropdownIndex = signal<number | null>(null);
 
     // Variants for selected unit (used by docked panel on non-phone layouts)
-    variantsForSelected = computed<Unit[]>(() => {
+    variantsForSelected = computed<UnitSummary[]>(() => {
         const idx = this.openDropdownIndex();
         if (idx === null) return [];
         
         const unit = this.customizableUnits()[idx];
         if (!unit?.unit) return [];
-        
-        const targetType = unit.unit.type;
-        const targetChassis = unit.unit.chassis;
-        
-        return this.dataService.getUnits()
-            .filter(u => u.type === targetType && u.chassis === targetChassis)
+
+        return this.getVariantsForUnit(unit.unit)
             .sort((a, b) => {
                 // Sort by year first, then by name
                 const yearDiff = (a.year ?? 0) - (b.year ?? 0);
@@ -174,10 +140,7 @@ export class CustomizeForcePackDialogComponent {
         }
 
         // Phone mode: use centered overlay
-        const targetType = unit.unit.type;
-        const targetChassis = unit.unit.chassis;
-        const variants = this.dataService.getUnits()
-            .filter(u => u.type === targetType && u.chassis === targetChassis)
+        const variants = this.getVariantsForUnit(unit.unit)
             .sort(compareUnitsByName);
 
         if (variants.length === 0) return;
@@ -208,17 +171,22 @@ export class CustomizeForcePackDialogComponent {
         componentRef.setInput('currentUnitName', unit.unit?.name ?? null);
 
         // Handle selection - cleanup when dialog closes
-        outputToObservable(componentRef.instance.selected).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((variant: Unit) => {
+        outputToObservable(componentRef.instance.selected).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((variant: UnitSummary) => {
             this.selectVariant(index, variant);
             this.closeDropdown();
         });
 
         // Handle info request - cleanup when dialog closes
-        outputToObservable(componentRef.instance.infoRequested).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((variant: Unit) => {
+        outputToObservable(componentRef.instance.infoRequested).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((variant: UnitSummary) => {
             this.showVariantInfo(variant, variants, index);
         });
 
         this.openDropdownIndex.set(index);
+    }
+
+    private getVariantsForUnit(unit: UnitSummary): UnitSummary[] {
+        return this.dataService.getUnits()
+            .filter(candidate => isSameVariantGroup(candidate, unit));
     }
 
     private closeDropdown(): void {
@@ -226,7 +194,7 @@ export class CustomizeForcePackDialogComponent {
         this.openDropdownIndex.set(null);
     }
 
-    private selectVariant(index: number, variant: Unit): void {
+    private selectVariant(index: number, variant: UnitSummary): void {
         this.customizableUnits.update(units => {
             const updated = [...units];
             updated[index] = {
@@ -240,7 +208,7 @@ export class CustomizeForcePackDialogComponent {
     }
 
     /** Handler for docked panel variant selection */
-    onDockedVariantSelect(variant: Unit): void {
+    onDockedVariantSelect(variant: UnitSummary): void {
         const idx = this.openDropdownIndex();
         if (idx === null) return;
         this.selectVariant(idx, variant);
@@ -248,7 +216,7 @@ export class CustomizeForcePackDialogComponent {
     }
 
     /** Handler for docked panel info request */
-    onDockedVariantInfo(variant: Unit): void {
+    onDockedVariantInfo(variant: UnitSummary): void {
         const idx = this.openDropdownIndex();
         if (idx === null) return;
         this.showVariantInfo(variant, this.variantsForSelected(), idx);
@@ -283,7 +251,7 @@ export class CustomizeForcePackDialogComponent {
     }
 
     /** Open unit details for a variant in the dropdown - SELECT selects the unit */
-    private async showVariantInfo(variant: Unit, variants: Unit[], unitIndex: number): Promise<void> {
+    private async showVariantInfo(variant: UnitSummary, variants: UnitSummary[], unitIndex: number): Promise<void> {
         const variantIdx = variants.findIndex(v => v.name === variant.name);
 
         const ref = this.dialogsService.createDialog(
@@ -299,7 +267,7 @@ export class CustomizeForcePackDialogComponent {
         );
 
         // When SELECT is clicked in unit-details, select that variant
-        outputToObservable(ref.componentInstance!.select).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((selectedUnit: Unit) => {
+        outputToObservable(ref.componentInstance!.select).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((selectedUnit: UnitSummary) => {
             this.selectVariant(unitIndex, selectedUnit);
             this.closeDropdown();
             ref.close();
@@ -312,7 +280,7 @@ export class CustomizeForcePackDialogComponent {
         
         const units = this.customizableUnits()
             .map(u => u.unit)
-            .filter((u): u is Unit => u !== null && u !== undefined);
+            .filter((u): u is UnitSummary => u !== null && u !== undefined);
         
         if (units.length === 0) return;
 

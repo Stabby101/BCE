@@ -73,7 +73,12 @@ export class MulAllowlistService {
 /* Map a Hot Spots faction STRING → one of the eight MUL dataset keys (the allowlist.json keys). Exact match first,
  * then a normalized alias table (the ilClan renames + common short/prose forms), then a longest-key contains pass
  * for prefixed employer strings ("Federated Suns — New Ivaarsen Chasseurs"). null for an unmapped faction. */
-const CANON = ['Draconis Combine', 'Federated Suns', 'Capellan Confederation', 'Republic of the Sphere', 'Raven Alliance', 'Clan Sea Fox', 'Pirates', 'Mercenary'];
+// HIN-1 (2026-09-03) — Lyran Commonwealth + Free Worlds League join CANON so the Hinterlands pack's employers (and Bolan's two
+// sides) resolve to real factions. They have NO MUL dataset: idsFor() returns null for them (the gate stays inert → the MekBay
+// era pool, the Jade Falcon posture). A bare 'commonwealth' alias was deliberately NOT added — the longest-key contains pass
+// would map "Marik-Stewart Commonwealth" (a League successor) to Lyran. No Clan joins the table (H13: the hiring predicate is
+// keyed to it; recon proved 0 Clan hiring flips with exactly these keys).
+const CANON = ['Draconis Combine', 'Federated Suns', 'Capellan Confederation', 'Republic of the Sphere', 'Raven Alliance', 'Clan Sea Fox', 'Pirates', 'Mercenary', 'Lyran Commonwealth', 'Free Worlds League'];
 const ALIAS: Record<string, string> = {
     'draconis combine': 'Draconis Combine', combine: 'Draconis Combine', dcms: 'Draconis Combine', kurita: 'Draconis Combine',
     'federated suns': 'Federated Suns', 'federated commonwealth': 'Federated Suns', affs: 'Federated Suns', davion: 'Federated Suns',
@@ -83,6 +88,8 @@ const ALIAS: Record<string, string> = {
     'clan sea fox': 'Clan Sea Fox', 'sea fox': 'Clan Sea Fox', 'clan diamond shark': 'Clan Sea Fox', 'diamond shark': 'Clan Sea Fox',
     pirates: 'Pirates', pirate: 'Pirates', bandit: 'Pirates', bandits: 'Pirates', bandit_caste: 'Pirates',
     mercenary: 'Mercenary', mercenaries: 'Mercenary', merc: 'Mercenary', mercs: 'Mercenary',
+    'lyran commonwealth': 'Lyran Commonwealth', 'lyran alliance': 'Lyran Commonwealth', lyran: 'Lyran Commonwealth', lcaf: 'Lyran Commonwealth', steiner: 'Lyran Commonwealth', // HIN-1
+    'free worlds league': 'Free Worlds League', fwl: 'Free Worlds League', fwlm: 'Free Worlds League', marik: 'Free Worlds League', tamarind: 'Free Worlds League', // HIN-1
 };
 const ALIAS_KEYS_DESC = Object.keys(ALIAS).sort((a, b) => b.length - a.length); // longest first → no short-key false hits
 export function hsFactionToMulFaction(name: string): string | null {

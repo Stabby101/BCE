@@ -1,53 +1,63 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import type { GameSystem, Rulebook, RulesReference } from '../models/common.model';
-import type { ForceUnit } from '../models/force-unit.model';
+import { GameSystem, type RulesReference } from '../models/common.model';
 
-/*
- * Author: Drake
- */
+export interface FormationWideAbility {
+    readonly id: string;
+    readonly name: string;
+    readonly summary: string[];
+    readonly rulesRef?: RulesReference[];
+}
+
+export type FormationSharedPoolLevel =
+    | {
+        readonly kind: 'fixed';
+        readonly value: number;
+    }
+    | {
+        readonly kind: 'unit-count-plus';
+        readonly offset: number;
+    };
+
+export interface FormationSharedPool {
+    /** Ability level granted by the pool, when the source rules define one. */
+    readonly level?: FormationSharedPoolLevel;
+    /** Total uses available to the whole formation during one scenario. */
+    readonly totalUsesPerScenario?: number;
+    /** Maximum uses one unit may receive from the pool during one scenario. */
+    readonly maxUsesPerUnitPerScenario?: number;
+    /** Whether a unit may combine this pool with its individually purchased ability. */
+    readonly stacksWithIndividualAbility?: boolean;
+}
 
 /**
- * Describes how a group of SPAs is distributed to units in a formation.
- * Each formation may have one or more effect groups, each describing a set of
- * abilities and the rules governing who receives them.
+ * Shared metadata for formation effect groups.
  */
-export interface FormationEffectGroup {
+interface FormationEffectGroupBase {
     /** SPA ids from PILOT_ABILITIES that may be granted by this effect. */
     abilityIds?: string[];
     /** SCA ids from COMMAND_ABILITIES whose effects are applied by this group. */
     commandAbilityIds?: string[];
+    /** Whether assignments rotate per turn (`true`) or are fixed at setup (`false`/omitted). */
+    perTurn?: boolean;
+    /** Number of units or pairs for `fixed` / `fixed-pairs` distributions. */
+    count?: number;
+    /** Human-readable condition for `conditional` distribution. */
+    condition?: string;
+    /** Role name for `role-filtered` distribution. */
+    roleFilter?: string;
+    /** Maximum abilities from this group a single unit can receive (default 1). */
+    maxPerUnit?: number;
+    /** Whether the formation commander is excluded from this effect group's recipients. */
+    excludeCommander?: boolean;
+}
+
+/**
+ * Describes how assignable SPAs and SCAs are distributed to units in a formation.
+ */
+export interface FormationAssignmentEffectGroup extends FormationEffectGroupBase {
     /**
      * How abilities are selected from the list:
      * - `choose-one`: One ability is chosen for all recipients (e.g. Recon Lance picks one SPA for everyone).
@@ -66,47 +76,116 @@ export interface FormationEffectGroup {
      * - `fixed-pairs`:       A fixed number of identical pairs (see `count`).
      * - `conditional`:       Units matching a specific condition (see `condition`).
      * - `remainder`:         Units not covered by another effect group.
-     * - `shared-pool`:       A shared resource pool for the formation (e.g. Lucky).
      * - `role-filtered`:     All units matching a specific role (see `roleFilter`).
      * - `commander`:         The designated commander unit only.
      */
     distribution: 'all' | 'half-round-down' | 'half-round-up' | 'percent-75'
         | 'up-to-50-percent' | 'fixed' | 'fixed-pairs' | 'conditional'
-        | 'remainder' | 'shared-pool' | 'role-filtered' | 'commander';
-    /** Whether assignments rotate per turn (`true`) or are fixed at start of play (`false`/omitted). */
-    perTurn?: boolean;
-    /** Number of units or pairs for `fixed` / `fixed-pairs` distributions. */
-    count?: number;
-    /** Human-readable condition for `conditional` distribution. */
-    condition?: string;
-    /** Role name for `role-filtered` distribution. */
-    roleFilter?: string;
-    /** Maximum abilities from this group a single unit can receive (default 1). */
-    maxPerUnit?: number;
+        | 'remainder' | 'role-filtered' | 'commander';
 }
 
+/** Describes a formation-level resource pool that is not assigned to units. */
+export interface FormationSharedPoolEffectGroup extends FormationEffectGroupBase {
+    selection: 'all';
+    distribution: 'shared-pool';
+    sharedPool: FormationSharedPool;
+}
 
-export interface FormationTypeDefinition {
+/**
+ * Describes a formation-wide ability that is not assigned to individual units.
+ */
+export interface FormationWideEffectGroup extends FormationEffectGroupBase {
+    formationWideAbilities: FormationWideAbility[];
+    distribution: 'formation-wide';
+}
+
+/**
+ * Copies the SPAs actually granted by another formation in the same force.
+ * The target formation is selected on the owning {@code UnitGroup}; keeping the
+ * target out of the static rule definition lets one definition serve every force.
+ */
+export interface FormationTargetCopyEffectGroup {
+    selection: 'copy';
+    distribution: 'formation-target';
+    /** How many units in the copying formation may receive copied SPAs. */
+    recipientLimit: 'one-per-two-target-recipients' | 'half-self-round-down';
+}
+
+export type FormationEffectGroup = FormationAssignmentEffectGroup
+    | FormationSharedPoolEffectGroup
+    | FormationWideEffectGroup
+    | FormationTargetCopyEffectGroup;
+
+export function isFormationTargetCopyEffectGroup(
+    group: FormationEffectGroup,
+): group is FormationTargetCopyEffectGroup {
+    return group.distribution === 'formation-target';
+}
+
+export function formationHasTargetCopyEffect(
+    definition: FormationTypeDefinition | null | undefined,
+): boolean {
+    return definition?.effectGroups?.some(isFormationTargetCopyEffectGroup) ?? false;
+}
+
+export interface FormationTypeDefinitionCommon {
     id: string;
     parent?: string;
     name: string;
+    /** Alternative formation names that should count as a whole-phrase match in custom group names. */
+    nameAliases?: string[];
     description: string;
+    /** Whether this formation explicitly inherits parent effect groups and parent requirement display. Defaults to false. */
+    inheritParentEffects?: boolean;
+    exclusiveFaction?: string[];
+    techBase?: 'Inner Sphere' | 'Clan' | 'Special';
+}
+
+/** Rules and metadata that belong to exactly one game system. */
+export interface FormationTypeGameSystemDefinition {
+    /** Human-readable formation bonus text for this game system. */
     effectDescription?: string;
     /** Structured SPA distribution rules for this formation's bonus ability. */
     effectGroups?: FormationEffectGroup[];
-    validator?: (units: ForceUnit[], gameSystem: GameSystem) => boolean;
-    /**
-     * Returns a human-readable description of what units/roles/weight classes
-     * are needed to qualify for this formation.
-     */
-    requirements?: (gameSystem: GameSystem) => string;
+    /** Human-readable description of what is needed to qualify for this formation. */
+    requirements?: string;
     idealRole?: string;
-    techBase?: 'Inner Sphere' | 'Clan' | 'Special';
     minUnits: number;
     maxUnits?: number;
-    exclusiveFaction?: string;
-    /** Multiple rulebook references (e.g. CO p.62, AS:CE p.117). */
+    /** Rulebook references that apply to this game system only. */
     rulesRef?: RulesReference[];
+}
+
+/** Authored formation data: common identity plus explicit rules for both games. */
+export interface FormationTypeDefinitionSource extends FormationTypeDefinitionCommon {
+    classic: FormationTypeGameSystemDefinition;
+    alphaStrike: FormationTypeGameSystemDefinition;
+}
+
+/** A formation definition resolved for one game system. */
+export interface FormationTypeDefinition extends FormationTypeDefinitionCommon, FormationTypeGameSystemDefinition {
+    readonly gameSystem?: GameSystem;
+}
+
+export function getFormationTypeGameSystemDefinition(
+    definition: FormationTypeDefinitionSource,
+    gameSystem: GameSystem,
+): FormationTypeGameSystemDefinition {
+    return gameSystem === GameSystem.CLASSIC
+        ? definition.classic
+        : definition.alphaStrike;
+}
+
+export function resolveFormationTypeDefinition(
+    definition: FormationTypeDefinitionSource,
+    gameSystem: GameSystem,
+): FormationTypeDefinition {
+    const { classic: _classic, alphaStrike: _alphaStrike, ...common } = definition;
+    return {
+        ...common,
+        ...getFormationTypeGameSystemDefinition(definition, gameSystem),
+        gameSystem,
+    };
 }
 
 /**
@@ -131,9 +210,48 @@ export const NO_FORMATION: FormationTypeDefinition = {
     description: 'Explicitly opt out of any formation assignment.',
 };
 
+function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeFormationNameMatchText(value: string): string {
+    return value.trim().replace(/\s+/g, ' ');
+}
+
+export function getFormationNameMatchStrings(definition: FormationTypeDefinition): string[] {
+    return [...new Set([
+        definition.name,
+        ...(definition.nameAliases ?? []),
+    ].map(normalizeFormationNameMatchText).filter(Boolean))];
+}
+
+export function getFormationDropdownDisplayName(definition: FormationTypeDefinition): string {
+    return definition.id.endsWith('-squadron')
+        ? `${definition.name} [Aero]`
+        : definition.name;
+}
+
+export function formationNameMatchesGroupName(definition: FormationTypeDefinition, groupName: string): boolean {
+    const normalizedGroupName = normalizeFormationNameMatchText(groupName);
+    if (!normalizedGroupName) return false;
+
+    return getFormationNameMatchStrings(definition).some((matchString) => {
+        const matcher = new RegExp(
+            `(^|[^A-Za-z0-9])${escapeRegExp(matchString)}(?=$|[^A-Za-z0-9])`,
+            'i',
+        );
+        return matcher.test(normalizedGroupName);
+    });
+}
+
 /** Returns `true` when the given definition is the "No Formation" sentinel. */
 export function isNoFormation(def: FormationTypeDefinition | null | undefined): boolean {
     return def?.id === NO_FORMATION_ID;
+}
+
+/** Returns `true` when this formation explicitly opts into inheriting parent effects. */
+export function formationInheritsParentEffects(def: FormationTypeDefinition | null | undefined): boolean {
+    return def?.inheritParentEffects === true;
 }
 
 /**
@@ -146,5 +264,6 @@ export interface FormationMatch {
      * groups from the resolved organization while checking requirements.
      */
     requirementsFiltered: boolean;
+    requirementsFilterCompositionName?: string;
     requirementsFilterNotice?: string;
 }

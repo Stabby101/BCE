@@ -17,6 +17,22 @@ export const DEPLOYED_CONDITION = 'Deployed';
  *  HF-020: a Quick Mission is deployed-only by contract (D-069) — every unit is on the field — so passing
  *  `quickMission=true` returns the WHOLE force, a belt-and-suspenders so a stray Reserve can never strand a
  *  one-shot's BLUFOR. Campaigns (default false) stay honest: only condition==='Deployed' counts. */
+/** ODM-18 P1 (ruling 5 — extraction is LAW, duplicated guards drift): conditions a unit can be deployed
+ *  FROM. The ONE source for deploy-roster's checkbox gate AND the intent adapter's set-deploy guard —
+ *  'In repair' / 'Cold storage' can never take the field, from ANY caller. */
+export const DEPLOY_ELIGIBLE: ReadonlySet<string> = new Set(['Active', 'Reserve', 'Deployed']);
+export function canDeploy(condition: string | undefined | null): boolean {
+    return DEPLOY_ELIGIBLE.has(condition ?? '');
+}
+/** TESTER-ODM-1 #2 — THE FULL deploy gate, condition AND crew, in one place. The condition test alone let
+ *  an UNPILOTED machine onto the field silently, and ODM-18's shared deploy intent made that reachable by
+ *  players too. Returns null when the unit may take the field, else the honest reason to show in its place
+ *  ('In repair' / 'Cold storage' / 'no crew') — every caller renders the same words. */
+export function deployBlocker(condition: string | undefined | null, hasCrew: boolean): string | null {
+    if (!canDeploy(condition)) return condition || 'unavailable';
+    return hasCrew ? null : 'no crew';
+}
+
 export function deployedSet(force: readonly ProtoInstance[] | null | undefined, quickMission = false): ProtoInstance[] {
     const f = force ?? [];
     return quickMission ? [...f] : f.filter((i) => i.condition === DEPLOYED_CONDITION);

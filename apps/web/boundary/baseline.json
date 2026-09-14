@@ -18,6 +18,24 @@
     "toScope": "engine-classic"
   },
   {
+    "from": "components/alpha-strike-card/alpha-strike-card.component.ts",
+    "to": "models/command-abilities.model",
+    "fromScope": "gamesystem-as",
+    "toScope": "gamesystem-cbt"
+  },
+  {
+    "from": "components/alpha-strike-card/layouts/layout-base.component.ts",
+    "to": "models/command-abilities.model",
+    "fromScope": "gamesystem-as",
+    "toScope": "gamesystem-cbt"
+  },
+  {
+    "from": "components/edit-as-pilot-dialog/edit-as-pilot-dialog.component.ts",
+    "to": "models/command-abilities.model",
+    "fromScope": "gamesystem-as",
+    "toScope": "gamesystem-cbt"
+  },
+  {
     "from": "models/as-force-unit.model.ts",
     "to": "services/unit-initializer.service",
     "fromScope": "gamesystem-as",

@@ -31,6 +31,11 @@ export interface OdmTreeNode {
     window?: { opens: OdmDate | null; closes: OdmDate | null; expiredLine?: string };
     opDays?: number;      // the operation's real time cost, booked at resolve (default 12)
     onExpire?: string;    // schema-ready, UNWIRED — an authored consequence node id (PM authors with the packet)
+    // ── ODM-18 P3 (additive): the EXPLICIT merge key. A node reaching the runtime from the composer carries
+    //    kind:'gm-mission'; every authored tree.json node has it absent and reconciles byte-identically. The
+    //    ODM-4 Part A delete rule below is UNCHANGED — a composed mission is not an exception to it, it is a
+    //    node the merged set legitimately contains (odm-gm-mission.mergeGmMissions). ──
+    kind?: 'gm-mission';
 }
 export interface OdmTreeData { packId: string; version: number; tiers: string[]; nodes: OdmTreeNode[] }
 
@@ -145,4 +150,37 @@ export function reconcileOdmTree(
 export function hasAuthoredNodes(current: MissionBranch[], tree: OdmTreeData): boolean {
     const ids = new Set(tree.nodes.map((n) => n.id));
     return current.some((b) => ids.has(b.branchId));
+}
+
+/**
+ * ORDER-10 / P7 — is this carrier missionSpec CURRENT for the tree? An ODM spec's missionId is stamped
+ * `odm-<branchId>-<seed>` at BEGIN OPERATION (odm-dashboard.beginOperation → the built spec), and begin
+ * flips that same branch ACTIVE. So a spec is current iff there is an ACTIVE branch it is stamped with.
+ * A RESOLVED mission's carrier spec (e.g. "Pale Candle") therefore stops being current the instant its
+ * branch resolves — EVEN while a DIFFERENT branch ("Last Bearing") is ACTIVE (the exact P7 shape: the
+ * header reads the active branch, the brief was reading the lingering spec). This is the ONE rule the
+ * GM brief (view), the reconcile clear, and the resume/hydrate all share: a resolved spec is never the
+ * GM's current brief. HS is unaffected — there each contract carries a distinct id, so its own
+ * `spec.contractId === ac.id` guard already rejects a resolved contract's spec.
+ */
+export function odmSpecIsCurrent(spec: { missionId?: string } | null | undefined, tree: MissionBranch[]): boolean {
+    if (!spec?.missionId) return false;
+    const id = spec.missionId;
+    const branches = tree ?? [];
+    if (id.startsWith('odm-')) {
+        // The spec's branch = the LONGEST branchId whose stamp `odm-<branchId>-` prefixes the missionId.
+        // Longest-match (not a bare startsWith) so a branchId that is a hyphen-prefix of another — e.g.
+        // 'iron-dividend' vs 'iron-dividend-relief', the convention the sibling packs already use — resolves
+        // to the RIGHT owner and a resolved sibling never reads as current (adversarial review, finding 1).
+        let owner: MissionBranch | null = null;
+        for (const b of branches) {
+            if (id.startsWith(`odm-${b.branchId}-`) && (!owner || b.branchId.length > owner.branchId.length)) owner = b;
+        }
+        return !!owner && owner.state === 'ACTIVE';
+    }
+    // A NON-odm-stamped carrier — the pack-unreachable Forge/Classic fallback mints a `msn-<rng>` spec
+    // (beginOperation's `!data || !node` branch) — is current while ANY branch is ACTIVE. That is the
+    // pre-ORDER-10 behavior, preserved so this rule never strips an in-progress fallback mission's spec
+    // (adversarial review, finding 2). The No-Forge doctrine clears such residue by other means.
+    return branches.some((b) => b.state === 'ACTIVE');
 }

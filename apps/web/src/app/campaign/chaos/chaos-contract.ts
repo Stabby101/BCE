@@ -26,6 +26,75 @@ export interface ChaosContract {
     side?: 'a' | 'b';
     sideRole?: 'attacker' | 'defender';
     employer?: string; // who you signed with (the chosen side's employer)
+    // GM-2 P2b — a PARTICIPANT contract's signing ledger: the rep spent at signing + the net transport (both settle on the
+    // FIRST slip after signing — `repSettled` marks it), and who signed (the phone, or the GM as broker).
+    repSpent?: number;
+    transportSp?: number;
+    signedBy?: 'gm' | 'player';
+    repSettled?: boolean;
+    // GM-3 P1 — THE SESSION CONTRACT: on a gmSession the singular is a PARTY-LESS template minted at Present ▸ from the hot
+    // spot's authored terms (Scale · steps · lengthMonths · the chosen side's target). It sits where `contractFor(participant)
+    // ?? primary` falls back, so every direct read gets a template and the six hooks BRANCH on it (tree at Present, no
+    // GM money, no rep dock, +1 to every signed participant). A plain campaign never carries the mark → byte-identical.
+    party?: 'session';
+}
+
+/** GM-3 P1 — is this the party-less session contract (a GM session's primary minted at Present ▸)? */
+export const isSessionContract = (c: Pick<ChaosContract, 'party'> | null | undefined): boolean => c?.party === 'session';
+/** GM-3 P1 (hook 3) — the side a participant signs on the primary. On a GM-signed primary (D-133), a wire-OPFOR player signs
+ *  the OPPOSING side (the pair). On a SESSION contract there is no opposed pair in this phase — every participant signs the
+ *  side the table plays, so the flip is SUPPRESSED (both-sides-player-run is the hiring hall, a later phase). Pure; the ONE
+ *  place both the GM panel and the phone compute it — pinned by chaos-contract.spec.ts, mutation-killed there. */
+export function participantSideFor(primary: Pick<ChaosContract, 'party' | 'side'> | null | undefined, deviceSide: string | null | undefined): 'a' | 'b' {
+    const primarySide: 'a' | 'b' = primary?.side === 'b' ? 'b' : 'a';
+    if (!isSessionContract(primary) && deviceSide === 'OPFOR') return primarySide === 'a' ? 'b' : 'a'; // the D-133 pair (GM-signed primary only)
+    return primarySide; // a session contract: the table's side, whatever the device's wire side
+}
+/** GM-3 P1 — the participant key of the GM's OWN company when he fields (his participant contract pays him like anyone). */
+export const GM_SELF_KEY = 'gm-self';
+
+// ── DIRECTIVE-PD3 P2 (PD3-9 + PD3-11) — THE SESSION PHASE. The phone showed a phase that had passed twice over: the side-pick
+//    window keyed on the presented brief alone (nothing clears it at completion) and the Briefing overlay read the raw spec (which
+//    the H17 retention re-applies after the GM clears it). ONE pure decider over the four fields that already ride the fan —
+//    the presented brief · the (player-safe) contract · the mission tree · the spec — plus the TERMINAL contract record P2 adds
+//    (`completedChaosContract`, written at both completion sites where the singular used to be nulled with no trace). Pure; the ONE
+//    place the pick window, the brief, the H17 retention and the api's side-pref guard (ws-authz, lockstep) compute it. ──
+export type SessionPhase = 'none' | 'lobby' | 'committed' | 'complete';
+/** D-128's "committed" rule, pure: a track was generated/built — any branch ACTIVE or RESOLVED, or a spec exists. */
+export function hasGeneratedTrackOf(tree: readonly { state?: string }[] | null | undefined, spec: unknown): boolean {
+    return (tree ?? []).some((b) => b.state === 'ACTIVE' || b.state === 'RESOLVED') || !!spec;
+}
+export function sessionPhase(a: {
+    presented: unknown;                                  // the published brief (presentedHotspot)
+    contract: Pick<ChaosContract, 'status'> | null | undefined; // the live singular (contractSummary on a phone, activeChaosContract elsewhere)
+    completed: unknown;                                  // the terminal record (completedChaosContract) — a completion, not a never-minted
+    tree: readonly { state?: string }[] | null | undefined;
+    spec: unknown;
+}): SessionPhase {
+    const live = a.contract && a.contract.status !== 'completed' ? a.contract : null;
+    if (live) return hasGeneratedTrackOf(a.tree, a.spec) ? 'committed' : 'lobby';
+    if (a.completed || (a.contract && a.contract.status === 'completed')) return 'complete';
+    if (a.presented) return 'complete'; // a brief with no contract: pre-P2 completions nulled the singular without a trace — never a live pick
+    return 'none';
+}
+/** GM-3 P1 — a participant contract VOIDED by un-present: rides under gmOnly.voidedContracts, attached per recipient as
+ *  `participantVoid`; the device shows the notice and returns the rep the slip already settled at home (repRefund). */
+export interface VoidedContract {
+    voidId: string;     // the home campaign's idempotency key (appliedSlips) for the refund
+    contractId: string;
+    hotspotId?: string;
+    repRefund: number;  // the rep spent at signing, IF a slip already settled it at home (else 0 — nothing was debited)
+    at: number;         // epoch ms
+}
+
+/** GM-2 P2a — the PLAYER-SAFE projection of a contract: its identity WITHOUT its terms (`steps` + `offerSnapshot` never
+ *  leave the GM device — H14). The GM writers put it top-level in a GM session so `sideLabelsOf` on a player device reads
+ *  the same employer / role / enemy it read before the singular moved under gmOnly. */
+export type ContractSummary = Omit<ChaosContract, 'steps' | 'offerSnapshot'> & { lockedCommand?: number }; // P2b — the ONE term a participant may see: Command, locked to the primary's value (displayed, never negotiable)
+export function contractSummaryOf(c: ChaosContract | null | undefined): ContractSummary | null {
+    if (!c) return null;
+    const { steps: _s, offerSnapshot: _o, ...rest } = c; void _o;
+    return { ...rest, ...(typeof _s?.command === 'number' ? { lockedCommand: _s.command } : {}) };
 }
 
 /** IMPORT-6 Part A — the Intensity a hot spot's AUTHORED contract terms sign at: the authored track count, verbatim

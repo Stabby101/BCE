@@ -1,35 +1,6 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import {
     Injectable,
@@ -41,9 +12,9 @@ import {
     inject
 } from '@angular/core';
 import { LayoutService } from '../../services/layout.service';
+import type { RecordSheetDoubleTapZoomResetMode } from '../../models/options.model';
 
 /*
- * Author: Drake
  * 
  * PageViewerZoomPanService - Manages zoom/pan interactions for a multi-page SVG viewer.
  * 
@@ -65,6 +36,7 @@ const POINTER_MOVE_THRESHOLD = 5;
 const SWIPE_THRESHOLD = 10;
 const DOUBLE_TAP_DELAY = 300;
 const DOUBLE_TAP_DISTANCE = 30;
+const WHEEL_LINE_DELTA_PX = 16;
 
 export interface ViewState {
     scale: number;
@@ -75,6 +47,11 @@ export interface ViewState {
 export interface PageDimensions {
     width: number;
     height: number;
+}
+
+export interface PageTransformTarget {
+    wrapper: HTMLElement;
+    rootSvg: SVGSVGElement | null;
 }
 
 export interface SwipeCallbacks {
@@ -135,9 +112,13 @@ export class PageViewerZoomPanService {
     private containerDimensions = { width: 0, height: 0 };
     private totalPages = 1;
     private nonInteractiveSelectors: string[] = [];
+    private doubleTapZoomResetMode: RecordSheetDoubleTapZoomResetMode = 'disabled';
     private spaceEvenly = false;
-    private transformPageWrappers: HTMLElement[] = [];
+    private transformPageTargets: PageTransformTarget[] = [];
     private transformCanvasOverlays: HTMLElement[] = [];
+    private transformTargetsDirty = true;
+    private canvasTargetsDirty = true;
+    private lastAppliedScale: number | null = null;
 
     // Pointer tracking
     private pointers = new Map<number, { x: number; y: number }>();
@@ -205,6 +186,14 @@ export class PageViewerZoomPanService {
         this.setupEventListeners();
     }
 
+    setDoubleTapZoomResetMode(mode: RecordSheetDoubleTapZoomResetMode): void {
+        this.doubleTapZoomResetMode = mode;
+        if (mode === 'disabled') {
+            this.doubleTapState.lastTapTime = 0;
+            this.doubleTapState.lastTapPoint = null;
+        }
+    }
+
     /**
      * Update dimensions when container or content changes
      */
@@ -228,9 +217,11 @@ export class PageViewerZoomPanService {
      * Update the elements affected by transform changes.
      * This avoids rescanning the DOM tree on every pan/zoom update.
      */
-    setTransformTargets(pageWrappers: HTMLElement[], canvasOverlays: HTMLElement[] = []): void {
-        this.transformPageWrappers = pageWrappers;
+    setTransformTargets(pageTargets: PageTransformTarget[], canvasOverlays: HTMLElement[] = []): void {
+        this.transformPageTargets = pageTargets;
         this.transformCanvasOverlays = canvasOverlays;
+        this.transformTargetsDirty = true;
+        this.canvasTargetsDirty = true;
     }
 
     /**
@@ -277,14 +268,7 @@ export class PageViewerZoomPanService {
             return positions;
         }
     }
-
-    /**
-     * @deprecated Use getPagePositions instead
-     */
-    getSpaceEvenlyPositions(pageCount: number): number[] {
-        return this.getPagePositions(pageCount);
-    }
-
+    
     /**
      * Calculate the minimum scale to fit content and how many pages are visible
      */
@@ -327,11 +311,12 @@ export class PageViewerZoomPanService {
         }
 
         this.visiblePageCount.set(optimalPages);
-        this.minScale.set(Math.max(MIN_SCALE_ABSOLUTE, optimalScale));
+        const minScaleValue = Math.max(MIN_SCALE_ABSOLUTE, optimalScale);
+        this.minScale.set(minScaleValue);
 
         // Ensure current scale isn't below minimum
-        if (this.scale() < this.minScale()) {
-            this.scale.set(this.minScale());
+        if (this.scale() < minScaleValue) {
+            this.scale.set(minScaleValue);
             this.centerContent();
         }
     }
@@ -373,10 +358,10 @@ export class PageViewerZoomPanService {
         };
 
         this.calculateMinScaleAndVisiblePages();
-
+        const minScaleValue = this.minScale();
         // Adjust scale if below minimum
-        if (this.scale() < this.minScale()) {
-            this.scale.set(this.minScale());
+        if (this.scale() < minScaleValue) {
+            this.scale.set(minScaleValue);
         }
 
         this.clampPan();
@@ -427,6 +412,11 @@ export class PageViewerZoomPanService {
     private onWheel(event: WheelEvent): void {
         event.preventDefault();
 
+        if (event.shiftKey || event.ctrlKey) {
+            this.panFromWheel(event.shiftKey ? 'x' : 'y', event);
+            return;
+        }
+
         const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
         let newScale = this.scale() * zoomFactor;
         newScale = Math.max(this.minScale(), Math.min(this.maxScale, newScale));
@@ -439,6 +429,31 @@ export class PageViewerZoomPanService {
         const mouseY = event.clientY - rect.top;
 
         this.zoomToPoint(mouseX, mouseY, newScale);
+    }
+
+    private panFromWheel(axis: 'x' | 'y', event: WheelEvent): void {
+        const delta = this.normalizeWheelDelta(event);
+        if (delta === 0) return;
+
+        const translate = this.translate();
+        this.translate.set(axis === 'x'
+            ? { x: translate.x - delta, y: translate.y }
+            : { x: translate.x, y: translate.y - delta });
+        this.clampPan();
+        this.applyTransform();
+    }
+
+    private normalizeWheelDelta(event: WheelEvent): number {
+        const rawDelta = event.deltaY || event.deltaX;
+
+        switch (event.deltaMode) {
+            case WheelEvent.DOM_DELTA_LINE:
+                return rawDelta * WHEEL_LINE_DELTA_PX;
+            case WheelEvent.DOM_DELTA_PAGE:
+                return rawDelta * this.containerDimensions.height;
+            default:
+                return rawDelta;
+        }
     }
 
     /**
@@ -719,6 +734,12 @@ export class PageViewerZoomPanService {
     // ========== Double-tap Zoom ==========
 
     private checkDoubleTap(event: PointerEvent): void {
+        if (this.doubleTapZoomResetMode === 'disabled') {
+            this.doubleTapState.lastTapTime = 0;
+            this.doubleTapState.lastTapPoint = null;
+            return;
+        }
+
         if (this.gestureState.pointerMoved || this.pointers.size > 1) {
             this.doubleTapState.lastTapPoint = null;
             return;
@@ -757,18 +778,7 @@ export class PageViewerZoomPanService {
             event.preventDefault();
             event.stopPropagation();
 
-            const rect = this.containerRef.nativeElement.getBoundingClientRect();
-            const tapX = event.clientX - rect.left;
-            const tapY = event.clientY - rect.top;
-
-            if (this.isFullyVisible()) {
-                // Zoom in to 2x minimum
-                const newScale = Math.min(this.maxScale, this.minScale() * 2);
-                this.zoomToPoint(tapX, tapY, newScale);
-            } else {
-                // Zoom out to fit
-                this.resetView();
-            }
+            this.resetZoomFromDoubleTap(this.doubleTapZoomResetMode, pageWrapper, event);
 
             this.doubleTapState.lastTapTime = 0;
             this.doubleTapState.lastTapPoint = null;
@@ -778,7 +788,65 @@ export class PageViewerZoomPanService {
         }
     }
 
+    private resetZoomFromDoubleTap(mode: RecordSheetDoubleTapZoomResetMode, pageWrapper: Element, event: PointerEvent): void {
+        if (mode === 'fit-to-screen' || (mode === 'contextual' && !this.isFullyVisible())) {
+            this.resetView();
+            return;
+        }
+
+        if (mode === 'full-width' || mode === 'contextual') {
+            this.resetToFullWidth(pageWrapper, event);
+        }
+    }
+
+    private resetToFullWidth(pageWrapper: Element, event: PointerEvent): void {
+        const containerWidth = this.containerDimensions.width;
+        if (containerWidth <= 0) return;
+
+        const containerRect = this.containerRef.nativeElement.getBoundingClientRect();
+        const tapY = event.clientY - containerRect.top;
+        const currentScale = this.scale();
+        const currentTranslate = this.translate();
+        const tappedContentY = currentScale > 0
+            ? (tapY - currentTranslate.y) / currentScale
+            : 0;
+        const originalLeft = this.getPageWrapperOriginalLeft(pageWrapper);
+        const nextScale = Math.max(this.minScale(), Math.min(this.maxScale, containerWidth / PAGE_WIDTH));
+        const centeredTapY = (this.containerDimensions.height / 2) - tappedContentY * nextScale;
+
+        this.scale.set(nextScale);
+        this.translate.set({
+            x: -originalLeft * nextScale,
+            y: centeredTapY
+        });
+        this.clampPan();
+        this.applyTransform();
+    }
+
+    private getPageWrapperOriginalLeft(pageWrapper: Element): number {
+        if (!(pageWrapper instanceof HTMLElement)) {
+            return 0;
+        }
+
+        const datasetLeft = Number.parseFloat(pageWrapper.dataset['originalLeft'] ?? '');
+        if (Number.isFinite(datasetLeft)) {
+            return datasetLeft;
+        }
+
+        const styleLeft = Number.parseFloat(pageWrapper.style.left);
+        if (!Number.isFinite(styleLeft)) {
+            return 0;
+        }
+
+        const currentScale = this.scale();
+        return currentScale > 0 ? styleLeft / currentScale : styleLeft;
+    }
+
     // ========== Gesture Finalization ==========
+
+    cancelGesture(): void {
+        this.resetGestureState();
+    }
 
     private resetGestureState(): void {
         this.gestureState.isPanning = false;
@@ -904,38 +972,47 @@ export class PageViewerZoomPanService {
         content.style.transform = `translate(${translate.x}px, ${translate.y}px)`;
         content.style.transformOrigin = 'top left';
 
+        const scaleChanged = this.lastAppliedScale !== scale;
+
         // Apply scale directly to each root SVG element (direct children of page-wrappers)
         // This fixes iOS blurry rendering without double-scaling nested SVGs
-        this.transformPageWrappers.forEach((wrapper: HTMLElement) => {
-            // Get the original left position (unscaled)
-            const originalLeft = parseFloat(wrapper.dataset['originalLeft'] || wrapper.style.left) || 0;
-            // Store original left if not already stored
-            if (!wrapper.dataset['originalLeft']) {
-                wrapper.dataset['originalLeft'] = String(originalLeft);
-            }
-            // Apply scaled position
-            wrapper.style.left = `${originalLeft * scale}px`;
-            wrapper.style.width = `${PAGE_WIDTH * scale}px`;
-            wrapper.style.height = `${PAGE_HEIGHT * scale}px`;
-            
-            // Scale only the direct SVG child (not nested SVGs)
-            const rootSvg = wrapper.querySelector(':scope > svg') as SVGSVGElement | null;
-            if (rootSvg) {
-                rootSvg.style.transform = `scale(${scale})`;
-                rootSvg.style.transformOrigin = 'top left';
-            }
-        });
+        if (scaleChanged || this.transformTargetsDirty) {
+            this.transformPageTargets.forEach(({ wrapper, rootSvg }) => {
+                // Get the original left position (unscaled)
+                const originalLeft = parseFloat(wrapper.dataset['originalLeft'] || wrapper.style.left) || 0;
+                // Store original left if not already stored
+                if (!wrapper.dataset['originalLeft']) {
+                    wrapper.dataset['originalLeft'] = String(originalLeft);
+                }
+                // Apply scaled position
+                wrapper.style.left = `${originalLeft * scale}px`;
+                wrapper.style.width = `${PAGE_WIDTH * scale}px`;
+                wrapper.style.height = `${PAGE_HEIGHT * scale}px`;
+                
+                // Scale only the direct SVG child (not nested SVGs)
+                if (rootSvg) {
+                    rootSvg.style.transform = `scale(${scale})`;
+                    rootSvg.style.transformOrigin = 'top left';
+                }
+            });
+            this.transformTargetsDirty = false;
+        }
 
         // Also scale canvas overlays if present
-        this.transformCanvasOverlays.forEach((overlay: HTMLElement) => {
-            const originalLeft = parseFloat(overlay.dataset['originalLeft'] || overlay.style.left) || 0;
-            if (!overlay.dataset['originalLeft']) {
-                overlay.dataset['originalLeft'] = String(originalLeft);
-            }
-            overlay.style.left = `${originalLeft * scale}px`;
-            overlay.style.width = `${PAGE_WIDTH * scale}px`;
-            overlay.style.height = `${PAGE_HEIGHT * scale}px`;
-        });
+        if (scaleChanged || this.canvasTargetsDirty) {
+            this.transformCanvasOverlays.forEach((overlay: HTMLElement) => {
+                const originalLeft = parseFloat(overlay.dataset['originalLeft'] || overlay.style.left) || 0;
+                if (!overlay.dataset['originalLeft']) {
+                    overlay.dataset['originalLeft'] = String(originalLeft);
+                }
+                overlay.style.left = `${originalLeft * scale}px`;
+                overlay.style.width = `${PAGE_WIDTH * scale}px`;
+                overlay.style.height = `${PAGE_HEIGHT * scale}px`;
+            });
+            this.canvasTargetsDirty = false;
+        }
+
+        this.lastAppliedScale = scale;
     }
 
     /**

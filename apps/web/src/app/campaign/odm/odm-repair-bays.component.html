@@ -1,0 +1,263 @@
+<!-- FORKED FROM campaign/repair/repair-bays.component.html @ dd1a717 - DIRECTIVE-ODM-13 Phase 2 (a DRIFT
+     SURFACE). Divergences: every money surface removed (repairs cost TIME and PARTS); the R3 HELD state on
+     the bay card; the queue's parts-availability advisory; the DONOR YARD (cold hulks strip to stores). -->
+<div class="rb">
+    <!-- ODM-17 P1 — the AUTHORED facility (MAC-7, the D39 pools) replaces the rolled tier/pool header.
+         Hours are DERIVED (headcount × 16); the commit ledger is DERIVED (Σ remaining estimates). -->
+    <header class="rb-head">
+        <div class="rb-title">Repair bays</div>
+        <div class="rb-cap">
+            <span class="cap-h">{{ perDayHours() }} tech-h / day</span>
+            <span class="cap-n">time and parts — the two things the company spends</span>
+        </div>
+    </header>
+    @if (shop(); as s) {
+        <div class="rb-pool" data-testid="odm-shop-head">
+            <span class="tp-name">{{ s.facility.name.toUpperCase() }} · {{ s.facility.location.toUpperCase() }}</span>
+            @for (pl of s.pools; track pl.id) {
+                <!-- TESTER-ODM-1 #6 — read the DERIVED pool hours, never headcount × rate: poolHours is the
+                     single choke point where the support register's couplings land (the wrecker's +20), so
+                     the raw product disagreed with the walk's own number by exactly that offset. -->
+                <span class="tp-head" [attr.data-pool]="pl.id">{{ pl.name }}: {{ pl.headcount }} techs · {{ poolHours(pl.id) }} h/day</span>
+            }
+            <span class="tp-char">{{ s.facility.character }}</span>
+            @if (armorer()) { <span class="tp-chief">Chief armorer: {{ armorer() }}</span> }
+        </div>
+        <div class="rb-ledger" data-testid="odm-shop-ledger" [class.over]="committed() > perDayHours()">
+            <span>Committed to the floor: <b>{{ committed() }}</b> h of estimates</span>
+            <span>· capacity {{ perDayHours() }} h/day</span>
+            @if (committed() > perDayHours()) { <span class="ov">— more than a day queued: the lowest-priority work waits</span> }
+        </div>
+    } @else {
+        <div class="rb-pool"><span class="tp-char">Reading the shop from the operation record…</span></div>
+    }
+
+    <!-- ODM-17 P4-a — THE 30-DAY MAINTENANCE CYCLE (the doctrine: it comes BEFORE salvage repairs in the
+         tech-hour budget; the ladder burns it first). OVERDUE machines roll the canon breakdown check. -->
+    <section class="rb-queue" data-testid="odm-maintenance">
+        <div class="sec-head"><span class="sec-t">Maintenance — the 30-day cycle</span><span class="sec-c">{{ maintDue().length }} due · burns before all repair work</span></div>
+        @if (!maintDue().length) {
+            <p class="rb-empty">Every machine is inside its cycle. The clock brings them due at 30 days; the shop takes them before any repair job.</p>
+        }
+        @for (m of maintDue(); track m.inst.instanceId) {
+            <div class="q-item">
+                <div class="q-main">
+                    <span class="sev" [class.sev-R]="m.overdue" [class.sev-Y]="!m.overdue">{{ m.overdue ? '!' : '·' }}</span>
+                    <div class="q-id">
+                        <span class="q-name">{{ m.label }} @if (m.overdue) { <span class="bo-prize" data-testid="odm-maint-overdue">OVERDUE{{ m.overdueMonths > 0 ? ' — ' + m.overdueMonths + ' month(s) missed' : '' }}</span> }</span>
+                        <span class="q-meta">{{ m.daysSince }} days since last cycle{{ m.heavy ? ' · HEAVY usage previous cycle' : '' }}</span>
+                    </div>
+                    <div class="q-est"><span class="q-hrs">{{ m.progress }} / {{ m.need }} h</span></div>
+                </div>
+            </div>
+        }
+    </section>
+
+    <!-- THE QUEUE -->
+    <section class="rb-queue">
+        <div class="sec-head"><span class="sec-t">Queue</span><span class="sec-c">{{ queue().length }} awaiting a bay</span></div>
+        @if (!queue().length) {
+            <p class="rb-empty">No units awaiting repair. Recovered ('In repair') units from the walk, captured hulks, and skirmish-damaged units land here.</p>
+        }
+        @for (it of queue(); track it.instanceId) {
+            <div class="q-item" [class.wo]="it.writeOff">
+                <div class="q-main">
+                    <span class="sev sev-{{ it.triage }}" [title]="'Triage ' + it.triage">{{ it.triage }}</span>
+                    <div class="q-id">
+                        <span class="q-name">{{ it.label }}</span>
+                        <span class="q-meta">{{ it.tons }}t · <span class="q-kind kind-{{ it.kind }}">{{ KIND_LABEL[it.kind] }}</span></span>
+                    </div>
+                    <div class="q-est">
+                        <span class="q-hrs">{{ it.bill.totalHours }} h</span>
+                        @if (it.missingParts.length) { <span class="q-cb warn" [attr.data-testid]="'odm-q-missing'">awaiting {{ it.missingParts.join(' · ') }}</span> }
+                        @else if (it.bill.lines.length) { <span class="q-cb">parts in stores</span> }
+                    </div>
+                    <div class="q-acts">
+                        <button type="button" class="lnk" (click)="toggleExplode(it.instanceId)">{{ isExploded(it.instanceId) ? 'Hide' : 'Estimate' }}</button>
+                        @if (it.writeOff) {
+                            <button type="button" class="wobtn" (click)="askWriteOff(it.instanceId)">Write off</button>
+                        }
+                        @if (freeBays().length) {
+                            <button type="button" class="asbtn" (click)="startAssign(it.instanceId)">Assign »</button>
+                        } @else {
+                            <span class="q-busy">bays full</span>
+                        }
+                    </div>
+                </div>
+
+                @if (it.missingParts.length) {
+                    <div class="q-warn">⚠ Replace-parts not in stores — the job will HOLD at the parts stage until supply arrives (salvage one, or strip a donor below).</div>
+                }
+
+                @if (assigning() === it.instanceId) {
+                    <div class="q-pick">
+                        <span class="pick-l">Assign to:</span>
+                        @for (b of assignableBays(it); track b.id) {
+                            <button type="button" class="baybtn" (click)="doAssign(it.instanceId, b.id)">{{ b.name }} <em>{{ b.type }}</em></button>
+                        }
+                        @if (it.kind === 'prize' && !assignableBays(it).length) { <span class="q-busy">prize refit needs an empty SALVAGE bay (convert one below)</span> }
+                        <button type="button" class="lnk" (click)="cancelAssign()">cancel</button>
+                    </div>
+                }
+
+                @if (confirmWO() === it.instanceId) {
+                    <div class="q-confirm">
+                        <span>Write off <b>{{ it.label }}</b>? It leaves the force permanently (the wreck is stripped for scrap).</span>
+                        <button type="button" class="wobtn go" (click)="doWriteOff(it.instanceId)">Confirm write-off</button>
+                        <button type="button" class="lnk" (click)="cancelWriteOff()">cancel</button>
+                    </div>
+                }
+
+                @if (isExploded(it.instanceId)) {
+                    <div class="bill">
+                        @for (l of it.bill.lines; track $index) {
+                            <div class="bill-row">
+                                <span class="bl-comp">{{ l.component }}</span>
+                                <span class="bl-act act-{{ l.action }}">{{ l.action }}</span>
+                                <span class="bl-hrs">{{ l.hours }} h</span>
+                                <span class="bl-cite">{{ l.cite }}</span>
+                            </div>
+                        }
+                        <div class="bill-total"><span>Total labour</span><b>{{ it.bill.totalHours }} h</b></div>
+                        @for (n of it.bill.notes; track $index) { <div class="bill-note">▸ {{ n }}</div> }
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    <!-- THE BAYS -->
+    <section class="rb-bays">
+        <div class="sec-head"><span class="sec-t">Bays</span><span class="sec-c">one occupant each</span></div>
+        <div class="bay-grid">
+            @for (bay of bays(); track bay.id) {
+                <div class="bay" [class.occupied]="!!bay.occupantId">
+                    <div class="bay-head">
+                        <span class="bay-name">{{ bay.name }}</span>
+                        <span class="bay-type type-{{ bay.type }}">{{ bay.type }}</span>
+                        @if (bay.occupantId) { <span class="bay-pri" data-testid="odm-job-pri">P{{ jobPri(bay) }}</span> }
+                    </div>
+
+                    @if (bay.occupantId) {
+                        <div class="bay-occ">
+                            <span class="sev sev-{{ bay.occTriage || 'Y' }}">{{ bay.occTriage || '—' }}</span>
+                            <span class="bo-name">{{ bay.label }}</span>
+                            @if (bay.occTons) { <span class="bo-tons">{{ bay.occTons }}t</span> }
+                            @if (bay.isPrize) { <span class="bo-prize">★ hulk refit</span> }
+                        </div>
+
+                        <div class="bay-prog">
+                            <div class="bar"><div class="bar-fill" [style.width.%]="progressPct(bay)"></div></div>
+                            <div class="bar-meta">
+                                <span>{{ bay.hoursSpent }} / {{ bay.laborHours }} h</span>
+                                <span class="bm-eta">
+                                    @if (bay.heldFor?.length) { held } @else if (remaining(bay) <= 0) { ready } @else if (etaDays(bay) !== null) { ETA ~{{ etaDays(bay) }} d } @else { ETA — }
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- ODM-13 P2 — the R3 HOLD, stated plainly on the card -->
+                        @if (bay.heldFor?.length) {
+                            <!-- ODM-17 P3-b — the held card names the doctrine RECOURSE per part ("on the bench, 3 h" /
+                                 "in RAW stock" / "grade B" / genuinely absent — which keeps the ODM-13 wording). -->
+                            <div class="q-warn" data-testid="odm-bay-held">HELD — {{ heldLine(bay) }} <span class="dimtag">(held for parts — not blocking the ladder)</span></div>
+                        }
+
+                        <div class="shop-note">
+                            <p class="sn-text">{{ summary(bay.label || '—', bay.bill, bay.laborHours) }}</p>
+                            @if (armorer()) { <span class="sn-sig">— {{ armorer() }}</span> }
+                        </div>
+
+                        <div class="bay-acts">
+                            <span class="pri-set" data-testid="odm-pri-set">priority:
+                                @for (p of [1,2,3,4]; track p) { <button type="button" class="prbtn" [class.on]="jobPri(bay) === p" (click)="setPriority(bay.id, p)">P{{ p }}</button> }
+                            </span>
+                            <button type="button" class="lnk" (click)="toggleExplode(bay.id)">{{ isExploded(bay.id) ? 'Hide estimate' : 'Estimate' }}</button>
+                            <button type="button" class="unbtn" (click)="unassign(bay.id)">Unassign</button>
+                        </div>
+
+                        @if (isExploded(bay.id) && bay.bill) {
+                            <div class="bill">
+                                @for (l of bay.bill; track $index) {
+                                    <div class="bill-row">
+                                        <span class="bl-comp">{{ l.component }}</span>
+                                        <span class="bl-act act-{{ l.action }}">{{ l.action }}</span>
+                                        <span class="bl-hrs">{{ l.hours }} h</span>
+                                        <span class="bl-cite">{{ l.cite }}</span>
+                                    </div>
+                                }
+                                @for (n of bay.notes; track $index) { <div class="bill-note">▸ {{ n }}</div> }
+                            </div>
+                        }
+                    } @else {
+                        <div class="bay-empty">Empty</div>
+                        <div class="bay-acts">
+                            <span class="pri-set" data-testid="odm-bay-convert">convert:
+                                <button type="button" class="prbtn" [class.on]="bay.type === 'GENERAL'" (click)="convertBay(bay.id, 'GENERAL')">GENERAL</button>
+                                <button type="button" class="prbtn" [class.on]="bay.type === 'SALVAGE'" (click)="convertBay(bay.id, 'SALVAGE')">SALVAGE</button>
+                            </span>
+                        </div>
+                        @if (bay.lastNote) { <div class="bill-note" data-testid="odm-bay-lastnote">▸ {{ bay.lastNote }}</div> }
+                    }
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- ODM-13 P2 — THE DONOR YARD (Ruling 4: cold hulks strip to stores; one direction, irreversible) -->
+    <section class="rb-queue">
+        <div class="sec-head"><span class="sec-t">Donor yard</span><span class="sec-c">{{ donors().length }} cold hulk{{ donors().length === 1 ? '' : 's' }}</span></div>
+        @if (!donors().length) {
+            <p class="rb-empty">No hulks in cold storage. Recover an enemy machine on the field walk to bank a repair candidate or a parts donor.</p>
+        }
+        @for (d of donors(); track d.inst.instanceId) {
+            <div class="q-item">
+                <div class="q-main">
+                    <span class="sev sev-{{ d.sev }}">{{ d.sev }}</span>
+                    <div class="q-id">
+                        <span class="q-name">{{ d.label }}</span>
+                        <span class="q-meta">{{ d.inst.tons }}t · cold storage</span>
+                    </div>
+                    <div class="q-est"><span class="q-cb">{{ donorYield(d.inst.instanceId) }}</span></div>
+                    <div class="q-acts">
+                        <button type="button" class="wobtn" [attr.data-testid]="'odm-donor-' + d.inst.instanceId" [disabled]="!salvageBayOk()" (click)="askDonor(d.inst.instanceId)">Strip as donor</button>
+                        @if (!salvageBayOk()) { <span class="q-busy" data-testid="odm-donor-gate">no SALVAGE bay operational — convert one (D36)</span> }
+                    </div>
+                </div>
+                @if (confirmDonor() === d.inst.instanceId) {
+                    <div class="q-confirm">
+                        <span>Strip <b>{{ d.label }}</b> for parts? The hulk is EXPENDED — it cannot be repaired afterward. Yields {{ donorYield(d.inst.instanceId) }}.</span>
+                        <button type="button" class="wobtn go" data-testid="odm-donor-confirm" (click)="doDonor(d.inst.instanceId)">Confirm donor strip</button>
+                        <button type="button" class="lnk" (click)="cancelDonor()">cancel</button>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    <!-- HISTORY -->
+    <section class="rb-hist">
+        <button type="button" class="hist-toggle" (click)="showHistory.set(!showHistory())">
+            {{ showHistory() ? '▾' : '▸' }} Bay history <span class="ht-c">{{ history().length }}</span>
+        </button>
+        @if (showHistory()) {
+            @if (!history().length) {
+                <p class="rb-empty">No completed jobs yet.</p>
+            } @else {
+                @for (h of history(); track $index) {
+                    <div class="hist-row" [class.wo]="h.outcome === 'written-off'">
+                        <span class="h-date">{{ fmtDate(h.date) }}</span>
+                        <span class="h-label">{{ h.label }}</span>
+                        <span class="h-bay">Bay {{ h.bayName }}</span>
+                        @if (h.outcome === 'completed') {
+                            <span class="h-out ok">{{ h.laborHours }} h@if (h.partsUsed?.length) { · parts: {{ h.partsUsed?.join(', ') }} }</span>
+                        } @else {
+                            <span class="h-out wo">written off</span>
+                        }
+                        <span class="h-note">{{ histSummary(h) }}@if (h.rearmShort?.length) { <em class="h-parts">REARMED SHORT — {{ h.rearmShort?.join('; ') }}</em> }</span>
+                    </div>
+                }
+            }
+        }
+    </section>
+</div>

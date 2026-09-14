@@ -24,6 +24,9 @@ export interface BattleStateRow {
 export class BattleStateService implements OnModuleInit {
     private readonly log = new Logger('BattleStateService');
     private db!: DatabaseSync;
+    // ORDER-4 H18 — CLOSED engagements, in memory (the per-write check is a Set lookup) AND persisted beside the battle
+    // state (a restart does not forget that the GM ended the fight). Key = `${campaignId}|${engagementKey}`.
+    private readonly closedKeys = new Set<string>();
 
     onModuleInit(): void {
         this.db = openDb(dbPath()); // HARDEN-7 A2 — shared opener (WAL + busy_timeout + synchronous=NORMAL, asserted)
@@ -37,7 +40,32 @@ export class BattleStateService implements OnModuleInit {
                 PRIMARY KEY (campaignId, engagementKey, instanceId)
             );`,
         );
+        // ORDER-4 H18 — the engagement CLOSE mark: the GM's resolve tells the server the fight is over; battle writes
+        // to a closed key are refused from then on (claims untouched). Persisted so a restart still refuses.
+        this.db.exec(
+            `CREATE TABLE IF NOT EXISTS engagement_closed (
+                campaignId TEXT NOT NULL,
+                engagementKey TEXT NOT NULL,
+                closedAt INTEGER,
+                PRIMARY KEY (campaignId, engagementKey)
+            );`,
+        );
+        for (const r of this.db.prepare('SELECT campaignId, engagementKey FROM engagement_closed').all() as Record<string, unknown>[]) {
+            this.closedKeys.add(`${String(r['campaignId'])}|${String(r['engagementKey'])}`);
+        }
         this.log.log('battle-state store ready');
+    }
+
+    /** ORDER-4 H18 — mark an engagement CLOSED (idempotent; the first closedAt is kept). */
+    close(campaignId: string, engagementKey: string, at: number): void {
+        this.db
+            .prepare('INSERT INTO engagement_closed (campaignId, engagementKey, closedAt) VALUES (?, ?, ?) ON CONFLICT(campaignId, engagementKey) DO NOTHING')
+            .run(campaignId, engagementKey, at);
+        this.closedKeys.add(`${campaignId}|${engagementKey}`);
+    }
+    /** ORDER-4 H18 — is this engagement closed? (a Set lookup — read on every battle write) */
+    isClosed(campaignId: string, engagementKey: string): boolean {
+        return this.closedKeys.has(`${campaignId}|${engagementKey}`);
     }
 
     /** Current battle state for an engagement (reconnect/late-join resync). */

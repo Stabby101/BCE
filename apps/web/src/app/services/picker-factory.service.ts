@@ -1,35 +1,6 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { ApplicationRef, type ComponentRef, createComponent, EnvironmentInjector, inject, Injectable, Injector } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
@@ -37,6 +8,7 @@ import { OptionsService } from './options.service';
 import { LayoutService } from './layout.service';
 import type {
     ChoicePickerInstance,
+    ChoicePickerComponent,
     NumericPickerInstance,
     NumericPickerResult,
     PickerChoice,
@@ -45,12 +17,13 @@ import type {
     PickerValue
 } from '../components/picker/picker.interface';
 import { RotatingPickerComponent } from '../components/rotating-picker/rotating-picker.component';
-import { LinearPickerComponent } from '../components/linear-picker/linear-picker.component';
+import { LinearPickerHorizontalComponent } from '../components/linear-picker/linear-picker-horizontal.component';
+import { LinearPickerVerticalComponent } from '../components/linear-picker/linear-picker-vertical.component';
 import { RadialPickerComponent } from '../components/radial-picker/radial-picker.component';
+import { DirectionalPickerComponent, DIRECTIONAL_PICKER_CHOICES } from '../components/directional-picker/directional-picker.component';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 
 /*
- * Author: Drake
  * 
  * Picker Factory Service - Centralized factory for creating picker components.
  * 
@@ -120,6 +93,11 @@ export interface ChoicePickerConfig extends BasePickerConfig {
     horizontal?: boolean;
     /** Alignment for linear picker */
     align?: 'topleft' | 'left' | 'center' | 'top';
+    onPick: (choice: PickerChoice) => void;
+}
+
+/** Configuration for the fixed four-way hit-direction picker. */
+export interface DirectionalPickerConfig extends BasePickerConfig {
     onPick: (choice: PickerChoice) => void;
 }
 
@@ -197,38 +175,56 @@ export class PickerFactoryService {
         }
     }
 
+    createDirectionalPicker(config: DirectionalPickerConfig): ChoicePickerInstance {
+        const compRef = createComponent(DirectionalPickerComponent, {
+            environmentInjector: this.envInjector,
+            elementInjector: this.injector
+        });
+        return this.configureChoicePicker(compRef, {
+            ...config,
+            values: DIRECTIONAL_PICKER_CHOICES,
+            selected: null,
+        });
+    }
+
     /**
      * Create a linear picker explicitly.
      */
     createLinearPicker(config: ChoicePickerConfig): ChoicePickerInstance {
-        const compRef = createComponent(LinearPickerComponent, {
+        if (config.horizontal) {
+            const compRef = createComponent(LinearPickerHorizontalComponent, {
+                environmentInjector: this.envInjector,
+                elementInjector: this.injector
+            });
+            compRef.setInput('align', config.align ?? 'center');
+            return this.configureChoicePicker(compRef, config);
+        }
+
+        const compRef = createComponent(LinearPickerVerticalComponent, {
             environmentInjector: this.envInjector,
             elementInjector: this.injector
         });
+        return this.configureChoicePicker(compRef, config);
+    }
 
+    private configureChoicePicker<T extends ChoicePickerComponent>(compRef: ComponentRef<T>, config: ChoicePickerConfig): ChoicePickerInstance {
         const instance = compRef.instance;
 
-        // Set inputs
         compRef.setInput('title', config.title ?? null);
         compRef.setInput('selected', config.selected ?? null);
         compRef.setInput('position', config.position);
         compRef.setInput('lightTheme', config.lightTheme ?? false);
-        compRef.setInput('horizontal', config.horizontal ?? false);
-        compRef.setInput('align', config.align ?? 'center');
         instance.values.set(config.values);
 
         if (config.initialEvent) {
             instance.initialEvent.set(config.initialEvent);
         }
 
-        // Create destroy signal for subscription cleanup
         const destroy$ = new Subject<void>();
 
-        // Subscribe to events with cleanup
         outputToObservable(instance.picked).pipe(takeUntil(destroy$)).subscribe(config.onPick);
         outputToObservable(instance.cancelled).pipe(takeUntil(destroy$)).subscribe(config.onCancel);
 
-        // Attach to DOM
         this.attachToDOM(compRef);
 
         return {

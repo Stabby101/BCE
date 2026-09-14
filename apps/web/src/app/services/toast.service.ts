@@ -1,59 +1,31 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import { Injectable, signal } from '@angular/core';
-import { generateUUID } from './ws.service';
+import { computed, Injectable, signal } from '@angular/core';
+import { uuidv7 } from '../utils/uuid.util';
 
-/*
- * Author: Drake
- */
+
 export interface Toast {
     id: string;
     message: string;
     type: 'info' | 'success' | 'error';
+    data?: Record<string, unknown>;
 }
 
 const TOAST_DURATION_MS = 3000;
-const MAX_TOASTS = 3;
+const MAX_TOASTS = 10;
+const MAX_VISIBLE_TOASTS = 3;
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {
     private toastsSignal = signal<Toast[]>([]);
     public toasts = this.toastsSignal.asReadonly();
-    private timeouts = new Map<string, any>();
+    public visibleToasts = computed(() => this.toastsSignal().slice(0, MAX_VISIBLE_TOASTS));
+    private timeout?: ReturnType<typeof setTimeout>;
 
-    showToast(message: string, type: Toast['type'], id?: string): string {
-        const toastId = id || generateUUID();
+    showToast(message: string, type: Toast['type'], id?: string, data?: Toast['data']): string {
+        const toastId = id || uuidv7();
         let toasts = this.toastsSignal();
         
         // If ID provided, check if toast already exists
@@ -61,52 +33,63 @@ export class ToastService {
             const existingToastIndex = toasts.findIndex(t => t.id === id);
             
             if (existingToastIndex !== -1) {
-                // Clear existing timeout
-                this.clearTimeout(id);
-                
                 // Update existing toast
                 const updatedToasts = [...toasts];
                 updatedToasts[existingToastIndex] = {
                     ...updatedToasts[existingToastIndex],
                     message: message,
-                    type: type
+                    type: type,
+                    data
                 };
                 this.toastsSignal.set(updatedToasts);
-                
-                // Set new timeout
-                const timeout = setTimeout(() => this.dismiss(toastId), TOAST_DURATION_MS);
-                this.timeouts.set(toastId, timeout);
+                if (existingToastIndex === 0) this.restartTimer();
                 
                 return toastId;
             }
         }
         
         // Create new toast
+        let activeToastRemoved = false;
         if (toasts.length >= MAX_TOASTS) {
-            const removedToast = toasts[0];
-            this.clearTimeout(removedToast.id);
             toasts = toasts.slice(1); // Remove oldest
+            activeToastRemoved = true;
         }
         
-        const toast: Toast = { id: toastId, message, type };
+        const toast: Toast = { id: toastId, message, type, data };
         this.toastsSignal.set([...toasts, toast]);
-        
-        const timeout = setTimeout(() => this.dismiss(toastId), TOAST_DURATION_MS);
-        this.timeouts.set(toastId, timeout);
+        if (activeToastRemoved) {
+            this.restartTimer();
+        } else {
+            this.startTimer();
+        }
         
         return toastId;
     }
 
     dismiss(id: string) {
-        this.clearTimeout(id);
-        this.toastsSignal.set(this.toastsSignal().filter(t => t.id !== id));
+        const activeToastRemoved = this.toastsSignal()[0]?.id === id;
+        this.toastsSignal.update(toasts => toasts.filter(t => t.id !== id));
+        if (activeToastRemoved) this.restartTimer();
     }
 
-    private clearTimeout(id: string) {
-        const timeout = this.timeouts.get(id);
-        if (timeout) {
-            clearTimeout(timeout);
-            this.timeouts.delete(id);
-        }
+    private startTimer() {
+        if (this.timeout !== undefined || this.toastsSignal().length === 0) return;
+
+        this.timeout = setTimeout(() => {
+            this.timeout = undefined;
+            const activeToast = this.toastsSignal()[0];
+            if (activeToast) this.dismiss(activeToast.id);
+        }, TOAST_DURATION_MS);
+    }
+
+    private restartTimer() {
+        this.stopTimer();
+        this.startTimer();
+    }
+
+    private stopTimer() {
+        if (this.timeout === undefined) return;
+        clearTimeout(this.timeout);
+        this.timeout = undefined;
     }
 }

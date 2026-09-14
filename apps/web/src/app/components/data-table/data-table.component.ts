@@ -1,42 +1,39 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
-import { Component, computed, input, output, signal, TemplateRef, viewChild } from '@angular/core';
+import { afterNextRender, Component, computed, DestroyRef, ElementRef, inject, input, output, signal, TemplateRef, viewChild } from '@angular/core';
+import { AutoFitTextDirective } from '../../directives/auto-fit-text.directive';
 import { LongPressDirective } from '../../directives/long-press.directive';
+import { VariableSizeVirtualScrollDirective } from '../../directives/variable-size-virtual-scroll.directive';
 
 export type DataTableClassValue = string | string[] | Set<string> | Record<string, boolean> | null | undefined;
+export type DataTableCellTone = 'focus';
+export type DataTableColumnTrack = number | {
+    readonly minPx: number;
+    readonly flex: number;
+};
+
+export const DATA_TABLE_COLUMN_GAP_PX = 8;
+export const DATA_TABLE_PADDING_START_PX = 12;
+export const DATA_TABLE_PADDING_END_PX = 20;
+
+export function serializeDataTableTrack(track: DataTableColumnTrack): string {
+    return typeof track === 'number'
+        ? `${track}px`
+        : `minmax(${track.minPx}px, ${track.flex}fr)`;
+}
+
+export function calculateDataTableMinWidth<T>(columns: readonly DataTableColumn<T>[]): number {
+    const trackWidth = columns.reduce(
+        (total, column) => total + (typeof column.track === 'number' ? column.track : column.track.minPx),
+        0,
+    );
+    const gapWidth = Math.max(0, columns.length - 1) * DATA_TABLE_COLUMN_GAP_PX;
+    return trackWidth + gapWidth + DATA_TABLE_PADDING_START_PX + DATA_TABLE_PADDING_END_PX;
+}
 
 export interface DataTableCellContext<T> {
     $implicit: T;
@@ -55,9 +52,10 @@ export interface DataTableRowContext<T> {
 export interface DataTableColumn<T> {
     id: string;
     header: string;
-    track: string;
+    track: DataTableColumnTrack;
     headerClass?: DataTableClassValue;
     cellClass?: DataTableClassValue | ((row: T, index: number) => DataTableClassValue);
+    cellTone?: DataTableCellTone;
     align?: 'left' | 'center' | 'right';
     value?: (row: T, index: number) => unknown;
     cellTemplate?: TemplateRef<DataTableCellContext<T>>;
@@ -90,35 +88,80 @@ export interface DataTableRowPointerEnterEvent<T> {
     event: PointerEvent;
 }
 
+export interface DataTableRowPointerMoveEvent<T> {
+    row: T;
+    index: number;
+    event: PointerEvent;
+}
+
 @Component({
     selector: 'mb-data-table',
-    imports: [CommonModule, NgTemplateOutlet, ScrollingModule, LongPressDirective],
+    imports: [AutoFitTextDirective, CommonModule, NgTemplateOutlet, ScrollingModule, LongPressDirective, VariableSizeVirtualScrollDirective],
     templateUrl: './data-table.component.html',
     styleUrl: './data-table.component.scss'
 })
 export class DataTableComponent<T> {
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+    private readonly destroyRef = inject(DestroyRef);
+
     readonly rows = input.required<readonly T[]>();
     readonly columns = input.required<readonly DataTableColumn<T>[]>();
     readonly itemSize = input(48);
-    readonly minWidth = input('0px');
     readonly sortDirection = input<'asc' | 'desc' | null>(null);
     readonly minBufferPx = input(600);
     readonly maxBufferPx = input(1200);
     readonly rowTrackBy = input<(index: number, row: T) => unknown>((index) => index);
+    readonly rowKeys = input<readonly unknown[] | null>(null);
     readonly rowClass = input<((row: T, index: number) => DataTableClassValue) | null>(null);
     readonly fullRowTemplate = input<TemplateRef<DataTableRowContext<T>> | null>(null);
     readonly isFullRow = input<((row: T, index: number) => boolean) | null>(null);
+    readonly columnGapPx = DATA_TABLE_COLUMN_GAP_PX;
+    readonly paddingStartPx = DATA_TABLE_PADDING_START_PX;
+    readonly paddingEndPx = DATA_TABLE_PADDING_END_PX;
 
     readonly sort = output<DataTableSortEvent>();
     readonly rowClick = output<DataTableRowClickEvent<T>>();
     readonly rowLongPress = output<DataTableRowLongPressEvent<T>>();
     readonly rowPointerEnter = output<DataTableRowPointerEnterEvent<T>>();
+    readonly rowPointerMove = output<DataTableRowPointerMoveEvent<T>>();
 
     private readonly viewport = viewChild(CdkVirtualScrollViewport);
     readonly scrollLeft = signal(0);
+    readonly textFitRevision = signal(0);
 
-    readonly gridTemplate = computed(() => this.columns().map(column => column.track).join(' '));
-    readonly tableWidth = computed(() => `max(${this.minWidth()}, 100%)`);
+    readonly gridTemplate = computed(() => this.columns().map(column => serializeDataTableTrack(column.track)).join(' '));
+    readonly minimumWidthPx = computed(() => calculateDataTableMinWidth(this.columns()));
+    readonly tableWidth = computed(() => `max(${this.minimumWidthPx()}px, 100%)`);
+    readonly textFitKey = computed(() => `${this.gridTemplate()}|${this.tableWidth()}|${this.textFitRevision()}`);
+    readonly virtualRowKeys = computed<readonly unknown[]>(() => {
+        const rows = this.rows();
+        const explicitKeys = this.rowKeys();
+        if (explicitKeys?.length === rows.length) {
+            return explicitKeys;
+        }
+
+        return rows.map((row, index) => this.rowTrackBy()(index, row));
+    });
+
+    constructor() {
+        let resizeObserver: ResizeObserver | null = null;
+        let observedWidth = 0;
+        const afterRenderRef = afterNextRender(() => {
+            if (typeof ResizeObserver === 'undefined') return;
+            resizeObserver = new ResizeObserver(entries => {
+                const width = entries[0]?.contentRect.width ?? this.host.nativeElement.clientWidth;
+                if (width <= 0 || Math.abs(width - observedWidth) < 0.5) return;
+                observedWidth = width;
+                this.textFitRevision.update(revision => revision + 1);
+            });
+            resizeObserver.observe(this.host.nativeElement);
+        });
+
+        this.destroyRef.onDestroy(() => {
+            afterRenderRef.destroy();
+            resizeObserver?.disconnect();
+        });
+    }
 
     onViewportScroll() {
         const viewport = this.viewport();
@@ -167,6 +210,14 @@ export class DataTableComponent<T> {
         }
 
         this.rowPointerEnter.emit({ row, index, event });
+    }
+
+    onRowPointerMove(row: T, index: number, event: PointerEvent) {
+        if (this.isFullRowRow(row, index)) {
+            return;
+        }
+
+        this.rowPointerMove.emit({ row, index, event });
     }
 
     getViewport(): CdkVirtualScrollViewport | undefined {

@@ -1,42 +1,11 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import type { Unit } from "../models/units.model";
+import type { UnitSummary } from "../models/unit-summary.model";
 import { getEffectivePilotingSkill } from "./cbt-common.util";
 
-/*
- * Author: Drake
- */
+
 export class BVCalculatorUtil {
 
     // BattleTech BV 2.0 Skill Multiplier Table (Official Values)
@@ -68,18 +37,31 @@ export class BVCalculatorUtil {
     }
 
     /**
-     * Calculate adjusted Battle Value based on pilot skills
+     * Calculate the unrounded Battle Value added or removed by pilot skills.
+     * Final BV rounding is intentionally excluded from this component.
+     */
+    static calculatePilotBV(unit: UnitSummary, baseBv: number, gunnerySkill: number, pilotingSkill: number): number {
+        return this.calculateUnroundedAdjustedBV(unit, baseBv, gunnerySkill, pilotingSkill) - baseBv;
+    }
+
+    /**
+     * Calculate adjusted Battle Value based on pilot skills.
      * @param unit - Unit object containing base Battle Value
      * @param gunnerySkill - Gunnery skill level (0-8+)
      * @param pilotingSkill - Piloting skill level (0-8+)
      * @returns Adjusted Battle Value rounded to nearest integer
      */
-    static calculateAdjustedBV(unit: Unit, baseBv: number, gunnerySkill: number, pilotingSkill: number): number {
-        pilotingSkill = getEffectivePilotingSkill(unit, pilotingSkill);
-        const multiplier = this.getSkillMultiplier(gunnerySkill, pilotingSkill);
-        if (multiplier === 1.0) {
-            return baseBv;
-        }
-        return Math.round(baseBv * multiplier);
+    static calculateAdjustedBV(unit: UnitSummary, baseBv: number, gunnerySkill: number, pilotingSkill: number): number {
+        return Math.round(this.calculateUnroundedAdjustedBV(unit, baseBv, gunnerySkill, pilotingSkill));
+    }
+
+    private static calculateUnroundedAdjustedBV(
+        unit: UnitSummary,
+        baseBv: number,
+        gunnerySkill: number,
+        pilotingSkill: number,
+    ): number {
+        const effectivePilotingSkill = getEffectivePilotingSkill(unit, pilotingSkill);
+        return baseBv * this.getSkillMultiplier(gunnerySkill, effectivePilotingSkill);
     }
 }

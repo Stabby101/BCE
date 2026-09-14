@@ -1,8 +1,10 @@
 /*
  * BCE multi-tenant (DEPLOY-002 P4) — the GM-bundle auth client. Reads /api/auth/me to drive the gated
  * shell (wall → pending → rejected → in), starts the OAuth login flow, runs the flag-gated dev-login test
- * seam, and exposes the admin approval console calls. Lives in the GM web bundle ONLY — it is NOT imported
- * by the port-isolated player bundle (app.player.config), so players stay account-less (ROLE-002).
+ * seam, and exposes the admin approval console calls. Lives in the GM web bundle; the port-isolated player
+ * bundle stayed account-less (ROLE-002) until GM-1 P3 gave player REST the device's credential — and GM-1c now
+ * injects THIS service there too (fragment adoption + enabledProviders + the start URL) so the join page can
+ * run the SAME sign-in flow, not a fork of it. The player SOCKET still withholds the token (HOTFIX-033).
  *
  * The session JWT is mirrored to localStorage ('bce.auth.token') so ClaimRealtimeService can put it on the
  * socket handshake (auth.token → the P2 ownership path); the httpOnly cookie still carries HTTP auth. When
@@ -67,6 +69,11 @@ const SESSION_TOKEN_KEY = 'bce.auth.token'; // the GM JWT, mirrored for the sock
 export const GUEST_RECOVERY_KEY = 'bce.guest.recovery';
 export const GUEST_BANNER_ACK_KEY = 'bce.guest.ack';
 const ME_TIMEOUT_MS = 6000;
+
+/** The sign-in button's human label for a provider id (shared by the login screen and the GM-1c join page). */
+export function providerLabel(p: string): string {
+    return p === 'google' ? 'Google' : p === 'github' ? 'GitHub' : (p.charAt(0).toUpperCase() + p.slice(1));
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -184,22 +191,28 @@ export class AuthService {
     /** HOTFIX-040 Fix A — Bearer-first for OAuth. The callback redirect carries the session JWT on the URL
      *  FRAGMENT (#bce_auth=…). Adopt it as the Bearer/socket token BEFORE the first /auth/me (so Google works
      *  when the browser blocks the cross-site cookie), then STRIP it from the URL so it's never left in the
-     *  address bar / history / a shared link. Called from the APP_INITIALIZER before refresh(); no-op otherwise. */
-    adoptAuthFragment(): void {
+     *  address bar / history / a shared link. Called from the APP_INITIALIZER before refresh(); no-op otherwise.
+     *  GM-1c: returns whether a token was adopted — the player join page uses the verdict to re-open Bring-my-company
+     *  after its sign-in round-trip (the path + query survive the strip, so the join link is intact). */
+    adoptAuthFragment(): boolean {
         try {
             const hash = typeof location !== 'undefined' ? (location.hash || '') : '';
             const m = hash.match(/(?:^#|&)bce_auth=([^&]*)/);
-            if (!m) return;
+            if (!m) return false;
             const token = decodeURIComponent(m[1] || '');
             if (token) this.syncSocketToken(token); // Bearer-first, identical to guest/recover/dev-login
             // strip ONLY bce_auth from the fragment, preserving any other hash params
             const rest = hash.replace(/^#/, '').split('&').filter((p) => p && !p.startsWith('bce_auth='));
             history.replaceState(null, '', location.pathname + location.search + (rest.length ? '#' + rest.join('&') : ''));
-        } catch { /* location/history unavailable — degrade to cookie-only auth */ }
+            return !!token;
+        } catch { return false; /* location/history unavailable — degrade to cookie-only auth */ }
     }
 
-    loginUrl(provider: string): string {
-        return `${this.base()}/auth/${provider}`;
+    /** The OAuth start URL. GM-1c: an optional `returnTo` (a same-site path such as the join page's
+     *  `/player/?campaign=…&engine=…`) rides through the provider as the OAuth `state`, and the callback lands the
+     *  browser back on it — the server validates it (open-redirect gate) and falls back to the root otherwise. */
+    loginUrl(provider: string, returnTo?: string): string {
+        return `${this.base()}/auth/${provider}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`;
     }
 
     // ── DEPLOY-009 GUEST tier ──────────────────────────────────────────────────────────────────────────
@@ -333,6 +346,16 @@ export class AuthService {
     /** DEPLOY-010 — the admin dashboard metrics (null on a transient failure → the cards show "—"). */
     async adminStats(): Promise<AdminStats | null> {
         try { return (await firstValueFrom(this.http.get<AdminStats>(`${this.base()}/admin/stats`, { withCredentials: true }))) ?? null; }
+        catch { return null; }
+    }
+    /** ODM-26 — the whole-DB export (HARDEN-7 A1 `/admin/export`, VACUUM INTO → a consistent single file).
+     *  Fetched rather than linked ON PURPOSE: `extractToken` accepts the session cookie OR a Bearer header,
+     *  and a plain `<a href>` only carries the cookie — so a bearer-only admin session would meet a 401 on a
+     *  link and download nothing. HttpClient carries both (the interceptor attaches Bearer, withCredentials
+     *  sends the cookie), which is the difference between a control that works and one that works for some
+     *  people. Returns the blob; the caller names the file and hands it to the browser. */
+    async adminExport(): Promise<Blob | null> {
+        try { return (await firstValueFrom(this.http.get(`${this.base()}/admin/export`, { responseType: 'blob', withCredentials: true }))) ?? null; }
         catch { return null; }
     }
     async listAudit(f: { user?: string; action?: string } = {}): Promise<AuditEntry[]> {

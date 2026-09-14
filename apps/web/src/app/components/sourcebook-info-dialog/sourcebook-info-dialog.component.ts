@@ -1,35 +1,6 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { CommonModule } from '@angular/common';
 import { type AfterViewInit, ChangeDetectionStrategy, Component, type ElementRef, inject, viewChild } from '@angular/core';
@@ -37,12 +8,19 @@ import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import type { Sourcebook } from '../../models/sourcebook.model';
 import { BaseDialogComponent } from '../base-dialog/base-dialog.component';
 
-/*
- * Author: Drake
- */
+
+export interface SourcebookInfoDialogSource extends Sourcebook {
+    sourceAnnotations?: string[];
+}
+
+export interface SourcebookInfoDialogUnknownSource {
+    abbrev: string;
+    sourceAnnotations?: string[];
+}
+
 export interface SourcebookInfoDialogData {
-    sourcebooks: Sourcebook[];
-    unknownSources: string[];
+    sourcebooks: SourcebookInfoDialogSource[];
+    unknownSources: SourcebookInfoDialogUnknownSource[];
     selectedIndex?: number;
 }
 
@@ -64,7 +42,12 @@ export interface SourcebookInfoDialogData {
                             <img [src]="sourcebook.image" [alt]="sourcebook.title" (error)="onImageError($event)" />
                         </div>
                     }
-                    <div class="sourcebook-title">{{ sourcebook.title }}</div>
+                    <div class="sourcebook-title">
+                        <span>{{ sourcebook.title }}</span>
+                        @if (sourcebook.sourceAnnotations?.length) {
+                            <span class="source-note">({{ sourcebook.sourceAnnotations.join(', ') }})</span>
+                        }
+                    </div>
                     @if (sourcebook.sku) {
                         <div class="sourcebook-sku">
                             <span class="label">SKU:</span>
@@ -84,12 +67,17 @@ export interface SourcebookInfoDialogData {
                     <hr class="sourcebook-separator" />
                 }
             }
-            @for (unknown of data.unknownSources; let last = $last; track unknown) {
+            @for (unknown of data.unknownSources; let last = $last; track unknown.abbrev) {
                 @if (data.sourcebooks.length > 0 || !$first) {
                     <hr class="sourcebook-separator" />
                 }
                 <div class="sourcebook-entry unknown">
-                    <div class="sourcebook-title">{{ unknown }}</div>
+                    <div class="sourcebook-title">
+                        <span>{{ unknown.abbrev }}</span>
+                        @if (unknown.sourceAnnotations?.length) {
+                            <span class="source-note">({{ unknown.sourceAnnotations.join(', ') }})</span>
+                        }
+                    </div>
                 </div>
             }
         </div>
@@ -136,9 +124,20 @@ export interface SourcebookInfoDialogData {
         }
 
         .sourcebook-title {
+            display: inline-flex;
+            align-items: baseline;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 4px;
             font-weight: 600;
             font-size: 1.1em;
             text-align: center;
+        }
+
+        .source-note {
+            color: var(--text-color-secondary);
+            font-weight: normal;
+            font-size: 0.9em;
         }
 
         .sourcebook-sku {

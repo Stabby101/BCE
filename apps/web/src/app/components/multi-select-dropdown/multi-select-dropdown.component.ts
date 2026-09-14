@@ -1,54 +1,31 @@
-/*
- * Copyright (C) 2026 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { Component, ElementRef, computed, input, signal, output, inject, ChangeDetectionStrategy, viewChild, afterNextRender, Injector, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { CdkConnectedOverlay, Overlay, OverlayModule, type ConnectedOverlayPositionChange, type ConnectedPosition } from '@angular/cdk/overlay';
 import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
 import { LayoutService } from '../../services/layout.service';
 import { highlightMatches, matchesSearch, parseSearchQuery } from '../../utils/search.util';
+import { scrollElementIntoView } from '../../utils/dropdown-interaction.utils';
 
-/*
- * Author: Drake
- */
+
 export interface DropdownOption {
     name: string;
     displayName?: string;
     img?: string;
     available?: boolean;
     count?: number;
+    alwaysVisible?: boolean;
+    exclusive?: boolean;
+    stateCycle?: readonly ('or' | 'and' | 'not')[];
+    /** Contextual minimum-value inputs shown when this option is selected. */
+    minimumFieldLabels?: readonly string[];
 }
 
 export type MultiState = false | 'or' | 'and' | 'not';
+type SelectableMultiState = Exclude<MultiState, false>;
 
 /** Operators for quantity constraints on countable filters */
 export type CountOperator = '=' | '!=' | '>' | '<' | '>=' | '<=';
@@ -65,6 +42,8 @@ export interface MultiStateOption {
     countIncludeRanges?: [number, number][];
     /** Exclude ranges for quantity (merged from multiple constraints) */
     countExcludeRanges?: [number, number][];
+    /** Per-slot inclusive minima. A null entry leaves that slot unconstrained. */
+    minimumValues?: (number | null)[];
 }
 
 export interface MultiStateSelection {
@@ -72,50 +51,102 @@ export interface MultiStateSelection {
 }
 
 type ScrollRestoreState =
-        | { kind: 'virtual'; optionName: string; scrollOffset: number; optionVisibleTop?: number }
-        | { kind: 'dom'; optionName: string; visibleTop: number };
+    | { kind: 'virtual'; scrollOffset: number; optionName?: string; optionVisibleTop?: number }
+    | { kind: 'dom'; scrollTop: number; optionName?: string; optionVisibleTop?: number };
+
+type TriggerRect = { left: number; top: number; width: number; height: number };
+
+interface OpenDropdownOptions {
+    focusInput: boolean;
+    scrollToOptionName?: string;
+}
+
+type OptionScrollAlignment = 'nearest' | 'center';
 
 @Component({
     selector: 'multi-select-dropdown',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CommonModule, ScrollingModule],
+    imports: [CommonModule, ScrollingModule, OverlayModule],
     templateUrl: './multi-select-dropdown.component.html',
     styleUrls: ['./multi-select-dropdown.component.css']
 })
 export class MultiSelectDropdownComponent {
+    private static nextId = 0;
+    private static readonly BELOW_OVERLAY_POSITIONS: ConnectedPosition[] = [
+        { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top' },
+        { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top' },
+    ];
+    private static readonly ABOVE_OVERLAY_POSITIONS: ConnectedPosition[] = [
+        { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' },
+        { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom' },
+    ];
     private elementRef = inject(ElementRef);
     private injector = inject(Injector);
     private layoutService = inject(LayoutService);
     private destroyRef = inject(DestroyRef);
+    private overlay = inject(Overlay);
     private destroyed = false;
     private lastPointerType = '';
+    private lastOptionsPointerType = '';
+    private anchorFollowFrameId: number | null = null;
+    private lastTriggerRect: TriggerRect | null = null;
+    private overlayRefreshFrameId: number | null = null;
+    private overlayRefreshNeedsMetrics = false;
+    private lastOverlayPositionKey: string | null = null;
+    readonly optionsListId = `multiSelectDropdown-${MultiSelectDropdownComponent.nextId++}-options`;
+    private preferredOverlayPlacement = signal<'above' | 'below'>('below');
+    displayAreaEl = viewChild<ElementRef<HTMLDivElement>>('displayArea');
     filterInput = viewChild<ElementRef<HTMLInputElement>>('filterInput');
     optionsEl = viewChild<ElementRef<HTMLDivElement>>('optionsEl');
     optionsDropdownEl = viewChild<ElementRef<HTMLDivElement>>('optionsDropdown');
     optionsViewport = viewChild<CdkVirtualScrollViewport>('optionsViewport');
+    connectedOverlay = viewChild(CdkConnectedOverlay);
     
     label = input<string>('');
     multiselect = input<boolean>(true);
     multistate = input<boolean>(false);
+    stateCycle = input<readonly SelectableMultiState[]>(['or', 'and', 'not']);
     countable = input<boolean>(false);
+    keepUnavailableVisible = input<boolean>(false);
     semanticOnly = input<boolean>(false);
     displayText = input<string | undefined>();  // Text to display instead of pills when in semantic-only mode (fallback)
     displayItems = input<{ text: string; state: 'or' | 'and' | 'not' }[] | undefined>();  // Structured display items with state
     options = input<readonly DropdownOption[]>([]);
+    optionSection = input<((option: DropdownOption) => string | null | undefined) | null>(null);
     selected = input<MultiStateSelection | string[]>([]);
     
     selectionChange = output<MultiStateSelection | readonly string[]>();
 
     showUnavailable = signal(false);
     showUnavailableToggle = computed(() => this.multistate() && this.options().some(o => o.available === false));
+    showFilterControls = computed(() => this.options().length > 20 || this.showUnavailableToggle());
     isOpen = signal(false);
     filterText = signal('');
-    private static readonly DEFAULT_MAX_HEIGHT = 248;
-    private static readonly MIN_MAX_HEIGHT = 200;
-    private openMaxHeight = signal(MultiSelectDropdownComponent.DEFAULT_MAX_HEIGHT);
-    readonly virtualScrollThreshold = 80;
+    private readonly hoveredOptionName = signal<string | null>(null);
+    private readonly keyboardFocusedOptionName = signal<string | null>(null);
+    readonly keyboardFocusedIndex = computed(() => {
+        const optionName = this.keyboardFocusedOptionName();
+        return optionName ? this.indexOfFilteredOption(optionName) : -1;
+    });
+    readonly keyboardFocusedOptionId = computed(() => {
+        const index = this.keyboardFocusedIndex();
+        return index >= 0 && index < this.filteredOptions().length ? this.optionId(index) : null;
+    });
+    private static readonly OVERLAY_GAP = 4;
+    private static readonly DEFAULT_PANEL_HEIGHT_FALLBACK = 248;
+    private static readonly FILTER_CONTAINER_HEIGHT_FALLBACK = 41;
+    private static readonly VIEWPORT_MARGIN = 12;
+    private openMaxHeight = signal(MultiSelectDropdownComponent.DEFAULT_PANEL_HEIGHT_FALLBACK);
+    private overlayMinWidth = signal(0);
+    readonly virtualScrollThreshold = 150;
     readonly optionItemSize = 44;
+    readonly overlayWidth = computed(() => this.overlayMinWidth() || this.measureOverlayWidth());
+    readonly repositionScrollStrategy = this.overlay.scrollStrategies.reposition();
+    readonly overlayPlacement = signal<'above' | 'below'>('below');
+    readonly overlayPositions = computed(() => this.preferredOverlayPlacement() === 'above'
+        ? MultiSelectDropdownComponent.ABOVE_OVERLAY_POSITIONS
+        : MultiSelectDropdownComponent.BELOW_OVERLAY_POSITIONS);
 
     private displayNameMap = computed(() => {
         const map = new Map<string, string>();
@@ -136,10 +167,27 @@ export class MultiSelectDropdownComponent {
             const sel = (this.selected() as MultiStateSelection) || {};
             return Object.entries(sel)
                 .filter(([_, selection]) => selection.state !== false)
-                .map(([name, selection]) => ({ name, state: selection.state, count: selection.count }));
+                .map(([name, selection]) => ({
+                    name,
+                    state: selection.state,
+                    count: selection.count,
+                    minimumValues: selection.minimumValues,
+                }));
         }
-        return (this.selected() as readonly string[] || []).map((name: string) => ({ name, state: 'or' as MultiState, count: 1 }));
+        return (this.selected() as readonly string[] || []).map((name: string) => ({
+            name,
+            state: 'or' as MultiState,
+            count: 1,
+            minimumValues: undefined,
+        }));
     });
+
+    formatMinimumSummary(values: readonly (number | null)[] | undefined): string {
+        if (!values?.some(value => value !== null && value !== undefined)) {
+            return '';
+        }
+        return values.map(value => value === null || value === undefined ? '–' : `≥${value}`).join('/');
+    }
 
     /** When more than 5 pills, compress into summary pills grouped by state */
     private static readonly COMPRESS_THRESHOLD = 5;
@@ -156,11 +204,19 @@ export class MultiSelectDropdownComponent {
             .map(s => ({ state: s, count: counts.get(s)! }));
     });
 
+    singleSelectedOption = computed(() => this.selectedOptions()[0] ?? null);
+
     maxHeightOptions = computed(() => {
         if (!this.isOpen()) {
-            return MultiSelectDropdownComponent.DEFAULT_MAX_HEIGHT;
+            return MultiSelectDropdownComponent.DEFAULT_PANEL_HEIGHT_FALLBACK;
         }
         return this.openMaxHeight();
+    });
+
+    viewportHeight = computed(() => {
+        const maxHeight = this.maxHeightOptions();
+        const contentHeight = this.filteredOptions().length * this.optionItemSize;
+        return Math.min(maxHeight, contentHeight || this.optionItemSize);
     });
 
     filteredOptions = computed(() => {
@@ -169,14 +225,15 @@ export class MultiSelectDropdownComponent {
         
         const searchTokens = parseSearchQuery(this.filterText());
         const hasActiveFilter = this.filterText().trim().length > 0;
-        const nameFiltered = this.options().filter(option => 
-            matchesSearch(option.name, searchTokens, true) || 
-            (option.displayName && matchesSearch(option.displayName, searchTokens, true))
+        const nameFiltered = this.options().filter(option =>
+            option.alwaysVisible === true
+            || matchesSearch(option.name, searchTokens, true)
+            || (option.displayName && matchesSearch(option.displayName, searchTokens, true))
         );
 
         // if the toggle is off, hide unavailable items
         if (!this.showUnavailable()) {
-            if (hasActiveFilter) {
+            if (hasActiveFilter || this.keepUnavailableVisible()) {
                 return nameFiltered;
             }
             return nameFiltered.filter(option => option.available !== false || this.isSelected(option.name));
@@ -184,11 +241,42 @@ export class MultiSelectDropdownComponent {
         return nameFiltered;
     });
 
-    useVirtualScroll = computed(() => this.filteredOptions().length >= this.virtualScrollThreshold);
+    optionSectionBreakIndexes = computed(() => {
+        const getSection = this.optionSection();
+        const options = this.filteredOptions();
+        const sectionBreakIndexes = new Set<number>();
+        if (!getSection || options.length < 2) return sectionBreakIndexes;
+
+        let previousSection = getSection(options[0]);
+        for (let index = 1; index < options.length; index++) {
+            const currentSection = getSection(options[index]);
+            if (currentSection && previousSection && currentSection !== previousSection) {
+                sectionBreakIndexes.add(index);
+            }
+            previousSection = currentSection;
+        }
+        return sectionBreakIndexes;
+    });
+
+    useVirtualScroll = computed(() => this.options().length >= this.virtualScrollThreshold);
 
     highlight(text: string): string {
         const searchTokens = parseSearchQuery(this.filterText());
         return highlightMatches(text, searchTokens, true);
+    }
+
+    getVirtualOptionLabelFontSize(option: DropdownOption): number {
+        const textLength = (option.displayName ?? option.name).length;
+        if (textLength <= 26) {
+            return 16;
+        }
+        if (textLength <= 38) {
+            return 14;
+        }
+        if (textLength <= 56) {
+            return 12.5;
+        }
+        return 11;
     }
 
     toggleUnavailable(event: MouseEvent) {
@@ -201,8 +289,7 @@ export class MultiSelectDropdownComponent {
         const ce = ev as CustomEvent;
         // if another instance opened, close this one
         if (ce.detail !== this && this.isOpen()) {
-            this.isOpen.set(false);
-            this.filterText.set('');
+            this.closeDropdown();
         }
     };
 
@@ -211,15 +298,21 @@ export class MultiSelectDropdownComponent {
         const target = event.target;
         if (!(target instanceof Node)) return;
 
+        const overlayElement = this.connectedOverlay()?.overlayRef?.overlayElement;
+        if (overlayElement?.contains(target)) {
+            return;
+        }
+
         if (!this.elementRef.nativeElement.contains(target)) {
-            this.isOpen.set(false);
-            this.filterText.set('');
+            this.closeDropdown();
         }
     };
 
     constructor() {
         this.destroyRef.onDestroy(() => {
             this.destroyed = true;
+            this.stopAnchorFollowLoop();
+            this.cancelScheduledOverlayRefresh();
             this.isOpen.set(false);
         });
         effect((cleanup) => {
@@ -239,6 +332,36 @@ export class MultiSelectDropdownComponent {
             });
         });
 
+        effect((cleanup) => {
+            if (!this.isOpen()) {
+                return;
+            }
+
+            this.startAnchorFollowLoop();
+
+            cleanup(() => {
+                this.stopAnchorFollowLoop();
+                this.cancelScheduledOverlayRefresh();
+            });
+        });
+
+        effect(() => {
+            if (!this.isOpen()) {
+                return;
+            }
+
+            this.layoutService.windowWidth();
+            this.layoutService.windowHeight();
+
+            afterNextRender(() => {
+                if (this.destroyed || !this.isOpen()) {
+                    return;
+                }
+
+                this.scheduleOverlayRefresh(true);
+            }, { injector: this.injector });
+        });
+
         effect(() => {
             if (!this.isOpen() || !this.useVirtualScroll()) {
                 return;
@@ -253,127 +376,654 @@ export class MultiSelectDropdownComponent {
                 this.optionsViewport()?.checkViewportSize();
             }, { injector: this.injector });
         });
+
+        effect(() => {
+            if (!this.isOpen()) {
+                return;
+            }
+
+            const optionName = this.keyboardFocusedOptionName();
+            if (!optionName || this.indexOfFilteredOption(optionName) < 0) {
+                return;
+            }
+
+            afterNextRender(() => {
+                if (this.destroyed || !this.isOpen() || this.keyboardFocusedOptionName() !== optionName) {
+                    return;
+                }
+
+                if (this.indexOfFilteredOption(optionName) >= 0) {
+                    this.scrollToOption(optionName);
+                }
+            }, { injector: this.injector });
+        });
     }
 
-    private measureDropdownMaxHeight(): number {
+    private measureDropdownMaxHeight(placement = this.overlayPlacement()): number {
+        const availableForList = this.measureAvailableListHeight(placement);
+        if (!Number.isFinite(availableForList) || availableForList <= 0) {
+            return MultiSelectDropdownComponent.DEFAULT_PANEL_HEIGHT_FALLBACK;
+        }
+
+        return availableForList;
+    }
+
+    private measureAvailableVerticalSpace(placement: 'above' | 'below'): number {
+        const displayArea = this.displayAreaEl()?.nativeElement;
+        if (!displayArea) {
+            return 0;
+        }
+
+        const triggerRect = displayArea.getBoundingClientRect();
+        if (triggerRect.height === 0) {
+            return 0;
+        }
+
+        const availableVerticalSpace = placement === 'below'
+            ? this.layoutService.windowHeight() - triggerRect.bottom - MultiSelectDropdownComponent.VIEWPORT_MARGIN
+            : triggerRect.top - MultiSelectDropdownComponent.VIEWPORT_MARGIN;
+
+        if (!Number.isFinite(availableVerticalSpace) || availableVerticalSpace <= 0) {
+            return 0;
+        }
+
+        return Math.floor(availableVerticalSpace);
+    }
+
+    private getFilterContainerHeightForMeasurements(): number {
+        const measuredHeight = this.measureFilterContainerHeight();
+        if (measuredHeight > 0) {
+            return measuredHeight;
+        }
+
+        return this.showFilterControls()
+            ? MultiSelectDropdownComponent.FILTER_CONTAINER_HEIGHT_FALLBACK
+            : 0;
+    }
+
+    private measureAvailableListHeight(placement: 'above' | 'below'): number {
+        const displayArea = this.displayAreaEl()?.nativeElement;
+        if (!displayArea) {
+            return 0;
+        }
+
+        const triggerRect = displayArea.getBoundingClientRect();
+        if (triggerRect.height === 0) {
+            return 0;
+        }
+
+        const filterRowHeight = this.getFilterContainerHeightForMeasurements();
+        const availableVerticalSpace = placement === 'below'
+            ? this.layoutService.windowHeight() - triggerRect.bottom - MultiSelectDropdownComponent.VIEWPORT_MARGIN
+            : triggerRect.top - MultiSelectDropdownComponent.VIEWPORT_MARGIN;
+        const availableForList = availableVerticalSpace - filterRowHeight - 8 - MultiSelectDropdownComponent.OVERLAY_GAP;
+
+        if (!Number.isFinite(availableForList) || availableForList <= 0) {
+            return 0;
+        }
+
+        return Math.floor(availableForList);
+    }
+
+    private determinePreferredOverlayPlacement(): 'above' | 'below' {
+        const belowAvailableHeight = this.measureAvailableVerticalSpace('below');
+        const aboveAvailableHeight = this.measureAvailableVerticalSpace('above');
+
+        if (belowAvailableHeight < MultiSelectDropdownComponent.DEFAULT_PANEL_HEIGHT_FALLBACK
+            && aboveAvailableHeight > belowAvailableHeight) {
+            return 'above';
+        }
+
+        return 'below';
+    }
+
+    private updatePreferredOverlayPlacement(): 'above' | 'below' {
+        const preferredPlacement = this.determinePreferredOverlayPlacement();
+        this.preferredOverlayPlacement.set(preferredPlacement);
+        return preferredPlacement;
+    }
+
+    private measureFilterContainerHeight(): number {
         const dropdown = this.optionsDropdownEl()?.nativeElement;
         if (!dropdown) {
-            return MultiSelectDropdownComponent.DEFAULT_MAX_HEIGHT;
+            return 0;
         }
 
-        const rect = dropdown.getBoundingClientRect();
-        if (rect.height === 0) {
-            return MultiSelectDropdownComponent.DEFAULT_MAX_HEIGHT;
+        const filterContainer = dropdown.querySelector<HTMLElement>('.filter-container:not([hidden])');
+        if (!filterContainer) {
+            return 0;
         }
 
-        const hasFilterRow = this.options().length > 20 || this.showUnavailableToggle();
-        const filterRowHeight = hasFilterRow ? 50 : 0;
-        const bottomPadding = 16;
-        const availableForList = this.layoutService.windowHeight() - rect.top - filterRowHeight - bottomPadding;
-
-        return Math.max(MultiSelectDropdownComponent.MIN_MAX_HEIGHT, availableForList);
+        return Math.ceil(filterContainer.getBoundingClientRect().height);
     }
 
-    private captureOpenHeight() {
-        this.openMaxHeight.set(this.measureDropdownMaxHeight());
+    private measureOverlayWidth(): number {
+        const displayArea = this.displayAreaEl()?.nativeElement;
+        if (!displayArea) {
+            return 0;
+        }
+
+        return displayArea.getBoundingClientRect().width;
+    }
+
+    private captureOpenMetrics(placement = this.overlayPlacement()) {
+        this.overlayMinWidth.set(this.measureOverlayWidth());
+        this.openMaxHeight.set(this.measureDropdownMaxHeight(placement));
+    }
+
+    private measureTriggerRect(): TriggerRect | null {
+        const triggerElement = this.displayAreaEl()?.nativeElement;
+        if (!triggerElement?.isConnected) {
+            return null;
+        }
+
+        const rect = triggerElement.getBoundingClientRect();
+        return {
+            left: rect.left,
+            top: rect.top,
+            width: rect.width,
+            height: rect.height,
+        };
+    }
+
+    private hasTriggerRectChanged(nextRect: TriggerRect, previousRect: TriggerRect | null): boolean {
+        if (!previousRect) {
+            return true;
+        }
+
+        return Math.abs(nextRect.left - previousRect.left) > 0.5
+            || Math.abs(nextRect.top - previousRect.top) > 0.5
+            || Math.abs(nextRect.width - previousRect.width) > 0.5
+            || Math.abs(nextRect.height - previousRect.height) > 0.5;
+    }
+
+    private startAnchorFollowLoop() {
+        if (this.anchorFollowFrameId !== null) {
+            return;
+        }
+
+        const step = () => {
+            this.anchorFollowFrameId = null;
+
+            if (this.destroyed || !this.isOpen()) {
+                return;
+            }
+
+            const nextRect = this.measureTriggerRect();
+            if (!nextRect) {
+                this.closeDropdown();
+                return;
+            }
+
+            if (this.hasTriggerRectChanged(nextRect, this.lastTriggerRect)) {
+                const preferredPlacement = this.updatePreferredOverlayPlacement();
+                const widthOrHeightChanged = !this.lastTriggerRect
+                    || Math.abs(nextRect.width - this.lastTriggerRect.width) > 0.5
+                    || Math.abs(nextRect.height - this.lastTriggerRect.height) > 0.5;
+                const placementPreferenceChanged = preferredPlacement !== this.overlayPlacement();
+
+                this.lastTriggerRect = nextRect;
+
+                if (widthOrHeightChanged || placementPreferenceChanged) {
+                    this.captureOpenMetrics(preferredPlacement);
+                }
+
+                this.connectedOverlay()?.overlayRef?.updatePosition();
+            }
+
+            this.anchorFollowFrameId = requestAnimationFrame(step);
+        };
+
+        this.anchorFollowFrameId = requestAnimationFrame(step);
+    }
+
+    private stopAnchorFollowLoop() {
+        if (this.anchorFollowFrameId !== null) {
+            cancelAnimationFrame(this.anchorFollowFrameId);
+            this.anchorFollowFrameId = null;
+        }
+
+        this.lastTriggerRect = null;
+    }
+
+    private resetOverlayState() {
+        this.stopAnchorFollowLoop();
+        this.cancelScheduledOverlayRefresh();
+        this.lastOverlayPositionKey = null;
+        this.preferredOverlayPlacement.set('below');
+        this.overlayPlacement.set('below');
+        this.openMaxHeight.set(MultiSelectDropdownComponent.DEFAULT_PANEL_HEIGHT_FALLBACK);
+    }
+
+    private closeDropdown() {
+        this.isOpen.set(false);
+        this.filterText.set('');
+        this.hoveredOptionName.set(null);
+        this.keyboardFocusedOptionName.set(null);
+        this.resetOverlayState();
+    }
+
+    private focusFilterInput() {
+        const inputEl = this.filterInput()?.nativeElement;
+        if (inputEl) {
+            inputEl.focus();
+        }
+    }
+
+    private scrollToOption(optionName: string, alignment: OptionScrollAlignment = 'nearest') {
+        const options = this.filteredOptions();
+        const optionIndex = options.findIndex(option => option.name === optionName);
+        if (optionIndex < 0) {
+            return;
+        }
+
+        if (this.useVirtualScroll()) {
+            const viewport = this.optionsViewport();
+            if (viewport) {
+                viewport.checkViewportSize();
+                this.scrollVirtualOptionIntoView(viewport, optionIndex, alignment);
+            }
+            return;
+        }
+
+        const container = this.optionsEl()?.nativeElement;
+        if (!container) {
+            return;
+        }
+
+        const items = Array.from(container.querySelectorAll<HTMLElement>('.option-item'));
+        for (const item of items) {
+            if (item.getAttribute('data-option-name') === optionName) {
+                if (alignment === 'center') {
+                    this.scrollDomOptionToCenter(container, item);
+                } else {
+                    scrollElementIntoView(container, item);
+                }
+                break;
+            }
+        }
+    }
+
+    private scrollVirtualOptionIntoView(viewport: CdkVirtualScrollViewport, optionIndex: number, alignment: OptionScrollAlignment = 'nearest'): void {
+        const visibleTop = viewport.measureScrollOffset('top');
+        const viewportHeight = viewport.getViewportSize();
+        const visibleBottom = visibleTop + viewportHeight;
+        const optionTop = optionIndex * this.optionItemSize;
+        const optionBottom = optionTop + this.optionItemSize;
+        const maxScrollTop = Math.max(0, this.filteredOptions().length * this.optionItemSize - viewportHeight);
+
+        if (alignment === 'center') {
+            const centeredOffset = optionTop - ((viewportHeight - this.optionItemSize) / 2);
+            viewport.scrollToOffset(Math.max(0, Math.min(maxScrollTop, centeredOffset)), 'auto');
+            return;
+        }
+
+        if (optionTop < visibleTop) {
+            viewport.scrollToOffset(Math.max(0, optionTop), 'auto');
+        } else if (optionBottom > visibleBottom) {
+            viewport.scrollToOffset(Math.min(maxScrollTop, optionBottom - viewportHeight), 'auto');
+        }
+    }
+
+    private scrollDomOptionToCenter(container: HTMLElement, item: HTMLElement): void {
+        const containerRect = container.getBoundingClientRect();
+        const itemRect = item.getBoundingClientRect();
+        const itemOffsetTop = itemRect.top - containerRect.top + container.scrollTop;
+        const itemHeight = itemRect.height || item.offsetHeight;
+        const centeredScrollTop = itemOffsetTop - ((container.clientHeight - itemHeight) / 2);
+        const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+        container.scrollTop = Math.max(0, Math.min(maxScrollTop, centeredScrollTop));
+    }
+
+    optionId(index: number): string {
+        return `${this.optionsListId}-${index}`;
+    }
+
+    private openDropdown({ focusInput, scrollToOptionName }: OpenDropdownOptions) {
+        const preferredPlacement = this.updatePreferredOverlayPlacement();
+        this.overlayPlacement.set(preferredPlacement);
+        this.captureOpenMetrics(preferredPlacement);
+        document.dispatchEvent(new CustomEvent('multi-select-dropdown-open', { detail: this }));
+        this.isOpen.set(true);
+        this.filterText.set('');
+        this.keyboardFocusedOptionName.set(
+            scrollToOptionName && this.indexOfFilteredOption(scrollToOptionName) >= 0 ? scrollToOptionName : null
+        );
+
+        afterNextRender(() => {
+            if (this.destroyed || !this.isOpen()) {
+                return;
+            }
+
+            if (scrollToOptionName) {
+                this.scrollToOption(scrollToOptionName, 'center');
+            }
+            if (focusInput) {
+                this.focusFilterInput();
+            }
+        }, { injector: this.injector });
+    }
+
+    private scheduleOverlayRefresh(recalculateMetrics = false) {
+        if (recalculateMetrics) {
+            this.overlayRefreshNeedsMetrics = true;
+        }
+
+        if (this.overlayRefreshFrameId !== null) {
+            return;
+        }
+
+        this.overlayRefreshFrameId = requestAnimationFrame(() => {
+            this.overlayRefreshFrameId = null;
+            const shouldRecalculateMetrics = this.overlayRefreshNeedsMetrics;
+            this.overlayRefreshNeedsMetrics = false;
+
+            if (this.destroyed || !this.isOpen()) {
+                return;
+            }
+
+            const triggerElement = this.displayAreaEl()?.nativeElement;
+            if (!triggerElement?.isConnected) {
+                this.closeDropdown();
+                return;
+            }
+
+            const preferredPlacement = this.updatePreferredOverlayPlacement();
+            if (shouldRecalculateMetrics) {
+                this.captureOpenMetrics(preferredPlacement);
+            }
+
+            if (shouldRecalculateMetrics || preferredPlacement !== this.overlayPlacement()) {
+                this.connectedOverlay()?.overlayRef?.updatePosition();
+            }
+        });
+    }
+
+    private cancelScheduledOverlayRefresh() {
+        if (this.overlayRefreshFrameId === null) {
+            return;
+        }
+
+        cancelAnimationFrame(this.overlayRefreshFrameId);
+        this.overlayRefreshFrameId = null;
+        this.overlayRefreshNeedsMetrics = false;
     }
 
     onPointerDown(event: PointerEvent) {
         this.lastPointerType = event.pointerType;
     }
 
-    toggleDropdown(event?: MouseEvent) {
+    toggleDropdown() {
         if (this.semanticOnly()) return;
-        const wasMouse = this.lastPointerType === 'mouse';
+        const shouldFocusFilter = this.lastPointerType === 'mouse';
         this.lastPointerType = '';
-        const nextIsOpen = !this.isOpen();
-        this.isOpen.set(nextIsOpen);
-        if (nextIsOpen) {
-            // notify other instances
-            document.dispatchEvent(new CustomEvent('multi-select-dropdown-open', { detail: this }));
-        } else {
-            this.openMaxHeight.set(MultiSelectDropdownComponent.DEFAULT_MAX_HEIGHT);
+        if (this.isOpen()) {
+            this.closeDropdown();
+            return;
         }
-        this.filterText.set('');
-        afterNextRender(() => {
-            if (this.destroyed) return;
-            if (this.isOpen()) {
-                this.captureOpenHeight();
-                if (wasMouse) {
-                    const inputEl = this.filterInput()?.nativeElement;
-                    if (inputEl) {
-                        inputEl.focus();
-                    }
+
+        this.openDropdown({ focusInput: shouldFocusFilter });
+    }
+
+    onTriggerKeydown(event: KeyboardEvent): void {
+        if (this.semanticOnly()) return;
+        if (event.target !== this.displayAreaEl()?.nativeElement) return;
+
+        switch (event.key) {
+            case 'ArrowDown':
+                event.preventDefault();
+                if (!this.isOpen()) {
+                    this.openDropdown({ focusInput: false });
+                    this.setKeyboardFocusedIndex(0);
+                    return;
                 }
-            }
-        }, { injector: this.injector });
+                this.moveKeyboardFocus(1);
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                if (!this.isOpen()) {
+                    this.openDropdown({ focusInput: false });
+                    this.setKeyboardFocusedIndex(this.filteredOptions().length - 1);
+                    return;
+                }
+                this.moveKeyboardFocus(-1);
+                break;
+            case 'Enter':
+            case ' ':
+                event.preventDefault();
+                if (this.isOpen()) {
+                    this.toggleKeyboardFocusedOption();
+                } else {
+                    this.openDropdown({ focusInput: false });
+                }
+                break;
+            case 'Escape':
+                if (this.isOpen()) {
+                    event.preventDefault();
+                    this.closeDropdown();
+                }
+                break;
+        }
+    }
+
+    onDropdownKeydown(event: KeyboardEvent): void {
+        if (event.target instanceof HTMLInputElement) return;
+        this.handleOpenDropdownKeydown(event);
+    }
+
+    onOptionsListFocus(event: FocusEvent): void {
+        if (event.target !== event.currentTarget) {
+            return;
+        }
+
+        if (this.lastOptionsPointerType) {
+            this.lastOptionsPointerType = '';
+            return;
+        }
+
+        if (this.keyboardFocusedIndex() < 0) {
+            this.setKeyboardFocusedIndex(0);
+        }
+    }
+
+    onOptionsPointerDown(event: PointerEvent): void {
+        this.lastOptionsPointerType = event.pointerType || 'mouse';
+    }
+
+    onFilterKeydown(event: KeyboardEvent): void {
+        switch (event.key) {
+            case 'ArrowDown':
+                event.preventDefault();
+                event.stopPropagation();
+                this.moveKeyboardFocus(1);
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                event.stopPropagation();
+                this.moveKeyboardFocus(-1);
+                break;
+            case 'Enter':
+                event.preventDefault();
+                event.stopPropagation();
+                this.toggleKeyboardFocusedOption();
+                break;
+            case 'Escape':
+                event.preventDefault();
+                event.stopPropagation();
+                this.closeDropdown();
+                break;
+        }
+    }
+
+    private handleOpenDropdownKeydown(event: KeyboardEvent): void {
+        switch (event.key) {
+            case 'ArrowDown':
+                event.preventDefault();
+                event.stopPropagation();
+                this.moveKeyboardFocus(1);
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                event.stopPropagation();
+                this.moveKeyboardFocus(-1);
+                break;
+            case 'Home':
+                event.preventDefault();
+                event.stopPropagation();
+                this.setKeyboardFocusedIndex(0);
+                break;
+            case 'End':
+                event.preventDefault();
+                event.stopPropagation();
+                this.setKeyboardFocusedIndex(this.filteredOptions().length - 1);
+                break;
+            case 'Enter':
+            case ' ':
+                event.preventDefault();
+                event.stopPropagation();
+                this.toggleKeyboardFocusedOption();
+                break;
+            case 'Escape':
+                event.preventDefault();
+                event.stopPropagation();
+                this.closeDropdown();
+                break;
+        }
     }
 
     openAndScrollTo(optionName: string, event: MouseEvent) {
-        document.dispatchEvent(new CustomEvent('multi-select-dropdown-open', { detail: this }));
         event.stopPropagation();
-        this.isOpen.set(true);
-        this.filterText.set('');
-        afterNextRender(() => {
-            if (this.destroyed) return;
-            this.captureOpenHeight();
-            
-            const options = this.filteredOptions();
-            const optionIndex = options.findIndex(option => option.name === optionName);
-            if (this.useVirtualScroll()) {
-                const viewport = this.optionsViewport();
-                if (viewport && optionIndex >= 0) {
-                    viewport.scrollToIndex(optionIndex, 'smooth');
-                }
-            } else {
-                const container = this.optionsEl()?.nativeElement;
-                if (container) {
-                    const items = Array.from(container.querySelectorAll<HTMLElement>('.option-item'));
-                    for (const item of items) {
-                        if (item.getAttribute('data-option-name') === optionName) {
-                            try {
-                                item.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                            } catch {
-                                item.scrollIntoView();
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
+        this.openDropdown({ focusInput: true, scrollToOptionName: optionName });
+    }
 
-            const inputEl = this.filterInput()?.nativeElement;
-            if (inputEl) {
-                inputEl.focus();
-            }
-        }, { injector: this.injector });
+    onOverlayAttached() {
+        this.scheduleOverlayRefresh(true);
+    }
+
+    onOverlayDetached() {
+        this.resetOverlayState();
+    }
+
+    onOverlayPositionChange(event: ConnectedOverlayPositionChange) {
+        this.overlayPlacement.set(event.connectionPair.overlayY === 'top' ? 'below' : 'above');
+        const positionKey = [
+            event.connectionPair.originX,
+            event.connectionPair.originY,
+            event.connectionPair.overlayX,
+            event.connectionPair.overlayY,
+        ].join(':');
+        const positionChanged = positionKey !== this.lastOverlayPositionKey;
+        this.lastOverlayPositionKey = positionKey;
+        this.scheduleOverlayRefresh(positionChanged);
     }
 
     onFilterInput(event: Event) {
         const inputElement = event.target as HTMLInputElement;
         this.filterText.set(inputElement.value);
+        this.hoveredOptionName.set(null);
+        this.keyboardFocusedOptionName.set(null);
     }
 
-    onOptionToggle(optionName: string, event?: MouseEvent) {
-        const restoreState = this.captureScrollRestoreState(optionName);
+    onOptionPointerHover(optionName: string): void {
+        this.hoveredOptionName.set(optionName);
+    }
 
+    onOptionPointerLeave(optionName: string): void {
+        if (this.hoveredOptionName() === optionName) {
+            this.hoveredOptionName.set(null);
+        }
+    }
+
+    private indexOfFilteredOption(optionName: string): number {
+        return this.filteredOptions().findIndex(option => option.name === optionName);
+    }
+
+    private moveKeyboardFocus(delta: number): void {
+        const options = this.filteredOptions();
+        if (options.length === 0) {
+            this.keyboardFocusedOptionName.set(null);
+            return;
+        }
+
+        const currentIndex = this.keyboardFocusedIndex();
+        const hoveredIndex = this.hoveredOptionName() ? this.indexOfFilteredOption(this.hoveredOptionName()!) : -1;
+        const baseIndex = currentIndex >= 0 ? currentIndex : hoveredIndex;
+        const nextIndex = currentIndex < 0
+            ? (baseIndex >= 0 ? Math.max(0, Math.min(options.length - 1, baseIndex + delta)) : (delta > 0 ? 0 : options.length - 1))
+            : Math.max(0, Math.min(options.length - 1, currentIndex + delta));
+        this.setKeyboardFocusedIndex(nextIndex);
+    }
+
+    private setKeyboardFocusedIndex(index: number): void {
+        const options = this.filteredOptions();
+        if (options.length === 0) {
+            this.keyboardFocusedOptionName.set(null);
+            return;
+        }
+
+        const clampedIndex = Math.max(0, Math.min(options.length - 1, index));
+        this.keyboardFocusedOptionName.set(options[clampedIndex].name);
+        this.scrollKeyboardFocusedOptionIntoView();
+    }
+
+    private scrollKeyboardFocusedOptionIntoView(): void {
+        const focusedOption = this.filteredOptions()[this.keyboardFocusedIndex()];
+        if (focusedOption) {
+            this.scrollToOption(focusedOption.name);
+        }
+    }
+
+    private toggleKeyboardFocusedOption(): void {
+        const focusedOption = this.filteredOptions()[this.keyboardFocusedIndex()];
+        if (!focusedOption) return;
+
+        if (this.multiselect()) {
+            this.onOptionToggle(focusedOption.name, false);
+        } else {
+            this.onSingleSelect(focusedOption.name);
+        }
+    }
+
+    onOptionToggle(optionName: string, restoreScroll = true) {
+        const restoreState = restoreScroll ? this.captureScrollRestoreState(optionName) : null;
         if (this.multistate()) {
+            const option = this.options().find((entry) => entry.name === optionName);
             const sel = this.selected();
             const currentSelection: MultiStateSelection = (sel && !Array.isArray(sel)) ? { ...sel } : {};
             const current = currentSelection[optionName] || { state: false as MultiState, count: 1 };
-            let nextState: MultiState;
-            switch (current.state) {
-                case false: nextState = 'or'; break;
-                case 'or': nextState = 'and'; break;
-                case 'and': nextState = 'not'; break;
-                case 'not': nextState = false; break;
-                default: nextState = 'or';
-            }
+            const cycle = this.getSelectableStateCycle(option);
+            const currentIndex = current.state === false ? -1 : cycle.indexOf(current.state);
+            const nextState: MultiState = currentIndex >= 0 && currentIndex < cycle.length - 1
+                ? cycle[currentIndex + 1]
+                : currentIndex === -1
+                    ? cycle[0]
+                    : false;
             if (nextState === false) {
                 delete currentSelection[optionName];
             } else {
+                if (option?.exclusive) {
+                    this.selectionChange.emit({
+                        [optionName]: { name: optionName, state: nextState, count: 1 },
+                    });
+                    if (restoreScroll) {
+                        this.restoreScrollPosition(restoreState);
+                    }
+                    return;
+                }
+
+                for (const exclusiveOption of this.options()) {
+                    if (exclusiveOption.exclusive) {
+                        delete currentSelection[exclusiveOption.name];
+                    }
+                }
                 const count = nextState === 'not' ? 1 : current.count;
-                currentSelection[optionName] = { name: optionName, state: nextState, count };
+                currentSelection[optionName] = {
+                    ...current,
+                    name: optionName,
+                    state: nextState,
+                    count,
+                    ...(nextState === 'not' ? { minimumValues: undefined } : {}),
+                };
             }
             this.selectionChange.emit(currentSelection);
         } else {
@@ -389,10 +1039,20 @@ export class MultiSelectDropdownComponent {
             this.selectionChange.emit(newSelection);
         }
         
-        this.restoreScrollPosition(restoreState);
+        if (restoreScroll) {
+            this.restoreScrollPosition(restoreState);
+        }
     }
 
-    private captureScrollRestoreState(optionName: string): ScrollRestoreState | null {
+    private getSelectableStateCycle(option?: DropdownOption): readonly SelectableMultiState[] {
+        const rawStates = option?.stateCycle ?? this.stateCycle();
+        const states = rawStates.filter((state): state is SelectableMultiState => (
+            state === 'or' || state === 'and' || state === 'not'
+        ));
+        return states.length > 0 ? states : ['or'];
+    }
+
+    private captureScrollRestoreState(optionName?: string): ScrollRestoreState | null {
         if (this.useVirtualScroll()) {
             const viewport = this.optionsViewport();
             const scrollOffset = viewport?.measureScrollOffset('top');
@@ -400,12 +1060,12 @@ export class MultiSelectDropdownComponent {
                 return null;
             }
 
-            const optionIndex = this.filteredOptions().findIndex(option => option.name === optionName);
+            const optionIndex = optionName ? this.indexOfFilteredOption(optionName) : -1;
+
             return {
                 kind: 'virtual',
-                optionName,
                 scrollOffset,
-                ...(optionIndex >= 0 ? { optionVisibleTop: optionIndex * this.optionItemSize - scrollOffset } : {}),
+                ...(optionName && optionIndex >= 0 ? { optionName, optionVisibleTop: (optionIndex * this.optionItemSize) - scrollOffset } : {}),
             };
         }
 
@@ -414,21 +1074,21 @@ export class MultiSelectDropdownComponent {
             return null;
         }
 
-        const item = container.querySelector<HTMLElement>('.option-item[data-option-name="' + CSS.escape(optionName) + '"]');
-        if (!item) {
-            return null;
-        }
+        const item = optionName
+            ? container.querySelector<HTMLElement>('.option-item[data-option-name="' + CSS.escape(optionName) + '"]')
+            : null;
+        const optionVisibleTop = item
+            ? item.getBoundingClientRect().top - container.getBoundingClientRect().top
+            : undefined;
 
-        const containerRect = container.getBoundingClientRect();
-        const itemRect = item.getBoundingClientRect();
         return {
             kind: 'dom',
-            optionName,
-            visibleTop: itemRect.top - containerRect.top,
+            scrollTop: container.scrollTop,
+            ...(optionName && optionVisibleTop !== undefined ? { optionName, optionVisibleTop } : {}),
         };
     }
 
-    restoreScrollPosition(restoreState: ScrollRestoreState | null) {
+    private restoreScrollPosition(restoreState: ScrollRestoreState | null) {
         // restore the preserved scroll after the DOM updates
         afterNextRender(() => {
             if (!restoreState) {
@@ -441,16 +1101,8 @@ export class MultiSelectDropdownComponent {
                     return;
                 }
 
-                let nextOffset = restoreState.scrollOffset;
-                if (restoreState.optionVisibleTop !== undefined) {
-                    const optionIndex = this.filteredOptions().findIndex(option => option.name === restoreState.optionName);
-                    if (optionIndex >= 0) {
-                        nextOffset = optionIndex * this.optionItemSize - restoreState.optionVisibleTop;
-                    }
-                }
-
-                const maxOffset = Math.max(0, viewport.getDataLength() * this.optionItemSize - viewport.getViewportSize());
-                viewport.scrollToOffset(Math.max(0, Math.min(maxOffset, nextOffset)));
+                viewport.checkViewportSize();
+                this.restoreVirtualScrollPosition(viewport, restoreState);
                 return;
             }
 
@@ -459,27 +1111,39 @@ export class MultiSelectDropdownComponent {
                 return;
             }
 
-            // find the same item after update
-            const itemAfter = container.querySelector<HTMLElement>('.option-item[data-option-name="' + CSS.escape(restoreState.optionName) + '"]');
-            if (!itemAfter) {
-                return;
-            }
-
-            const containerRect = container.getBoundingClientRect();
-            const itemRect = itemAfter.getBoundingClientRect();
-
-            // item offset within the scrollable content (distance from content top)
-            const itemAfterOffsetTop = (itemRect.top - containerRect.top) + container.scrollTop;
-
-            // desired visible top within container is the preservedVisibleTop
-            let newScrollTop = itemAfterOffsetTop - restoreState.visibleTop;
-            newScrollTop = Math.max(0, Math.min(container.scrollHeight - container.clientHeight, newScrollTop));
-
-            // apply only if it meaningfully changes the scroll to avoid jitter
-            if (Math.abs(container.scrollTop - newScrollTop) > 0.5) {
-                container.scrollTop = newScrollTop;
-            }
+            this.restoreDomScrollPosition(container, restoreState);
         }, { injector: this.injector });
+    }
+
+    private restoreDomScrollPosition(container: HTMLElement, restoreState: Extract<ScrollRestoreState, { kind: 'dom' }>): void {
+        let newScrollTop = restoreState.scrollTop;
+        if (restoreState.optionName && restoreState.optionVisibleTop !== undefined) {
+            const item = container.querySelector<HTMLElement>('.option-item[data-option-name="' + CSS.escape(restoreState.optionName) + '"]');
+            if (item) {
+                const itemOffsetTop = (item.getBoundingClientRect().top - container.getBoundingClientRect().top) + container.scrollTop;
+                newScrollTop = itemOffsetTop - restoreState.optionVisibleTop;
+            }
+        }
+
+        newScrollTop = Math.max(0, Math.min(container.scrollHeight - container.clientHeight, newScrollTop));
+
+        // apply only if it meaningfully changes the scroll to avoid jitter
+        if (Math.abs(container.scrollTop - newScrollTop) > 0.5) {
+            container.scrollTop = newScrollTop;
+        }
+    }
+
+    private restoreVirtualScrollPosition(viewport: CdkVirtualScrollViewport, restoreState: Extract<ScrollRestoreState, { kind: 'virtual' }>) {
+        let nextOffset = restoreState.scrollOffset;
+        if (restoreState.optionName && restoreState.optionVisibleTop !== undefined) {
+            const optionIndex = this.indexOfFilteredOption(restoreState.optionName);
+            if (optionIndex >= 0) {
+                nextOffset = (optionIndex * this.optionItemSize) - restoreState.optionVisibleTop;
+            }
+        }
+
+        const maxOffset = Math.max(0, viewport.getDataLength() * this.optionItemSize - viewport.getViewportSize());
+        viewport.scrollToOffset(Math.max(0, Math.min(maxOffset, nextOffset)), 'auto');
     }
 
     getState(optionName: string): MultiState {
@@ -509,6 +1173,7 @@ export class MultiSelectDropdownComponent {
         
         if (current && (current.state === 'and' || current.state === 'or')) {
             currentSelection[optionName] = { 
+                ...current,
                 name: optionName,
                 state: current.state, 
                 count: Math.max(1, count) 
@@ -516,6 +1181,52 @@ export class MultiSelectDropdownComponent {
             this.selectionChange.emit(currentSelection);
         }
         this.restoreScrollPosition(restoreState);
+    }
+
+    getMinimumValue(optionName: string, index: number): number | '' {
+        if (!this.multistate()) {
+            return '';
+        }
+        const selection = this.selected() as MultiStateSelection;
+        return selection[optionName]?.minimumValues?.[index] ?? '';
+    }
+
+    setMinimumValue(optionName: string, index: number, rawValue: string, fieldCount: number): void {
+        if (!this.multistate()) {
+            return;
+        }
+
+        const selection = this.selected() as MultiStateSelection;
+        const current = selection[optionName];
+        if (!current || (current.state !== 'and' && current.state !== 'or')) {
+            return;
+        }
+
+        const parsedValue = rawValue.trim() === '' ? null : Number(rawValue);
+        if (parsedValue !== null && (!Number.isFinite(parsedValue) || parsedValue < 0)) {
+            return;
+        }
+
+        const minimumValues: (number | null)[] = Array<number | null>(fieldCount)
+            .fill(null)
+            .map((_, fieldIndex) => current.minimumValues?.[fieldIndex] ?? null);
+        minimumValues[index] = parsedValue;
+
+        const currentSelection: MultiStateSelection = { ...selection };
+        currentSelection[optionName] = {
+            ...current,
+            minimumValues: minimumValues.some(value => value !== null) ? minimumValues : undefined,
+        };
+        this.selectionChange.emit(currentSelection);
+    }
+
+    onMinimumInput(optionName: string, index: number, fieldCount: number, event: Event): void {
+        this.setMinimumValue(optionName, index, (event.target as HTMLInputElement).value, fieldCount);
+    }
+
+    onMinimumWheel(event: WheelEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
     }
 
     trackOptionName = (_index: number, option: DropdownOption) => option.name;
@@ -548,8 +1259,7 @@ export class MultiSelectDropdownComponent {
     onSingleSelect(optionName: string) {
         if (!this.multiselect()) {
             this.selectionChange.emit([optionName]);
-            this.isOpen.set(false);
-            this.filterText.set('');
+            this.closeDropdown();
         }
     }
 

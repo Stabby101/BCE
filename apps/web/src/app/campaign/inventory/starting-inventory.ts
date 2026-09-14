@@ -24,6 +24,11 @@ export interface InventoryLine {
     unit: 'tons' | 'count';
     floor: number;
     notes?: string;
+    /** DIRECTIVE-ODM-17 P3 (additive; the ODM fork only — Classic never reads or writes it): per-grade
+     *  counts for COMPONENT lines, the doctrine's A/B/C/RAW ledger (armor_parts qty_grade_a/b/c/raw_stock).
+     *  onHand stays the TOTAL (every existing render remains truthful); grades sum to onHand. Absent on a
+     *  legacy line = pre-P3; the fork migrates forward-only (a = onHand). */
+    grades?: { a: number; b: number; c: number; raw: number };
 }
 export interface InventoryState {
     lines: InventoryLine[];

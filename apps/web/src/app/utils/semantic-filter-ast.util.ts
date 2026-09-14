@@ -1,35 +1,6 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 /**
  * AST-based Semantic Filter Parser with Nested Bracket Support
@@ -58,11 +29,17 @@
  */
 
 import type { GameSystem } from '../models/common.model';
-import { ADVANCED_FILTERS, type AdvFilterConfig, AdvFilterType } from '../services/unit-search-filters.model';
+import { ADVANCED_FILTERS, type AdvFilterConfig, AdvFilterType, type AvailabilityFilterScope, FORMATION_TARGET_FILTER_KEY, getBooleanFilterUnitValue, parseBooleanFilterSemanticValue } from '../services/unit-search-filters.model';
 import { type SemanticOperator, type SemanticToken, buildSemanticKeyMap, VIRTUAL_SEMANTIC_KEYS, parseValues, parseValueWithQuantity, type QuantityConstraint } from './semantic-filter.util';
 import { normalizeLooseText, wildcardToRegex } from './string.util';
 import { usesIndexedDropdownUniverse } from './unit-search-filter-config.util';
-import { checkQuantityConstraint as checkQuantityConstraintCore } from './unit-search-shared.util';
+import { checkQuantityConstraint as checkQuantityConstraintCore, isEmbeddedApostrophe, unitMatchesRulesRefsSelection } from './unit-search-shared.util';
+import { isASDamageSemanticKey, parseASDamageValue } from './as-damage.util';
+import {
+    buildIndexedASSpecialSelectionCandidates,
+    evaluateASSpecialsFilter,
+    type ParsedASSpecials,
+} from './as-special-filter.util';
 
 // ============================================================================
 // Helpers
@@ -248,13 +225,33 @@ function tokenize(input: string, semanticKeyMap: Map<string, AdvFilterConfig>): 
         // we can safely collect all word characters until we hit a boundary
         const textStart = i;
         let textEnd = i;
+        let inTextQuote: '"' | "'" | null = null;
         
         while (textEnd < input.length) {
             const char = input[textEnd];
             
+            if (inTextQuote) {
+                if (char === '\\' && textEnd + 1 < input.length && (input[textEnd + 1] === inTextQuote || input[textEnd + 1] === '\\')) {
+                    textEnd += 2;
+                    continue;
+                }
+
+                if (char === inTextQuote && (char !== '\'' || !isEmbeddedApostrophe(input, textEnd))) {
+                    inTextQuote = null;
+                }
+                textEnd++;
+                continue;
+            }
+
             // Handle escape sequences - skip the backslash and include the escaped char
             if (isEscapeSequence(input, textEnd)) {
                 textEnd += 2; // Skip both backslash and the escaped char
+                continue;
+            }
+
+            if (char === '"' || (char === "'" && !isEmbeddedApostrophe(input, textEnd))) {
+                inTextQuote = char;
+                textEnd++;
                 continue;
             }
             
@@ -332,6 +329,9 @@ function tryParseFilterToken(
     } else if (input[i] === '=') {
         operator = '=';
         i += 1;
+    } else if (input[i] === ':' && conf?.type === AdvFilterType.BOOLEAN) {
+        operator = '=';
+        i += 1;
     } else if (input[i] === '>') {
         operator = '>';
         i += 1;
@@ -350,7 +350,14 @@ function tryParseFilterToken(
         }
     }
 
-    if (operator === '==' && (!conf || (conf.type !== AdvFilterType.DROPDOWN && conf.type !== AdvFilterType.SEMANTIC))) {
+    if (conf && conf.type === AdvFilterType.BOOLEAN) {
+        const validBooleanOperators: SemanticOperator[] = ['=', '==', '!='];
+        if (!validBooleanOperators.includes(operator)) {
+            return null;
+        }
+    }
+
+    if (operator === '==' && (!conf || (conf.type !== AdvFilterType.DROPDOWN && conf.type !== AdvFilterType.SEMANTIC && conf.type !== AdvFilterType.BOOLEAN))) {
         return null;
     }
     
@@ -370,11 +377,11 @@ function tryParseFilterToken(
                 i += 2; // Skip escaped character
                 continue;
             }
-            if (char === inQuote) {
+            if (char === inQuote && (char !== '\'' || !isEmbeddedApostrophe(input, i))) {
                 inQuote = null;
             }
             i++;
-        } else if (char === '"' || char === "'") {
+        } else if (char === '"' || (char === "'" && !isEmbeddedApostrophe(input, i))) {
             inQuote = char;
             i++;
         } else if (char === ' ' || char === '\t' || char === '\n' || char === '\r' || 
@@ -390,12 +397,13 @@ function tryParseFilterToken(
     
     // Clean the value
     let cleanValue = rawValue;
-    if ((rawValue.startsWith('"') && rawValue.endsWith('"') && !rawValue.slice(1, -1).includes('"')) ||
-        (rawValue.startsWith("'") && rawValue.endsWith("'") && !rawValue.slice(1, -1).includes("'"))) {
+    const isFullyQuoted = (rawValue.startsWith('"') && rawValue.endsWith('"') && !rawValue.slice(1, -1).includes('"')) ||
+        (rawValue.startsWith("'") && rawValue.endsWith("'") && !rawValue.slice(1, -1).includes("'"));
+    if (isFullyQuoted) {
         cleanValue = rawValue.slice(1, -1);
     }
     
-    const values = parseValues(cleanValue).filter(v => v.trim() !== '');
+    const values = (isFullyQuoted ? [cleanValue] : parseValues(cleanValue)).filter(v => v.trim() !== '');
     
     // Skip tokens with no valid values
     if (values.length === 0) {
@@ -728,6 +736,57 @@ export function parseSemanticQueryAST(input: string, gameSystem: GameSystem, ret
     return result;
 }
 
+function emptyTrueGroup(start: number, end: number): GroupASTNode {
+    return { type: 'group', operator: 'AND', start, end, children: [] };
+}
+
+function stripSemanticFieldNode(node: ASTNode, fields: ReadonlySet<string>): { node: ASTNode; alwaysTrue: boolean } {
+    if (node.type === 'filter') {
+        return fields.has(node.token.field)
+            ? { node: emptyTrueGroup(node.start, node.end), alwaysTrue: true }
+            : { node, alwaysTrue: false };
+    }
+
+    if (node.type !== 'group') {
+        return { node, alwaysTrue: false };
+    }
+
+    const strippedChildren = node.children.map(child => stripSemanticFieldNode(child, fields));
+    if (node.operator === 'OR' && strippedChildren.some(child => child.alwaysTrue)) {
+        return { node: emptyTrueGroup(node.start, node.end), alwaysTrue: true };
+    }
+
+    const children = strippedChildren
+        .filter(child => !child.alwaysTrue)
+        .map(child => child.node);
+
+    if (children.length === 0) {
+        return { node: emptyTrueGroup(node.start, node.end), alwaysTrue: true };
+    }
+
+    return {
+        node: { ...node, children },
+        alwaysTrue: false,
+    };
+}
+
+export function stripSemanticFieldsFromParseResult(parsed: ParseResult, fields: ReadonlySet<string>): ParseResult {
+    if (fields.size === 0) {
+        return parsed;
+    }
+
+    const strippedRoot = stripSemanticFieldNode(parsed.ast, fields).node;
+    const ast = strippedRoot.type === 'group'
+        ? strippedRoot
+        : { type: 'group', operator: 'AND', start: strippedRoot.start, end: strippedRoot.end, children: [strippedRoot] } as GroupASTNode;
+
+    return {
+        ...parsed,
+        ast,
+        tokens: parsed.tokens.filter(token => !fields.has(token.field)),
+    };
+}
+
 /**
  * Validate a semantic query and return errors for highlighting.
  * Returns an array of errors with positions for UI highlighting.
@@ -1019,7 +1078,7 @@ export function isComplexQuery(ast: GroupASTNode): boolean {
 export interface EvaluatorContext {
     /** Get a property value from a unit by key path (e.g., 'as.PV', 'bv') */
     getProperty: (unit: any, key: string) => any;
-    /** Get a stable unit identifier for candidate prefiltering. */
+    /** Get the unit UUID used by indexed candidate postings. */
     getUnitId: (unit: any) => string;
     /** Get adjusted BV for a unit (with pilot skill modifiers) */
     getAdjustedBV?: (unit: any) => number;
@@ -1032,17 +1091,29 @@ export interface EvaluatorContext {
     /** Get item counts for a countable filter (e.g., equipment). Returns name -> count mapping. */
     getCountableValues?: (unit: any, filterKey: string) => Map<string, number> | null;
     /** Check if a unit belongs to a specific era (external filter) */
-    unitBelongsToEra?: (unit: any, eraName: string) => boolean;
+    unitBelongsToEra?: (unit: any, eraName: string, scope?: AvailabilityFilterScope) => boolean;
     /** Check if a unit belongs to a specific faction (external filter) */
     unitBelongsToFaction?: (unit: any, factionName: string, eraNames?: readonly string[]) => boolean;
+    /** Check if a unit matches a MegaMek availability source (requisition or salvage). */
+    unitMatchesAvailabilityFrom?: (unit: any, availabilityFromName: string, scope?: AvailabilityFilterScope) => boolean;
+    /** Check if a unit matches a MegaMek availability rarity in the active scope. */
+    unitMatchesAvailabilityRarity?: (unit: any, rarityName: string, scope?: AvailabilityFilterScope) => boolean;
     /** Get all era names (for wildcard expansion) */
     getAllEraNames?: () => string[];
     /** Get all faction names (for wildcard expansion) */
     getAllFactionNames?: () => string[];
+    /** Get all availability source names (for wildcard expansion). */
+    getAllAvailabilityFromNames?: () => string[];
+    /** Get all availability rarity names (for wildcard expansion). */
+    getAllAvailabilityRarityNames?: () => string[];
     /** Check if a unit belongs to a specific force pack (external filter) */
     unitBelongsToForcePack?: (unit: any, packName: string) => boolean;
     /** Get all force pack names (for wildcard expansion) */
     getAllForcePackNames?: () => string[];
+    /** Check if adding a unit would preserve a target formation search. */
+    unitMatchesFormationTarget?: (unit: any, formationName: string) => boolean;
+    /** Get all formation target names (for wildcard expansion). */
+    getAllFormationNames?: () => string[];
     /** 
      * Get AS movement values filtered by active motive selection.
      * Returns array of movement values to check for range filtering.
@@ -1059,10 +1130,12 @@ export interface EvaluatorContext {
      * @returns The display name, or undefined if no lookup exists
      */
     getDisplayName?: (filterKey: string, value: string) => string | undefined;
-    /** Get indexed unit ids for an exact stored filter value. */
-    getIndexedUnitIds?: (filterKey: string, value: string) => ReadonlySet<string | number> | undefined;
+    /** Get indexed unit UUIDs for an exact stored filter value. */
+    getIndexedUnitIds?: (filterKey: string, value: string, scope?: AvailabilityFilterScope) => ReadonlySet<string> | undefined;
     /** Get all stored values available in an index for a filter key. */
     getIndexedFilterValues?: (filterKey: string) => readonly string[];
+    /** Get pre-parsed Alpha Strike special tuples for a unit. */
+    getIndexedASSpecials?: (unitUuid: string) => ParsedASSpecials | undefined;
 }
 
 type ParsedRangeValue =
@@ -1070,12 +1143,13 @@ type ParsedRangeValue =
     | { type: 'single'; num: number };
 
 const RANGE_VALUE_PATTERN = /^(-?\d+(?:\.\d+)?)[-~](-?\d+(?:\.\d+)?)$/;
+const AS_DAMAGE_RANGE_VALUE_PATTERN = /^(0\*|-?\d+(?:\.\d+)?)[-~](0\*|-?\d+(?:\.\d+)?)$/i;
 const FILTER_CONFIGS_BY_SEMANTIC_KEY = new Map<string, AdvFilterConfig[]>();
 const sortedFilterConfigsCache = new WeakMap<EvaluatorContext, Map<string, readonly AdvFilterConfig[]>>();
 const parsedRangeValuesCache = new WeakMap<SemanticToken, ParsedRangeValue[]>();
 
 for (const filterConfig of ADVANCED_FILTERS) {
-    const semanticKey = filterConfig.semanticKey || filterConfig.key;
+    const semanticKey = (filterConfig.semanticKey || filterConfig.key).toLowerCase();
     const matchingConfigs = FILTER_CONFIGS_BY_SEMANTIC_KEY.get(semanticKey);
     if (matchingConfigs) {
         matchingConfigs.push(filterConfig);
@@ -1085,6 +1159,7 @@ for (const filterConfig of ADVANCED_FILTERS) {
 }
 
 function getSortedFilterConfigs(context: EvaluatorContext, semanticKey: string): readonly AdvFilterConfig[] {
+    semanticKey = semanticKey.toLowerCase();
     let contextCache = sortedFilterConfigsCache.get(context);
     if (!contextCache) {
         contextCache = new Map<string, readonly AdvFilterConfig[]>();
@@ -1111,21 +1186,36 @@ function getSortedFilterConfigs(context: EvaluatorContext, semanticKey: string):
     return sorted;
 }
 
-function preParseRangeValues(values: string[]): ParsedRangeValue[] {
+function parseRangeFilterNumber(value: string, semanticKey: string): number | null {
+    if (isASDamageSemanticKey(semanticKey)) {
+        return parseASDamageValue(value);
+    }
+
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+function preParseRangeValues(values: string[], semanticKey: string): ParsedRangeValue[] {
     const parsedValues: ParsedRangeValue[] = [];
     for (const value of values) {
-        const rangeMatch = value.match(RANGE_VALUE_PATTERN);
+        const rangeMatch = value.match(isASDamageSemanticKey(semanticKey) ? AS_DAMAGE_RANGE_VALUE_PATTERN : RANGE_VALUE_PATTERN);
         if (rangeMatch) {
+            const min = parseRangeFilterNumber(rangeMatch[1], semanticKey);
+            const max = parseRangeFilterNumber(rangeMatch[2], semanticKey);
+            if (min === null || max === null) {
+                continue;
+            }
+
             parsedValues.push({
                 type: 'range',
-                min: parseFloat(rangeMatch[1]),
-                max: parseFloat(rangeMatch[2]),
+                min: Math.min(min, max),
+                max: Math.max(min, max),
             });
             continue;
         }
 
-        const num = parseFloat(value);
-        if (!Number.isNaN(num)) {
+        const num = parseRangeFilterNumber(value, semanticKey);
+        if (num !== null) {
             parsedValues.push({ type: 'single', num });
         }
     }
@@ -1135,7 +1225,7 @@ function preParseRangeValues(values: string[]): ParsedRangeValue[] {
 function getParsedRangeValues(filter: SemanticToken): ParsedRangeValue[] {
     let cached = parsedRangeValuesCache.get(filter);
     if (!cached) {
-        cached = preParseRangeValues(filter.values);
+        cached = preParseRangeValues(filter.values, filter.field);
         parsedRangeValuesCache.set(filter, cached);
     }
     return cached;
@@ -1145,6 +1235,7 @@ interface ExternalFilterRuntimeCache {
     allNamesByKey: Map<string, string[]>;
     expandedValuesByKey: Map<string, Map<string, string[]>>;
     unitMatchedNamesByKey: WeakMap<any, Map<string, Set<string>>>;
+    indexedResultsByKey: Map<string, { mode: 'match' | 'exclude'; unitIds: Set<string> }>;
 }
 
 const externalFilterRuntimeCache = new WeakMap<EvaluatorContext, ExternalFilterRuntimeCache>();
@@ -1156,6 +1247,7 @@ function getExternalFilterRuntimeCache(context: EvaluatorContext): ExternalFilte
             allNamesByKey: new Map<string, string[]>(),
             expandedValuesByKey: new Map<string, Map<string, string[]>>(),
             unitMatchedNamesByKey: new WeakMap<any, Map<string, Set<string>>>(),
+            indexedResultsByKey: new Map<string, { mode: 'match' | 'exclude'; unitIds: Set<string> }>(),
         };
         externalFilterRuntimeCache.set(context, cache);
     }
@@ -1223,7 +1315,7 @@ function getUnitMatchedExternalNames(
     filterKey: string,
     allNames: string[],
     checkMembership: (name: string) => boolean,
-    activeEraNames?: readonly string[],
+    activeScope?: AvailabilityFilterScope,
 ): Set<string> {
     const runtimeCache = getExternalFilterRuntimeCache(context);
     let unitCache = runtimeCache.unitMatchedNamesByKey.get(unit);
@@ -1232,8 +1324,9 @@ function getUnitMatchedExternalNames(
         runtimeCache.unitMatchedNamesByKey.set(unit, unitCache);
     }
 
-    const cacheKey = filterKey === 'faction' && activeEraNames
-        ? `${filterKey}\u0001${[...activeEraNames].map(name => name.toLowerCase()).sort().join('\u0001')}`
+    const scopeKey = buildExternalFilterScopeCacheKey(activeScope);
+    const cacheKey = scopeKey
+        ? `${filterKey}\u0001${scopeKey}`
         : filterKey;
     const cached = unitCache.get(cacheKey);
     if (cached) {
@@ -1251,32 +1344,220 @@ function getUnitMatchedExternalNames(
     return matchedNames;
 }
 
-function getPositiveEraNamesFromFilter(
-    filter: SemanticToken,
+function buildExternalFilterScopeCacheKey(activeScope?: AvailabilityFilterScope): string {
+    const scopeParts: string[] = [];
+    const addNames = (key: string, names: readonly string[] | undefined): void => {
+        if (names === undefined) {
+            return;
+        }
+
+        scopeParts.push(`${key}=${[...names].map(name => name.toLowerCase()).sort().join('\u0001')}`);
+    };
+
+    if (activeScope?.bridgeThroughMulMembership) {
+        scopeParts.push('bridge=mul');
+    }
+    addNames('era', activeScope?.eraNames);
+    addNames('faction', activeScope?.factionNames);
+    addNames('from', activeScope?.availabilityFromNames);
+    addNames('rarity', activeScope?.availabilityRarityNames);
+
+    return scopeParts.join('\u0002');
+}
+
+function buildIndexedExternalFilterCacheKey(
+    filterKey: string,
+    operator: SemanticOperator,
+    values: readonly string[],
+    activeScope?: AvailabilityFilterScope,
+): string {
+    const normalizedValues = [...values].map(value => value.toLowerCase()).sort().join('\u0001');
+    const scopeKey = buildExternalFilterScopeCacheKey(activeScope);
+
+    return scopeKey
+        ? `${filterKey}\u0003${operator}\u0003${normalizedValues}\u0003${scopeKey}`
+        : `${filterKey}\u0003${operator}\u0003${normalizedValues}`;
+}
+
+function addIndexedExternalUnitIds(
+    target: Set<string>,
     context: EvaluatorContext,
-): string[] | null {
-    const isEraFilter = getSortedFilterConfigs(context, filter.field).some(conf => conf.key === 'era');
-    if (!isEraFilter || filter.operator === '!=' || !context.getAllEraNames) {
+    filterKey: string,
+    names: Iterable<string>,
+    activeScope?: AvailabilityFilterScope,
+): void {
+    for (const name of names) {
+        const unitIds = context.getIndexedUnitIds?.(filterKey, name, activeScope);
+        if (!unitIds) {
+            continue;
+        }
+
+        for (const unitId of unitIds) {
+            target.add(unitId);
+        }
+    }
+}
+
+function buildIndexedExternalUnitIdSet(
+    context: EvaluatorContext,
+    filterKey: string,
+    names: Iterable<string>,
+    activeScope?: AvailabilityFilterScope,
+): Set<string> {
+    const unitIds = new Set<string>();
+    addIndexedExternalUnitIds(unitIds, context, filterKey, names, activeScope);
+    return unitIds;
+}
+
+function getIndexedExternalFilterResult(
+    context: EvaluatorContext,
+    filterKey: string,
+    operator: SemanticOperator,
+    values: readonly string[],
+    activeScope?: AvailabilityFilterScope,
+): { mode: 'match' | 'exclude'; unitIds: Set<string> } | null {
+    if (!context.getIndexedUnitIds || !context.getIndexedFilterValues) {
         return null;
     }
 
-    const allEraNames = getCachedExternalNames(context, 'era', context.getAllEraNames);
-    const expandedEraNames = new Set<string>();
+    const indexedNames = context.getIndexedFilterValues(filterKey);
+    if (!indexedNames || indexedNames.length === 0) {
+        return null;
+    }
+
+    const allNames = getCachedExternalNames(context, filterKey, () => [...indexedNames]);
+    const runtimeCache = getExternalFilterRuntimeCache(context);
+    const cacheKey = buildIndexedExternalFilterCacheKey(filterKey, operator, values, activeScope);
+    const cached = runtimeCache.indexedResultsByKey.get(cacheKey);
+    if (cached) {
+        return cached;
+    }
+
+    let result: { mode: 'match' | 'exclude'; unitIds: Set<string> };
+
+    if (operator === '!=') {
+        const excludedIds = new Set<string>();
+        for (const value of values) {
+            addIndexedExternalUnitIds(
+                excludedIds,
+                context,
+                filterKey,
+                expandExternalFilterValue(context, filterKey, value, allNames),
+                activeScope,
+            );
+        }
+
+        result = {
+            mode: 'exclude',
+            unitIds: excludedIds,
+        };
+    } else if (operator === '&=') {
+        let matchingIds: Set<string> | null = null;
+
+        for (const value of values) {
+            const expandedNames = expandExternalFilterValue(context, filterKey, value, allNames);
+            const valueMatchingIds = buildIndexedExternalUnitIdSet(context, filterKey, expandedNames, activeScope);
+
+            if (matchingIds === null) {
+                matchingIds = valueMatchingIds;
+                continue;
+            }
+
+            for (const unitId of Array.from(matchingIds)) {
+                if (!valueMatchingIds.has(unitId)) {
+                    matchingIds.delete(unitId);
+                }
+            }
+        }
+
+        result = {
+            mode: 'match',
+            unitIds: matchingIds ?? new Set<string>(),
+        };
+    } else {
+        const allowedNamesByLower = new Map<string, string>();
+        for (const value of values) {
+            for (const name of expandExternalFilterValue(context, filterKey, value, allNames)) {
+                const lowerName = name.toLowerCase();
+                if (!allowedNamesByLower.has(lowerName)) {
+                    allowedNamesByLower.set(lowerName, name);
+                }
+            }
+        }
+
+        const matchingIds = buildIndexedExternalUnitIdSet(
+            context,
+            filterKey,
+            allowedNamesByLower.values(),
+            activeScope,
+        );
+
+        if (operator === '==') {
+            const excludedIds = new Set<string>();
+            for (const name of allNames) {
+                if (!allowedNamesByLower.has(name.toLowerCase())) {
+                    addIndexedExternalUnitIds(excludedIds, context, filterKey, [name], activeScope);
+                }
+            }
+
+            for (const unitId of excludedIds) {
+                matchingIds.delete(unitId);
+            }
+        }
+
+        result = {
+            mode: 'match',
+            unitIds: matchingIds,
+        };
+    }
+
+    runtimeCache.indexedResultsByKey.set(cacheKey, result);
+    return result;
+}
+
+function getAllScopedNamesGetter(
+    context: EvaluatorContext,
+    filterKey: 'era' | 'faction' | 'availabilityFrom',
+): (() => string[]) | undefined {
+    switch (filterKey) {
+        case 'era':
+            return context.getAllEraNames;
+        case 'faction':
+            return context.getAllFactionNames;
+        case 'availabilityFrom':
+            return context.getAllAvailabilityFromNames;
+    }
+}
+
+function getPositiveScopedNamesFromFilter(
+    filter: SemanticToken,
+    context: EvaluatorContext,
+    filterKey: 'era' | 'faction' | 'availabilityFrom',
+): string[] | null {
+    const isScopedFilter = getSortedFilterConfigs(context, filter.field).some(conf => conf.key === filterKey);
+    const getAllNames = getAllScopedNamesGetter(context, filterKey);
+    if (!isScopedFilter || filter.operator === '!=' || !getAllNames) {
+        return null;
+    }
+
+    const allNames = getCachedExternalNames(context, filterKey, getAllNames);
+    const expandedNames = new Set<string>();
     for (const value of filter.values) {
-        for (const eraName of expandExternalFilterValue(context, 'era', value, allEraNames)) {
-            expandedEraNames.add(eraName);
+        for (const name of expandExternalFilterValue(context, filterKey, value, allNames)) {
+            expandedNames.add(name);
         }
     }
 
-    return expandedEraNames.size > 0 ? Array.from(expandedEraNames) : null;
+    return expandedNames.size > 0 ? Array.from(expandedNames) : null;
 }
 
-function collectScopedEraNames(
+function collectScopedNames(
     node: ASTNode,
     context: EvaluatorContext,
+    filterKey: 'era' | 'faction' | 'availabilityFrom',
 ): string[] | null {
     if (node.type === 'filter') {
-        return getPositiveEraNamesFromFilter(node.token, context);
+        return getPositiveScopedNamesFromFilter(node.token, context, filterKey);
     }
 
     if (node.type !== 'group' || node.children.length === 0) {
@@ -1284,55 +1565,69 @@ function collectScopedEraNames(
     }
 
     if (node.operator === 'OR') {
-        const eraNames = new Set<string>();
+        const names = new Set<string>();
         for (const child of node.children) {
-            const childEraNames = collectScopedEraNames(child, context);
-            if (!childEraNames) {
+            const childNames = collectScopedNames(child, context, filterKey);
+            if (!childNames) {
                 return null;
             }
-            for (const eraName of childEraNames) {
-                eraNames.add(eraName);
+            for (const name of childNames) {
+                names.add(name);
             }
         }
-        return eraNames.size > 0 ? Array.from(eraNames) : null;
+        return names.size > 0 ? Array.from(names) : null;
     }
 
-    const eraNames = new Set<string>();
+    const names = new Set<string>();
     for (const child of node.children) {
-        const childEraNames = collectScopedEraNames(child, context);
-        if (!childEraNames) {
+        const childNames = collectScopedNames(child, context, filterKey);
+        if (!childNames) {
             continue;
         }
-        for (const eraName of childEraNames) {
-            eraNames.add(eraName);
+        for (const name of childNames) {
+            names.add(name);
         }
     }
 
-    return eraNames.size > 0 ? Array.from(eraNames) : null;
+    return names.size > 0 ? Array.from(names) : null;
 }
 
-function mergeActiveEraNames(
-    inheritedEraNames: readonly string[] | undefined,
-    scopedEraNames: readonly string[] | null,
+function mergeActiveNames(
+    inheritedNames: readonly string[] | undefined,
+    scopedNames: readonly string[] | null,
 ): readonly string[] | undefined {
-    if (!inheritedEraNames || inheritedEraNames.length === 0) {
-        return scopedEraNames ? [...scopedEraNames] : inheritedEraNames;
+    if (inheritedNames === undefined) {
+        return scopedNames ? [...scopedNames] : undefined;
     }
 
-    if (!scopedEraNames || scopedEraNames.length === 0) {
-        return [...inheritedEraNames];
+    if (!scopedNames || scopedNames.length === 0) {
+        return [...inheritedNames];
     }
 
-    const scopedByLowerName = new Map(scopedEraNames.map(name => [name.toLowerCase(), name]));
+    const scopedByLowerName = new Map(scopedNames.map(name => [name.toLowerCase(), name]));
     const intersection: string[] = [];
-    for (const eraName of inheritedEraNames) {
-        const match = scopedByLowerName.get(eraName.toLowerCase());
+    for (const name of inheritedNames) {
+        const match = scopedByLowerName.get(name.toLowerCase());
         if (match) {
             intersection.push(match);
         }
     }
 
     return intersection;
+}
+
+function getAndGroupAvailabilityScope(
+    group: GroupASTNode,
+    context: EvaluatorContext,
+    activeScope?: AvailabilityFilterScope,
+): AvailabilityFilterScope {
+    return {
+        bridgeThroughMulMembership: activeScope?.bridgeThroughMulMembership,
+        eraNames: mergeActiveNames(activeScope?.eraNames, collectScopedNames(group, context, 'era')),
+        factionNames: mergeActiveNames(activeScope?.factionNames, collectScopedNames(group, context, 'faction')),
+        availabilityFromNames: mergeActiveNames(activeScope?.availabilityFromNames, collectScopedNames(group, context, 'availabilityFrom')),
+        availabilityRarityNames: activeScope?.availabilityRarityNames,
+    };
 }
 
 /**
@@ -1346,11 +1641,11 @@ function evaluateSingleFilterConfig(
     unit: any,
     context: EvaluatorContext,
     parsedRangeValues: ParsedRangeValue[],
-    activeEraNames?: readonly string[],
+    activeScope?: AvailabilityFilterScope,
 ): boolean {
     // Handle external filters (era, faction) - these use ID-based lookups
     if (conf.external) {
-        return evaluateExternalFilter(unit, operator, values, conf, context, activeEraNames);
+        return evaluateExternalFilter(unit, operator, values, conf, context, activeScope);
     }
     
     // Get unit value for this filter
@@ -1377,6 +1672,8 @@ function evaluateSingleFilterConfig(
     // Handle different filter types
     if (conf.type === AdvFilterType.RANGE) {
         return evaluateRangeFilter(unitValue, operator, parsedRangeValues, conf);
+    } else if (conf.type === AdvFilterType.BOOLEAN) {
+        return evaluateBooleanFilter(unitValue, operator, values, conf);
     } else if (conf.type === AdvFilterType.DROPDOWN) {
         return evaluateDropdownFilter(unit, unitValue, operator, values, conf, context);
     } else if (conf.type === AdvFilterType.SEMANTIC) {
@@ -1384,6 +1681,32 @@ function evaluateSingleFilterConfig(
     }
     
     return true;
+}
+
+function evaluateBooleanFilter(
+    unitValue: any,
+    operator: SemanticOperator,
+    values: string[],
+    conf: AdvFilterConfig,
+): boolean {
+    const actualValue = getBooleanFilterUnitValue(conf, unitValue);
+    const expectedValues = values
+        .map(value => parseBooleanFilterSemanticValue(value))
+        .filter((value): value is boolean => value !== null);
+
+    if (expectedValues.length === 0) {
+        return operator === '!=';
+    }
+
+    if (operator === '!=') {
+        return expectedValues.every(expectedValue => actualValue !== expectedValue);
+    }
+
+    if (operator === '&=') {
+        return expectedValues.every(expectedValue => actualValue === expectedValue);
+    }
+
+    return expectedValues.some(expectedValue => actualValue === expectedValue);
 }
 
 /**
@@ -1397,7 +1720,7 @@ function evaluateFilter(
     filter: SemanticToken,
     unit: any,
     context: EvaluatorContext,
-    activeEraNames?: readonly string[],
+    activeScope?: AvailabilityFilterScope,
 ): boolean {
     const sortedFilters = getSortedFilterConfigs(context, filter.field);
     if (sortedFilters.length === 0) return true; // Unknown filter - pass through
@@ -1410,12 +1733,12 @@ function evaluateFilter(
     if (operator === '!=') {
         // Exclusion: unit must NOT match ANY of the configs
         return sortedFilters.every(conf => 
-            evaluateSingleFilterConfig(conf, operator, values, unit, context, parsedRangeValues, activeEraNames)
+            evaluateSingleFilterConfig(conf, operator, values, unit, context, parsedRangeValues, activeScope)
         );
     } else {
         // Inclusion: unit must match AT LEAST ONE config
         return sortedFilters.some(conf => 
-            evaluateSingleFilterConfig(conf, operator, values, unit, context, parsedRangeValues, activeEraNames)
+            evaluateSingleFilterConfig(conf, operator, values, unit, context, parsedRangeValues, activeScope)
         );
     }
 }
@@ -1462,20 +1785,60 @@ function matchIndexedStoredValues(
     return matchedValues;
 }
 
+function buildIndexedASSpecialCandidateSet(
+    operator: SemanticOperator,
+    values: string[],
+    context: EvaluatorContext,
+    activeScope?: AvailabilityFilterScope,
+): Set<string> | null {
+    if (operator === '!=' || (operator !== '=' && operator !== '==' && operator !== '&=')) {
+        return null;
+    }
+
+    if ((context.getIndexedFilterValues?.('as.specials') ?? []).length === 0) {
+        return null;
+    }
+
+    const state = operator === '&=' ? 'and' : 'or';
+    return buildIndexedASSpecialSelectionCandidates(
+        values.map(name => ({ name, state })),
+        token => context.getIndexedUnitIds?.('as.specials', token, activeScope),
+    );
+}
+
 function buildIndexedCandidateSetForConfig(
     conf: AdvFilterConfig,
     operator: SemanticOperator,
     values: string[],
-    context: EvaluatorContext
-): Set<string | number> | null {
+    context: EvaluatorContext,
+    activeScope?: AvailabilityFilterScope,
+): Set<string> | null {
     if (!context.getIndexedUnitIds || !context.getIndexedFilterValues) {
         return null;
     }
-    if (conf.type !== AdvFilterType.DROPDOWN || conf.countable || operator === '!=') {
+    if (conf.key === 'as.specials') {
+        return buildIndexedASSpecialCandidateSet(operator, values, context, activeScope);
+    }
+    if (conf.type === AdvFilterType.BOOLEAN) {
+        return buildIndexedBooleanCandidateSet(conf, operator, values, context, activeScope);
+    }
+
+    if (conf.type !== AdvFilterType.DROPDOWN || conf.countable) {
         return null;
     }
 
     if (!usesIndexedDropdownUniverse(conf)) {
+        return null;
+    }
+
+    if (conf.external && operator !== '!=') {
+        const indexedResult = getIndexedExternalFilterResult(context, conf.key, operator, values, activeScope);
+        if (indexedResult && indexedResult.mode === 'match') {
+            return new Set<string>(indexedResult.unitIds);
+        }
+    }
+
+    if (operator === '!=') {
         return null;
     }
 
@@ -1484,8 +1847,8 @@ function buildIndexedCandidateSetForConfig(
         return null;
     }
 
-    const addStoredValueUnits = (storedValue: string, target: Set<string | number>): void => {
-        const unitIds = context.getIndexedUnitIds?.(conf.key, storedValue);
+    const addStoredValueUnits = (storedValue: string, target: Set<string>): void => {
+        const unitIds = context.getIndexedUnitIds?.(conf.key, storedValue, activeScope);
         if (!unitIds) {
             return;
         }
@@ -1495,7 +1858,7 @@ function buildIndexedCandidateSetForConfig(
     };
 
     if (operator === '=' || operator === '==') {
-        const candidateIds = new Set<string | number>();
+        const candidateIds = new Set<string>();
         for (const value of values) {
             for (const storedValue of matchIndexedStoredValues(conf.key, value, context)) {
                 addStoredValueUnits(storedValue, candidateIds);
@@ -1505,9 +1868,9 @@ function buildIndexedCandidateSetForConfig(
     }
 
     if (operator === '&=') {
-        let candidateIds: Set<string | number> | null = null;
+        let candidateIds: Set<string> | null = null;
         for (const value of values) {
-            const valueCandidateIds = new Set<string | number>();
+            const valueCandidateIds = new Set<string>();
             for (const storedValue of matchIndexedStoredValues(conf.key, value, context)) {
                 addStoredValueUnits(storedValue, valueCandidateIds);
             }
@@ -1523,18 +1886,71 @@ function buildIndexedCandidateSetForConfig(
                 }
             }
         }
-        return candidateIds ?? new Set<string | number>();
+        return candidateIds ?? new Set<string>();
     }
 
     return null;
 }
 
+function buildIndexedBooleanCandidateSet(
+    conf: AdvFilterConfig,
+    operator: SemanticOperator,
+    values: string[],
+    context: EvaluatorContext,
+    activeScope?: AvailabilityFilterScope,
+): Set<string> | null {
+    if (operator === '&=') {
+        return null;
+    }
+
+    const indexedValues = context.getIndexedFilterValues?.(conf.key) ?? [];
+    if (indexedValues.length === 0) {
+        return null;
+    }
+
+    const parsedValues = values
+        .map(value => parseBooleanFilterSemanticValue(value))
+        .filter((value): value is boolean => value !== null);
+    if (parsedValues.length === 0) {
+        return null;
+    }
+
+    const expectedValues = new Set(parsedValues);
+    const targetValues = new Set<boolean>();
+    if (operator === '!=') {
+        for (const value of [true, false]) {
+            if (!expectedValues.has(value)) {
+                targetValues.add(value);
+            }
+        }
+    } else {
+        for (const value of expectedValues) {
+            targetValues.add(value);
+        }
+    }
+
+    const candidateIds = new Set<string>();
+    for (const targetValue of targetValues) {
+        const indexedIds = context.getIndexedUnitIds?.(conf.key, targetValue ? 'yes' : 'no', activeScope);
+        if (!indexedIds) {
+            continue;
+        }
+
+        for (const unitId of indexedIds) {
+            candidateIds.add(unitId);
+        }
+    }
+
+    return candidateIds;
+}
+
 function getIndexedCandidateIdsForFilter(
     filter: SemanticToken,
-    context: EvaluatorContext
-): Set<string | number> | null {
+    context: EvaluatorContext,
+    activeScope?: AvailabilityFilterScope,
+): Set<string> | null {
     const matchingFilters = ADVANCED_FILTERS.filter(f =>
-        (f.semanticKey || f.key) === filter.field
+        (f.semanticKey || f.key).toLowerCase() === filter.field.toLowerCase()
     );
     if (matchingFilters.length === 0) {
         return null;
@@ -1551,16 +1967,16 @@ function getIndexedCandidateIdsForFilter(
     for (const f of gameAgnostic) sortedFilters.push(f);
     for (const f of otherGame) sortedFilters.push(f);
 
-    const candidateSets: Set<string | number>[] = [];
+    const candidateSets: Set<string>[] = [];
     for (const conf of sortedFilters) {
-        const candidateSet = buildIndexedCandidateSetForConfig(conf, filter.operator, filter.values, context);
+        const candidateSet = buildIndexedCandidateSetForConfig(conf, filter.operator, filter.values, context, activeScope);
         if (!candidateSet) {
             return null;
         }
         candidateSets.push(candidateSet);
     }
 
-    const combined = new Set<string | number>();
+    const combined = new Set<string>();
     for (const candidateSet of candidateSets) {
         for (const unitId of candidateSet) {
             combined.add(unitId);
@@ -1571,28 +1987,30 @@ function getIndexedCandidateIdsForFilter(
 
 function getIndexedCandidateIdsForNode(
     node: ASTNode,
-    context: EvaluatorContext
-): Set<string | number> | null {
+    context: EvaluatorContext,
+    activeScope?: AvailabilityFilterScope,
+): Set<string> | null {
     switch (node.type) {
         case 'text':
             return null;
         case 'filter':
-            return getIndexedCandidateIdsForFilter(node.token, context);
+            return getIndexedCandidateIdsForFilter(node.token, context, activeScope);
         case 'group':
             if (node.children.length === 0) {
                 return null;
             }
 
             if (node.operator === 'AND') {
+                const nextActiveScope = getAndGroupAvailabilityScope(node, context, activeScope);
                 const childCandidates = node.children
-                    .map(child => getIndexedCandidateIdsForNode(child, context))
-                    .filter((candidate): candidate is Set<string | number> => candidate !== null);
+                    .map(child => getIndexedCandidateIdsForNode(child, context, nextActiveScope))
+                    .filter((candidate): candidate is Set<string> => candidate !== null);
 
                 if (childCandidates.length === 0) {
                     return null;
                 }
 
-                const intersection = new Set<string | number>(childCandidates[0]);
+                const intersection = new Set<string>(childCandidates[0]);
                 for (let index = 1; index < childCandidates.length; index++) {
                     const candidateSet = childCandidates[index];
                     for (const unitId of Array.from(intersection)) {
@@ -1604,16 +2022,16 @@ function getIndexedCandidateIdsForNode(
                 return intersection;
             }
 
-            const branchCandidates: Set<string | number>[] = [];
+            const branchCandidates: Set<string>[] = [];
             for (const child of node.children) {
-                const candidateSet = getIndexedCandidateIdsForNode(child, context);
+                const candidateSet = getIndexedCandidateIdsForNode(child, context, activeScope);
                 if (!candidateSet) {
                     return null;
                 }
                 branchCandidates.push(candidateSet);
             }
 
-            const union = new Set<string | number>();
+            const union = new Set<string>();
             for (const candidateSet of branchCandidates) {
                 for (const unitId of candidateSet) {
                     union.add(unitId);
@@ -1635,21 +2053,30 @@ function evaluateExternalFilter(
     values: string[],
     conf: AdvFilterConfig,
     context: EvaluatorContext,
-    activeEraNames?: readonly string[],
+    activeScope?: AvailabilityFilterScope,
 ): boolean {
     // Determine the membership check function and all names getter based on filter key
     let checkMembership: (name: string) => boolean;
     let getAllNames: (() => string[]) | undefined;
     
     if (conf.key === 'era' && context.unitBelongsToEra) {
-        checkMembership = (name: string) => context.unitBelongsToEra!(unit, name);
+        checkMembership = (name: string) => context.unitBelongsToEra!(unit, name, activeScope);
         getAllNames = context.getAllEraNames;
     } else if (conf.key === 'faction' && context.unitBelongsToFaction) {
-        checkMembership = (name: string) => context.unitBelongsToFaction!(unit, name, activeEraNames);
+        checkMembership = (name: string) => context.unitBelongsToFaction!(unit, name, activeScope?.eraNames);
         getAllNames = context.getAllFactionNames;
+    } else if (conf.key === 'availabilityFrom' && context.unitMatchesAvailabilityFrom) {
+        checkMembership = (name: string) => context.unitMatchesAvailabilityFrom!(unit, name, activeScope);
+        getAllNames = context.getAllAvailabilityFromNames;
+    } else if (conf.key === 'availabilityRarity' && context.unitMatchesAvailabilityRarity) {
+        checkMembership = (name: string) => context.unitMatchesAvailabilityRarity!(unit, name, activeScope);
+        getAllNames = context.getAllAvailabilityRarityNames;
     } else if (conf.key === 'forcePack' && context.unitBelongsToForcePack) {
         checkMembership = (name: string) => context.unitBelongsToForcePack!(unit, name);
         getAllNames = context.getAllForcePackNames;
+    } else if (conf.key === FORMATION_TARGET_FILTER_KEY && context.unitMatchesFormationTarget) {
+        checkMembership = (name: string) => context.unitMatchesFormationTarget!(unit, name);
+        getAllNames = context.getAllFormationNames;
     } else {
         // External filter handler not provided, pass through
         return true;
@@ -1657,6 +2084,14 @@ function evaluateExternalFilter(
 
     const filterKey = conf.key;
     const allNames = getCachedExternalNames(context, filterKey, getAllNames);
+    const indexedResult = getIndexedExternalFilterResult(context, filterKey, operator, values, activeScope);
+    if (indexedResult) {
+        const unitId = context.getUnitId(unit);
+        return indexedResult.mode === 'exclude'
+            ? !indexedResult.unitIds.has(unitId)
+            : indexedResult.unitIds.has(unitId);
+    }
+
     const expandedValues = values.flatMap(value => expandExternalFilterValue(context, filterKey, value, allNames));
     
     // Handle operators
@@ -1671,7 +2106,7 @@ function evaluateExternalFilter(
     } else if (operator === '==') {
         const allowedNames = new Set(expandedValues.map(val => val.toLowerCase()));
         const unitMatchedNames = allNames.length > 0
-            ? getUnitMatchedExternalNames(context, unit, filterKey, allNames, checkMembership, activeEraNames)
+            ? getUnitMatchedExternalNames(context, unit, filterKey, allNames, checkMembership, activeScope)
             : null;
 
         if (!unitMatchedNames) {
@@ -1690,7 +2125,7 @@ function evaluateExternalFilter(
         return true;
     } else if (operator === '&=') {
         const unitMatchedNames = allNames.length > 0
-            ? getUnitMatchedExternalNames(context, unit, filterKey, allNames, checkMembership, activeEraNames)
+            ? getUnitMatchedExternalNames(context, unit, filterKey, allNames, checkMembership, activeScope)
             : null;
 
         if (unitMatchedNames) {
@@ -1740,7 +2175,7 @@ function evaluateRangeFilter(
     parsedValues: ParsedRangeValue[],
     conf: AdvFilterConfig
 ): boolean {
-    if (unitValue == null) return false;
+    if (unitValue == null) return conf.includeMissing === true;
     
     const numValue = typeof unitValue === 'number' ? unitValue : parseFloat(unitValue);
     if (isNaN(numValue)) return false;
@@ -1880,6 +2315,23 @@ function evaluateDropdownFilter(
     conf: AdvFilterConfig,
     context: EvaluatorContext
 ): boolean {
+    if (conf.key === 'as.specials') {
+        return evaluateASSpecialsFilter(
+            unitValue,
+            operator,
+            values,
+            context.getIndexedASSpecials?.(context.getUnitId(unit)),
+        );
+    }
+
+    if (conf.key === 'rulesRefs' && (operator === '=' || operator === '==')) {
+        const selectedRulesRefs = Array.from(new Set(values.flatMap(value => {
+            const indexedMatches = matchIndexedStoredValues(conf.key, value, context);
+            return indexedMatches.length > 0 ? indexedMatches : [value];
+        })));
+        return unitMatchesRulesRefsSelection(unitValue, selectedRulesRefs);
+    }
+
     if (unitValue == null) return operator === '!=';
     
     // Normalize unit value(s) to array
@@ -2052,7 +2504,7 @@ export function evaluateASTNode(
     node: ASTNode,
     unit: any,
     context: EvaluatorContext,
-    activeEraNames?: readonly string[],
+    activeScope?: AvailabilityFilterScope,
 ): boolean {
     switch (node.type) {
         case 'text':
@@ -2065,10 +2517,10 @@ export function evaluateASTNode(
             return true;
             
         case 'filter':
-            return evaluateFilter(node.token, unit, context, activeEraNames);
+            return evaluateFilter(node.token, unit, context, activeScope);
             
         case 'group':
-            return evaluateGroup(node, unit, context, activeEraNames);
+            return evaluateGroup(node, unit, context, activeScope);
             
         default:
             return true;
@@ -2082,18 +2534,17 @@ function evaluateGroup(
     group: GroupASTNode,
     unit: any,
     context: EvaluatorContext,
-    activeEraNames?: readonly string[],
+    activeScope?: AvailabilityFilterScope,
 ): boolean {
     if (group.children.length === 0) return true;
     
     if (group.operator === 'AND') {
-        const scopedEraNames = collectScopedEraNames(group, context);
-        const nextActiveEraNames = mergeActiveEraNames(activeEraNames, scopedEraNames);
+        const nextActiveScope = getAndGroupAvailabilityScope(group, context, activeScope);
         // All children must match
-        return group.children.every(child => evaluateASTNode(child, unit, context, nextActiveEraNames));
+        return group.children.every(child => evaluateASTNode(child, unit, context, nextActiveScope));
     } else {
         // OR: At least one child must match
-        return group.children.some(child => evaluateASTNode(child, unit, context, activeEraNames));
+        return group.children.some(child => evaluateASTNode(child, unit, context, activeScope));
     }
 }
 
@@ -2104,7 +2555,8 @@ function evaluateGroup(
 export function filterUnitsWithAST(
     units: any[],
     ast: GroupASTNode,
-    context: EvaluatorContext
+    context: EvaluatorContext,
+    initialScope?: AvailabilityFilterScope,
 ): any[] {
     // If AST has no children, return all units
     if (ast.children.length === 0) return units;
@@ -2116,7 +2568,7 @@ export function filterUnitsWithAST(
 
     let candidateUnits = units;
     if (context.getIndexedUnitIds && context.getIndexedFilterValues) {
-        const candidateIds = getIndexedCandidateIdsForNode(ast, context);
+        const candidateIds = getIndexedCandidateIdsForNode(ast, context, initialScope);
         if (candidateIds) {
             candidateUnits = units.filter(unit => {
                 const unitId = context.getUnitId(unit);
@@ -2125,7 +2577,7 @@ export function filterUnitsWithAST(
         }
     }
 
-    return candidateUnits.filter(unit => evaluateASTNode(ast, unit, context));
+    return candidateUnits.filter(unit => evaluateASTNode(ast, unit, context, initialScope));
 }
 
 /**
@@ -2158,15 +2610,17 @@ function hasTextNodes(node: ASTNode): boolean {
 export function getMatchingTextForUnit(
     ast: GroupASTNode,
     unit: any,
-    context: EvaluatorContext
+    context: EvaluatorContext,
+    initialScope?: AvailabilityFilterScope,
 ): string[] {
-    return collectMatchingText(ast, unit, context);
+    return collectMatchingText(ast, unit, context, initialScope);
 }
 
 function collectMatchingText(
     node: ASTNode,
     unit: any,
-    context: EvaluatorContext
+    context: EvaluatorContext,
+    activeScope?: AvailabilityFilterScope,
 ): string[] {
     if (node.type === 'text') {
         // Check if this text node matches the unit (use unescaped value for matching)
@@ -2183,17 +2637,18 @@ function collectMatchingText(
     
     if (node.type === 'group') {
         if (node.operator === 'AND') {
+            const nextActiveScope = getAndGroupAvailabilityScope(node, context, activeScope);
             // For AND, collect all matching text from all children
             const texts: string[] = [];
             for (const child of node.children) {
-                texts.push(...collectMatchingText(child, unit, context));
+                texts.push(...collectMatchingText(child, unit, context, nextActiveScope));
             }
             return texts;
         } else {
             // For OR, find the first matching child and return its text
             for (const child of node.children) {
-                if (evaluateASTNode(child, unit, context)) {
-                    return collectMatchingText(child, unit, context);
+                if (evaluateASTNode(child, unit, context, activeScope)) {
+                    return collectMatchingText(child, unit, context, activeScope);
                 }
             }
             return [];

@@ -1,41 +1,13 @@
-/*
- * Copyright (C) 2026 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { computed, type Signal } from '@angular/core';
 import type { CBTForceUnit } from '../cbt-force-unit.model';
+import { MiscEquipment, type Equipment } from '../equipment.model';
+import { getMekLegLocations, inferMekConfigFromLocations } from '../entity/types';
 
 /**
- * Author: Drake
  * 
  * Shared heat-management logic and data structures for Mek and (Aero) Fighters rules.
  * Composed into those rules classes via the HeatManagement class.
@@ -60,6 +32,35 @@ export interface HeatScaleEntry {
     pilotDamage?: number;
 }
 
+export interface ResolvedHeatScaleEffects {
+    moveModifier: number;
+    fireModifier: number;
+    shutdownTarget?: number;
+    ammoExplosionTarget?: number;
+    randomMovementTarget?: number;
+    pilotDamageTarget?: number;
+}
+
+export function resolveHeatScaleEffects(
+    scale: readonly HeatScaleEntry[],
+    heat: number,
+): ResolvedHeatScaleEffects {
+    const effects: ResolvedHeatScaleEffects = {
+        moveModifier: 0,
+        fireModifier: 0,
+    };
+    for (const entry of scale) {
+        if (heat < entry.heat) break;
+        if (entry.move !== undefined) effects.moveModifier = entry.move;
+        if (entry.fire !== undefined) effects.fireModifier = entry.fire;
+        if (entry.shutdown !== undefined) effects.shutdownTarget = entry.shutdown;
+        if (entry.ammoExp !== undefined) effects.ammoExplosionTarget = entry.ammoExp;
+        if (entry.randomMovement !== undefined) effects.randomMovementTarget = entry.randomMovement;
+        if (entry.pilotDamage !== undefined) effects.pilotDamageTarget = entry.pilotDamage;
+    }
+    return effects;
+}
+
 /**
  * Walk a heat scale and return cumulative move/fire modifiers at a given heat level.
  */
@@ -67,14 +68,32 @@ export function getHeatEffects(
     scale: readonly HeatScaleEntry[],
     heat: number,
 ): { moveModifier: number; fireModifier: number } {
-    let moveModifier = 0;
-    let fireModifier = 0;
-    for (const entry of scale) {
-        if (heat < entry.heat) break;
-        if (entry.move !== undefined) moveModifier = entry.move;
-        if (entry.fire !== undefined) fireModifier = entry.fire;
-    }
+    const { moveModifier, fireModifier } = resolveHeatScaleEffects(scale, heat);
     return { moveModifier, fireModifier };
+}
+
+/** Human-readable cumulative roll checks triggered at one heat level. */
+export function describeHeatScaleRollChecks(
+    scale: readonly HeatScaleEntry[],
+    heat: number,
+): string[] {
+    const effects = resolveHeatScaleEffects(scale, heat);
+    const labels: string[] = [];
+    if (effects.shutdownTarget !== undefined) {
+        labels.push(effects.shutdownTarget >= 100
+            ? 'Automatic shutdown'
+            : `Shutdown check ${effects.shutdownTarget}+`);
+    }
+    if (effects.ammoExplosionTarget !== undefined) {
+        labels.push(`Ammo explosion check ${effects.ammoExplosionTarget}+`);
+    }
+    if (effects.randomMovementTarget !== undefined) {
+        labels.push(`Random movement check ${effects.randomMovementTarget}+`);
+    }
+    if (effects.pilotDamageTarget !== undefined) {
+        labels.push(`Pilot damage check ${effects.pilotDamageTarget}+`);
+    }
+    return labels;
 }
 
 // ── Dissipation State ────────────────────────────────────────────────────────
@@ -91,6 +110,10 @@ export interface HeatDissipationState {
     heatsinksOff: number;
     /** Effective dissipation after damage & turned-off HS. */
     totalDissipation: number;
+    /** Additional dissipation provided by operational heatsinks submerged in water. */
+    underwaterBonus?: number;
+    /** Effective dissipation including partial-wing cooling when applicable. */
+    totalDissipationWithWings?: number;
 }
 
 // ── Heatsink Profile ─────────────────────────────────────────────────────────
@@ -102,6 +125,11 @@ interface HeatsinkProfile {
     engineDissipationPer: number;
     hittable: HSEntry[];
     totalPips: number;
+}
+
+function heatSinkDissipation(equipment: Equipment): number {
+    if (!(equipment instanceof MiscEquipment) || !equipment.isHeatSink) return 0;
+    return equipment.hasAnyFlag(['F_DOUBLE_HEAT_SINK', 'F_IS_DOUBLE_HEAT_SINK_PROTOTYPE', 'F_LASER_HEAT_SINK']) ? 2 : 1;
 }
 
 // ── HeatManagement ───────────────────────────────────────────────────────────
@@ -132,9 +160,8 @@ export class HeatManagement {
         let totalPips = engineHSCount;
         for (const comp of unit.comp) {
             if (!comp.eq) continue;
-            const isSingle = comp.eq.hasFlag('F_HEAT_SINK');
-            const isDouble = comp.eq.hasFlag('F_DOUBLE_HEAT_SINK');
-            if (!isSingle && !isDouble) continue;
+            const dissipation = heatSinkDissipation(comp.eq);
+            if (dissipation === 0) continue;
             totalPips += comp.q;
             if (comp.p < 0) {
                 // Engine-mounted: each quantity is one heatsink group
@@ -142,7 +169,7 @@ export class HeatManagement {
             } else {
                 // Hittable (outside engine): each quantity is one heatsink group
                 for (let i = 0; i < comp.q; i++) {
-                    hittable.push({ id: comp.id, dissipation: isDouble ? 2 : 1 });
+                    hittable.push({ id: comp.id, dissipation });
                 }
             }
         }
@@ -162,27 +189,50 @@ export class HeatManagement {
 
         const critSlots = this.unit.getCritSlots();
         const heatsinksOff = this.unit.getHeat().heatsinksOff || 0;
+        const mountedById = new Map(this.unit.getInventory().map(entry => [entry.id, entry]));
 
-        // Count destroyed heatsinks
-        const destroyedHSIds = new Set<string>();
-        let damagedCount = 0;
-        let dissipationLost = 0;
+        const criticalHeatsinks = new Map<string, { dissipation: number; locations: Set<string>; unavailable: boolean }>();
         for (const slot of critSlots) {
-            if (!slot.id || !slot.destroyed || !slot.eq) continue;
-            if (destroyedHSIds.has(slot.id)) continue; // already counted this slot's destruction
-            const isSingle = slot.eq.hasFlag('F_HEAT_SINK');
-            const isDouble = slot.eq.hasFlag('F_DOUBLE_HEAT_SINK');
-            if (!isSingle && !isDouble) continue; // not a heatsink crit!
-            destroyedHSIds.add(slot.id);
-            damagedCount++;
-            dissipationLost += isDouble ? 2 : 1;
+            if (!slot.id || !slot.eq) continue;
+            const dissipation = heatSinkDissipation(slot.eq);
+            if (dissipation === 0) continue;
+            const state = criticalHeatsinks.get(slot.id) ?? { dissipation, locations: new Set<string>(), unavailable: false };
+            if (slot.loc) state.locations.add(slot.loc);
+            state.unavailable ||= !this.unit.isEquipmentOperational(mountedById.get(slot.id) ?? slot);
+            criticalHeatsinks.set(slot.id, state);
         }
 
+        const unavailableHeatsinks = Array.from(criticalHeatsinks.values()).filter(state => state.unavailable);
+        const damagedCount = unavailableHeatsinks.length;
+        const dissipationLost = unavailableHeatsinks.reduce((total, state) => total + state.dissipation, 0);
         const engineDissipation = profile.engineHSCount * profile.engineDissipationPer;
         const hittableDissipation = profile.hittable.reduce((sum, hs) => sum + hs.dissipation, 0);
-        let totalDissipation = engineDissipation + hittableDissipation - dissipationLost;
-        totalDissipation -= heatsinksOff * profile.engineDissipationPer;
-        totalDissipation = Math.max(0, totalDissipation);
+        const baseDissipation = Math.max(
+            0,
+            engineDissipation + hittableDissipation - dissipationLost
+                - heatsinksOff * profile.engineDissipationPer,
+        );
+
+        let underwaterBonus = 0;
+        const submerged = this.unit.turnState().submerged();
+        const partiallyUnderwater = this.unit.turnState().partiallyUnderwater();
+        if (this.unit.getUnit().type === 'Mek' && (submerged || partiallyUnderwater)) {
+            if (submerged) {
+                // Once the torso is underwater, engine-mounted sinks are submerged too.
+                underwaterBonus = Math.min(6, baseDissipation);
+            } else {
+                const legLocations = new Set<string>(getMekLegLocations(inferMekConfigFromLocations(this.unit.locations?.internal.keys() ?? [])));
+                const functioningHeatsinkCount = Math.max(0, profile.totalPips - damagedCount - heatsinksOff);
+                const underwaterHeatsinks = Array.from(criticalHeatsinks.values())
+                    .filter(state => !state.unavailable && Array.from(state.locations).some(loc => legLocations.has(loc)))
+                    .sort((left, right) => right.dissipation - left.dissipation);
+                underwaterBonus = Math.min(6, underwaterHeatsinks
+                    .slice(0, Math.min(underwaterHeatsinks.length, functioningHeatsinkCount))
+                    .reduce((total, state) => total + state.dissipation, 0));
+            }
+        }
+
+        const totalDissipation = baseDissipation + underwaterBonus;
 
         return {
             totalPips: profile.totalPips,
@@ -190,6 +240,7 @@ export class HeatManagement {
             damagedCount,
             heatsinksOff,
             totalDissipation,
+            ...(underwaterBonus > 0 ? { underwaterBonus } : {}),
         };
     });
 }

@@ -1,72 +1,45 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MegaMek is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import { effect, inject, Injectable, signal } from '@angular/core';
+import { DestroyRef, effect, inject, Injectable, signal } from '@angular/core';
 import { UserStateService } from './userState.service';
 import { LoggerService } from './logger.service';
 import type { SerializedForce } from '../models/force-serialization';
-
-/*
- * Author: Drake
- */
-
-export function generateUUID(): string {
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-        return crypto.randomUUID();
-    }
-
-    // Fallback for non-secure contexts
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
+import type { ServerMessage } from '../models/server-message.model';
+import { APP_VERSION, BUILD_BRANCH, BUILD_COMMIT_NUMBER } from '../build-meta';
+import { uuidv7 } from '../utils/uuid.util';
 
 /** Client protocol version - increment when breaking changes are made */
 export const PROTOCOL_VERSION = 2;
+
+export type ConnectionStatusPhase = 'hidden' | 'offline' | 'online';
+export type ForceUpdateSource = 'live' | 'reconnect';
+
+interface WsRequestOptions {
+    timeout?: number;
+    suppressGlobalError?: boolean;
+}
+
+interface ForceSubscription {
+    onRemoteUpdate: (data: SerializedForce, source: ForceUpdateSource) => void | Promise<void>;
+    handler: ((event: MessageEvent) => void) | null;
+    socket: WebSocket | null;
+    updateQueue: Promise<void>;
+}
 
 @Injectable({
     providedIn: 'root'
 })
 export class WsService {
     private logger = inject(LoggerService);
+    private readonly destroyRef = inject(DestroyRef);
     private ws: WebSocket | null = null;
     private readonly wsUrl = 'wss://mekbay.com/ws';
     private wsReady?: Promise<void>;
     private wsReadyResolver: (() => void) | null = null;
-    private readonly wsSessionId = generateUUID();
-    private subscriptions = new Map<string, (event: MessageEvent) => void>();
+    private readonly wsSessionId = uuidv7();
+    private subscriptions = new Map<string, ForceSubscription>();
     private actionHandlers = new Map<string, Set<(msg: any, event: MessageEvent) => void>>();
     
     // Connection state management
@@ -77,11 +50,27 @@ export class WsService {
     private readonly baseReconnectDelay = 1000;
     private readonly maxReconnectDelay = 15000;
     private readonly connectionTimeout = 3000;
+    private readonly resumeProbeTimeout = 2000;
+    private readonly connectionStatusHideDelay = 3500;
+    private connectionStatusHideTimeoutId: number | null = null;
+    private connectionStatusHasFailed = false;
+    public readonly connectionStatusPhase = signal<ConnectionStatusPhase>('hidden');
 
     public wsConnected = signal<boolean>(false);
     private userStateService = inject(UserStateService);
     private globalErrorHandler: ((message: string) => void) | null = null;
+    private readonly locallyHandledErrorRequestIds = new Set<string>();
     private lastRegisteredUuid = '';
+    private resumeProbeInFlight = false;
+    private lastResumeProbeAt = 0;
+
+    private readonly onlineHandler = () => this.handleNetworkOnline();
+    private readonly offlineHandler = () => this.handleNetworkOffline();
+    private readonly focusHandler = () => this.handlePageResume();
+    private readonly pageShowHandler = () => this.handlePageResume();
+    private readonly visibilityHandler = () => {
+        if (document.visibilityState === 'visible') this.handlePageResume();
+    };
 
     private getCurrentUuid(): string {
         return this.userStateService.uuid().trim();
@@ -111,9 +100,18 @@ export class WsService {
      */
     private setupUserStateHandler(): void {
         this.registerMessageHandler('userState', (msg) => {
-            if (msg.publicId) {
-                this.userStateService.setPublicId(msg.publicId);
-            }
+            const snapshot = {
+                publicId: msg.publicId ?? null,
+                displayName: typeof msg.displayName === 'string' ? msg.displayName : null,
+                hasOAuth: msg.hasOAuth,
+                oauthProviderCount: msg.oauthProviderCount,
+                oauthProviders: Array.isArray(msg.oauthProviders) ? msg.oauthProviders : undefined,
+                availableAuthProviders: Array.isArray(msg.availableAuthProviders) ? msg.availableAuthProviders : undefined,
+                ...(typeof msg.accountProtectionPromptDismissed === 'boolean'
+                    ? { accountProtectionPromptDismissed: msg.accountProtectionPromptDismissed }
+                    : {}),
+            };
+            void this.userStateService.applyServerState(snapshot);
         });
     }
 
@@ -129,12 +127,18 @@ export class WsService {
      * Setup network status monitoring
      */
     private setupNetworkMonitoring(): void {
-        window.addEventListener('online', () => {
-            this.handleNetworkOnline();
-        });
+        window.addEventListener('online', this.onlineHandler);
+        window.addEventListener('offline', this.offlineHandler);
+        window.addEventListener('focus', this.focusHandler);
+        window.addEventListener('pageshow', this.pageShowHandler);
+        document.addEventListener('visibilitychange', this.visibilityHandler);
 
-        window.addEventListener('offline', () => {
-            this.handleNetworkOffline();
+        this.destroyRef.onDestroy(() => {
+            window.removeEventListener('online', this.onlineHandler);
+            window.removeEventListener('offline', this.offlineHandler);
+            window.removeEventListener('focus', this.focusHandler);
+            window.removeEventListener('pageshow', this.pageShowHandler);
+            document.removeEventListener('visibilitychange', this.visibilityHandler);
         });
     }
 
@@ -143,11 +147,7 @@ export class WsService {
      */
     private handleNetworkOnline(): void {
         this.shouldReconnect = true;
-        this.reconnectAttempt = 0; // Reset backoff when network returns
-        if (!this.wsConnected() && !this.isConnecting && this.getCurrentUuid()) {
-            this.clearReconnectTimer();
-            this.scheduleReconnect();
-        }
+        this.recoverConnection(true);
     }
 
     /**
@@ -156,6 +156,48 @@ export class WsService {
     private handleNetworkOffline(): void {
         this.wsConnected.set(false);
         this.clearReconnectTimer();
+        this.showDisconnectedBadge();
+    }
+
+    private handlePageResume(): void {
+        if (document.visibilityState === 'hidden') return;
+        this.recoverConnection(true);
+    }
+
+    private recoverConnection(probeOpenSocket = false): void {
+        if (!this.shouldReconnect || !navigator.onLine || !this.getCurrentUuid()) return;
+
+        const socket = this.ws;
+        if (socket?.readyState === WebSocket.OPEN && this.wsConnected()) {
+            if (probeOpenSocket) void this.probeConnection(socket);
+            return;
+        }
+        if (this.isConnecting || socket?.readyState === WebSocket.CONNECTING) return;
+
+        this.reconnectAttempt = 0;
+        this.clearReconnectTimer();
+        this.connect();
+    }
+
+    private async probeConnection(socket: WebSocket): Promise<void> {
+        const now = Date.now();
+        if (this.resumeProbeInFlight || now - this.lastResumeProbeAt < 1000) return;
+
+        this.resumeProbeInFlight = true;
+        this.lastResumeProbeAt = now;
+        try {
+            const response = await this.sendAndWaitForResponse({ action: 'ping' }, this.resumeProbeTimeout);
+            if (this.ws !== socket || response?.action === 'pong') return;
+
+            this.logger.warn('WebSocket health check failed after page resume; reconnecting.');
+            this.wsConnected.set(false);
+            this.showDisconnectedBadge();
+            this.closeWebSocket(false);
+            this.reconnectAttempt = 0;
+            this.connect();
+        } finally {
+            this.resumeProbeInFlight = false;
+        }
     }
 
     /**
@@ -181,6 +223,7 @@ export class WsService {
         } catch (error) {
             this.logger.error(`Failed to create WebSocket: ${error}`);
             this.isConnecting = false;
+            this.showDisconnectedBadge();
             this.scheduleReconnect();
         }
     }
@@ -189,12 +232,13 @@ export class WsService {
      * Setup WebSocket event handlers
      */
     private setupWebSocketHandlers(): void {
-        if (!this.ws) return;
+        const socket = this.ws;
+        if (!socket) return;
 
-        this.ws.onopen = () => this.handleOpen();
-        this.ws.onclose = (event) => this.handleClose(event);
-        this.ws.onerror = () => this.handleError();
-        this.ws.onmessage = (event) => this.handleMessage(event);
+        socket.onopen = () => this.handleOpen();
+        socket.onclose = (event) => this.handleClose(event, socket);
+        socket.onerror = () => this.handleError();
+        socket.onmessage = (event) => this.handleMessage(event);
     }
 
     /**
@@ -223,17 +267,23 @@ export class WsService {
         this.isConnecting = false;
         this.reconnectAttempt = 0; // Reset backoff on successful connection
         this.wsConnected.set(true);
+        this.showReconnectedBadge();
         this.resolveConnectionPromise();
         this.registerSession();
+        void this.resubscribeToForceUpdates();
     }
 
     /**
      * Handle WebSocket close event
      */
-    private handleClose(event: CloseEvent): void {
+    private handleClose(event: CloseEvent, closedSocket: WebSocket | null = this.ws): void {
         this.logger.error(`WebSocket closed: ${event.code}, ${event.reason}`);
+        if (closedSocket) {
+            this.detachForceSubscriptions(closedSocket);
+        }
         this.isConnecting = false;
         this.wsConnected.set(false);
+        this.showDisconnectedBadge();
 
         // Only attempt reconnection if we should reconnect and network is online
         if (this.shouldReconnect && navigator.onLine && this.getCurrentUuid()) {
@@ -248,6 +298,10 @@ export class WsService {
         this.logger.error('WebSocket error occurred');
         this.isConnecting = false;
         this.wsConnected.set(false);
+        this.showDisconnectedBadge();
+        if (this.shouldReconnect && navigator.onLine && this.getCurrentUuid()) {
+            this.scheduleReconnect();
+        }
     }
 
     /**
@@ -261,8 +315,12 @@ export class WsService {
             return;
         }
 
-        if (msg?.action === 'error' && this.globalErrorHandler) {
-            this.globalErrorHandler(msg.message || 'Unknown error');
+        if (msg?.action === 'error') {
+            const locallyHandled = typeof msg.requestId === 'string'
+                && this.locallyHandledErrorRequestIds.delete(msg.requestId);
+            if (!locallyHandled && this.globalErrorHandler) {
+                this.globalErrorHandler(msg.message || 'Unknown error');
+            }
         }
 
         const action = msg?.action;
@@ -305,7 +363,15 @@ export class WsService {
         }
         this.lastRegisteredUuid = uuid;
         try {
-            this.send({ action: 'register', sessionId: this.wsSessionId, uuid, version: PROTOCOL_VERSION });
+            this.send({
+                action: 'register',
+                sessionId: this.wsSessionId,
+                uuid,
+                version: PROTOCOL_VERSION,
+                appVersion: APP_VERSION,
+                buildBranch: BUILD_BRANCH,
+                buildCommitNumber: BUILD_COMMIT_NUMBER,
+            });
         } catch (error) {
             this.logger.error(`Failed to register session: ${error}`);
         }
@@ -352,6 +418,39 @@ export class WsService {
         }
     }
 
+    private showDisconnectedBadge(): void {
+        this.connectionStatusHasFailed = true;
+        this.clearConnectionStatusHideTimer();
+        this.connectionStatusPhase.set('offline');
+    }
+
+    private showReconnectedBadge(): void {
+        if (!this.connectionStatusHasFailed) {
+            return;
+        }
+
+        this.clearConnectionStatusHideTimer();
+        this.connectionStatusPhase.set('online');
+        this.connectionStatusHideTimeoutId = window.setTimeout(() => {
+            this.connectionStatusHideTimeoutId = null;
+            if (this.wsConnected()) {
+                this.connectionStatusPhase.set('hidden');
+            }
+        }, this.connectionStatusHideDelay);
+    }
+
+    private clearConnectionStatusHideTimer(): void {
+        if (this.connectionStatusHideTimeoutId !== null) {
+            clearTimeout(this.connectionStatusHideTimeoutId);
+            this.connectionStatusHideTimeoutId = null;
+        }
+    }
+
+    private hideConnectionStatusBadge(): void {
+        this.clearConnectionStatusHideTimer();
+        this.connectionStatusPhase.set('hidden');
+    }
+
     /**
      * Close WebSocket connection
      */
@@ -363,6 +462,7 @@ export class WsService {
             }
             return;
         }
+        this.detachForceSubscriptions(this.ws);
         // Remove event handlers to prevent them from firing
         this.ws.onopen = null;
         this.ws.onclose = null;
@@ -434,6 +534,12 @@ export class WsService {
         return this.wsSessionId;
     }
 
+    public getHttpBaseUrl(): string {
+        const parsedUrl = new URL(this.wsUrl);
+        parsedUrl.protocol = parsedUrl.protocol === 'wss:' ? 'https:' : 'http:';
+        return parsedUrl.origin;
+    }
+
     /**
      * Get connection ready promise
      */
@@ -448,6 +554,7 @@ export class WsService {
         this.closeWebSocket(true);
         this.wsConnected.set(false);
         this.wsReady = Promise.resolve();
+        this.hideConnectionStatusBadge();
     }
 
     /**
@@ -462,7 +569,7 @@ export class WsService {
         const message = {
             ...payload,
             sessionId: this.wsSessionId,
-            requestId: generateUUID()
+            requestId: uuidv7()
         };
         try {
             this.ws.send(JSON.stringify(message));
@@ -474,13 +581,23 @@ export class WsService {
     /**
      * Send a message and wait for response
      */
-    public async sendAndWaitForResponse(payload: object, timeout: number = 5000): Promise<any | null> {
+    public async sendAndWaitForResponse(
+        payload: object,
+        timeoutOrOptions: number | WsRequestOptions = 5000,
+    ): Promise<any | null> {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
             this.logger.warn('Cannot send: WebSocket not connected');
             return null;
         }
 
-        const requestId = generateUUID();
+        const options = typeof timeoutOrOptions === 'number'
+            ? { timeout: timeoutOrOptions }
+            : timeoutOrOptions;
+        const timeout = options.timeout ?? 5000;
+        const requestId = uuidv7();
+        if (options.suppressGlobalError) {
+            this.locallyHandledErrorRequestIds.add(requestId);
+        }
         const message = {
             ...payload,
             sessionId: this.wsSessionId,
@@ -496,7 +613,11 @@ export class WsService {
                 try {
                     const msg = JSON.parse(event.data);
                     if (msg.requestId === requestId) {
-                        cleanup();
+                        const preserveErrorOwnership = options.suppressGlobalError && msg.action === 'error';
+                        cleanup(preserveErrorOwnership);
+                        if (preserveErrorOwnership) {
+                            queueMicrotask(() => this.locallyHandledErrorRequestIds.delete(requestId));
+                        }
                         resolve(msg);
                     }
                 } catch {
@@ -504,10 +625,13 @@ export class WsService {
                 }
             };
 
-            const cleanup = () => {
+            const cleanup = (preserveErrorOwnership = false) => {
                 ws.removeEventListener('message', handler);
                 if (timeoutId !== null) {
                     clearTimeout(timeoutId);
+                }
+                if (!preserveErrorOwnership) {
+                    this.locallyHandledErrorRequestIds.delete(requestId);
                 }
             };
 
@@ -531,46 +655,39 @@ export class WsService {
     /**
      * Subscribe to instance updates
      */
-    public async subscribeToForceUpdates(instanceId: string, onRemoteUpdate: (data: SerializedForce) => void): Promise<void> {
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-            this.logger.warn('Cannot subscribe: WebSocket not connected');
-            return;
-        }
-
+    public async subscribeToForceUpdates(
+        instanceId: string,
+        onRemoteUpdate: (data: SerializedForce, source: ForceUpdateSource) => void | Promise<void>,
+    ): Promise<void> {
         // Unsubscribe from previous subscription if exists
         await this.unsubscribeFromForceUpdates(instanceId);
 
-        // Setup message handler
-        const handler = (event: MessageEvent) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.action === 'updatedForce' && msg.data?.instanceId === instanceId) {
-                    onRemoteUpdate(msg.data as SerializedForce);
-                }
-            } catch {
-                // Ignore parse errors
-            }
-        };
-
-        this.ws.addEventListener('message', handler);
-        this.subscriptions.set(instanceId, handler);
-
-        // Send subscribe message
-        this.send({
-            action: 'subscribeToForceUpdates',
-            instanceId
+        this.subscriptions.set(instanceId, {
+            onRemoteUpdate,
+            handler: null,
+            socket: null,
+            updateQueue: Promise.resolve(),
         });
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            this.logger.warn('Cannot subscribe: WebSocket not connected; will subscribe after reconnect');
+            return;
+        }
 
+        this.attachForceSubscription(instanceId);
     }
 
     /**
      * Unsubscribe from instance updates
      */
     public async unsubscribeFromForceUpdates(instanceId: string): Promise<void> {
-        const handler = this.subscriptions.get(instanceId);
-        if (!handler) return;
+        const subscription = this.subscriptions.get(instanceId);
+        if (!subscription) return;
 
         this.subscriptions.delete(instanceId);
+
+        if (subscription.socket && subscription.handler) {
+            subscription.socket.removeEventListener('message', subscription.handler);
+        }
 
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             try {
@@ -583,9 +700,6 @@ export class WsService {
             }
         }
 
-        if (this.ws) {
-            this.ws.removeEventListener('message', handler);
-        }
     }
 
     /**
@@ -596,6 +710,122 @@ export class WsService {
         instanceIds.forEach(instanceId => {
             this.unsubscribeFromForceUpdates(instanceId);
         });
+    }
+
+    private attachForceSubscription(instanceId: string): void {
+        const subscription = this.subscriptions.get(instanceId);
+        const socket = this.ws;
+        if (!subscription || !socket || socket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+
+        if (subscription.socket === socket && subscription.handler) {
+            return;
+        }
+
+        if (subscription.socket && subscription.handler) {
+            subscription.socket.removeEventListener('message', subscription.handler);
+        }
+
+        const handler = (event: MessageEvent) => {
+            try {
+                const msg = JSON.parse(event.data);
+                if (msg.action === 'updatedForce' && msg.data?.instanceId === instanceId) {
+                    void this.notifyForceSubscription(subscription, msg.data as SerializedForce, 'live', instanceId);
+                }
+            } catch {
+                // Ignore parse errors
+            }
+        };
+
+        socket.addEventListener('message', handler);
+        subscription.handler = handler;
+        subscription.socket = socket;
+        this.send({
+            action: 'subscribeToForceUpdates',
+            instanceId,
+        });
+    }
+
+    private async resubscribeToForceUpdates(): Promise<void> {
+        const socket = this.ws;
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+
+        const reconnectSubscriptions: Array<{
+            instanceId: string;
+            subscription: ForceSubscription;
+        }> = [];
+
+        for (const instanceId of this.subscriptions.keys()) {
+            const subscription = this.subscriptions.get(instanceId);
+            if (!subscription) {
+                continue;
+            }
+
+            this.attachForceSubscription(instanceId);
+            reconnectSubscriptions.push({ instanceId, subscription });
+        }
+
+        await Promise.all(reconnectSubscriptions.map(({ instanceId, subscription }) => {
+            if (this.ws !== socket) {
+                return Promise.resolve();
+            }
+            return this.refreshForceSubscription(instanceId, subscription, socket);
+        }));
+    }
+
+    private async refreshForceSubscription(
+        instanceId: string,
+        subscription: ForceSubscription,
+        socket: WebSocket,
+    ): Promise<void> {
+        try {
+            const response = await this.sendAndWaitForResponse({
+                action: 'getForce',
+                instanceId,
+            });
+
+            if (this.ws !== socket || this.subscriptions.get(instanceId) !== subscription) {
+                return;
+            }
+
+            const data = response?.data;
+            if (data?.instanceId === instanceId) {
+                await this.notifyForceSubscription(subscription, data as SerializedForce, 'reconnect', instanceId);
+            }
+        } catch (error) {
+            this.logger.error(`Failed to refresh force subscription ${instanceId}: ${error}`);
+        }
+    }
+
+    private notifyForceSubscription(
+        subscription: ForceSubscription,
+        data: SerializedForce,
+        source: ForceUpdateSource,
+        instanceId: string,
+    ): Promise<void> {
+        const update = subscription.updateQueue
+            .then(() => subscription.onRemoteUpdate(data, source))
+            .catch(error => {
+                this.logger.error(`Force update handler error for ${instanceId}: ${error}`);
+            });
+        subscription.updateQueue = update;
+        return update;
+    }
+
+    private detachForceSubscriptions(socket: WebSocket): void {
+        for (const subscription of this.subscriptions.values()) {
+            if (subscription.socket !== socket) {
+                continue;
+            }
+            if (subscription.handler) {
+                socket.removeEventListener('message', subscription.handler);
+            }
+            subscription.handler = null;
+            subscription.socket = null;
+        }
     }
 
     public registerMessageHandler(actions: string | string[], handler: (msg: any, event: MessageEvent) => void): () => void {
@@ -620,6 +850,19 @@ export class WsService {
                 }
             });
         };
+    }
+
+    public registerServerMessageHandler(
+        messageTypes: string | string[],
+        handler: (msg: ServerMessage, event: MessageEvent) => void,
+    ): () => void {
+        const types = Array.isArray(messageTypes) ? messageTypes : [messageTypes];
+        return this.registerMessageHandler('serverMessage', (msg, event) => {
+            if (!types.includes(msg?.messageType)) {
+                return;
+            }
+            handler(msg as ServerMessage, event);
+        });
     }
 
     public clearHandlersForAction(action: string): void {

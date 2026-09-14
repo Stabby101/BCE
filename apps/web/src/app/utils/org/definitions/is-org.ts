@@ -1,9 +1,13 @@
-import { ASUnitTypeCode } from '../../../models/units.model';
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
+import { ASUnitTypeCode } from '../../../models/unit-summary.model';
 import { DEFAULT_ORG_RULE_REGISTRY } from '../org-facts.util';
 import type {
     OrgCIFormationRule,
     OrgComposedCountRule,
-    OrgDefinitionSpec,
+    OrgDefinition,
     OrgLeafCountRule,
 } from '../org-types';
 
@@ -11,7 +15,7 @@ export const IS_FLIGHT: OrgLeafCountRule = {
     kind: 'leaf-count',
     type: 'Flight',
     priority: 1,
-    modifiers: { 'Under-Strength ': 1, '': 2, 'Reinforced ': 3 },
+    modifiers: { '': 2, 'Reinforced ': 3 },
     commandRank: 'Lieutenant',
     tier: 1,
     unitSelector: 'flightEligible',
@@ -34,7 +38,8 @@ export const IS_WING: OrgComposedCountRule = {
     type: 'Wing',
     modifiers: { 'Under-Strength ': 2, '': 3, 'Reinforced ': 4 },
     commandRank: 'Major',
-    tier: 4,
+    tier: 3,
+    priority: 1,
     childRoles: [{ matches: ['Squadron'] }],
     childBucketBy: 'promotionBasic',
 };
@@ -73,15 +78,15 @@ export const IS_PLATOON: OrgCIFormationRule = {
     commandRank: 'Lieutenant',
     tier: 1,
     entries: [
-        { moveClass: 'foot', troopers: 7, counts: { '': 4 } },
-        { moveClass: 'motorized', troopers: 7, counts: { '': 4 } },
-        { moveClass: 'scuba', troopers: 7, counts: { '': 4 } },
-        { moveClass: 'jump', troopers: 7, counts: { '': 3 } },
-        { moveClass: 'mechanized-vtol', troopers: 5, counts: { '': 4 } },
-        { moveClass: 'mechanized-hover', troopers: 5, counts: { '': 4 } },
-        { moveClass: 'mechanized-wheeled', troopers: 6, counts: { '': 4 } },
-        { moveClass: 'mechanized-tracked', troopers: 7, counts: { '': 4 } },
-        { moveClass: 'mechanized-submarine', troopers: 5, counts: { '': 4 } },
+        { moveClass: 'foot', counts: { '': 4 } },
+        { moveClass: 'motorized', counts: { '': 4 } },
+        { moveClass: 'scuba', counts: { '': 4 } },
+        { moveClass: 'jump', counts: { '': 3 } },
+        { moveClass: 'mechanized-vtol', counts: { '': 4 } },
+        { moveClass: 'mechanized-hover', counts: { '': 4 } },
+        { moveClass: 'mechanized-wheeled', counts: { '': 4 } },
+        { moveClass: 'mechanized-tracked', counts: { '': 4 } },
+        { moveClass: 'mechanized-submarine', counts: { '': 4 } },
     ],
 };
 
@@ -104,9 +109,9 @@ export const IS_AIR_LANCE: OrgComposedCountRule = {
     childBucketBy: 'promotionWithUnitKinds',
 };
 
-export const IS_SINGLE: OrgLeafCountRule = {
+export const IS_UNIT: OrgLeafCountRule = {
     kind: 'leaf-count',
-    type: 'Single',
+    type: 'Unit',
     priority: -1,
     modifiers: { '': 1 },
     tier: 0,
@@ -120,7 +125,7 @@ export const IS_LANCE: OrgLeafCountRule = {
     modifiers: { 'Short ': 2, 'Under-Strength ': 3, '': 4, 'Reinforced ': 5, 'Fortified ': 6 },
     commandRank: 'Lieutenant',
     tier: 1,
-    unitSelector: 'nonInfantry',
+    unitSelector: ['BM', 'CV', 'IM', 'SV'],
     pointModel: 'fixed',
 };
 
@@ -168,7 +173,7 @@ export const IS_BRIGADE: OrgComposedCountRule = {
     childBucketBy: 'promotionBasic',
 };
 
-export const IS_CORE_ORG: OrgDefinitionSpec = {
+export const IS_CORE_ORG: OrgDefinition = {
     rules: [
         IS_FLIGHT,
         IS_SQUADRON,
@@ -176,7 +181,7 @@ export const IS_CORE_ORG: OrgDefinitionSpec = {
         IS_BA_SQUAD,
         IS_BA_PLATOON,
         IS_PLATOON,
-        IS_SINGLE,
+        IS_UNIT,
         IS_LANCE,
         IS_AIR_LANCE,
         IS_COMPANY,

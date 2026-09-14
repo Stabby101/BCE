@@ -14,7 +14,7 @@ import { PilotService } from '../barracks/pilot.service';
 import { CampaignSaveStore } from '../campaign-save-store';
 import { pruneLance, redesignateCommander } from '../force/force-structure';
 import { MARKET_TUNABLES, priceOf, resaleOf, priceIsFallback, evalGates, passesAllGates, overriddenGates, type GateFlags } from '../force/market';
-import type { Unit, WeightClass } from '../../models/units.model';
+import type { UnitSummary as Unit, WeightClass } from '../../models/unit-summary.model';
 import type { TechBase } from '../../models/tech.model';
 import type { ProtoInstance, Provenance } from '../force/force-generator';
 
@@ -30,7 +30,8 @@ export interface BuyRow {
     tons: number;
     bv: number;
     year: number; // intro year
-    techBase: TechBase; // 'Inner Sphere' | 'Clan' | 'Mixed'
+    techBase: TechBase; // 'Inner Sphere' | 'Clan' (REBASE-1: upstream split mixed-tech into the `mixed` flag below)
+    mixed: boolean; // BCE-EDIT (REBASE-1 P1 c): mixed-tech is now a separate boolean on UnitSummary, not a techBase value
     weightClass: WeightClass;
 }
 export interface OwnedRow {
@@ -90,7 +91,7 @@ export class AcquisitionService {
             const gates = evalGates(u, ctx);
             return {
                 unit: u, price: priceOf(u), fallback: priceIsFallback(u), gates, passes: passesAllGates(gates), overrides: overriddenGates(gates),
-                tons: u.tons, bv: u.bv, year: u.year, techBase: u.techBase, weightClass: u.weightClass, // DIRECTIVE-063 (D)
+                tons: u.tons, bv: u.bv, year: u.year, techBase: u.techBase, mixed: u.mixed, weightClass: u.weightClass, // DIRECTIVE-063 (D); REBASE-1: mixed flag
             };
         });
     });

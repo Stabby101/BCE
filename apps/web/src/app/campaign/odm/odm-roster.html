@@ -112,32 +112,72 @@
                                          line 1; the flavor chips (callsign/kin) WRAP to line 2 before the name is crushed. -->
                                     <div class="pmain">
                                         @if (u.pilotId) {
-                                            <button type="button" class="pname pbtn" (click)="detailPilot.set(u.pilotId)" [attr.aria-label]="'Open ' + u.pilotDisplayName + ' personnel file'">{{ u.pilotDisplayName }}</button>
+                                            <!-- ODM-25b: the name WRAPS to two lines instead of truncating, and carries a
+                                                 title either way. "Aldous Bre…" is a person whose name the card refuses
+                                                 to say; an ellipsis is not a rendering choice, it is a lost fact. -->
+                                            <button type="button" class="pname pbtn" (click)="detailPilot.set(u.pilotId)"
+                                                    [title]="u.pilotDisplayName"
+                                                    [attr.aria-label]="'Open ' + u.pilotDisplayName + ' personnel file'">{{ u.pilotDisplayName }}</button>
                                             <span class="skills">{{ u.pilotGp }}</span>
                                         } @else {
                                             <span class="pname">&mdash; no pilot assigned &mdash;</span>
                                         }
-                                        <!-- the ▾ reuses the D-020 assignment list — an opacity:0 select over the chevron (no select text) -->
+                                        <!-- the ▾ reuses the D-020 assignment list — an opacity:0 select over the chevron (no select text).
+                                             ODM-25: the list is now PER MACHINE — pruned to the hull's own trade, every option
+                                             annotated with the person's trade and current posting. -->
                                         <span class="chg">
                                             <span class="chev" aria-hidden="true">▾</span>
-                                            <select class="chgsel" (change)="reassignPilot(u.id, $any($event.target).value)" [attr.aria-label]="u.name + ' — change pilot'">
+                                            <!-- data-inst: the machine this control speaks for. A harness that has to
+                                                 match on a chassis PREFIX cannot tell two hulls of the same name apart,
+                                                 and a test aimed at the wrong control proves nothing about the right one. -->
+                                            <select class="chgsel" [attr.data-inst]="u.id" (change)="reassignPilot(u.id, $any($event.target).value, $any($event.target))" [attr.aria-label]="u.name + ' — change pilot'">
                                                 <option value="" [selected]="!u.pilotId">— no pilot —</option>
-                                                @for (p of pilotOptions(); track p.id) {
+                                                @for (p of pilotOptions(u.trade, u.pilotId); track p.id) {
                                                     <option [value]="p.id" [selected]="p.id === u.pilotId">{{ p.label }}</option>
                                                 }
                                             </select>
                                         </span>
                                     </div>
-                                    @if (u.pilotId || u.captured) {
-                                        <!-- flavor chips — lowest priority; the group wraps to line 2 when line 1 can't fit it.
-                                             Future chips (WIA / ★ favorite, T-030) land here without touching the control. -->
-                                        <span class="pflav">
-                                            @if (u.captured) { <span class="capchip" title="Captured prize — taken on the field (provenance)">★&nbsp;CAPTURED</span> }
-                                            @if (u.perkCount) { <span class="perkchip" title="special pilot abilities on file">★{{ u.perkCount }}</span> }
-                                            @if (u.callsign) { <span class="csign">{{ u.callsign }}</span> }
-                                            @if (u.kin) { <span class="kin" title="kin — shares a family name">⚭<span class="ktx">&nbsp;kin</span></span> }
+                                    <!-- ODM-25b — ROW 2: the flavour chips, and the crew controls as small ICONS pushed
+                                         to the right edge. James asked for "a small radial check box to the right of the
+                                         callsign" and it grew into two labelled buttons on a third row, which is a
+                                         heavier card than the information deserves. Two ~28px icons also make the
+                                         overflow IMPOSSIBLE BY CONSTRUCTION rather than merely absent today: a pair of
+                                         fixed-width glyphs cannot spill a column however narrow the name gets. -->
+                                    <div class="prow2">
+                                        @if (u.pilotId || u.captured) {
+                                            <!-- flavor chips — lowest priority; they compress before the icons do.
+                                                 Future chips (WIA / ★ favorite, T-030) land here without touching the controls. -->
+                                            <span class="pflav">
+                                                @if (u.captured) { <span class="capchip" title="Captured prize — taken on the field (provenance)">★&nbsp;CAPTURED</span> }
+                                                @if (u.perkCount) { <span class="perkchip" title="special pilot abilities on file">★{{ u.perkCount }}</span> }
+                                                @if (u.callsign) { <span class="csign">{{ u.callsign }}</span> }
+                                                @if (u.kin) { <span class="kin" title="kin — shares a family name">⚭<span class="ktx">&nbsp;kin</span></span> }
+                                            </span>
+                                        }
+                                        <span class="picons">
+                                            <!-- THE PRIMARY HULL marker (ruling 4): the CHASSIS this crew calls their own.
+                                                 The glyph carries its own state — ☆ hollow, ★ filled — matching the ★ CMD
+                                                 badge already on this card, so no text label has to say it. Record only;
+                                                 no mechanic reads it yet, ODM-16 is where it earns a number. -->
+                                            <button type="button" class="picon prim" [class.on]="u.primary" [disabled]="!u.pilotId"
+                                                    (click)="togglePrimary(u)" data-testid="odm-primary-hull"
+                                                    [attr.aria-pressed]="u.primary"
+                                                    [attr.aria-label]="u.pilotId ? 'Primary hull for ' + u.pilotDisplayName : 'Primary hull — no crew assigned'"
+                                                    [title]="u.pilotId
+                                                        ? (u.primary ? u.pilotDisplayName + ' calls the ' + u.name + ' their primary hull — press to clear' : 'Mark the ' + u.name + ' as ' + u.pilotDisplayName + '’s primary hull (replaces any other)')
+                                                        : 'No crew assigned — a primary hull is a person’s, so crew this machine first'">{{ u.primary ? '★' : '☆' }}</button>
+                                            <!-- STAND DOWN — ⏏, the pilot leaving the cockpit. Disabled WITH A REASON on a
+                                                 crewless machine rather than hidden: a control that appears and disappears
+                                                 teaches nothing, a titled disabled one explains itself. -->
+                                            <button type="button" class="picon standdown" [disabled]="!u.pilotId"
+                                                    (click)="standDown(u.id)" data-testid="odm-standdown"
+                                                    [attr.aria-label]="u.pilotId ? 'Take ' + u.pilotDisplayName + ' off ' + u.name : 'Stand down — no crew assigned'"
+                                                    [title]="u.pilotId
+                                                        ? 'Stand down — take ' + u.pilotDisplayName + ' off the ' + u.name + '; they return to the spares list and the machine cannot deploy until it is crewed again'
+                                                        : 'No crew to stand down'">⏏</button>
                                         </span>
-                                    }
+                                    </div>
                                 </div>
                             }
                             <!-- CONTROL ROW: condition + lance — labeled, reserved chevron space, ellipsis, ≥40px targets.
@@ -155,7 +195,10 @@
                                     </div>
                                     <div class="ctl">
                                         <label>Lance</label>
-                                        <select class="lsel" (change)="moveTo(u.id, $any($event.target).value)" [attr.aria-label]="u.name + ' lance assignment'">
+                                        <!-- ODM-25b: a <select> cannot wrap, so the title carries the full lance name the
+                                             ellipsis eats. Same reasoning as the pilot name — a truncated value that
+                                             nothing can recover is a fact the card is refusing to say. -->
+                                        <select class="lsel" [title]="u.lanceName" (change)="moveTo(u.id, $any($event.target).value)" [attr.aria-label]="u.name + ' lance assignment'">
                                             @for (l of lanceOptions(); track l.id) { <option [value]="l.id" [selected]="l.id === u.lanceId">{{ l.name }}</option> }
                                             <option [value]="reserveKey" [selected]="u.lanceId === reserveKey">Reserve</option>
                                         </select>
@@ -189,44 +232,64 @@
 <button type="button" class="newlance" (click)="newLance()" aria-label="Create a new empty lance">+ new lance</button>
 }
 
-<!-- DIRECTIVE-IMPORT-7 Part B — Fleet & Transport (named DropShips, fuel bars, the jump-passage tier card) is a Traditional
-     resource-tier mechanic; the Draconis Reach book has NO fuel model (transport = the negotiated SP term + transit time, which the
-     HS brief keeps as its transit line). Traditional byte-unchanged (the @if is the only edit). -->
-@if (!isHotspots()) {
+<!-- DIRECTIVE-ODM-17 P2-e — THE FLEET, real: packs/odm/fleet.json (one-way from the PM canonical-lift
+     master) rendered live (status overlay wins). The fake tier vessels died here. The Iron Covenant's
+     fuel bar IS the ODM-11 fuel card (one tank, never double-tracked); the Leopards' tanks are capacity
+     DATA. Doors are truth: a 0-door hold loads nothing afield. The lift budget derives live (R3). -->
 <div class="cat">
     <div class="cathead"><span>Fleet &amp; transport</span><span class="cnt">{{ fleetCount() }}</span></div>
-    <div class="fleet">
-        @for (v of fleet(); track v.name) {
-            @if (v.kind === 'contract' || v.kind === 'none') {
-                <div class="contracted">↗ {{ v.name }} — {{ v.cls }}@if (v.kind === 'contract') {. (Established tier adds an owned JumpShip w/ K-F charge.)}</div>
-            } @else {
-                <div class="vessel">
-                    <div class="vh">
-                        <div><div class="vn">{{ v.name }}</div><div class="vc">{{ v.cls }}</div></div>
-                        <span class="ftag">{{ v.kind === 'jump' ? 'K-F CHARGE' : 'REACTION FUEL' }}</span>
-                    </div>
+    <div class="fleet" data-testid="odm-fleet-roster">
+        @for (v of fleetVessels(); track v.id) {
+            <div class="vessel">
+                <div class="vh">
+                    <div><div class="vn">{{ v.name }}</div><div class="vc">{{ v.class }} · {{ v.hull }} · {{ v.mass | number }} t</div></div>
+                    <span class="ftag" [class.vgrounded]="v.status !== 'OPERATIONAL'">{{ v.status }}</span>
+                </div>
+                <div class="vspec">
+                    @for (b of v.bays; track $index) { <span>{{ bayLine(b) }}</span> }
+                    @if (v.doorsMax) { <span>{{ doorsLine(v) }}</span> }
+                    @if (v.dockingCollars) { <span>{{ v.dockingCollars }} docking collars (0 spare)</span> }
+                    @if (v.smallCraftBays) { <span>{{ v.smallCraftCapacity ?? v.smallCraftBays }} small craft ({{ v.smallCraftBays }} bay)</span> }
+                    <span>fuel capacity {{ v.fuelCapacityTons }} t</span>
+                    @if (v.thrustPoints) { <span>thrust {{ v.thrustPoints.safe }}/{{ v.thrustPoints.max }}</span> }
+                    @if (v.cargoDiscrepancy) { <span class="vdisc">cargo recorded {{ v.cargoDiscrepancy.recordedTons }} t · current rules ~{{ v.cargoDiscrepancy.currentRulesTons }} t — discrepancy on record, no mechanic banks either</span> }
+                </div>
+                @if (v.id === 'iron-covenant') {
                     <div class="barwrap">
-                        <div class="barlbl"><span>{{ v.kind === 'jump' ? 'Jump charge' : 'Fuel' }}</span><span>{{ v.pct }}%</span></div>
+                        <div class="barlbl"><span>Fuel — the company tank (the Ops card, live)</span><span>{{ icFuel().pct }}%</span></div>
                         <div class="bar">
-                            <div class="fill"
-                                [class.kf]="v.kind === 'jump'"
-                                [class.g]="v.kind !== 'jump' && fuelClass(v.pct ?? 0) === 'g'"
-                                [class.a]="v.kind !== 'jump' && fuelClass(v.pct ?? 0) === 'a'"
-                                [class.r]="v.kind !== 'jump' && fuelClass(v.pct ?? 0) === 'r'"
-                                [style.width.%]="v.pct"></div>
+                            <div class="fill" [class.g]="icFuel().state === 'ok'" [class.a]="icFuel().state === 'amber'" [class.r]="icFuel().state === 'red'" [style.width.%]="icFuel().pct"></div>
                         </div>
                     </div>
-                </div>
-            }
+                } @else if (isJumpShip(v)) {
+                    <div class="barwrap">
+                        <div class="barlbl"><span>K-F drive</span><span>{{ v.status }}</span></div>
+                        <div class="bar"><div class="fill kf" [style.width.%]="v.status === 'OPERATIONAL' ? 100 : 0"></div></div>
+                    </div>
+                }
+                <div class="vnote">{{ v.note }}</div>
+            </div>
+        }
+        @if (!fleetVessels().length) { <div class="contracted">fleet manifest loading…</div> }
+        @if (liftBudget(); as lb) {
+            <div class="liftline" data-testid="odm-lift-budget">LIFT: <b [class.short]="lb.shortTons > 0">{{ lb.shortTons === 0 ? 'one-wave' : lb.waves + '-wave — ' + lb.shortTons + ' t short of one-wave' }}</b> — {{ lb.requiredTons | number }} t of bay tonnage needed ({{ lb.meks }} 'Mechs · {{ lb.lightVehicles }} light + {{ lb.heavyVehicles }} heavy vehicle bays) vs {{ lb.availableTons | number }} t convertible on the operational hulls{{ lb.oversize ? ' · ' + lb.oversize + ' OVERSIZE vehicle(s) priced as cubicles (no TM bin)' : '' }}</div>
+        }
+        @if (fleetOps(); as ops) {
+            <div class="liftline vops" data-testid="odm-fleet-ops">LOADING: ~60 s per unit · {{ ops.throughputRule }} · cargo-ready {{ ops.cargoReadyMinutes }} min (palletized units — bays are faster because doors are the gate)</div>
         }
     </div>
 </div>
-}
 
 @if (explodedFu()) {
     <bce-sheet-modal [fu]="explodedFu()" [title]="explodedTitle()" [abilities]="explodedAbilities()" (close)="closeModal()"></bce-sheet-modal>
 }
 <!-- ODM-1 FORK: the market overlay STRIPPED -->
 @if (detailPilot()) {
-    <bce-pilot-detail [pilotId]="detailPilot()!" (close)="detailPilot.set(null)" />
+    <!-- ODM-25 — the overlay that DISPLAYS a posting can now change it. postingOptions/postingChange are the
+         same caller-supplied override shape as ODM-18 P1's notesText/notesSaved: Classic passes nothing, the
+         control does not exist there, and the shared component stays byte-identical for Traditional and HS. -->
+    <bce-pilot-detail [pilotId]="detailPilot()!" [notesText]="gmNoteFor(detailPilot()!)" (notesSaved)="saveGmNote(detailPilot()!, $event)"
+                      [postingOptions]="postingOptions()" (postingChange)="changePosting(detailPilot()!, $event)"
+                      [tradeOptions]="tradeOptions" (tradeChange)="changeTrade(detailPilot()!, $event)"
+                      (close)="detailPilot.set(null)" />
 }

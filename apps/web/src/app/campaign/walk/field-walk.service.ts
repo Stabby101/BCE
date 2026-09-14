@@ -9,7 +9,7 @@ import { Injectable, computed, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { DataService } from '../../services/data.service';
 import { CampaignSaveStore } from '../campaign-save-store';
-import type { Unit } from '../../models/units.model';
+import type { UnitSummary as Unit } from '../../models/unit-summary.model';
 import type { ProtoInstance } from '../force/force-generator';
 import type { Pilot } from '../barracks/pilot-generator';
 import { deployedSet } from '../force/deployed';

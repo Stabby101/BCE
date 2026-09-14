@@ -1,7 +1,11 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
 import { createOrgRuleRegistry } from '../org-facts.util';
 import type {
     OrgComposedCountRule,
-    OrgDefinitionSpec,
+    OrgDefinition,
     OrgLeafCountRule,
     OrgLeafPatternRule,
     OrgSelectorName,
@@ -29,6 +33,8 @@ export const SOCIETY_BA_UN: OrgLeafCountRule = {
     modifiers: { '': 3 },
     tier: 0,
     unitSelector: 'BA',
+    fragmentType: 'Unit',
+    fragmentTier: -1,
     pointModel: 'fixed',
 };
 
@@ -53,6 +59,8 @@ export const SOCIETY_PM_UN: OrgLeafCountRule = {
     modifiers: { '': 3 },
     tier: 0,
     unitSelector: 'PM',
+    fragmentType: 'Unit',
+    fragmentTier: -1,
     pointModel: 'fixed',
 };
 
@@ -62,6 +70,8 @@ export const SOCIETY_CV_UN: OrgLeafCountRule = {
     modifiers: { '': 7 },
     tier: 0,
     unitSelector: 'CV',
+    fragmentType: 'Unit',
+    fragmentTier: -1,
     pointModel: 'fixed',
 };
 
@@ -71,6 +81,8 @@ export const SOCIETY_AF_UN: OrgLeafCountRule = {
     modifiers: { '': 3 },
     tier: 0,
     unitSelector: 'AF',
+    fragmentType: 'Unit',
+    fragmentTier: -1,
     pointModel: 'fixed',
 };
 
@@ -101,7 +113,7 @@ export const SOCIETY_SEPT: OrgComposedCountRule = {
     childBucketBy: 'promotionBasic',
 };
 
-export const SOCIETY_CORE_ORG: OrgDefinitionSpec = {
+export const SOCIETY_CORE_ORG: OrgDefinition = {
     rules: [
         SOCIETY_BA_UN,
         SOCIETY_CI_UN,

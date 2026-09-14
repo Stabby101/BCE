@@ -1,52 +1,25 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import type { MultiStateSelection } from '../components/multi-select-dropdown/multi-select-dropdown.component';
+import type { DropdownOption, MultiStateSelection } from '../components/multi-select-dropdown/multi-select-dropdown.component';
 import type { GameSystem } from '../models/common.model';
-import type { Unit } from '../models/units.model';
+import type { UnitSummary } from '../models/unit-summary.model';
 import type { WildcardPattern } from './semantic-filter.util';
-import { getAdvOptionsContextSnapshot, getSnapshotAvailabilityNames, getSnapshotAvailableNames, getSnapshotComponentCounts, getSnapshotUnitIds, type AdvOptionsContextSnapshot } from './unit-search-adv-options.util';
+import { getAdvOptionsContextSnapshot, getSnapshotAvailabilityNames, getSnapshotAvailableNames, getSnapshotCountableValues, getSnapshotUnitIds, type AdvOptionsContextSnapshot } from './unit-search-adv-options.util';
 import { applyFilterStateToUnits, type UnitFilterKernelDependencies } from './unit-filter-kernel.util';
 import { matchesSearch, parseSearchQuery } from './search.util';
-import { getNowMs, getProperty } from './unit-search-shared.util';
-import { isComponentBackedDropdown, usesIndexedDropdownAvailability, usesIndexedDropdownUniverse } from './unit-search-filter-config.util';
+import { getNowMs, getProperty, normalizeMultiStateSelection } from './unit-search-shared.util';
+import { isComponentBackedDropdown, isCountableBackedDropdown, usesIndexedDropdownAvailability, usesIndexedDropdownUniverse } from './unit-search-filter-config.util';
 import { sortAvailableDropdownOptions, sortDropdownOptionObjects } from './unit-search-dropdown-sort.util';
-import { AdvFilterType, type AdvFilterConfig, type AdvFilterOptions, type AdvOptionsTelemetryFilterStage, type AdvOptionsTelemetrySnapshot, type FilterState, type SemanticDisplayItem } from '../services/unit-search-filters.model';
+import { AdvFilterType, normalizeTriStateBooleanFilterValue, type AdvFilterConfig, type AdvFilterOptions, type AdvOptionsTelemetryFilterStage, type AdvOptionsTelemetrySnapshot, type FilterState, type SemanticDisplayItem } from '../services/unit-search-filters.model';
+
+const AVAILABILITY_CASCADE_FILTER_KEYS = new Set(['era', 'faction', 'availabilityFrom', 'availabilityRarity']);
 
 interface BuildUnitSearchAdvOptionsRequest {
     advancedFilters: readonly AdvFilterConfig[];
     state: FilterState;
-    units: Unit[];
+    units: UnitSummary[];
     queryText: string;
     textSearch: string;
     isComplexQuery: boolean;
@@ -56,14 +29,19 @@ interface BuildUnitSearchAdvOptionsRequest {
     getUnitFilterKernelDependencies: () => UnitFilterKernelDependencies;
     buildIndexedDropdownOptions: (
         conf: AdvFilterConfig,
-        contextUnits: Unit[],
+        contextUnits: UnitSummary[],
         displayNameFn?: (value: string) => string | undefined,
         contextUnitIds?: ReadonlySet<string>,
-    ) => { name: string; img?: string; displayName?: string; available?: boolean }[];
+    ) => DropdownOption[];
     buildForcePackDropdownOptions: (
         snapshot: AdvOptionsContextSnapshot,
-        contextUnits: Unit[],
+        contextUnits: UnitSummary[],
     ) => { name: string; available: boolean }[];
+    buildCustomDropdownOptions?: (
+        conf: AdvFilterConfig,
+        contextUnits: UnitSummary[],
+        state: FilterState,
+    ) => DropdownOption[] | null;
     getIndexedUniverseNames: (filterKey: string) => string[];
     getSortedIndexedUniverseNames: (conf: AdvFilterConfig) => string[];
     collectIndexedAvailabilityNames: (
@@ -74,12 +52,12 @@ interface BuildUnitSearchAdvOptionsRequest {
     ) => Set<string>;
     collectConstrainedMultistateAvailabilityNames: (
         filterKey: string,
-        units: Unit[],
+        units: UnitSummary[],
         selection: MultiStateSelection,
         isComponentFilter: boolean,
     ) => Set<string> | null;
     getAvailableRangeForUnits: (
-        units: Unit[],
+        units: UnitSummary[],
         conf: AdvFilterConfig,
         fallbackRange: [number, number],
     ) => [number, number];
@@ -236,8 +214,9 @@ export function buildUnitSearchAdvOptions(request: BuildUnitSearchAdvOptionsRequ
             dependencies: request.getUnitFilterKernelDependencies(),
         });
 
-    const contextUnitsCache = new Map<string, Unit[]>();
-    const contextSnapshotCache = new WeakMap<Unit[], AdvOptionsContextSnapshot>();
+    const contextUnitsCache = new Map<string, UnitSummary[]>();
+    const contextSnapshotCache = new WeakMap<UnitSummary[], AdvOptionsContextSnapshot>();
+    let availabilityContextUnits: UnitSummary[] | null = null;
 
     const pushAdvOptionsTelemetry = (
         conf: AdvFilterConfig,
@@ -249,7 +228,11 @@ export function buildUnitSearchAdvOptions(request: BuildUnitSearchAdvOptionsRequ
     ) => {
         const stage: AdvOptionsTelemetryFilterStage = {
             key: conf.key,
-            type: conf.type === AdvFilterType.RANGE ? 'range' : 'dropdown',
+            type: conf.type === AdvFilterType.RANGE
+                ? 'range'
+                : conf.type === AdvFilterType.BOOLEAN
+                    ? 'boolean'
+                    : 'dropdown',
             durationMs: getNowMs() - startedAt,
             contextDerivationMs,
             contextUnitCount,
@@ -300,32 +283,80 @@ export function buildUnitSearchAdvOptions(request: BuildUnitSearchAdvOptionsRequ
             }
         }
 
+        if (request.buildCustomDropdownOptions && AVAILABILITY_CASCADE_FILTER_KEYS.has(conf.key)) {
+            if (!availabilityContextUnits) {
+                const nonAvailabilityState = Object.fromEntries(
+                    Object.entries(request.state).filter(([key, value]) => (
+                        value.interactedWith && !AVAILABILITY_CASCADE_FILTER_KEYS.has(key)
+                    )),
+                ) as FilterState;
+
+                availabilityContextUnits = Object.keys(nonAvailabilityState).length === 0
+                    ? baseUnits
+                    : applyFilterStateToUnits({
+                        units: baseUnits,
+                        state: nonAvailabilityState,
+                        dependencies: request.getUnitFilterKernelDependencies(),
+                    });
+            }
+
+            contextUnits = availabilityContextUnits;
+        }
+
         const contextDerivationMs = getNowMs() - contextDerivationStartedAt;
-        let availableOptions: { name: string; img?: string; displayName?: string; available?: boolean }[] = [];
+        let availableOptions: DropdownOption[] = [];
+
+        if (conf.type === AdvFilterType.BOOLEAN) {
+            const value = normalizeTriStateBooleanFilterValue(
+                filterStateEntry?.interactedWith ? filterStateEntry.value : null,
+            );
+
+            result[conf.key] = {
+                type: 'boolean',
+                label,
+                value,
+                interacted: value !== null,
+                semanticOnly: filterStateEntry?.semanticOnly,
+            };
+            pushAdvOptionsTelemetry(conf, filterStartedAt, contextDerivationMs, contextUnits.length, contextStrategy);
+            continue;
+        }
 
         if (conf.type === AdvFilterType.DROPDOWN) {
             const displayNameFn = (value: string) => request.getDisplayName(conf.key, value);
             const contextSnapshot = getAdvOptionsContextSnapshot(contextSnapshotCache, contextUnits);
             const contextUnitIds = getSnapshotUnitIds(contextSnapshot, contextUnits);
+            const customOptions = request.buildCustomDropdownOptions?.(conf, contextUnits, request.state);
 
-            if (usesIndexedDropdownUniverse(conf) && !conf.multistate) {
+            if (customOptions) {
+                availableOptions = customOptions;
+            } else if (usesIndexedDropdownUniverse(conf) && !conf.multistate) {
                 availableOptions = request.buildIndexedDropdownOptions(conf, contextUnits, displayNameFn, contextUnitIds);
             } else if (conf.multistate) {
                 const isComponentFilter = isComponentBackedDropdown(conf);
+                const isCountableFilter = isCountableBackedDropdown(conf);
                 const currentFilter = request.state[conf.key];
-                const hasQuantityFilters = conf.countable && isComponentFilter
-                    && currentFilter?.interactedWith && currentFilter.value
-                    && Object.values(currentFilter.value as MultiStateSelection).some(selection => selection.count > 1);
+                const normalizedCurrentSelection = currentFilter?.interactedWith
+                    ? normalizeMultiStateSelection(currentFilter.value)
+                    : {};
+                const hasQuantityFilters = conf.countable && isCountableFilter
+                    && Object.values(normalizedCurrentSelection).some(selection =>
+                        selection.count > 1
+                        || selection.countOperator !== undefined
+                        || selection.countMax !== undefined
+                        || selection.countIncludeRanges !== undefined
+                        || selection.countExcludeRanges !== undefined
+                    );
                 const indexedUniverse = usesIndexedDropdownUniverse(conf);
                 const availableNames = indexedUniverse
                     ? request.getIndexedUniverseNames(conf.key)
                     : getSnapshotAvailableNames(contextSnapshot, conf.key, contextUnits, isComponentFilter);
-                const constrainedAvailableNameSet = currentFilter?.interactedWith && currentFilter.value
+                const constrainedAvailableNameSet = Object.keys(normalizedCurrentSelection).length > 0
                     ? request.collectConstrainedMultistateAvailabilityNames(
                         conf.key,
                         contextUnits,
-                        currentFilter.value as MultiStateSelection,
-                        isComponentFilter,
+                        normalizedCurrentSelection,
+                        isCountableFilter,
                     )
                     : null;
 
@@ -335,7 +366,7 @@ export function buildUnitSearchAdvOptions(request: BuildUnitSearchAdvOptionsRequ
                 const availableNameSet = constrainedAvailableNameSet
                     ?? (indexedUniverse
                         ? (usesIndexedDropdownAvailability(conf)
-                            ? request.collectIndexedAvailabilityNames(conf.key, sortedNames, contextUnitIds, isComponentFilter)
+                            ? request.collectIndexedAvailabilityNames(conf.key, sortedNames, contextUnitIds, isCountableFilter)
                             : getSnapshotAvailabilityNames(contextSnapshot, conf.key, contextUnits, isComponentFilter))
                         : getSnapshotAvailabilityNames(contextSnapshot, conf.key, contextUnits, isComponentFilter));
                 const indexedOptionMetadata = indexedUniverse
@@ -347,17 +378,18 @@ export function buildUnitSearchAdvOptions(request: BuildUnitSearchAdvOptionsRequ
 
                 let totalCountsMap: Map<string, number> | null = null;
                 if (hasQuantityFilters) {
-                    totalCountsMap = getSnapshotComponentCounts(contextSnapshot, contextUnits);
+                    totalCountsMap = getSnapshotCountableValues(contextSnapshot, conf.key, contextUnits);
                 }
 
                 const optionsWithAvailability = sortedNames.map(name => {
-                    const normalizedName = isComponentFilter ? name.toLowerCase() : name;
+                    const normalizedName = isCountableFilter ? name.toLowerCase() : name;
                     const metadata = indexedOptionMetadata?.get(name);
-                    const option: { name: string; img?: string; displayName?: string; available: boolean; count?: number } = {
+                    const option: DropdownOption = {
                         name,
                         ...(metadata?.img ? { img: metadata.img } : {}),
                         ...(metadata?.displayName ? { displayName: metadata.displayName } : {}),
-                        available: availableNameSet.has(normalizedName),
+                        ...(metadata?.minimumFieldLabels ? { minimumFieldLabels: metadata.minimumFieldLabels } : {}),
+                        available: availableNameSet.has(normalizedName) || availableNameSet.has(name),
                     };
 
                     if (totalCountsMap) {
@@ -368,26 +400,28 @@ export function buildUnitSearchAdvOptions(request: BuildUnitSearchAdvOptionsRequ
                 });
 
                 const currentFilterValue = filterStateEntry?.interactedWith ? filterStateEntry.value : {};
-                const currentSelection = currentFilterValue as MultiStateSelection;
+                const currentSelection = normalizeMultiStateSelection(currentFilterValue);
                 const wildcardPatternsMultistate = filterStateEntry?.wildcardPatterns;
                 const isExclusiveSemantic = filterStateEntry?.exclusive ?? false;
-                const displayItemsMultistate = currentSelection && typeof currentSelection === 'object'
-                    ? buildSemanticDisplayItems(
-                        currentSelection,
-                        !!conf.countable,
-                        isExclusiveSemantic,
-                        wildcardPatternsMultistate,
-                    )
+                const displayItemsMultistate = buildSemanticDisplayItems(
+                    currentSelection,
+                    !!conf.countable,
+                    isExclusiveSemantic,
+                    wildcardPatternsMultistate,
+                );
+                const displayTextMultistate = displayItemsMultistate
+                    ? semanticDisplayItemsToText(displayItemsMultistate)
                     : undefined;
-                const semanticOnlyMultistate = displayItemsMultistate !== undefined;
+                const semanticOnlyMultistate = filterStateEntry?.semanticOnly ?? (displayItemsMultistate !== undefined);
 
                 result[conf.key] = {
                     type: 'dropdown',
                     label,
                     options: optionsWithAvailability,
-                    value: currentFilterValue,
+                    value: currentSelection,
                     interacted: filterStateEntry?.interactedWith ?? false,
                     semanticOnly: semanticOnlyMultistate,
+                    displayText: displayTextMultistate,
                     displayItems: displayItemsMultistate,
                 };
                 pushAdvOptionsTelemetry(conf, filterStartedAt, contextDerivationMs, contextUnits.length, contextStrategy, optionsWithAvailability);
@@ -426,15 +460,14 @@ export function buildUnitSearchAdvOptions(request: BuildUnitSearchAdvOptionsRequ
             if (wildcardPatterns && wildcardPatterns.length > 0) {
                 semanticOnly = true;
                 if (conf.multistate) {
-                    const selection = filterValue as MultiStateSelection;
-                    if (selection && typeof selection === 'object') {
-                        displayItems = buildSemanticDisplayItems(
-                            selection,
-                            !!conf.countable,
-                            isExclusiveSemantic,
-                            wildcardPatterns,
-                        );
-                    }
+                    const selection = normalizeMultiStateSelection(filterValue);
+                    displayItems = buildSemanticDisplayItems(
+                        selection,
+                        !!conf.countable,
+                        isExclusiveSemantic,
+                        wildcardPatterns,
+                    );
+                    displayText = displayItems ? semanticDisplayItemsToText(displayItems) : undefined;
                 } else {
                     displayText = wildcardPatterns.map(pattern => {
                         const prefix = pattern.state === 'not' ? '!' : '';
@@ -445,8 +478,8 @@ export function buildUnitSearchAdvOptions(request: BuildUnitSearchAdvOptionsRequ
                     }
                 }
             } else if (conf.multistate) {
-                const selection = filterValue as MultiStateSelection;
-                if (selection && typeof selection === 'object') {
+                const selection = normalizeMultiStateSelection(filterValue);
+                if (Object.keys(selection).length > 0) {
                     const activeSelections = Object.entries(selection)
                         .filter(([, selectionValue]) => selectionValue.state !== false);
                     const unavailableSelections = activeSelections.filter(([name]) => !availableOptionNames.has(name));

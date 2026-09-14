@@ -1,53 +1,34 @@
-/*
- * Copyright (C) 2026 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import { signal } from '@angular/core';
-import type { CBTForceUnit } from '../cbt-force-unit.model';
-import type { UnitTypeRules } from './unit-type-rules';
-import type { PSRCheck } from '../turn-state.model';
+import type { CBTForceUnit, EquipmentAction } from '../cbt-force-unit.model';
+import { WeaponEquipment } from '../equipment.model';
+import type { MountedEquipment } from '../mounted-equipment.model';
+import { parseInventoryComponentReference } from '../inventory-component-reference.model';
+import type { MotiveModes } from '../motiveModes.model';
+import { getTargetUnitTypeModifier } from '../target-number-calculator.model';
+import type { TurnState } from '../turn-state.model';
+import type { UnitComponent } from '../unit-summary.model';
+import { UnitTypeRulesBase, type UnitModifierBreakdownEntry } from './unit-type-rules';
+
+export const FIELD_GUN_LOCATION = 'FGUN';
 
 /**
- * Author: Drake
  * 
  * Infantry / Battle Armor game rules.
  */
-export class InfantryRules implements UnitTypeRules {
+export class InfantryRules extends UnitTypeRulesBase {
 
-    constructor(private unit: CBTForceUnit) {}
+    override canPerformEquipmentAction(entry: MountedEquipment, action: EquipmentAction): boolean {
+        return action !== 'fire' || !this.isInfantryFieldGunEntryDisabled(entry);
+    }
+
+    constructor(unit: CBTForceUnit) {
+        super(unit);
+    }
 
     evaluateDestroyed(): void {
-        this.evaluateInventoryDestruction();
-
         let allDestroyed = true;
 
         // Unit destroyed when all troop armor+internal locations are committed-destroyed.
@@ -71,17 +52,45 @@ export class InfantryRules implements UnitTypeRules {
         }
     }
 
-    /** Mark inventory entries as destroyed when the T1 armor location is gone. */
-    evaluateInventoryDestruction(): void {
-        const t1Destroyed = this.unit.isArmorLocDestroyed('T1');
-        for (const entry of this.unit.getInventory()) {
-            if (entry.equipment) {
-                entry.destroyed = t1Destroyed;
-            }
-        }
+    protected override getTargetUnitTypeModifierBreakdown(_turnState: TurnState): UnitModifierBreakdownEntry[] {
+        const baseUnit = this.unit.getUnit();
+        if (baseUnit.subtype !== 'Battle Armor') return [];
+        return [{ label: 'Battle Armor', modifier: getTargetUnitTypeModifier('battle-armor') }];
     }
 
-    /** Infantry does not support PSR. */
-    readonly PSRModifiers = signal<{ modifier: number; modifiers: PSRCheck[] }>({ modifier: 0, modifiers: [] });
-    readonly PSRTargetRoll = signal<number>(0);
+    override getMinDistanceForMoveMode(moveMode: MotiveModes): number | null {
+        if (moveMode === 'jump') return 1;
+        return null;
+    }
+
+    isInfantryFieldGunEntryDisabled(entry: MountedEquipment): boolean {
+        const componentRef = parseInventoryComponentReference(entry.id);
+        const component = this.getFieldGunComponent(entry);
+        if (!component || componentRef === null || componentRef.binIndex === null) return false;
+        return componentRef.binIndex >= this.getFieldGunFunctionalCount(component);
+    }
+
+    getFieldGunFunctionalCount(component: UnitComponent): number {
+        const crewSize = Math.max(1, component.cw ?? 1);
+        const maxGuns = Math.max(0, component.q ?? 0);
+        return Math.min(maxGuns, Math.floor(this.getCommittedInfantryTroopCount() / crewSize));
+    }
+
+    private getCommittedInfantryTroopCount(): number {
+        const totalTroops = this.unit.locations?.internal.get('TROOP')?.points
+            ?? this.unit.getUnit().internal
+            ?? ((this.unit.getUnit().squads ?? 0) * (this.unit.getUnit().squadSize ?? 0));
+        const committedDamage = this.unit.getCommittedInternalHits('TROOP');
+        return Math.max(0, totalTroops - committedDamage);
+    }
+
+    getFieldGunComponent(entry: MountedEquipment): UnitComponent | null {
+        if (this.unit.getUnit().type !== 'Infantry' || this.unit.getUnit().subtype === 'Battle Armor') return null;
+        if (!(entry.equipment instanceof WeaponEquipment)) return null;
+        const componentRef = parseInventoryComponentReference(entry.id);
+        const component = componentRef === null ? undefined : this.unit.getUnit().comp[componentRef.componentIndex];
+        if (!component || component.l !== FIELD_GUN_LOCATION || component.t === 'X') return null;
+        return component;
+    }
+
 }

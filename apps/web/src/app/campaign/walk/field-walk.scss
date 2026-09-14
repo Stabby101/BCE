@@ -55,6 +55,14 @@
 .fw-go { font-family: var(--label); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; font-size: 12px; border: 1.6px solid var(--ok, #3a7d44); background: transparent; color: var(--ok, #3a7d44); padding: 9px 16px; cursor: pointer; min-height: 40px; }
 .fw-go:hover, .fw-go:focus-visible { background: var(--ok, #3a7d44); color: var(--paper); outline: none; }
 
+/* ── DIRECTIVE-ODM-17 P2 — the odm walk's manifest additions (Classic renders none of these; additive). ── */
+.q2 { cursor: default; }
+.fw-total .fw-over { color: var(--stamp); }
+.fw-force { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fw-force input { font-family: var(--mono); font-size: 11px; background: transparent; border: 1.4px solid var(--warn); color: var(--ink); padding: 4px 8px; min-width: 260px; flex: 1; }
+.fw-refusal { font-size: 11px; font-style: normal; color: var(--stamp); border: 1.4px solid var(--stamp); padding: 4px 8px; }
+.fw-go[disabled] { opacity: .45; cursor: not-allowed; }
+
 @media (max-width: 620px) {
     .fw-row { grid-template-columns: 1fr 1fr; gap: 7px; }
     .fw-overlay { padding: 8px; }

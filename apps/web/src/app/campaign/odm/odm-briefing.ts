@@ -113,6 +113,8 @@ export function parsePacket(text: string): Block[] {
             <div class="ob-bar">
                 <label class="ob-pick">Mission
                     <select (change)="onPick($event)">
+                        <!-- TABLE-2 T2-2 — a placeholder for "no active mission" so the box never displays a stale packet when sel is unset. -->
+                        <option value="" [selected]="!sel()">— No active mission —</option>
                         @for (m of missions(); track m.id) { <option [value]="m.id" [selected]="m.id === sel()">{{ m.title }}{{ m.system ? ' — ' + m.system : '' }}{{ m.threat ? ' (' + m.threat + ')' : '' }}</option> }
                     </select>
                 </label>
@@ -124,7 +126,7 @@ export function parsePacket(text: string): Block[] {
                 </div>
                 <!-- ODM-3 addendum C — in-app print: browser-print over the rendered view (build.py = the premium docx path).
                      OPFOR prints only from the GM view — the same gate as rendering (an unrendered doc can't print). -->
-                <button type="button" class="ob-vbtn ob-print" [disabled]="!doc()" (click)="onPrint()" data-testid="ob-print">Ὓ6 Print</button>
+                <button type="button" class="ob-vbtn ob-print" [disabled]="!sel() || !doc()" (click)="onPrint()" data-testid="ob-print">Ὓ6 Print</button>
             </div>
 
             @if (view() === 'opfor') {
@@ -151,6 +153,9 @@ export function parsePacket(text: string): Block[] {
 
             @if (missions().length === 0) {
                 <div class="ob-empty">No mission packets in the pack manifest.</div>
+            } @else if (!sel()) {
+                <!-- TABLE-2 T2-2 — no active mission (never defaults to the manifest's first packet). Pick one to view its briefing. -->
+                <div class="ob-empty" data-testid="ob-noactive">No active mission. Begin an operation on the Missions tab, or pick a mission above to read its briefing.</div>
             } @else if (doc() === null) {
                 <div class="ob-empty">Loading packet…</div>
             } @else if (doc() === '') {
@@ -312,14 +317,27 @@ export class OdmBriefingComponent {
     protected readonly blocks = computed(() => parsePacket(this.doc() || ''));
 
     constructor() {
-        void this.pack.missionIndex().then((ms) => {
+        void (async () => {
+            const ms = await this.pack.missionIndex();
             this.missions.set(ms);
             // ODM-3 — a "View briefing ▸" deep-link (the missions board) pre-selects its packet; one-shot.
             const focus = this.pack.briefingFocus();
             this.pack.briefingFocus.set(null);
-            const pick = focus && ms.some((m) => m.id === focus) ? focus : ms[0]?.id;
+            // TABLE-2 T2-2 — the Briefing tab FOLLOWS THE ACTIVE MISSION, never the manifest's first packet (ms[0]).
+            // On tab re-entry the one-shot focus is already spent, so the old ms[0] fallback reverted to Pale Candle
+            // while a different mission was active. Order now: the deep-link focus → the ACTIVE branch's packet
+            // (odmActiveNodeId, cleared on resolve) → no active mission (empty state). Never ms[0].
+            let activePacket: string | null = null;
+            const activeNodeId = this.state.odmActiveNodeId();
+            if (activeNodeId) {
+                if (!this.odmNodes().length) { const t = await this.pack.treeJson(); this.odmNodes.set((t?.nodes ?? []).map((n) => ({ id: n.id, packet: n.packet }))); }
+                activePacket = this.odmNodes().find((n) => n.id === activeNodeId)?.packet ?? null;
+            }
+            const pick = (focus && ms.some((m) => m.id === focus)) ? focus
+                : (activePacket && ms.some((m) => m.id === activePacket)) ? activePacket
+                : null;
             if (pick) { this.sel.set(pick); void this.loadDoc(); }
-        });
+        })();
     }
 
     protected onPick(e: Event): void { this.sel.set((e.target as HTMLSelectElement).value); void this.loadDoc(); }

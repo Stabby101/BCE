@@ -1,52 +1,24 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { signal, computed, type Injector, type Signal, type WritableSignal } from '@angular/core';
 import type { DataService } from '../services/data.service';
-import type { Unit } from "./units.model";
+import type { UnitSummary } from "./unit-summary.model";
 import type { UnitInitializerService } from '../services/unit-initializer.service';
-import { generateUUID } from '../services/ws.service';
 import type { SerializedUnit } from './force-serialization';
 import type { Force, UnitGroup } from './force.model';
 import type { ForceUnitState } from './force-unit-state.model';
+import type { ConditionData } from './force-unit-state.model';
 import type { CrewMember } from './crew-member.model';
+import { uuidv7 } from '../utils/uuid.util';
+import type { C3Component } from './c3-network.model';
 
-/*
- * Author: Drake
- */
+
 export abstract class ForceUnit {
-    protected unit: Unit; // Original unit data
+    protected unit: UnitSummary; // Original unit data
     private _forceRef = signal<Force>(null!);
+    protected readonly _formationCommander = signal<boolean>(false);
     id: string;
     updatedTs: number = 0;
     initialized = false;
@@ -66,20 +38,22 @@ export abstract class ForceUnit {
     isLoaded: WritableSignal<boolean> = signal(false);
     public disabledSaving: boolean = false;
     phaseTrigger = signal(0); // Used to trigger change detection on phase changes
+    crewTrigger = signal(0); // TABLE-2 T2-3 — bumped on a crew/pilot-hit change so the battle mirror fans a pilot hit ON ITS OWN (crew hits are a plain property, not a signal, so the mirror cannot track them directly)
 
     protected abstract state: ForceUnitState;
 
     readOnly = computed(() => this.force.owned() === false);
+    readonly commander = this._formationCommander.asReadonly();
 
     abstract readonly alias: Signal<string | undefined>;
 
-    constructor(unit: Unit,
+    constructor(unit: UnitSummary,
         force: Force,
         dataService: DataService,
         unitInitializer: UnitInitializerService,
         injector: Injector
     ) {
-        this.id = generateUUID();
+        this.id = uuidv7();
         this.force = force;
         this.unit = unit;
 
@@ -95,6 +69,12 @@ export abstract class ForceUnit {
 
     getDisplayName() {
         return (this.unit.chassis + ' ' + this.unit.model).trim();
+    }
+
+    getNotificationDisplayName() {
+        const pilotName = this.alias()?.trim();
+        const unitName = this.getDisplayName();
+        return pilotName ? `${unitName} (${pilotName})` : unitName;
     }
 
     get modified(): boolean {
@@ -117,11 +97,42 @@ export abstract class ForceUnit {
     }
 
     get shutdown(): boolean {
-        return this.state.shutdown();
+        return this.state.hasCondition('shutdown');
     }
 
-    setShutdown(shutdown: boolean) {
-        this.state.shutdown.set(shutdown);
+    get conditions(): ReadonlyMap<string, ConditionData | undefined> {
+        return this.state.conditions();
+    }
+
+    getConditions(): ReadonlyMap<string, ConditionData | undefined> {
+        return this.state.conditions();
+    }
+
+    getCondition(condition: string): boolean {
+        return this.state.hasCondition(condition);
+    }
+
+    /** Runtime availability hook used by the force-level C3 graph. */
+    isC3EndpointOperational(_componentIndex: number, _component?: C3Component): boolean {
+        return !this.destroyed;
+    }
+
+    /** CBT overrides this; Alpha Strike does not apply CBT C3 jamming rules. */
+    isC3Jammed(): boolean {
+        return false;
+    }
+
+    isComputedCondition(_condition: string): boolean {
+        return false;
+    }
+
+    hasComputedCondition(_condition: string): boolean {
+        return false;
+    }
+
+    setCondition(condition: string, active: boolean) {
+        if (!this.state.setCondition(condition, active)) return;
+        this.setModified();
     }
 
     /** Get/set the C3 visual editor position for this unit */
@@ -133,7 +144,18 @@ export abstract class ForceUnit {
         this.state.c3Position.set(pos);
     }
 
-    getUnit(): Unit {
+    setFormationCommander(value: boolean, markModified: boolean = true): void {
+        if (this._formationCommander() === value) {
+            return;
+        }
+
+        this._formationCommander.set(value);
+        if (markModified) {
+            this.setModified();
+        }
+    }
+
+    getUnit(): UnitSummary {
         return this.unit;
     }
 
@@ -144,6 +166,12 @@ export abstract class ForceUnit {
     }
 
     abstract getBaseBv: Signal<number>;
+
+    /** BV/PV after force modifiers, retaining precision for the final skill adjustment. */
+    abstract getPreSkillBv: Signal<number>;
+
+    /** Display BV/PV including force modifiers and final rounding, without pilot skills. */
+    abstract readonly baseAdjustedBv: Signal<number>;
 
     abstract getBv: Signal<number>;
 
@@ -160,17 +188,17 @@ export abstract class ForceUnit {
 
     /** Deserialize a plain object to a ForceUnit instance - must be implemented by subclasses */
     public static deserialize(
-        data: SerializedUnit,
-        force: Force,
-        dataService: DataService,
-        unitInitializer: UnitInitializerService,
-        injector: Injector
+        _data: SerializedUnit,
+        _force: Force,
+        _dataService: DataService,
+        _unitInitializer: UnitInitializerService,
+        _injector: Injector
     ): ForceUnit {
         throw new Error('ForceUnit.deserialize must be implemented by subclass');
     }
 
-    public getAvailableEquipment() {
-        return this.dataService.getEquipments();
+    public getEquipmentRegistry() {
+        return this.dataService.getEquipmentRegistry();
     }
 
 }

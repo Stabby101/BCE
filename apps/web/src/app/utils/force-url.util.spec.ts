@@ -1,8 +1,13 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
 import { GameSystem } from '../models/common.model';
 import type { Force } from '../models/force.model';
 import type { ForceUnit } from '../models/force-unit.model';
-import type { Unit } from '../models/units.model';
-import { parseForceFromUrl } from './force-url.util';
+import type { UnitSummary } from '../models/unit-summary.model';
+import { createEmptyUnit } from '../testing/unit-test-helpers';
+import { buildMultiForceQueryParams, parseForceFromUrl } from './force-url.util';
 
 type WritableArraySignal<T> = (() => T[]) & { set: (next: T[]) => void };
 
@@ -36,7 +41,7 @@ function createMockForce(): Force {
             groups.push(group);
             return group;
         }),
-        addUnit: jasmine.createSpy('addUnit').and.callFake((unit: Unit) => {
+        addUnit: jasmine.createSpy('addUnit').and.callFake((unit: UnitSummary) => {
             const forceUnit = {
                 id: `force-unit-${nextForceUnitId++}`,
                 getUnit: () => unit
@@ -53,11 +58,23 @@ describe('force URL parsing', () => {
     it('parses units by name by default', () => {
         const force = createMockForce();
         const units = [
-            { name: 'BMAtlas_AS7D', id: 140 } as Unit,
-            { name: 'BMLocust_LCT1V', id: 1901 } as Unit
+            createEmptyUnit({ name: 'BMAtlas_AS7D', id: 140 }),
+            createEmptyUnit({ name: 'BMLocust_LCT1V', id: 1901 })
         ];
 
         const forceUnits = parseForceFromUrl(force, 'BMAtlas_AS7D,BMLocust_LCT1V', units);
+
+        expect(forceUnits.map(unit => unit.getUnit().name)).toEqual(['BMAtlas_AS7D', 'BMLocust_LCT1V']);
+    });
+
+    it('parses units by name without matching case exactly', () => {
+        const force = createMockForce();
+        const units = [
+            createEmptyUnit({ name: 'BMAtlas_AS7D', id: 140 }),
+            createEmptyUnit({ name: 'BMLocust_LCT1V', id: 1901 })
+        ];
+
+        const forceUnits = parseForceFromUrl(force, 'bmatlas_as7d,bmlocust_lct1v', units);
 
         expect(forceUnits.map(unit => unit.getUnit().name)).toEqual(['BMAtlas_AS7D', 'BMLocust_LCT1V']);
     });
@@ -66,9 +83,9 @@ describe('force URL parsing', () => {
         const force = createMockForce();
         const logger = { warn: jasmine.createSpy('warn') };
         const units = [
-            { name: 'BMAtlas_AS7D', id: 140 } as Unit,
-            { name: 'BMAtlas_AS7K', id: 144 } as Unit,
-            { name: 'BMLocust_LCT1V', id: 1901 } as Unit
+            createEmptyUnit({ name: 'BMAtlas_AS7D', id: 140 }),
+            createEmptyUnit({ name: 'BMAtlas_AS7K', id: 144 }),
+            createEmptyUnit({ name: 'BMLocust_LCT1V', id: 1901 })
         ];
 
         const forceUnits = parseForceFromUrl(force, 'Alpha~140,1901', units, logger, 'mulId');
@@ -78,5 +95,19 @@ describe('force URL parsing', () => {
         expect(groups[1]?.name.set).toHaveBeenCalledWith('Alpha');
         expect(groups[1]?.units().map(unit => unit.getUnit().name)).toEqual(['BMAtlas_AS7D', 'BMLocust_LCT1V']);
         expect(logger.warn).not.toHaveBeenCalled();
+    });
+});
+
+describe('force URL serialization', () => {
+    it('omits session-only lobby forces', () => {
+        const persistedForce = { instanceId: () => 'persisted-force' } as unknown as Force;
+        const lobbyForce = { instanceId: () => 'lobby-force' } as unknown as Force;
+
+        const params = buildMultiForceQueryParams([
+            { force: persistedForce, alignment: 'friendly', changeSub: null },
+            { force: lobbyForce, alignment: 'enemy', changeSub: null, persistInUrl: false },
+        ]);
+
+        expect(params.instance).toBe('persisted-force');
     });
 });

@@ -1,35 +1,6 @@
-/*
- * Copyright (C) 2026 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
@@ -38,7 +9,6 @@ import { FormationInfoComponent } from '../formation-info/formation-info.compone
 import type { GameSystem } from '../../models/common.model';
 
 /*
- * Author: Drake
  *
  * Dialog that shows full formation details and abilities.
  * Opened from the (i) icon in the force-builder-viewer group header.
@@ -56,8 +26,18 @@ export interface FormationInfoDialogData {
     isValid?: boolean;
     /** Whether organization-level units were ignored while checking requirements */
     requirementsFiltered?: boolean;
+    /** Optional org composition name that caused requirement filtering */
+    requirementsFilterCompositionName?: string;
     /** Optional notice describing which structural units were ignored */
     requirementsFilterNotice?: string;
+    /** Eligible concrete groups for formations that copy another formation's bonus. */
+    formationTargetOptions?: readonly { id: string; label: string }[];
+    formationTargetGroupId?: string | null;
+    formationTargetEditable?: boolean;
+}
+
+export interface FormationInfoDialogResult {
+    formationTargetGroupId: string | null;
 }
 
 @Component({
@@ -72,9 +52,28 @@ export interface FormationInfoDialogData {
         <div class="content">
             <h2 dialog-title>{{ data.formationDisplayName || data.formation.name }}</h2>
             <div dialog-content>
-                <formation-info [formation]="data.formation" [gameSystem]="data.gameSystem" [unitCount]="data.unitCount" [isValid]="data.isValid" [requirementsFiltered]="data.requirementsFiltered ?? false" [requirementsFilterNotice]="data.requirementsFilterNotice" [showTitle]="false"></formation-info>
+                <formation-info [formation]="data.formation" [gameSystem]="data.gameSystem" [unitCount]="data.unitCount" [isValid]="data.isValid" [requirementsFiltered]="data.requirementsFiltered ?? false" [requirementsFilterCompositionName]="data.requirementsFilterCompositionName" [requirementsFilterNotice]="data.requirementsFilterNotice" [showTitle]="false"></formation-info>
+                @if (data.formationTargetOptions) {
+                    <div class="formation-target">
+                        <label for="formation-target-group">Supported formation</label>
+                        <select id="formation-target-group" class="bt-select formation-target-select" [value]="selectedTargetGroupId ?? ''" [disabled]="data.formationTargetEditable === false" (change)="onTargetChange($event)">
+                            <option value="" [selected]="!selectedTargetGroupId">Select a formation</option>
+                            @for (option of data.formationTargetOptions; track option.id) {
+                                <option [value]="option.id" [selected]="option.id === selectedTargetGroupId">{{ option.label }}</option>
+                            }
+                        </select>
+                        @if (data.formationTargetEditable !== false && data.formationTargetOptions.length === 0) {
+                            <div class="formation-target-warning">No eligible formation is available in this force.</div>
+                        } @else if (data.formationTargetEditable !== false && !selectedTargetGroupId) {
+                            <div class="formation-target-warning">Select the formation whose assigned abilities this formation copies.</div>
+                        }
+                    </div>
+                }
             </div>
             <div dialog-actions>
+                @if (data.formationTargetOptions && data.formationTargetEditable !== false) {
+                    <button (click)="apply()" class="bt-button">APPLY</button>
+                }
                 <button (click)="close()" class="bt-button">DISMISS</button>
             </div>
         </div>
@@ -112,6 +111,29 @@ export interface FormationInfoDialogData {
             min-width: 100px;
         }
 
+        .formation-target {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 14px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .formation-target label {
+            font-weight: 700;
+        }
+
+        .formation-target-select {
+            width: 100%;
+        }
+
+        .formation-target-warning {
+            color: var(--bt-orange, #f2a900);
+            font-size: 0.85em;
+        }
+
         .formation-warning {
             display: flex;
             align-items: center;
@@ -135,6 +157,15 @@ export interface FormationInfoDialogData {
 export class FormationInfoDialogComponent {
     public dialogRef = inject(DialogRef);
     readonly data: FormationInfoDialogData = inject(DIALOG_DATA) as FormationInfoDialogData;
+    selectedTargetGroupId: string | null = this.data.formationTargetGroupId ?? null;
+
+    onTargetChange(event: Event): void {
+        this.selectedTargetGroupId = (event.target as HTMLSelectElement).value || null;
+    }
+
+    apply(): void {
+        this.dialogRef.close({ formationTargetGroupId: this.selectedTargetGroupId } satisfies FormationInfoDialogResult);
+    }
 
     close(): void {
         this.dialogRef.close();

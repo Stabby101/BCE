@@ -1,42 +1,14 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-// BCE-EDIT (DEPLOY-004): REMOTE_HOST is now ENV-RESOLVED at module load (mirrors the engine-URL pattern).
-// Everything MekBay fetches (units/factions/eras JSON, /sheets SVGs, /images crests + fluff) hangs off this
-// one constant, so resolving it to OUR same-origin /mekbay on a hosted (non-localhost/LAN) origin routes all
-// of it through the Cloudflare edge-cache proxy (functions/mekbay/[[path]].js) — users never hit
+// BCE-EDIT (DEPLOY-004; REBASE-1 P1 c ruling #3 — overlay on the pin's REMOTE_HOST): REMOTE_HOST is
+// ENV-RESOLVED at module load. Everything MekBay fetches (units/factions/eras JSON, /sheets SVGs, /images
+// crests + fluff) hangs off this one constant, so resolving it to OUR same-origin /mekbay on a hosted
+// (non-localhost/LAN) origin routes all of it through the Cloudflare edge-cache proxy — users never hit
 // db.mekbay.com at runtime. Dev/LAN keeps the db.mekbay.com default UNCHANGED. Override: localStorage
-// 'bce.remote.host'. Falls back to db.mekbay.com if anything is unavailable (SSR/no-window).
+// 'bce.remote.host'. Falls back to db.mekbay.com if anything is unavailable (SSR/no-window). HOTFIX-028's
+// law (never derive on public, only replace unreachable values) is proven by verify-hf028 at P2.
 function resolveRemoteHost(): string {
     try {
         const override = localStorage.getItem('bce.remote.host');
@@ -51,6 +23,33 @@ function resolveRemoteHost(): string {
 }
 export const REMOTE_HOST = resolveRemoteHost();
 
+/**
+ * Resolves the base host a given unit's assets (record-sheet SVGs and fluff art)
+ * should be loaded from. Units imported from a user-supplied additional unit server
+ * carry a `serverHost`; everything else defaults to the canonical {@link REMOTE_HOST}.
+ */
+export function getUnitServerHost(unit: { serverHost?: string } | null | undefined): string {
+    return unit?.serverHost || REMOTE_HOST;
+}
+
+/**
+ * Normalizes a user-supplied unit server base URL: trims whitespace and removes any
+ * trailing slashes. Returns an empty string when the input is not a valid http(s) URL.
+ */
+export function normalizeUnitServerUrl(url: string): string {
+    const trimmed = (url ?? '').trim().replace(/\/+$/, '');
+    try {
+        const parsed = new URL(trimmed);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            return '';
+        }
+        // Preserve pathname (to allow hosting under a sub-path), but drop query/hash and trailing slashes.
+        return `${parsed.origin}${parsed.pathname}`.replace(/\/+$/, '');
+    } catch {
+        return '';
+    }
+}
+
 export enum GameSystem {
     CLASSIC = 'cbt',
     ALPHA_STRIKE = 'as'
@@ -61,15 +60,31 @@ export enum Rulebook {
     ASC = "Alpha Strike: Companion",
     ASC_ERR16 = "Alpha Strike Companion Errata v1.6 (2022)",
     BOT = "Battle of Tukayyid",
-    CO = "BattleTech: Campaign Operations"
+    CO = "BattleTech: Campaign Operations",
+    FMD = "Force Manual: Davion",
+    FMK = "Force Manual: Kurita",
+    FMMERC = "Force Manual: Mercenaries",
+    EA = "Empire Alone",
+    TR = "Tamar Rising",
+    DD = "Dominions Divided",
+    IEO = "IlKhan's Eyes Only"
 }
 
 /**
- * A reference to a specific rulebook and page number.
+ * A reference to a specific rulebook and page number or numbers.
  */
 export interface RulesReference {
     book: Rulebook;
-    page: number;
+    page: number | number[];
+}
+
+export function formatRulesPages(page: RulesReference['page']): string {
+    return Array.isArray(page) ? page.join(', ') : String(page);
+}
+
+export function formatRulesReference(reference: RulesReference): string {
+    const pageLabel = Array.isArray(reference.page) ? 'pp.' : 'p.';
+    return `${reference.book}, ${pageLabel}${formatRulesPages(reference.page)}`;
 }
 
 export enum ECMMode {
@@ -126,12 +141,3 @@ export const uidTranslations: { [key: string]: string } = {
     'Landing Gear': 'landing_gear_hit_',
     'Cockpit': 'cockpit_hit_',
 };
-
-
-export const linkedLocs: { [key: string]: string[] } = {
-    'RT': ['RA'],
-    'LT': ['LA'],
-};
-
-export const LEG_LOCATIONS = new Set(['LL', 'RL', 'CL', 'FRL', 'FLL', 'RRL', 'RLL']);
-export const FOUR_LEGGED_LOCATIONS = new Set(['FRL', 'FLL', 'RRL', 'RLL']);

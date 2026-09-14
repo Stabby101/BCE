@@ -7,7 +7,7 @@ import { MulAllowlistService } from './mul-allowlist.service'; // D-127 — the 
 import { purchaseSP, sellSP } from './chaos-sp-costs';
 import { hasMechDamage } from '../repair/repair-bays'; // PURE module helper (NOT the Traditional service)
 import type { ProtoInstance } from '../force/force-generator';
-import type { Unit } from '../../models/units.model';
+import type { UnitSummary as Unit } from '../../models/unit-summary.model';
 
 /**
  * DIRECTIVE-112 — the Chaos Market (buy/sell) tab, Hot Spots fork only. Clean-room: it spends Support Points via

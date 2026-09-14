@@ -1,45 +1,17 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import type { Unit, PublicTagInfo } from '../../models/units.model';
-import { UnitSearchFiltersService } from '../../services/unit-search-filters.service';
+import type { UnitSummary, PublicTagInfo, UnitTagEntry } from '../../models/unit-summary.model';
 import { PublicTagsService } from '../../services/public-tags.service';
+import { TagsService } from '../../services/tags.service';
+import { naturalCompare } from '../../utils/sort.util';
 
 /** Event data emitted when the tag button is clicked */
 export interface TagClickEvent {
-    unit: Unit;
+    unit: UnitSummary;
     event: MouseEvent;
 }
 
@@ -55,12 +27,12 @@ export interface TagClickEvent {
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [CommonModule],
     templateUrl: './unit-tags.component.html',
-    styleUrl: './unit-tags.component.css'
+    styleUrl: './unit-tags.component.scss'
 })
 export class UnitTagsComponent {
-    private filtersService = inject(UnitSearchFiltersService);
     private publicTagsService = inject(PublicTagsService);
-    unit = input.required<Unit>();
+    private tagsService = inject(TagsService);
+    unit = input.required<UnitSummary>();
 
     /** 
      * Display mode:
@@ -69,33 +41,43 @@ export class UnitTagsComponent {
      */
     mode = input<'compact' | 'full'>('compact');
 
+    enableTagsEditing = input(true);
+
     /** Emitted when the add/edit tag button is clicked. Passes both the unit and MouseEvent for overlay positioning. */
     tagClick = output<TagClickEvent>();
 
-    /** Name tags derived from unit, invalidated when tagsVersion changes */
-    nameTags = computed(() => {
-        this.filtersService.tagsVersion(); // dependency for cache invalidation
-        return [...(this.unit()._nameTags ?? [])];
+    /** Quantity-aware name tags for full-mode rendering */
+    nameTagEntries = computed((): UnitTagEntry[] => {
+        this.tagsService.version();
+        const tags = [...(this.unit()._nameTags ?? [])];
+        return this.mode() === 'full' ? tags.sort((left, right) => naturalCompare(left.tag, right.tag)) : tags;
     });
 
-    /** Chassis tags derived from unit, invalidated when tagsVersion changes */
-    chassisTags = computed(() => {
-        this.filtersService.tagsVersion(); // dependency for cache invalidation
-        return [...(this.unit()._chassisTags ?? [])];
+    /** Quantity-aware chassis tags for full-mode rendering */
+    chassisTagEntries = computed((): UnitTagEntry[] => {
+        this.tagsService.version();
+        const tags = [...(this.unit()._chassisTags ?? [])];
+        return this.mode() === 'full' ? tags.sort((left, right) => naturalCompare(left.tag, right.tag)) : tags;
     });
 
     /** Public tags from other users (temporary or subscribed) */
     publicTags = computed((): PublicTagInfo[] => {
-        this.filtersService.tagsVersion(); // dependency for cache invalidation
         this.publicTagsService.version(); // dependency for public tags updates
-        return this.publicTagsService.getPublicTagsForUnit(this.unit());
+        const tags = this.publicTagsService.getPublicTagsForUnit(this.unit());
+        return this.mode() === 'full'
+            ? [...tags].sort((left, right) => naturalCompare(left.tag, right.tag) || naturalCompare(left.publicId, right.publicId))
+            : tags;
     });
 
-    totalTagCount = computed(() => this.nameTags().length + this.chassisTags().length + this.publicTags().length);
+    totalTagCount = computed(() => this.nameTagEntries().length + this.chassisTagEntries().length + this.publicTags().length);
     hasTags = computed(() => this.totalTagCount() > 0);
 
     onTagClick(event: MouseEvent): void {
         event.stopPropagation();
         this.tagClick.emit({ unit: this.unit(), event });
+    }
+
+    formatTagEntry(entry: UnitTagEntry): string {
+        return entry.quantity > 1 ? `${entry.tag} (${entry.quantity})` : entry.tag;
     }
 }

@@ -6,6 +6,7 @@ import { WarchestService } from './warchest.service';
 import { repairSP, rearmSP, healMechWarriorSP, type RepairLevel } from './chaos-sp-costs';
 import { resolved, supportCoverFraction } from './chaos-contract'; // D-110 — employer Cover under a Support term
 import { hasMechDamage } from '../repair/repair-bays'; // PURE module helper (NOT the Traditional service)
+import { hsDamaged } from '../battle/hs-damage'; // PD3 P1 — the ONE HS damage truth (repair list · header badge · rail stop)
 import type { ProtoInstance } from '../force/force-generator';
 import type { Pilot } from '../barracks/pilot-generator';
 
@@ -165,12 +166,12 @@ export class ChaosRepairComponent {
     /** Units carrying repairable damage (mech crit/armor/internal, or a destroyed flag on any unit type). */
     protected readonly repairList = computed<RepairRow[]>(() =>
         (this.state.startingForce() ?? [])
-            .filter((i) => hasMechDamage(i.damage) || !!i.damage?.destroyed || !!i.chaosDamage) // D-110d — tabletop-flagged too
+            .filter((i) => hsDamaged(i)) // D-110d tabletop-flagged too · PD3 P1 — the same predicate the badge + rail count
             .map((inst) => {
                 const level = this.chaosRepairLevel(inst);
                 const unit = this.data.getUnitByName(inst.unitRef);
                 const cost = repairSP(level, inst.tons, {
-                    clanOrMixed: unit?.techBase === 'Clan' || unit?.techBase === 'Mixed',
+                    clanOrMixed: unit?.techBase === 'Clan' || unit?.mixed === true, // REBASE-1: mixed-tech is the `mixed` flag now, not a techBase value
                     vehicleOrBattleArmor: (inst.unitType ?? 'mech') !== 'mech',
                 });
                 return { inst, level, cost };
@@ -193,7 +194,7 @@ export class ChaosRepairComponent {
     protected money(n: number): string { return Math.round(n).toLocaleString('en-US'); }
     /** D-110 — the employer's reimbursement (Cover) for a cost under the active contract's Support term. */
     protected coverFor(cost: number): number {
-        const c = this.state.activeChaosContract();
+        const c = this.state.contractFor(); // GM-2 P2a — through the ONE accessor
         if (!c || c.status !== 'active') return 0;
         return Math.round(cost * supportCoverFraction(resolved(c.steps).support));
     }

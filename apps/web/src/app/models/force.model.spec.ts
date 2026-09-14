@@ -1,0 +1,378 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
+import type { Injector } from '@angular/core';
+import { GameSystem } from './common.model';
+import type { Era } from './eras.model';
+import type { Faction } from './factions.model';
+import { Force, buildEraWarningMessage, getEraUnitValidationSummary } from './force.model';
+import type { ForceUnit } from './force-unit.model';
+import type { SerializedForce, SerializedUnit } from './force-serialization';
+import type { UnitSummary } from './unit-summary.model';
+import type { DataService } from '../services/data.service';
+import type { UnitInitializerService } from '../services/unit-initializer.service';
+import { createEmptyUnit } from '../testing/unit-test-helpers';
+import type { ForceAvailabilityContext } from '../utils/force-availability.util';
+import { NO_FORMATION } from '../utils/formation-type.model';
+import { C3NetworkType } from './c3-network.model';
+
+function createUnit(id: number, name: string, year: number): UnitSummary {
+    return createEmptyUnit({
+        id,
+        name,
+        chassis: 'Test',
+        model: 'Unit',
+        year,
+    });
+}
+
+function createForceUnit(unit: UnitSummary): ForceUnit {
+    return {
+        getUnit: () => unit,
+        getDisplayName: () => unit.name,
+    } as ForceUnit;
+}
+
+function createEra(id: number, from: number, to: number): Era {
+    return {
+        id,
+        name: `Era ${id}`,
+        years: { from, to },
+        factions: new Set<number>(),
+        units: new Set<number>(),
+    };
+}
+
+function createFaction(id: number, name: string): Faction {
+    return {
+        id,
+        name,
+        group: 'Inner Sphere',
+        img: '',
+        eras: {},
+    };
+}
+
+function createSerializedUnit(id: string): SerializedUnit {
+    return {
+        id,
+        unit: 'Test Unit',
+        state: {
+            modified: false,
+            destroyed: false,
+        },
+    };
+}
+
+function createStubDeserializedUnit(data: SerializedUnit): ForceUnit {
+    const unit = createUnit(1, data.unit, 3025);
+
+    return {
+        id: data.id,
+        destroy: () => undefined,
+        update: () => undefined,
+        getUnit: () => unit,
+        getDisplayName: () => unit.name,
+        getBv: () => 0,
+        serialize: () => data,
+    } as unknown as ForceUnit;
+}
+
+class TestForce extends Force<ForceUnit> {
+    override gameSystem = GameSystem.CLASSIC;
+
+    constructor() {
+        const dataService = {
+            getFactionById: () => null,
+            getEraById: () => null,
+            getEras: () => [],
+        } as unknown as DataService;
+        const unitInitializer = {} as UnitInitializerService;
+        const injector = {
+            get: () => ({
+                warn: () => undefined,
+                error: () => undefined,
+            }),
+        } as unknown as Injector;
+
+        super('Test Force', dataService, unitInitializer, injector);
+    }
+
+    protected override createForceUnit(_unit: UnitSummary): ForceUnit {
+        throw new Error('Not used in TestForce');
+    }
+
+    protected override deserializeForceUnit(data: SerializedUnit): ForceUnit {
+        return createStubDeserializedUnit(data);
+    }
+
+    protected override transferPilotData(_fromUnit: ForceUnit, _toUnit: ForceUnit): void {
+    }
+
+    protected override sanitizeForceData(data: SerializedForce): SerializedForce {
+        return data;
+    }
+
+    protected override deserializeFrom(serialized: SerializedForce): Force<ForceUnit> {
+        const force = new TestForce();
+        force.loadSerialized(serialized);
+        return force;
+    }
+
+    loadSerialized(data: SerializedForce): void {
+        this.populateFromSerialized(data);
+    }
+}
+
+function createSerializedForce(groups: SerializedForce['groups']): SerializedForce {
+    return {
+        version: 1,
+        timestamp: new Date().toISOString(),
+        instanceId: 'force-id',
+        type: GameSystem.CLASSIC,
+        name: 'Test Force',
+        groups: groups ?? [],
+    };
+}
+
+describe('getEraUnitValidationSummary', () => {
+    it('treats context-provided extinct units as extinct even when they are absent from visible era units', () => {
+        const selectedEra = createEra(3025, 3025, 3049);
+        const earlierEra = createEra(3000, 3000, 3024);
+        const extinctFaction = createFaction(3, 'Extinct');
+        const unit = createUnit(101, 'Shadow Hawk SHD-2H', 3020);
+
+        const visibilityByEra = new Map<number, ReadonlySet<string>>([
+            [earlierEra.id, new Set([unit.name])],
+            [selectedEra.id, new Set()],
+        ]);
+        const extinctByEra = new Map<number, ReadonlySet<string>>([
+            [selectedEra.id, new Set([unit.name])],
+        ]);
+
+        const availabilityContext: ForceAvailabilityContext = {
+            source: 'megamek',
+            getUnitKey: (candidate) => candidate.name,
+            getVisibleEraUnitIds: (era) => visibilityByEra.get(era.id) ?? new Set<string>(),
+            getFactionUnitIds: () => new Set<string>(),
+            getFactionEraUnitIds: (faction, era) => faction.id === extinctFaction.id
+                ? (extinctByEra.get(era.id) ?? new Set<string>())
+                : new Set<string>(),
+        };
+
+        const summary = getEraUnitValidationSummary(
+            [createForceUnit(unit)],
+            selectedEra,
+            [earlierEra, selectedEra],
+            extinctFaction,
+            availabilityContext
+        );
+
+        expect(summary.extinctTrackedUnits).toBe(1);
+        expect(summary.extinctTrackedUnitNames).toEqual([unit.name]);
+        expect(summary.invalidTrackedUnits).toBe(0);
+    });
+});
+
+describe('buildEraWarningMessage', () => {
+    it('accepts a custom faction-exists predicate for force-scoped availability contexts', () => {
+        const selectedEra = createEra(3025, 3025, 3049);
+        const unit = createUnit(101, 'Phoenix Hawk PXH-1', 3020);
+        const faction = createFaction(11, 'Context Faction');
+
+        const availabilityContext: ForceAvailabilityContext = {
+            source: 'megamek',
+            getUnitKey: (candidate) => candidate.name,
+            getVisibleEraUnitIds: () => new Set([unit.name]),
+            getFactionUnitIds: () => new Set<string>(),
+            getFactionEraUnitIds: () => new Set<string>(),
+        };
+
+        const warning = buildEraWarningMessage(
+            [createForceUnit(unit)],
+            selectedEra,
+            faction,
+            [selectedEra],
+            null,
+            availabilityContext,
+            () => true,
+        );
+
+        expect(warning).toBeNull();
+    });
+});
+
+describe('Force formation deserialization', () => {
+    it('loads locked groups without a formation id as NO_FORMATION', () => {
+        const force = new TestForce();
+
+        force.loadSerialized(createSerializedForce([
+            {
+                id: 'group-1',
+                formationLock: true,
+                units: [],
+            },
+        ]));
+
+        expect(force.groups()[0].formation()).toBe(NO_FORMATION);
+        expect(force.groups()[0].formationLock).toBeTrue();
+    });
+
+    it('updates existing groups without a formation id to NO_FORMATION when locked', () => {
+        const force = new TestForce();
+
+        force.loadSerialized(createSerializedForce([
+            {
+                id: 'group-1',
+                units: [],
+            },
+        ]));
+
+        force.update(createSerializedForce([
+            {
+                id: 'group-1',
+                formationLock: true,
+                units: [createSerializedUnit('unit-1')],
+            },
+        ]));
+
+        expect(force.groups()[0].formation()).toBe(NO_FORMATION);
+        expect(force.groups()[0].formationLock).toBeTrue();
+    });
+
+    it('round-trips the one optional formation target group id', () => {
+        const force = new TestForce();
+        force.loadSerialized(createSerializedForce([
+            {
+                id: 'support',
+                formationId: 'support-lance',
+                formationTargetGroupId: 'recon',
+                units: [createSerializedUnit('support-unit')],
+            },
+            {
+                id: 'recon',
+                formationId: 'recon-lance',
+                units: [createSerializedUnit('recon-unit')],
+            },
+        ]));
+
+        expect(force.groups()[0].formationTargetGroupId()).toBe('recon');
+        expect(force.serialize().groups?.[0].formationTargetGroupId).toBe('recon');
+
+        force.update(createSerializedForce([
+            {
+                id: 'support',
+                formationId: 'support-lance',
+                units: [createSerializedUnit('support-unit')],
+            },
+            {
+                id: 'recon',
+                formationId: 'recon-lance',
+                units: [createSerializedUnit('recon-unit')],
+            },
+        ]));
+        expect(force.groups()[0].formationTargetGroupId()).toBeNull();
+    });
+
+    it('remaps formation target group ids when cloning a force', () => {
+        const force = new TestForce();
+        force.loadSerialized(createSerializedForce([
+            {
+                id: 'support',
+                formationId: 'support-lance',
+                formationTargetGroupId: 'recon',
+                units: [createSerializedUnit('support-unit')],
+            },
+            {
+                id: 'recon',
+                formationId: 'recon-lance',
+                units: [createSerializedUnit('recon-unit')],
+            },
+        ]));
+
+        const clone = force.clone();
+        const clonedSupport = clone.groups().find(group => group.activeFormation()?.id === 'support-lance')!;
+        const clonedRecon = clone.groups().find(group => group.activeFormation()?.id === 'recon-lance')!;
+
+        expect(clonedSupport.id).not.toBe('support');
+        expect(clonedRecon.id).not.toBe('recon');
+        expect(clonedSupport.formationTargetGroupId()).toBe(clonedRecon.id);
+    });
+
+    it('clears formation target references when the target group is removed', () => {
+        const force = new TestForce();
+        force.loadSerialized(createSerializedForce([
+            {
+                id: 'support',
+                formationId: 'support-lance',
+                formationTargetGroupId: 'recon',
+                units: [createSerializedUnit('support-unit')],
+            },
+            {
+                id: 'recon',
+                formationId: 'recon-lance',
+                units: [createSerializedUnit('recon-unit')],
+            },
+        ]));
+
+        force.removeGroup(force.groups()[1]);
+
+        expect(force.groups()[0].formationTargetGroupId()).toBeNull();
+    });
+
+    it('drops an invalid formation target while deserializing', () => {
+        const force = new TestForce();
+        force.loadSerialized(createSerializedForce([
+            {
+                id: 'support',
+                formationId: 'support-lance',
+                formationTargetGroupId: 'missing',
+                units: [createSerializedUnit('support-unit')],
+            },
+        ]));
+
+        expect(force.groups()[0].formationTargetGroupId()).toBeNull();
+        expect(force.serialize().groups?.[0].formationTargetGroupId).toBeUndefined();
+    });
+});
+
+describe('Force C3 cleanup', () => {
+    it('preserves serialized networks during load and update before unit equipment is hydrated', () => {
+        const network = {
+            id: 'peer-network',
+            type: C3NetworkType.C3I,
+            color: '#1',
+            peerIds: ['first', 'second'],
+        };
+        const serialized = {
+            ...createSerializedForce([{
+                id: 'group',
+                units: [createSerializedUnit('first'), createSerializedUnit('second')],
+            }]),
+            c3Networks: [network],
+        };
+        const force = new TestForce();
+
+        force.loadSerialized(serialized);
+        expect(force.c3Networks()).toEqual([network]);
+
+        force.update(serialized);
+        expect(force.c3Networks()).toEqual([network]);
+    });
+
+    it('removes every deleted group unit from the evolving network revision', () => {
+        const force = new TestForce();
+        const first = createStubDeserializedUnit(createSerializedUnit('first'));
+        const second = createStubDeserializedUnit(createSerializedUnit('second'));
+        const group = force.addGroup();
+        group.units.set([first, second]);
+        force.setNetwork([{
+            id: 'peer-network', type: C3NetworkType.C3I, color: '#1', peerIds: ['first', 'second', 'remaining'],
+        }]);
+
+        force.removeGroup(group);
+
+        expect(force.c3Networks()).toEqual([]);
+    });
+});

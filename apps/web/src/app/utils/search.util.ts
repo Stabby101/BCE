@@ -1,35 +1,6 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { removeAccents, escapeHtml, escapeRegExp } from './string.util';
 
@@ -39,6 +10,173 @@ function normalizeSearchValue(value: string): string {
 
 function toAlphanumericSearchValue(value: string): string {
     return normalizeSearchValue(value).replace(/[^a-z0-9]/gi, '');
+}
+
+interface AlphanumericProjection {
+    collapsed: string;
+    originalIndices: number[];
+    startsAfterWhitespace: boolean[];
+}
+
+function isAlphanumericSearchChar(char: string): boolean {
+    return /[a-z0-9]/i.test(char);
+}
+
+function buildAlphanumericProjection(value: string): AlphanumericProjection {
+    const normalized = normalizeSearchValue(value);
+    let collapsed = '';
+    const originalIndices: number[] = [];
+    const startsAfterWhitespace: boolean[] = [];
+    let sawWhitespaceSinceLastChar = false;
+
+    for (let index = 0; index < normalized.length; index++) {
+        const char = normalized[index];
+        if (isAlphanumericSearchChar(char)) {
+            collapsed += char;
+            originalIndices.push(index);
+            startsAfterWhitespace.push(originalIndices.length === 1 ? true : sawWhitespaceSinceLastChar);
+            sawWhitespaceSinceLastChar = false;
+            continue;
+        }
+
+        if (/\s/.test(char)) {
+            sawWhitespaceSinceLastChar = true;
+        }
+    }
+
+    return {
+        collapsed,
+        originalIndices,
+        startsAfterWhitespace,
+    };
+}
+
+function crossesWhitespaceBoundary(projection: AlphanumericProjection, start: number, end: number): boolean {
+    for (let index = start + 1; index < end; index++) {
+        if (projection.startsAfterWhitespace[index]) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function findTokenRangesInAlphanumericProjection(
+    textToSearch: string,
+    tokens: string[],
+): Array<[number, number]> | null {
+    const projection = buildAlphanumericProjection(textToSearch);
+    if (!projection.collapsed) {
+        return null;
+    }
+
+    const taken: Array<[number, number]> = [];
+
+    for (const rawToken of tokens) {
+        const token = toAlphanumericSearchValue(rawToken);
+        if (!token) {
+            continue;
+        }
+
+        let searchStart = 0;
+        let found = false;
+
+        while (searchStart <= projection.collapsed.length - token.length) {
+            const collapsedIndex = projection.collapsed.indexOf(token, searchStart);
+            if (collapsedIndex === -1) {
+                break;
+            }
+
+            const collapsedEnd = collapsedIndex + token.length;
+            const spansWhitespace = crossesWhitespaceBoundary(projection, collapsedIndex, collapsedEnd);
+            if (spansWhitespace && !projection.startsAfterWhitespace[collapsedIndex]) {
+                searchStart = collapsedIndex + 1;
+                continue;
+            }
+
+            const start = projection.originalIndices[collapsedIndex];
+            const end = projection.originalIndices[collapsedEnd - 1] + 1;
+            const overlaps = taken.some(([takenStart, takenEnd]) => !(end <= takenStart || start >= takenEnd));
+            if (!overlaps) {
+                taken.push([start, end]);
+                found = true;
+                break;
+            }
+
+            searchStart = collapsedIndex + 1;
+        }
+
+        if (!found) {
+            return null;
+        }
+    }
+
+    return taken;
+}
+
+function collectHighlightRanges(text: string, tokens: string[]): Array<[number, number]> {
+    const projection = buildAlphanumericProjection(text);
+    if (!projection.collapsed) {
+        return [];
+    }
+
+    const ranges: Array<[number, number]> = [];
+
+    for (const rawToken of tokens) {
+        const token = toAlphanumericSearchValue(rawToken);
+        if (!token) {
+            continue;
+        }
+
+        let searchStart = 0;
+        while (searchStart <= projection.collapsed.length - token.length) {
+            const collapsedIndex = projection.collapsed.indexOf(token, searchStart);
+            if (collapsedIndex === -1) {
+                break;
+            }
+
+            const collapsedEnd = collapsedIndex + token.length;
+            const spansWhitespace = crossesWhitespaceBoundary(projection, collapsedIndex, collapsedEnd);
+            if (spansWhitespace && !projection.startsAfterWhitespace[collapsedIndex]) {
+                searchStart = collapsedIndex + 1;
+                continue;
+            }
+
+            const start = projection.originalIndices[collapsedIndex];
+            const end = projection.originalIndices[collapsedEnd - 1] + 1;
+            const overlaps = ranges.some(([rangeStart, rangeEnd]) => !(end <= rangeStart || start >= rangeEnd));
+            if (!overlaps) {
+                ranges.push([start, end]);
+            }
+
+            searchStart = collapsedIndex + 1;
+        }
+    }
+
+    return ranges.sort((left, right) => left[0] - right[0]);
+}
+
+function renderHighlightedRanges(text: string, ranges: Array<[number, number]>): string {
+    if (ranges.length === 0) {
+        return escapeHtml(text);
+    }
+
+    let cursor = 0;
+    let output = '';
+
+    for (const [start, end] of ranges) {
+        if (start > cursor) {
+            output += escapeHtml(text.slice(cursor, start));
+        }
+        output += `<span class="matchHighlight">${escapeHtml(text.slice(start, end))}</span>`;
+        cursor = end;
+    }
+
+    if (cursor < text.length) {
+        output += escapeHtml(text.slice(cursor));
+    }
+
+    return output;
 }
 
 /**
@@ -162,8 +300,8 @@ export function matchesSearch(
     if (!searchTokens || searchTokens.length === 0) return true;
 
     const normalizedText = normalizeSearchValue(textToSearch);
-    const alphaNumText = alphanumericNormalization 
-        ? toAlphanumericSearchValue(textToSearch)
+    const alphaNumText = alphanumericNormalization
+        ? buildAlphanumericProjection(textToSearch).collapsed
         : '';
 
     // The text matches if it matches ANY of the OR groups
@@ -202,7 +340,7 @@ export function matchesSearch(
         // All partial tokens must match non-overlappingly
         if (partialTokens.length > 0) {
             if (!tokensMatchNonOverlapping(normalizedText, partialTokens)) {
-                if (!alphanumericNormalization || alphaNumPartialTokens.length === 0 || !tokensMatchNonOverlapping(alphaNumText, alphaNumPartialTokens)) {
+                if (!alphanumericNormalization || alphaNumPartialTokens.length === 0 || !alphaNumText || !findTokenRangesInAlphanumericProjection(textToSearch, alphaNumPartialTokens)) {
                     return false;
                 }
             }
@@ -243,23 +381,11 @@ export function highlightMatches(
 
     if (tokens.length === 0) return escapeHtml(text);
 
-    let pattern = tokens.map(escapeRegExp).join('|');
-
     if (alphanumericNormalization) {
-        const alphaNumTokens = tokens
-            .map(token => toAlphanumericSearchValue(token))
-            .filter(Boolean)
-            .map(token => {
-                const chars = token.split('');
-            return chars.map((char, index) => {
-                const isLastChar = index === chars.length - 1;
-                return `${escapeRegExp(char)}${isLastChar ? '' : '[^a-zA-Z0-9]*'}`;
-            }).join('');
-            });
-        if (alphaNumTokens.length > 0) {
-            pattern += '|' + alphaNumTokens.join('|');
-        }
+        return renderHighlightedRanges(text, collectHighlightRanges(text, tokens));
     }
+
+    let pattern = tokens.map(escapeRegExp).join('|');
     
     if (!pattern) return escapeHtml(text);
 

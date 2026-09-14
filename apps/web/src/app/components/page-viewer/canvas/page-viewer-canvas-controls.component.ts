@@ -1,35 +1,6 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import {
     Component,
@@ -44,7 +15,6 @@ import { DialogsService } from '../../../services/dialogs.service';
 import type { ForceUnit } from '../../../models/force-unit.model';
 
 /*
- * Author: Drake
  * 
  * PageViewerCanvasControlsComponent - Global FAB controls for canvas drawing.
  * 
@@ -147,7 +117,7 @@ export class PageViewerCanvasControlsComponent {
     // Input for current unit
     unit = input<ForceUnit | null>(null);
 
-    clearRequested = output<void>();
+    clearRequested = output<'unit' | 'force'>();
     printRequested = output<void>();
 
     mainFabStyle = computed(() => {
@@ -172,14 +142,21 @@ export class PageViewerCanvasControlsComponent {
             return;
         }
 
-        const confirmed = await this.dialogsService.requestConfirmation(
-            `Are you sure you want to clear the canvas for ${currentUnit.getDisplayName()}? This cannot be undone.`,
+        const currentForce = currentUnit.force;
+        const choice = await this.dialogsService.choose<'unit' | 'force' | 'dismiss'>(
             'Clear Canvas',
-            'info'
+            `Delete the canvas for "${currentUnit.getDisplayName()}", or delete all canvases for "${currentForce.displayName()}"? This cannot be undone.`,
+            [
+                { label: 'UNIT', value: 'unit', class: 'danger' },
+                { label: 'FORCE', value: 'force', class: 'danger' },
+                { label: 'DISMISS', value: 'dismiss' }
+            ],
+            'dismiss',
+            { panelClass: 'warning' }
         );
-        if (confirmed) {
-            this.canvasService.clearCanvas(`canvas-${currentUnit.id}`);
-            this.clearRequested.emit();
+
+        if (choice === 'unit' || choice === 'force') {
+            this.clearRequested.emit(choice);
         }
     }
 

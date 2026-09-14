@@ -28,11 +28,20 @@ export class CampaignSetupComponent {
     protected readonly campaignSystem = this.state.campaignSystem;
     protected readonly hotSpotCampaign = this.state.hotSpotCampaign;
     protected readonly quick = this.state.quickMission; // D-067 — crumb reflects Quick Mission vs Create campaign
+    protected readonly gmSession = this.state.gmSession; // GM-1 P1 — a GM session IS a Hot Spots campaign; the choice locks
+
+    constructor() {
+        // GM-1 P1 — the GM door pre-commits the system: a Game Master session is a Hot Spots campaign by
+        // definition (the directive's "everything a HS campaign has, it has"). Pre-select + lock; a plain
+        // Create (gmSession false) is byte-identical to before.
+        if (this.state.gmSession()) this.state.setCampaignSystem('hotspots');
+    }
 
     protected setGameSystem(gs: GameSystem): void {
         this.state.setGameSystem(gs);
     }
     protected setCampaignSystem(m: 'traditional' | 'hotspots'): void {
+        if (this.state.gmSession() && m !== 'hotspots') return; // GM-1 — locked to Hot Spots in a GM session
         this.state.setCampaignSystem(m);
     }
     protected pickCampaign(c: ChaosCampaign): void {

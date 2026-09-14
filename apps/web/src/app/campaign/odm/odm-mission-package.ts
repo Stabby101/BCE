@@ -27,6 +27,7 @@ import { NarratorService } from '../narrator/narrator.service';
 import type { RefineTarget, VoiceBoxTarget } from '../narrator/narrator-types';
 import type { MissionSpec } from '../mission/mission-spec';
 import { diffAfter, type DiffToken } from '../narrator/prose-diff';
+import { OdmContactsService, type OdmAarSlot } from './odm-contacts.service'; // ODM-12b B2 — one source of people
 
 /** A staff-voice sidebar box (D-025 pattern, placed per-section since D-035). D-045: `refined` marks a
  *  box the narrator rewrote (machine-diff-verified) so it badges in place instead of being preferred silently. */
@@ -59,6 +60,7 @@ export class OdmMissionPackageComponent {
     readonly close = output<void>();
     private readonly state = inject(NewCampaignState);
     private readonly pack = inject(ForgePackService);
+    private readonly contacts = inject(OdmContactsService); // ODM-12b B2 — the authored voices; staffVoices is never read here
     private readonly data = inject(DataService);
     protected readonly narrator = inject(NarratorService);
     private readonly store = inject(CampaignSaveStore);
@@ -376,10 +378,40 @@ export class OdmMissionPackageComponent {
         return `Reward (contract): ${this.fmt(spec.reward.total)} C-bills · ${this.fmt(spec.reward.monthly)}/mo`;
     }
 
+    /* ODM-12b B2 — the sidebars resolve SEVEN role families out of what used to be the ROLLED voice-cast
+     * (command · intelligence · engineering · logistics · naval · medical · comms). This fork reads the
+     * AUTHORED registry instead, and a family with no registry voice renders NOTHING — an honest absence,
+     * the posture the AAR takes when a voice is not on record. Never a fallback to the rolled cast.
+     *
+     * ODM-12b FOLLOW-UP (PM rulings, 2026-08-26/27): four further mappings authorized, each verified
+     * against the registry's own `role` field before wiring. THREE now render — comms and medical map to
+     * registry slots whose contacts carry a voice block, and naval got its voice block DELIVERED by the
+     * PM (the mapping had held all along; the missing piece was content, which is exactly where the
+     * earlier STOP said it was). ONE is DROPPED by ruling, permanently: the logistics family's `role`
+     * field does not state logistics, and the registry is the source of truth precisely because the data
+     * is never bent to serve the code — logistics renders nothing. Role text is deliberately NOT quoted
+     * here: this file is published GPL source and bundles, and pack content never belongs in either
+     * (the ODM-11 leak-net lesson). */
+    private static readonly REGISTRY_SLOT: Record<string, OdmAarSlot> = {
+        command: 'command', intelligence: 'intelligence', engineering: 'engineering',
+        comms: 'intelligence',   // the relay operator IS the company's comms voice
+        medical: 'personnel',    // the medic
+        naval: 'naval',          // the JumpShip captain — voice block PM-delivered 2026-08-27
+    };
+    private registryBox(roleFamily: string): { header: string; name: string; rules: string; contactId: string } | null {
+        const slot = OdmMissionPackageComponent.REGISTRY_SLOT[roleFamily];
+        if (!slot) return null; // logistics — DROPPED by ruling; nothing renders
+        const c = this.contacts.bySlot(slot);
+        return c?.aar ? { header: c.aar.header, name: c.name, rules: c.aar.standingRules.join(' · '), contactId: c.id } : null;
+    }
     private voiceBox(roleFamily: string, seen?: Set<string>): VoiceBox | null {
-        const voiceId = this.state.staffVoices()[roleFamily];
-        const v = this.pack.voiceById(voiceId);
-        if (!v) return null;
+        const reg = this.registryBox(roleFamily);
+        if (!reg) return null;
+        // D-085's dedup key must be the PERSON, not the role family: one contact can serve two families
+        // (Coss is intelligence AND comms), and keying by family would print her twice — exactly the
+        // cross-section repeat D-085 exists to prevent. The rolled cast keyed by voiceId for this reason.
+        const voiceId = `odm:${reg.contactId}`;
+        const v = { sidebarHeader: reg.header, speechRules: [reg.rules] };
         // D-085: a voice already printed in an earlier sidebar isn't repeated (no verbatim cross-section repeats).
         if (seen) { if (seen.has(voiceId)) return null; seen.add(voiceId); }
         // D-043: prefer the mission-aware refined voice (machine-diff-verified) over the stub samples.
@@ -397,9 +429,9 @@ export class OdmMissionPackageComponent {
      *  kernel — same policy as the sidebars (sampleLines are characterization, not briefing ground-truth; they
      *  cite invented geography). The subject stays (it's filled from the mission's real slots). */
     private kernelBox(voiceSlot: string, kernel: string): KernelBox | null {
-        const v = this.pack.voiceById(this.state.staffVoices()[voiceSlot]);
-        if (!v) return null;
-        return { header: v.sidebarHeader, subject: this.fill(kernel), line: '', rules: v.speechRules.join(' · ') };
+        const reg = this.registryBox(voiceSlot); // ODM-12b B2 — registry or nothing; never the rolled cast
+        if (!reg) return null;
+        return { header: reg.header, subject: this.fill(kernel), line: '', rules: reg.rules };
     }
     /** §2.3 — the recurring adversary's dossier from the drawn registry NPC (persists campaign-wide). */
     private commanderVm() {
@@ -575,9 +607,9 @@ export class OdmMissionPackageComponent {
     private voiceTargets(): VoiceBoxTarget[] {
         const out: VoiceBoxTarget[] = [];
         for (const fam of this.VOICE_FAMILIES) {
-            const v = this.pack.voiceById(this.state.staffVoices()[fam]);
-            if (!v) continue;
-            out.push({ id: fam, header: v.sidebarHeader, name: v.name, speechRules: v.speechRules, stub: v.sampleLines, commentOn: this.commentFor(fam) });
+            const reg = this.registryBox(fam); // ODM-12b B2 — the narrator rewrites AUTHORED voices only
+            if (!reg) continue;
+            out.push({ id: fam, header: reg.header, name: reg.name, speechRules: [reg.rules], stub: [], commentOn: this.commentFor(fam) });
         }
         return out;
     }
@@ -628,9 +660,8 @@ export class OdmMissionPackageComponent {
     }
     private voiceCard(roleFamily: string | null): { name: string; speechRules: string[] } | null {
         if (!roleFamily) return null;
-        // prefer the seed's staff voice for the role; fall back to the campaign staff cast
-        const v = this.pack.voiceById(this.state.staffVoices()[roleFamily]);
-        return v ? { name: v.name, speechRules: v.speechRules } : null;
+        const reg = this.registryBox(roleFamily); // ODM-12b B2 — the authored registry, never the rolled cast
+        return reg ? { name: reg.name, speechRules: [reg.rules] } : null;
     }
 
     protected onClose(): void {

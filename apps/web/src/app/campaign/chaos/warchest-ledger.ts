@@ -36,6 +36,15 @@ import { CampaignSaveStore } from '../campaign-save-store';
             <button type="button" class="wca-btn ded" [disabled]="!canAdjust()" (click)="manualAdjust(1)" data-testid="cc-sp-deduct">－ Deduct</button>
             @if (adjMsg()) { <span class="wca-msg">{{ adjMsg() }}</span> }
         </div>
+        <!-- DIRECTIVE-PD3 P4 (S56, was S55) — GM manual REPUTATION set, same shape as the SP adjust: a value + a required reason, logged to the
+             Contract Record Sheet as a 0-SP line ("Reputation set to N by GM — reason"). setReputation BEFORE the post: post() stamps s.reputation(). -->
+        <div class="wc-adjust wc-adjust-rep">
+            <span class="wca-l">GM adjust Rep</span>
+            <input class="wca-in amt" type="number" min="0" max="20" [value]="adjRep() ?? ''" (input)="adjRep.set($any($event.target).value === '' ? null : +$any($event.target).value)" placeholder="reputation" aria-label="Reputation value" data-testid="cc-rep-value">
+            <input class="wca-in reason" [value]="adjRepReason()" (input)="adjRepReason.set($any($event.target).value)" placeholder="reason (required — logged)" aria-label="Reason for the reputation change" data-testid="cc-rep-reason">
+            <button type="button" class="wca-btn add" [disabled]="!canSetRep()" (click)="setRep()" data-testid="cc-rep-set">Set Rep</button>
+            @if (repMsg()) { <span class="wca-msg">{{ repMsg() }}</span> }
+        </div>
 
         <div class="crs" role="table" aria-label="Contract Record Sheet">
             <div class="crs-h" role="row">
@@ -144,6 +153,21 @@ export class WarchestLedgerComponent {
         this.warchest.post(`GM adjustment — ${reason}`, sign * amt, 0); // +cost = deduct/spend, −cost = add/income
         this.adjMsg.set(`${sign < 0 ? 'Added' : 'Deducted'} ${amt} SP — ${reason}`);
         this.adjAmt.set(0); this.adjReason.set('');
+        void this.store.persistCurrent();
+    }
+
+    // ── DIRECTIVE-PD3 P4 (S56) — GM manual Reputation SET with a REQUIRED reason: the ONE field (state.reputation), then a 0-SP ledger line. ──
+    protected readonly adjRep = signal<number | null>(null);
+    protected readonly adjRepReason = signal('');
+    protected readonly repMsg = signal('');
+    protected canSetRep(): boolean { const n = this.adjRep(); return n !== null && Number.isFinite(n) && n >= 0 && this.adjRepReason().trim().length > 0; }
+    protected setRep(): void {
+        if (!this.canSetRep()) { this.repMsg.set('Enter a reputation value and a reason.'); return; }
+        const n = Math.max(0, Math.round(this.adjRep() ?? 0)); const reason = this.adjRepReason().trim();
+        this.state.setReputation(n);                                                              // FIRST — post() snapshots s.reputation() onto the line
+        this.warchest.post(`Reputation set to ${n} by GM — ${reason}`, 0, 0);                    // cost 0: no SP moves; toasted like any player action
+        this.repMsg.set(`Reputation set to ${n} — ${reason}`);
+        this.adjRep.set(null); this.adjRepReason.set('');
         void this.store.persistCurrent();
     }
 

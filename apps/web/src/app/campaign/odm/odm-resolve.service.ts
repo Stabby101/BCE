@@ -18,13 +18,15 @@
  * dashboard-owned UI signals confirmResolve writes (packageOpen/walkOpen) are BOUND IN by the dashboard at
  * construction (bindHostUi) — the same signal instances, the same writes, byte-identical behavior.
  */
-import { type Signal, Injectable, type WritableSignal, computed, inject, signal } from '@angular/core';
+import { type Signal, Injectable, type WritableSignal, computed, effect, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store'; // ODM-3
 import { CampaignClockService } from '../clock/campaign-clock.service'; // ODM-5 — the op-cost booking
 import { MissionTreeService } from '../mission/mission-tree.service';
 import { BattleReconcileService } from '../battle/battle-reconcile.service';
-import { FieldWalkService } from '../walk/field-walk.service';
+import { ClaimRealtimeService } from '../claims/claim-realtime.service'; // ORDER-4 H18 — the engagement-close sender
+import { engagementKeyOf } from '../claims/engagement-key'; // TABLE-2 T2-3 — the GM observes the lobby so the resolve gate reads a fresh pendingPhase roster
+import { OdmFieldWalkService } from './odm-field-walk.service'; // ODM-13 — the fork walk (same pending law)
 import { ForgePackService } from '../mission/forge-pack.service';
 import { PilotService } from '../barracks/pilot.service';
 import { computeTier, twoSidedResolve, singleSidedResolve, resolveModelFor, type ResolveAnswers, type OutcomeGate } from '../mission/mission-tree'; // D-134 — two-sided VP resolve · IMPORT-6 — single-sided
@@ -32,17 +34,31 @@ import { deployedSet } from '../force/deployed';
 import { readDamage } from '../walk/field-walk-core';
 import { filledObjectives } from '../mission/forge-select';
 import { odmTierToGate, reconcileOdmTree, type OdmTier, type OdmTreeData } from './odm-tree'; // ODM-3
+import { newSlipId, type SlipUnitRow } from '../gm/results-slip'; // ORDER-3 H16 — the ODM resolve mints the results slip (the shared shape)
 
 @Injectable()
 export class OdmResolveService {
     private readonly state = inject(NewCampaignState);
     private readonly tree = inject(MissionTreeService);
     private readonly reconcile = inject(BattleReconcileService); // D-048 phase D — battle_state -> inst.damage at resolve
-    private readonly fieldWalk = inject(FieldWalkService);
+    private readonly rt = inject(ClaimRealtimeService); // ORDER-4 H18 — the engagement-close sender
+    private readonly fieldWalk = inject(OdmFieldWalkService); // ODM-13
     private readonly pilotSvc = inject(PilotService);
     private readonly pack = inject(ForgePackService);
     private readonly store = inject(CampaignSaveStore); // ODM-3 — persist the outcome record + reconciled tree
     private readonly clock = inject(CampaignClockService); // ODM-5
+
+    constructor() {
+        // TABLE-2 T2-3 — the GM OBSERVES the lobby for the whole ODM session (not only while the Lobby tab is open),
+        // so the resolve gate (askResolve) reads a FRESH pendingPhase roster even when resolving straight from the
+        // Missions tab or after a reload — the same ensure+observeLobby the claims/lobby panels do (odm-claims-panel).
+        effect(() => {
+            const id = this.store.campaignId();
+            if (!id) return;
+            this.rt.ensure(id, engagementKeyOf(this.state.missionTree()));
+            this.rt.observeLobby();
+        });
+    }
 
     // ── host-derived computeds — the dashboard's EXACT expressions over the same root signals (value-identical). ──
     readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots'); // D-110b (public — the modal template gates the Compromised row on it)
@@ -67,6 +83,9 @@ export class OdmResolveService {
 
     readonly gates: OutcomeGate[] = ['FULL_SUCCESS', 'SUCCESS', 'PARTIAL', 'FAILURE', 'COMPROMISED'];
     readonly resolveOpen = signal(false);
+    /** TABLE-2 T2-3 — set when Resolve is BLOCKED because deployed devices still have un-ended (unshared) picks;
+     *  the GM waits for END PHASE or takes the logged resolveAnyway() override. Null = no block. */
+    readonly pendingResolveWarn = signal<{ count: number; names: string[] } | null>(null);
     readonly rAns = signal<ResolveAnswers>({ primary: true, secondary: true, bonus: false, compromised: false, notes: '' });
     private readonly rOverride = signal<OutcomeGate | null>(null);
     // ── ODM-3 — the 4-tier outcome + GM flag checklist ──
@@ -91,7 +110,37 @@ export class OdmResolveService {
         this.odmFlags.update((f) => { const n = new Set(f); if (n.has(id)) n.delete(id); else n.add(id); return n; });
     }
 
+    /** TABLE-2 T2-3 — deployed devices with un-ended picks this phase. The pin fans damage only at END PHASE, so
+     *  resolving now would read a stale end-state and lose their damage/pilot hits. Resolve is gated on this = 0. */
+    private pendingPickPlayers(): { count: number; names: string[] } {
+        const p = (this.rt.lobby() ?? []).filter((x) => (x.pendingPhase ?? 0) > 0);
+        return { count: p.length, names: p.map((x) => x.name) };
+    }
+
     async askResolve(): Promise<void> {
+        // TABLE-2 T2-3 — BLOCK while any deployed device still has unshared (un-ended) picks; the GM must wait for
+        // END PHASE or take the logged "Resolve anyway" override (resolveAnyway). The ⏳ was display-only before this.
+        const pending = this.pendingPickPlayers();
+        if (pending.count > 0) { this.pendingResolveWarn.set(pending); return; }
+        this.pendingResolveWarn.set(null);
+        await this.openResolve();
+    }
+
+    /** TABLE-2 T2-3 — the logged override: resolve despite N unshared picks, naming the participants in the ledger. */
+    async resolveAnyway(): Promise<void> {
+        const pending = this.pendingPickPlayers();
+        if (pending.count > 0) {
+            this.state.logNotice(`Resolve anyway — ${pending.count} pick(s) unshared: ${pending.names.join(', ')} had not ended their phase (GM override; their damage may be missing).`, null, 'admin');
+            void this.store.persistCurrent();
+        }
+        this.pendingResolveWarn.set(null);
+        await this.openResolve();
+    }
+
+    /** TABLE-2 T2-3 — dismiss the "picks unshared" block without resolving. */
+    cancelResolveWarn(): void { this.pendingResolveWarn.set(null); }
+
+    private async openResolve(): Promise<void> {
         this.rAns.set({ primary: true, secondary: true, bonus: false, compromised: false, notes: '' });
         this.rOverride.set(null);
         // ODM-3 — the 4-tier default mirrors the default toggles (SUCCESS); GM adjusts; flags start clear.
@@ -248,6 +297,36 @@ export class OdmResolveService {
         // subtracts claimed prizes — no double-dip) and apply it AFTER (roster + pilots + resolution.losses/prizes).
         const hs = this.isHotspots();
         const branchId = this.activeBranch()?.branchId;
+        // ORDER-3 H16 (SMOKE-ODM-4P S44) — the ODM table's RESULTS SLIP: captured BEFORE resolveBranch clears the spec (the
+        // Classic/HS shape, `resolve.service.ts`), stamped AFTER the tree is reconciled. Rows = the deployed company AND every
+        // OpFor unit: at an ODM table the OpFor is player-flown (the 4-player session's side B), so its end-state is a take-home
+        // too — the reconcile above already wrote the battle_state onto both copies. NO combatPay / salvageSp (absent, not 0):
+        // the company record holds the outcome and the ODM iron rule pays 0; the render says so. GM-2 P1's identity fields ride
+        // where a unit has them (a brought unit); the company's own hulls carry none — there is no home to apply to.
+        // DECISION: packId-gated (this fork only ever runs on an ODM campaign; the gate keeps the mint honest if that changes).
+        let odmSlipRows: SlipUnitRow[] | null = null;
+        if (this.state.packId() === 'odm' && this.deployedCount() > 0 && branchId) {
+            const row = (u: { instanceId: string; chassis: string; model: string; damage?: SlipUnitRow['damage']; provenance?: { sourceCampaignId?: string; originInstanceId?: string } }): SlipUnitRow => {
+                const crew0 = (u.damage?.crew ?? []) as Array<{ hits?: number }>;
+                const destroyed = !!(u.damage as { destroyed?: boolean } | null | undefined)?.destroyed;
+                const prov = u.provenance;
+                const originPilotId = this.pilotSvc.pilotFor(u.instanceId)?.originPilotId;
+                return {
+                    instanceId: u.instanceId,
+                    label: `${u.chassis} ${u.model}`,
+                    status: destroyed ? 'destroyed' : 'ok',
+                    ...(crew0[0]?.hits ? { crewHits: Math.max(0, Math.min(6, crew0[0].hits)) } : {}),
+                    damage: u.damage ? JSON.parse(JSON.stringify(u.damage)) as SlipUnitRow['damage'] : null,
+                    ...(prov?.sourceCampaignId ? { sourceCampaignId: prov.sourceCampaignId } : {}),
+                    ...(prov?.originInstanceId ? { originInstanceId: prov.originInstanceId } : {}),
+                    ...(originPilotId ? { originPilotId } : {}),
+                };
+            };
+            odmSlipRows = [
+                ...deployedSet(this.state.startingForce(), this.state.quickMission()).map(row),
+                ...(this.state.missionSpec()?.opforForce ?? []).map(row),
+            ];
+        }
         let plan: { losses: { instanceId: string; label: string; reason: 'destroyed' | 'abandoned'; pilotFate: 'ok' | 'injured' | 'kia' }[]; prizes: { instanceId: string; label: string }[] } | null = null;
         if (hs && this.deployedCount() > 0 && branchId) {
             const losses = this.settleBlufor().filter((u) => this.isLost(u.id, u.destroyed))
@@ -281,7 +360,34 @@ export class OdmResolveService {
             // clock advance retriggers the dashboard's reconcile effect; the explicit pass below is the belt.
             this.clock.advanceDays(node.opDays ?? 12);
             const now = this.state.currentDate() ?? undefined;
+            // TESTER-ODM-1 #7 — resolveBranch stamps resolvedDate from the clock BEFORE this advance, so the
+            // AAR dated every operation to the day it BEGAN. The operation ran its opDays and ended here.
+            if (now) {
+                this.state.missionTree.update((t) => (t ?? []).map((b) => (b.branchId === node.id && b.resolution
+                    ? { ...b, resolution: { ...b.resolution, resolvedDate: now } } : b)));
+            }
             this.state.missionTree.update((t) => reconcileOdmTree(t ?? [], treeData, this.state.odmOutcomes(), now));
+            void this.store.persistCurrent();
+        }
+        // ORDER-3 H16 — stamp the slip AFTER the tree is final (the fanned snapshot is the record). Same header as the
+        // Classic/HS slip: slipId · branchId · trackName · resolvedAt · outcome (the TRUE 4-tier literal when the node is
+        // authored, else the gate) · sessionName (the company record's name). Replaced each resolve. Persisted so a device
+        // joining late still receives it (the store is the fan's source).
+        if (odmSlipRows && branchId) {
+            const br = (this.state.missionTree() ?? []).find((b) => b.branchId === branchId);
+            const outcome = (node ? this.state.odmOutcomes()[node.id]?.tier : undefined) ?? (br?.resolution?.outcomeTier ? String(br.resolution.outcomeTier) : undefined);
+            const campId = this.store.campaignId();
+            let sessionName: string | undefined;
+            try { sessionName = campId ? (await this.store.get(campId))?.name : undefined; } catch { sessionName = undefined; }
+            this.state.setResultsSlip({
+                slipId: newSlipId(),
+                ...(sessionName ? { sessionName } : {}),
+                branchId,
+                trackName: br?.name ?? node?.title ?? 'the operation',
+                resolvedAt: Date.now(),
+                ...(outcome ? { outcome } : {}),
+                units: odmSlipRows,
+            });
             void this.store.persistCurrent();
         }
         this.resolveOpen.set(false);
@@ -289,6 +395,16 @@ export class OdmResolveService {
         // D-031: a resolved mission whose battle had engaged units → walk the field (skippable + resumable).
         // D-110b: the field walk credits C-bills (salvage/strip) — a Traditional mechanic. Hot Spots salvage is the
         // SP economy (estimated at resolve; the SP walk is D-110c), so never auto-open the C-bill walk under hotspots.
-        if (this.fieldWalk.pendingBranch() && !this.isHotspots()) this.walkOpen.set(true);
+        // TABLE-2 T2-1: target THE JUST-RESOLVED branch (not the first-pending .find()), so resolving a second mission
+        // opens ITS walk rather than an earlier still-pending one; clear the selection if it did not become pending.
+        if (branchId && !this.isHotspots()) {
+            this.fieldWalk.selectedWalkBranchId.set(branchId);
+            if (this.fieldWalk.pendingBranch()?.branchId === branchId) this.walkOpen.set(true);
+            else this.fieldWalk.selectedWalkBranchId.set(null);
+        }
+        // ORDER-4 H18 — LAST: tell the server the operation's fight is over (after the slip is set); every later battle write to
+        // this key is refused server-side — the H17 read-only view now has the server's agreement.
+        const campId = this.store.campaignId();
+        if (branchId && campId) this.rt.closeEngagement(campId, branchId);
     }
 }

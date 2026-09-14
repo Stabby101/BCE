@@ -12,7 +12,8 @@ export type Severity = 'G' | 'Y' | 'R' | 'B'; // Green light / Yellow / Red / Bl
 export type Side = 'blufor' | 'opfor';
 export type Disposition =
     | 'RECOVER' | 'FIELD_STRIP' | 'ABANDON'                   // BLUFOR
-    | 'CLAIM_PRIZE' | 'SALVAGE' | 'LEAVE';                    // OPFOR
+    | 'CLAIM_PRIZE' | 'SALVAGE' | 'LEAVE'                     // OPFOR
+    | 'STRIP';                                                // ODM-13 — the materiel strip (both sides; the odm walk's record literal — Classic never produces it; aar-render falls through to the raw label)
 export type PilotOutcomeStatus = 'OK' | 'Injured' | 'KIA';
 
 // ── WALK_TUNABLES — every interim number, flagged + in one block (the CamOps salvage-math + full
@@ -136,10 +137,23 @@ export interface WalkRowResult {
     captured?: boolean;
     pilot?: PilotOutcome & { pilotId?: string };
     overrides?: string[];      // logged GM overrides
+    tons?: number;             // DIRECTIVE-ODM-17 P2 (additive; odm walk only): what this row put on the lift — strip yield tonnage, or the hulk's catalog tons on a capture. Classic never writes it.
+    fieldHours?: number;       // DIRECTIVE-ODM-17 P2 (additive; odm walk only): the strip's FIELD-pool price (the doctrine table). Classic never writes it.
+}
+/** DIRECTIVE-ODM-17 P2 (additive; odm walk only) — the LOAD MANIFEST the walk settled under: what rode
+ *  home, against what the operational fleet could lift. Classic walks never write one. */
+export interface WalkLoadManifest {
+    ammoTons: number; componentTons: number;   // the strip haul (cargo holds)
+    hulks: number; hulkTons: number;           // captures (bay slots)
+    baysUsed: number; liftBays: number;        // own machines riding home + hulks vs operational 'Mech bays
+    cargoUsed: number; cargoTons: number;      // strip tonnage vs operational holds
+    fieldHours: number; fieldHoursWindow: number; // strip pricing vs the extraction window (the FIELD pool's day)
+    overrideReason?: string;                   // the logged GM reason when a full lift was forced (Q2 override)
 }
 export interface FieldWalkResult {
     walkedDate: { y: number; m: number; d: number };
     rows: WalkRowResult[];
     totalCredit: number;
     prizesClaimed: number;
+    manifest?: WalkLoadManifest; // ODM-17 P2 additive — absent on every Classic (and pre-P2 odm) record
 }

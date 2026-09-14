@@ -4,7 +4,7 @@
     <div class="cl-head">
         <h3 class="ph">Roster / claim board</h3>
         <div class="cl-counts">
-            <span class="cl-dot on"></span>{{ connectedCount() }} connected · {{ bluforCount() }} BLUFOR · {{ opforCount() }} OPFOR
+            <span class="cl-dot on"></span>{{ connectedCount() }} connected · {{ bluforCount() }} BLUFOR · {{ opforCount() }} OPFOR@if (pendingPlayers() > 0) {<span class="cl-pending-sum" data-testid="cc-pending-sum"> · ⏳ {{ pendingPlayers() }} with unshared picks — not yet ended</span>}
         </div>
     </div>
 
@@ -20,8 +20,9 @@
     @for (side of sides(); track side.key) {
         <section class="cl-group cl-{{ side.key }}">
             <h4 class="cl-side">{{ side.label }} <span class="cl-side-sub">{{ side.sub }}</span> <span class="cl-side-n">{{ side.units.length }}</span>
-                <!-- DIRECTIVE-130 — GM manual OpFor builder (Hot Spots only; enabled once a mission is generated). -->
-                @if (side.key === 'opfor' && isHotspots()) {
+                <!-- DIRECTIVE-130 — GM manual OpFor builder (Hot Spots only; enabled once a mission is generated).
+                     GM-1 P1 — table mode blanks it (a GM surface; table.on() is constant false outside a GM session). -->
+                @if (side.key === 'opfor' && isHotspots() && !table.on()) {
                     <button type="button" class="cl-buildopfor" data-testid="cc-build-opfor" [disabled]="!missionSpec()" (click)="openBuilder()"
                             [title]="missionSpec() ? 'Hand-pick the OpFor roster — field your own minis' : 'Generate the mission first'">⚔ Build / Edit OpFor</button>
                 }
@@ -39,6 +40,7 @@
                                 <span class="cl-dot" [class.on]="presence(i.instanceId) === true" [class.off]="presence(i.instanceId) === false"
                                       [title]="presence(i.instanceId) ? 'connected' : 'claim held — device disconnected'"></span>
                                 <span class="cl-held">{{ h }}</span>
+                                @if (pendingFor(i.instanceId) > 0) {<span class="cl-pending" data-testid="cc-pending" [attr.data-count]="pendingFor(i.instanceId)" title="damage picked but the phase is not ended — not shared with the table yet">⏳ {{ pendingFor(i.instanceId) }}</span>}
                                 <button type="button" class="cl-kick" (click)="kickClaim(i.instanceId)">Kick</button>
                             } @else {
                                 <span class="cl-free">UNCLAIMED</span>
@@ -59,6 +61,7 @@
                     <li class="cl-row spec">
                         <span class="cl-dot" [class.on]="p.connected" [class.off]="!p.connected" [title]="p.connected ? 'connected' : 'disconnected'"></span>
                         <span class="cl-mech">{{ p.name }}</span>
+                        @if ((p.pendingPhase ?? 0) > 0) {<span class="cl-pending" data-testid="cc-pending" [attr.data-count]="p.pendingPhase" title="damage picked but the phase is not ended">⏳ {{ p.pendingPhase }}</span>}
                         <span class="cl-pside" [class.blu]="p.side === 'BLUFOR'" [class.opf]="p.side === 'OPFOR'">{{ p.side }}</span>
                         <button type="button" class="cl-reassign" (click)="reassign(p.token, p.side === 'BLUFOR' ? 'OPFOR' : 'BLUFOR')">→ {{ p.side === 'BLUFOR' ? 'OPFOR' : 'BLUFOR' }}</button>
                         <button type="button" class="cl-kick" (click)="kick(p.token)">Kick</button>
@@ -68,8 +71,9 @@
         </section>
     }
 
-    <!-- DIRECTIVE-130 — the GM manual OpFor builder modal (HS-only; opens on ⚔ Build / Edit OpFor). -->
-    @if (builderOpen()) {
+    <!-- DIRECTIVE-130 — the GM manual OpFor builder modal (HS-only; opens on ⚔ Build / Edit OpFor).
+         GM-1 P1 — unmounted in table mode (blanking the button alone leaves the modal reachable via seams). -->
+    @if (builderOpen() && !table.on()) {
         <bce-opfor-builder [faction]="opforFaction()" [initial]="opfor()" [playerBv]="playerBv()" (save)="saveOpFor($event)" (close)="closeBuilder()" />
     }
 </div>

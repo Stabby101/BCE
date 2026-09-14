@@ -1,0 +1,157 @@
+<div class="ph">Intelligence
+    <span class="modes">
+        <button type="button" class="modebtn" [class.on]="mode() === 'contacts'" (click)="mode.set('contacts')">Contacts</button>
+        <button type="button" class="modebtn" [class.on]="mode() === 'notebook'" (click)="mode.set('notebook')">Notebook</button>
+    </span>
+</div>
+
+@if (mode() === 'contacts') {
+    <!-- ODM-12b C7 — the honest state: nothing files itself. No packet and no tree datum links an
+         operation to a contact, so the engine cannot open a channel on the company's behalf, and this
+         copy must not imply it will. Plain speech, no promise the engine cannot keep. -->
+    <p class="note">The company's register of <b>people and cells</b> — who it can reach, how, and at what delay. Contacts you have not made do not appear. <b>Nothing files itself:</b> when the company uses a channel, file it here by hand. Status is the GM's call and persists with the save. Tap a card to read the full dossier.</p>
+    <div class="ctc-bar">
+        <span class="ctc-count">{{ contacts().length }} contact{{ contacts().length === 1 ? '' : 's' }} on file</span>
+        @if (unfiled().length) {
+            <button type="button" class="gobtn" (click)="fileOpen.set(true)">+ File a contact</button>
+        }
+    </div>
+
+    @if (!contacts().length) {
+        <!-- Honest states: the registry is fetched, so "not yet read" must not read as "nobody is out there". -->
+        <div class="ic-empty">
+            <div class="ic-h">{{ loaded() ? 'The register is closed' : 'Reading the register…' }}</div>
+            <p class="note">{{ loaded() ? 'No register on file for this campaign — the company\'s contacts are carried with the operation record.' : 'The company\'s register is being read from the operation record.' }}</p>
+        </div>
+    } @else {
+        <div class="ctc-grid">
+            @for (c of contacts(); track c.id) {
+                <div class="ctc" [class.dead]="c.status === 'dead'" [class.burned]="c.status === 'burned'" [class.kia]="c.kia" [attr.data-contact]="c.id">
+                    <button type="button" class="ctc-open" (click)="explode(c)">
+                        <span class="ctc-name">{{ c.name }}@if (c.kia) { <span class="ctc-kia">KIA</span> }</span>
+                        <span class="ctc-arch">{{ c.role }}@if (c.filed) { <span class="ctc-gm">FILED</span> }</span>
+                        <span class="ctc-msn">{{ c.contactMethod }}</span>
+                    </button>
+                    <div class="ctc-status">
+                        <label>Status</label>
+                        <!-- AGENTS NG-SELECT: dynamic @for options take [selected], never [value] on the select -->
+                        <select class="stsel" (change)="setStatus(c.id, $any($event.target).value)" [attr.aria-label]="c.name + ' status'">
+                            @for (s of statuses; track s) { <option [value]="s" [selected]="s === c.status">{{ s.toUpperCase() }}</option> }
+                        </select>
+                        <span class="ctc-rel">{{ c.relationship }}@if (c.reliability) { · {{ c.reliability }} }</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- THE CELL LADDER — world-slots. UNCONTACTED renders the world name and nothing else. -->
+    @if (cells().length) {
+        <div class="ph flat cells-h">Underground — the Circle</div>
+        <p class="note">{{ cells().length }} worlds. What the network has answered, and what it has not.</p>
+        <div class="cells" data-testid="odm-cells">
+            @for (cl of cells(); track cl.world) {
+                <div class="cell s-{{ cl.status }}" [attr.data-world]="cl.world">
+                    <span class="cl-world">{{ cl.world }}</span>
+                    <!-- UNCONTACTED renders the WORLD NAME AND NOTHING ELSE — not even the status word.
+                         An empty line in a ledger is a promise; a label would answer what has not answered. -->
+                    @if (cl.status !== 'UNCONTACTED') {
+                        <span class="cl-status">{{ cl.status }}</span>
+                        @if (cl.note) { <span class="cl-note">{{ cl.note }}</span> }
+                    }
+                </div>
+            }
+        </div>
+    }
+} @else {
+    <p class="note">The campaign notebook — the between-session surface. Auto-entries surface from the campaign's <b>stored records</b> (operations, the walk, the bays, the quartermaster); your own notes interleave by date.</p>
+    <div class="nb-compose">
+        <input type="text" class="nb-in" placeholder="Add a GM note…" [value]="noteText()" (input)="noteText.set($any($event.target).value)" (keydown.enter)="addNote()" />
+        <select class="nb-npc" (change)="noteNpc.set($any($event.target).value)" aria-label="Link note to a contact">
+            <option value="" [selected]="!noteNpc()">— no contact link —</option>
+            @for (c of contacts(); track c.id) { <option [value]="c.id" [selected]="c.id === noteNpc()">{{ c.name }}</option> }
+        </select>
+        <button type="button" class="gobtn" (click)="addNote()">Add note</button>
+    </div>
+    <div class="nb-feed">
+        @for (it of feed(); track $index) {
+            <div class="nb-item" [class.gm]="!!it.noteId">
+                <span class="nb-date">{{ it.dateText }}</span>
+                <span class="nb-kind k-{{ it.kind }}">{{ it.kind.toUpperCase() }}</span>
+                @if (editingId() && it.noteId === editingId()) {
+                    <span class="nb-edit">
+                        <input type="text" class="nb-in" [value]="editText()" (input)="editText.set($any($event.target).value)" (keydown.enter)="saveEdit()" />
+                        <button type="button" class="lnk" (click)="saveEdit()">save</button>
+                        <button type="button" class="lnk" (click)="cancelEdit()">cancel</button>
+                    </span>
+                } @else {
+                    <span class="nb-text">{{ it.text }}@if (it.npcName) { <span class="nb-link">→ {{ it.npcName }}</span> }</span>
+                    @if (it.noteId) {
+                        <span class="nb-acts">
+                            <button type="button" class="lnk" (click)="startEdit(it)">edit</button>
+                            <button type="button" class="lnk danger" (click)="askDelete(it.noteId!)">delete</button>
+                        </span>
+                    }
+                }
+            </div>
+        } @empty {
+            <p class="note">Nothing in the notebook yet — fight, walk the field, count the stores; it all files here.</p>
+        }
+    </div>
+}
+
+<!-- FILE — a first-encounter contact whose channel has been used -->
+@if (fileOpen()) {
+    <div class="cmodal" role="dialog" aria-modal="true" (click)="fileOpen.set(false)">
+        <div class="cbox wide" (click)="$event.stopPropagation()">
+            <div class="ph flat">File a contact</div>
+            <p class="cmsg">Channels the company knows <b>of</b> but has not used. Filing one records that contact has been made — the dossier opens then, and not before. The engine will not file for you; a channel counts as used when you say it was. <span class="cmsg-sub">Names and factions only — the dossier stays shut.</span></p>
+            <div class="ipool">
+                @for (c of unfiled(); track c.id) {
+                    <button type="button" class="ip-row" (click)="file(c.id)" [attr.data-file]="c.id">
+                        <span class="ip-name">{{ c.name }}</span>
+                        <span class="ip-meta">{{ c.faction }}</span>
+                        <span class="ip-add">FILE »</span>
+                    </button>
+                } @empty {
+                    <p class="note">Every channel on the register has been used.</p>
+                }
+            </div>
+            <div class="cbtns">
+                <button type="button" class="cbtn" (click)="fileOpen.set(false)">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- EXPLODE — the full dossier -->
+@if (exploded(); as c) {
+    <div class="cmodal" role="dialog" aria-modal="true" (click)="exploded.set(null)">
+        <div class="cbox wide dossier" (click)="$event.stopPropagation()">
+            <!-- KIA reads KIA in the dossier too — the card and the header must not disagree about the dead. -->
+            <div class="ph flat">{{ c.name }} <span class="dx-st st-{{ c.status }}">{{ c.kia ? 'KIA' : c.status.toUpperCase() }}</span></div>
+            <div class="dx-meta">{{ c.role }} · {{ c.faction }} · {{ c.relationship }}@if (c.reliability) { · reliability {{ c.reliability }} }</div>
+            <p class="dx-bg">{{ c.dossier }}</p>
+            <div class="dx-tr">Location: {{ c.location }}</div>
+            <div class="dx-vh">Channel</div>
+            <ul class="dx-voice"><li>{{ c.contactMethod }}</li></ul>
+            <div class="cbtns">
+                <button type="button" class="cbtn" (click)="exploded.set(null)">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- DELETE NOTE confirm -->
+@if (deleteTarget()) {
+    <div class="cmodal" role="dialog" aria-modal="true" (click)="deleteTarget.set(null)">
+        <div class="cbox" (click)="$event.stopPropagation()">
+            <div class="ph flat">Delete note?</div>
+            <p class="cmsg">This GM note is removed from the notebook. Auto-entries are records and never delete.</p>
+            <div class="cbtns">
+                <button type="button" class="cbtn" (click)="deleteTarget.set(null)">Cancel</button>
+                <button type="button" class="cbtn go" (click)="confirmDelete()">Delete »</button>
+            </div>
+        </div>
+    </div>
+}

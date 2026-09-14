@@ -10,7 +10,7 @@ import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
 import { WarchestService } from '../chaos/warchest.service'; // D-109 — Hot Spots combat pay at resolution
 import { initCampaignPilot } from '../chaos/pilot-card'; // D-125 — earn-side careerSP credit at resolve
-import { resolved } from '../chaos/chaos-contract'; // D-110b — chaos contract terms (Salvage %) at resolution
+import { resolved, isSessionContract, contractSummaryOf } from '../chaos/chaos-contract'; // D-110b — chaos contract terms (Salvage %) at resolution · GM-3 P1 — the session contract branches
 import { HotSpotsCatalogService } from '../chaos/hotspots-catalog'; // D-129 — resolve a pending child's authored track template
 import { MissionGeneratorService } from './mission-generator.service';
 import { ForgePackService } from './forge-pack.service';
@@ -220,7 +220,7 @@ export class MissionTreeService {
      *  loaded — graceful degradation otherwise). Returns true if it changed something (caller persists). */
     ensureTree(): boolean {
         if (this.tree().length) return false;
-        const ac = this.state.acceptedContract();
+        const ac = this.state.offerFor(); // GM-2 P2a — through the ONE accessor
         if (!ac || ac.status !== 'ACTIVE') return false;
         const root = this.rootBranch(ac);
         const spec = this.state.missionSpec();
@@ -288,7 +288,7 @@ export class MissionTreeService {
         // IMPORT-6 Part B — the dispatch is the ONE shared rule (resolveModelFor: 'two' = D-134 unchanged · 'one' = the
         // single-sided authored list, VP-share tier · 'legacy' = computeTier); the resolve modal's live verdict reads the
         // same rule, so what the GM saw is what posts.
-        const tsContract = this.state.activeChaosContract();
+        const tsContract = this.state.contractFor();
         const tsSpec = this.state.missionSpec();
         const model = resolveModelFor(tsSpec, tsContract);
         // IMPORT-6 FOLLOWUPS — keep the model's VIEW (the authored objectives + marks), not just its tier: it is snapshotted
@@ -372,22 +372,34 @@ export class MissionTreeService {
         // Warchest ledger as income (negative cost → balance up). Posted every resolution (0 on a failure) so the
         // Contract Record Sheet records each track. Traditional posts nothing here.
         let hsCombatPay = 0, hsSalvageSp = 0; // D-121 — snapshot the SP settlement onto the resolution for the AAR render
+        // GM-3 P1 — the SESSION CONTRACT (a GM session's party-less primary): NOBODY's warchest is paid by the primary's terms —
+        // no combat pay, no salvage, no completion +1 on the GM's record (hooks 2/6); each signed participant is paid by ITS
+        // contract on the slip (resolve.service), the GM's own only if he fielded (his participant contract). The D-125 earn
+        // POOL still exists (the tier's pay at the session's scale) so brought pilots earn career SP; it is posted nowhere.
+        // A plain campaign's contract never carries `party` → every branch below is dead there, byte-identical.
+        const sessionPrimary = isSessionContract(this.state.activeChaosContract());
+        let earnPool = 0;
         if (this.state.campaignSystem() === 'hotspots') {
-            hsCombatPay = this.warchest.combatPay(tier, this.state.contractScale() ?? 1);
-            this.warchest.post(`Combat pay: ${active.name}`, -hsCombatPay, 0, null, { silent: true }); // D-139 — resolve settlement (the resolve modal already shows this); not toasted
+            earnPool = this.warchest.combatPay(tier, this.state.scaleFor() ?? 1);
+            if (!sessionPrimary) {
+                hsCombatPay = earnPool;
+                this.warchest.post(`Combat pay: ${active.name}`, -hsCombatPay, 0, null, { silent: true }); // D-139 — resolve settlement (the resolve modal already shows this); not toasted
+            }
         }
         // D-110b — Hot Spots contract ↔ track loop. A resolved track (a) posts ESTIMATED salvage on a success and
         // (b) counts toward the contract's Intensity; the last track AUTO-COMPLETES (Rep +1, tree closed). The
         // tree-close is deferred to AFTER the fork rebuild below (else it would fight the unlock). Traditional (no
         // activeChaosContract) is untouched. Per-track intensity GATING + accurate salvage are D-110c.
         let hotspotsCompleted: ContractOffer | null = null;
-        const cc = this.state.activeChaosContract();
+        const cc = this.state.contractFor();
         if (this.state.campaignSystem() === 'hotspots' && cc?.status === 'active') {
             const salv = resolved(cc.steps).salvage;
             const salvagePct = typeof salv === 'number' ? salv : 0; // 'None'/'Exchange' → no straight-% estimate
             // D-110c — a GM-entered salvage SP (from the resolve dialog) posts as 'Salvage —'; an untouched dialog
             // (salvageValue undefined) posts the D-110b estimate as 'Salvage (est.) —'. Both only when > 0 (no 0-SP noise).
-            if (answers.salvageValue !== undefined) {
+            if (sessionPrimary) {
+                /* GM-3 P1 — no salvage to the GM's warchest on a session contract (each participant's estimate rides its slip entry) */
+            } else if (answers.salvageValue !== undefined) {
                 hsSalvageSp = Math.max(0, answers.salvageValue);
                 if (hsSalvageSp > 0) this.warchest.post(`Salvage — ${active.name}`, -hsSalvageSp, 0, null, { silent: true }); // D-139 — resolve settlement, not toasted
             } else {
@@ -401,11 +413,15 @@ export class MissionTreeService {
             }
             const done = cc.tracksDone + 1;
             if (done >= cc.intensity) {
-                this.state.setReputation((this.state.reputation() ?? 1) + 1);
-                this.warchest.post('Contract completed', 0, 0, null, { silent: true }); // D-139 — resolve settlement, not toasted
+                if (!sessionPrimary) { // GM-3 P1 (hook 6) — the +1 belongs to every SIGNED PARTICIPANT on the slip, never to a non-party GM
+                    this.state.setReputation((this.state.reputation() ?? 1) + 1);
+                    this.warchest.post('Contract completed', 0, 0, null, { silent: true }); // D-139 — resolve settlement, not toasted
+                }
+                this.state.setCompletedChaosContract(contractSummaryOf({ ...cc, status: 'completed', tracksDone: done })); // PD3 P2 — the terminal record, BEFORE the null
                 this.state.setActiveChaosContract(null);
+                this.state.clearParticipantContracts(); // GM-2 P2a — the participants' contracts complete with the primary's last track
                 this.state.clearHiredMercs(); this.state.clearContractHiredKeys(); // IMPORT-3 P2 — the contract's over: any hired mercs disband
-                hotspotsCompleted = this.state.acceptedContract(); // the synthetic offer, closed after the rebuild
+                hotspotsCompleted = this.state.offerFor(); // the synthetic offer, closed after the rebuild
                 this.state.setAcceptedContract(null); // clears the never-dead-end continuation guard below
             } else {
                 this.state.setActiveChaosContract({ ...cc, tracksDone: done }); // immutable replace
@@ -428,12 +444,12 @@ export class MissionTreeService {
             // (hiredMercs, per-track or contract-long) neither earn nor dilute — their pilot record is deleted at release
             // (releasePerTrackMercs / clearHiredMercs), so a share credited to them was thrown away while shrinking every
             // real pilot's share; the divisor is the deployed units that are NOT hired mercs. // DECISION
-            if (hsCombatPay > 0 && bluforIds.length) {
+            if (earnPool > 0 && bluforIds.length) { // GM-3 P1 — the earn pool = the posted combat pay on a plain campaign (identical), the un-posted tier pay on a session
                 const force = this.state.startingForce() ?? [];
                 const mercInstanceIds = new Set((this.state.hiredMercs() ?? []).map((m) => m.instanceId));
                 const earningUnits = bluforIds.filter((id) => !mercInstanceIds.has(id));
                 const deployed = new Set(earningUnits);
-                const share = earningUnits.length ? Math.round(hsCombatPay / earningUnits.length) : 0;
+                const share = earningUnits.length ? Math.round(earnPool / earningUnits.length) : 0;
                 if (share > 0) this.state.setPilots((this.state.pilots() ?? []).map((p) => {
                     if (!p.named || p.status === 'KIA' || !p.assignedInstanceId || !deployed.has(p.assignedInstanceId)) return p;
                     const unit = force.find((i) => i.instanceId === p.assignedInstanceId);
@@ -454,7 +470,7 @@ export class MissionTreeService {
         });
         // NEVER DEAD-END: if no fork matched AND nothing is left AVAILABLE anywhere, roll the next
         // operation under the live contract/order so the campaign continues (the app-wide guarantee).
-        if (!next.some((b) => b.state === 'AVAILABLE') && this.state.acceptedContract()?.status === 'ACTIVE') {
+        if (!next.some((b) => b.state === 'AVAILABLE') && this.state.offerFor()?.status === 'ACTIVE') {
             next.push(this.continuationBranch(active));
         }
         this.setTree(next);
@@ -470,7 +486,7 @@ export class MissionTreeService {
      *  STATE the generator reads back next time (DATA-003-safe); the tier gate / fork-unlock is untouched. */
     private recordOutcome(active: MissionBranch, tier: OutcomeGate, spec: ReturnType<NewCampaignState['missionSpec']>): void {
         const t = MISSION_TUNABLES.escalation;
-        const contractId = this.state.acceptedContract()?.id ?? '';
+        const contractId = this.state.offerFor()?.id ?? '';
         const threadTag = contractId || '__campaign__';
         const rec: OutcomeRecord = {
             contractId, branchId: active.branchId, threadTag, tier, date: this.today(),
@@ -488,13 +504,13 @@ export class MissionTreeService {
     /** A never-dead-end CONTINUATION op (D-039): AVAILABLE, ANY-gated, parented to the resolved branch so
      *  Flow shows continuity. No seedFamilyHint → GENERATE falls back to the contract missionType. */
     private continuationBranch(parent: MissionBranch): MissionBranch {
-        const ac = this.state.acceptedContract();
+        const ac = this.state.offerFor(); // GM-2 P2a — through the ONE accessor
         const mt = ac ? MISSION_TYPES[ac.missionType as keyof typeof MISSION_TYPES] : undefined;
         // IMPORT-6 Part A — under a live Hot Spots contract no authored track follows this outcome (the chain ran out, or
         // no fork matched the tier) with intensity unmet: name the slot for what it is (the picker's target — "next
         // track"), not a Traditional follow-on tasking. Read via activeChaosContract (HS-only state; Traditional never
         // sets it) — no new mode-branch read (branch-pin). tracksDone was already incremented above.
-        const cc = this.state.activeChaosContract();
+        const cc = this.state.contractFor();
         if (cc?.status === 'active') {
             return {
                 branchId: this.newId('cont'),

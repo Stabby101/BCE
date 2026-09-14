@@ -9,6 +9,8 @@ import { DecimalPipe } from '@angular/common';
 import { NewCampaignState } from '../new-campaign-state';
 import { DataService } from '../../services/data.service';
 import { CampaignPilotService } from './campaign-pilot.service';
+import { PilotService } from '../barracks/pilot.service'; // PD3 P4 — the D-070 rename path
+import { CampaignSaveStore } from '../campaign-save-store'; // PD3 P4 — persist after a rename
 import { BVCalculatorUtil } from '../../utils/bv-calculator.util';
 import { PILOT_ABILITIES } from '../barracks/pilot-abilities';
 import { initCampaignPilot, gunneryLadder, pilotingLadder, edgeLadder, abilityLadder, nextGunneryRung, nextPilotingRung, nextEdgeRung, nextAbilityRung, nextCommandAbilityCost, PILOT_CARD_PRICES, COMMAND_ABILITIES } from './pilot-card';
@@ -23,7 +25,12 @@ import { initCampaignPilot, gunneryLadder, pilotingLadder, edgeLadder, abilityLa
         <section class="cpc">
             <div class="cpc-h">
                 <div class="cpc-tag">CAMPAIGN PILOT CARD</div>
-                <div class="cpc-name">{{ p.name }}@if (p.callsign) { <span class="cpc-cs">“{{ p.callsign }}”</span> } <span class="cpc-type">{{ c.type }}</span></div>
+                @if (renaming()) {
+                    <!-- PD3 P4 (PD3-5) — the card's name is EDITABLE (pilot.service.rename, the D-070 path); the overlay's "edit" link stays -->
+                    <div class="cpc-name"><input class="cpc-name-in" [value]="nameDraft()" (input)="nameDraft.set($any($event.target).value)" (keydown.enter)="saveRename()" (keydown.escape)="renaming.set(false)" maxlength="40" aria-label="Pilot name" data-testid="cpc-rename-input" /> <button type="button" class="cpc-ren save" (click)="saveRename()" data-testid="cpc-rename-save" aria-label="Save name">✓</button> <button type="button" class="cpc-ren" (click)="renaming.set(false)" aria-label="Cancel rename">✕</button></div>
+                } @else {
+                    <div class="cpc-name">{{ p.name }}@if (p.callsign) { <span class="cpc-cs">“{{ p.callsign }}”</span> } <span class="cpc-type">{{ c.type }}</span> @if (p.status !== 'KIA') { <button type="button" class="cpc-ren" (click)="startRename()" data-testid="cpc-rename" aria-label="Rename pilot" title="Rename pilot">✎</button> }</div>
+                }
             </div>
             <div class="cpc-stats">
                 <div class="cpc-stat"><span>Gunnery</span><b>{{ p.gunnery }}</b></div>
@@ -100,6 +107,8 @@ import { initCampaignPilot, gunneryLadder, pilotingLadder, edgeLadder, abilityLa
         } }
     `,
     styles: [`
+        .cpc-ren { border: none; background: transparent; color: inherit; opacity: .7; font-size: 13px; line-height: 1; padding: 2px 6px; cursor: pointer; min-width: 28px; min-height: 28px; } .cpc-ren:hover { opacity: 1; } .cpc-ren.save { opacity: 1; font-weight: 700; } /* PD3 P4 */
+        .cpc-name-in { font: inherit; padding: 3px 6px; max-width: 18ch; } /* PD3 P4 */
         .cpc { border: 1.6px solid var(--ink); background: var(--paper2, var(--paper)); padding: 12px 14px; margin-top: 14px; font-family: var(--type); color: var(--ink); }
         .cpc-tag { font-family: var(--label); font-weight: 700; letter-spacing: 2px; font-size: 10px; text-transform: uppercase; color: var(--stamp); }
         .cpc-name { font-family: var(--stencil, var(--label)); font-size: 18px; margin-top: 2px; }
@@ -134,6 +143,13 @@ export class CampaignPilotCardComponent {
     private readonly state = inject(NewCampaignState);
     private readonly data = inject(DataService);
     protected readonly svc = inject(CampaignPilotService);
+    // PD3 P4 (PD3-5) — the rename affordance ON the card (the D-070 rename path; KIA names are the memorial and stay fixed)
+    private readonly pilots = inject(PilotService);
+    private readonly store = inject(CampaignSaveStore);
+    protected readonly renaming = signal(false);
+    protected readonly nameDraft = signal('');
+    protected startRename(): void { const p = this.pilot(); if (!p || p.status === 'KIA') return; this.nameDraft.set(p.name); this.renaming.set(true); }
+    protected saveRename(): void { this.pilots.rename(this.pilotId(), this.nameDraft()); this.renaming.set(false); void this.store.persistCurrent(); }
 
     protected readonly heal = PILOT_CARD_PRICES.heal;
     protected readonly fcCost = PILOT_CARD_PRICES.formationCommander;

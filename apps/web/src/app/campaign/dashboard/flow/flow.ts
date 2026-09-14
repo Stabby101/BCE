@@ -7,15 +7,16 @@
  * drawer shows only the fork's trigger/consequence teaser. A contract selector recalls archived trees
  * (read-only). MERC/contract-scoped. Height-safe (the canvas pans inside a bounded viewport).
  */
-import { Component, ChangeDetectionStrategy, computed, inject, signal, output, input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, inject, signal, output, input, viewChild, effect, untracked, type ElementRef } from '@angular/core';
 import { NewCampaignState } from '../../new-campaign-state';
 import { MissionTreeService } from '../../mission/mission-tree.service';
 import { layoutTree } from './flow-layout';
 import type { MissionBranch } from '../../mission/mission-tree';
 import { deployedSet } from '../../force/deployed';
+import { hsDamagedCount } from '../../battle/hs-damage'; // PD3 P1 — the rail's Repair stop carries the damaged count
 
 /** DIRECTIVE-073 — one lifecycle stage of the current mission, read-only over the real state/gates. */
-interface GateNode { key: string; name: string; status: 'done' | 'pending' | 'blocked'; detail: string; }
+interface GateNode { key: string; name: string; status: 'done' | 'pending' | 'blocked'; detail: string; badge?: number; }
 
 /** DIRECTIVE-115 — the advisory rail: each lifecycle step → the tab (+ optional Missions-hub sub) where the player
  *  performs it, per campaign system. Post-D-114 Hot Spots layout: the mission hub lives in the Contracts tab
@@ -34,18 +35,19 @@ const STEP_DEST: Record<string, { traditional: FlowDest; hotspots: FlowDest }> =
 
 /** DIRECTIVE-119 P2 — the Hot Spots lifecycle as a top-of-sheet Process Rail: ordered steps + where each is done.
  *  `advance` is the P1 clock-advance action (not a navigate). Reuses the same navigate/advancePhase outputs. */
-const HS_RAIL: readonly { key: string; label: string; dest: FlowDest | 'advance' }[] = [
-    { key: 'force',    label: 'Your force',         dest: { tab: 'roster' } },
-    { key: 'contract', label: 'Contract',           dest: { tab: 'chaos-contracts', sub: 'brief' } },
+const HS_RAIL: readonly { key: string; label: string; dest: FlowDest | 'advance'; next: string }[] = [
+    // PD3 P3 — `next` = what to do at this stop, in words (the "PHASE: <name> — <next>" line under the rail)
+    { key: 'force',    label: 'Your force',         dest: { tab: 'roster' },                         next: 'review the roster, then sign a contract' },
+    { key: 'contract', label: 'Contract',           dest: { tab: 'chaos-contracts', sub: 'brief' },  next: 'pick an offer on the Contracts board and sign it' },
     // DECISION (D-119 P2) — DEPLOY lands on the Contracts BRIEF sub, where the D-118 inline deploy roster lives (the
     // primary deploy UX), not the legacy /force battle-view; the brief hub adapts (board when idle → deploy roster
     // once a track is active), so CONTRACT and DEPLOY share it state-adaptively.
-    { key: 'deploy',   label: 'Deploy',             dest: { tab: 'chaos-contracts', sub: 'brief' } },
-    { key: 'lobby',    label: 'Lobby',              dest: { tab: 'lobby' } },
-    { key: 'resolve',  label: 'Resolve',            dest: { tab: 'lobby' } },
-    { key: 'aar',      label: 'AAR',                dest: { tab: 'aar' } },
-    { key: 'repair',   label: 'Repair & Infirmary', dest: { tab: 'chaos-repair' } },
-    { key: 'advance',  label: 'Advance phase',      dest: 'advance' },
+    { key: 'deploy',   label: 'Deploy',             dest: { tab: 'chaos-contracts', sub: 'brief' },  next: 'generate the track and deploy your force on the Brief' },
+    { key: 'lobby',    label: 'Lobby',              dest: { tab: 'lobby' },                          next: 'open the Lobby — players scan in and claim their machines' },
+    { key: 'resolve',  label: 'Resolve',            dest: { tab: 'lobby' },                          next: 'play the track, then Resolve it from the Lobby' },
+    { key: 'aar',      label: 'AAR',                dest: { tab: 'aar' },                            next: 'read the after-action report' },
+    { key: 'repair',   label: 'Repair & Infirmary', dest: { tab: 'chaos-repair' },                   next: 'repair damage and heal wounds for SP' },
+    { key: 'advance',  label: 'Advance phase',      dest: 'advance',                                 next: 'advance the phase to the next month' },
 ];
 
 @Component({
@@ -247,6 +249,10 @@ export class FlowComponent {
         const resolved = cur?.state === 'RESOLVED';
         const hasActive = cur?.state === 'ACTIVE';
         const deployed = deployedSet(this.state.startingForce()).length;
+        // PD3 P1 (PD3-12) — Repair & Refit is REACHABLE whenever damaged units exist (a digital envelope or a tabletop level,
+        // hs-damage.ts): before P1 the stop was locked until the current track resolved, so after ADVANCE PHASE a hurt force
+        // had no way back in. Pending (◉ + badge) while unresolved, done (✓ + badge) after — never blocked over damage.
+        const damaged = hsDamagedCount(this.state.startingForce());
         const st = (key: string): GateNode['status'] => {
             switch (key) {
                 case 'force': return 'done'; // the merc command always exists in Hot Spots
@@ -255,15 +261,34 @@ export class FlowComponent {
                 case 'lobby': return resolved ? 'done' : (hasActive && deployed > 0) ? 'pending' : 'blocked';
                 case 'resolve': return resolved ? 'done' : (hasActive && deployed > 0) ? 'pending' : 'blocked';
                 case 'aar': return resolved ? 'done' : 'blocked';
-                case 'repair': return resolved ? 'done' : 'blocked'; // HS settles repair/infirmary at resolve (SP economy)
+                case 'repair': return resolved ? 'done' : damaged > 0 ? 'pending' : 'blocked'; // HS settles repair/infirmary at resolve (SP economy) · PD3 P1 — open while anything is damaged
                 case 'advance': return resolved ? 'pending' : 'blocked';
                 default: return 'blocked';
             }
         };
-        return HS_RAIL.map((s) => ({ key: s.key, name: s.label, status: st(s.key), detail: '' }));
+        return HS_RAIL.map((s) => ({ key: s.key, name: s.label, status: st(s.key), detail: '', ...(s.key === 'repair' && damaged > 0 ? { badge: damaged } : {}) }));
     });
     /** The first pending step — the "do this next" ▶ highlight. */
     protected readonly hsRailNext = computed<string | null>(() => this.hsRail().find((n) => n.status === 'pending')?.key ?? null);
+    /** PD3 P3 (PD3-10) — the phase line: the current (▶) stop's name + what to do there; every stop done → the loop is closed. */
+    protected readonly railPhase = computed<{ key: string; name: string; next: string } | null>(() => {
+        if (this.variant() !== 'rail') return null;
+        const key = this.hsRailNext();
+        const step = key ? HS_RAIL.find((s) => s.key === key) : null;
+        if (!step) return { key: 'done', name: 'Cycle complete', next: 'advance the phase, or sign the next contract' };
+        return { key: step.key, name: step.label, next: step.next };
+    });
+    /** PD3 P3 — the strip auto-scrolls the current stop into view on render: the rail's OWN scrollLeft (never scrollIntoView, which
+     *  would drag the page's ancestors); a no-op while the rail fits (desktop) or nothing is pending. */
+    private readonly prailEl = viewChild<ElementRef<HTMLElement>>('prail');
+    private readonly scrollCurrent = effect(() => {
+        const key = this.hsRailNext(); const nav = this.prailEl()?.nativeElement;
+        untracked(() => { if (!nav || !key) return; setTimeout(() => {
+            if (nav.scrollWidth <= nav.clientWidth) return;
+            const step = nav.querySelector<HTMLElement>(`.pr-step[data-step="${key}"]`); if (!step) return;
+            nav.scrollLeft = Math.max(0, step.offsetLeft - (nav.clientWidth - step.offsetWidth) / 2);
+        }, 0); });
+    });
 
     /** Click a rail step: locked (blocked = ahead of frontier) does nothing; else navigate, or fire ADVANCE PHASE. */
     protected railStep(step: GateNode): void {

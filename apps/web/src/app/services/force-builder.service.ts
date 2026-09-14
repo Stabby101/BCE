@@ -1,106 +1,155 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { Injectable, signal, effect, computed, Injector, inject, untracked, DestroyRef, ApplicationRef } from '@angular/core';
-import type { Unit } from '../models/units.model';
-import { type Force, type UnitGroup, MAX_GROUPS, MAX_UNITS } from '../models/force.model';
+import type { UnitSummary } from '../models/unit-summary.model';
+import { Force, type UnitGroup, MAX_GROUPS, MAX_UNITS } from '../models/force.model';
 import type { ForceUnit } from '../models/force-unit.model';
 import { DataService } from './data.service';
 import { LayoutService } from './layout.service';
 import { ForceNamerUtil } from '../utils/force-namer.util';
-import type { Faction } from '../models/factions.model';
+import { getFactionImg, type Faction } from '../models/factions.model';
 import type { Era } from '../models/eras.model';
-import type { FormationNamerUtil } from '../utils/formation-namer.util';
 import { ConfirmDialogComponent, type ConfirmDialogData } from '../components/confirm-dialog/confirm-dialog.component';
-import { firstValueFrom, Subject } from 'rxjs';
+import { firstValueFrom, Subject, filter, map, take, type Observable } from 'rxjs';
 import { RenameForceDialogComponent, type RenameForceDialogData, type RenameForceDialogResult } from '../components/rename-force-dialog/rename-force-dialog.component';
 import { RenameGroupDialogComponent, type RenameGroupDialogData, type RenameGroupDialogResult } from '../components/rename-group-dialog/rename-group-dialog.component';
 import { UnitInitializerService } from './unit-initializer.service';
 import { DialogsService, type DialogRef } from './dialogs.service';
-import { generateUUID, WsService } from './ws.service';
+import { WsService, type ForceUpdateSource } from './ws.service';
 import { ToastService } from './toast.service';
 import { LoggerService } from './logger.service';
-import { SheetService } from './sheet.service';
 import { OptionsService } from './options.service';
-import { LoadForceEntry } from '../models/load-force-entry.model';
+import { AsAbilityLookupService } from './as-ability-lookup.service';
+import { LoadForceEntry, type LoadForceUnit } from '../models/load-force-entry.model';
 import { ForceLoadDialogComponent, type ForceLoadDialogResult } from '../components/force-load-dialog/force-load-dialog.component';
 import { ForcePackDialogComponent, type ForcePackDialogResult } from '../components/force-pack-dialog/force-pack-dialog.component';
+import type { SearchForceGeneratorDialogResult } from '../components/search-force-generator-dialog/search-force-generator-dialog.component';
 import type { SerializedForce } from '../models/force-serialization';
 import { EditPilotDialogComponent, type EditPilotDialogData, type EditPilotResult } from '../components/edit-pilot-dialog/edit-pilot-dialog.component';
 import { EditASPilotDialogComponent, type EditASPilotDialogData, type EditASPilotResult } from '../components/edit-as-pilot-dialog/edit-as-pilot-dialog.component';
 import { ShareForceDialogComponent } from '../components/share-force-dialog/share-force-dialog.component';
-import { FormationInfoDialogComponent, type FormationInfoDialogData } from '../components/formation-info-dialog/formation-info-dialog.component';
-import type { CrewMember } from '../models/crew-member.model';
+import { FormationInfoDialogComponent, type FormationInfoDialogData, type FormationInfoDialogResult } from '../components/formation-info-dialog/formation-info-dialog.component';
 import { GameSystem } from '../models/common.model';
 import { CBTForce } from '../models/cbt-force.model';
 import { ASForce } from '../models/as-force.model';
 import { ASForceUnit } from '../models/as-force-unit.model';
 import { CBTForceUnit } from '../models/cbt-force-unit.model';
 import { GameService } from './game.service';
-import { UrlStateService } from './url-state.service';
-import { canAntiMech } from '../utils/infantry.util';
-import { getEffectivePilotingSkill } from '../utils/cbt-common.util';
+import { UrlService } from './url.service';
+import { NavigationEnd, Router } from '@angular/router';
+import { getEffectivePilotingSkill, getFixedPilotingSkill } from '../utils/cbt-common.util';
 import type { ResolvedPack } from '../utils/force-pack.util';
 import { buildMultiForceQueryParams, parseForceFromUrl, type ForceQueryParams, type ForceUrlUnitLookupMode } from '../utils/force-url.util';
 import { CBTPrintUtil } from '../utils/cbtprint.util';
+import { CBTSummaryPrintUtil } from '../utils/cbt-summary-print.util';
 import { ASPrintUtil } from '../utils/asprint.util';
+import { ASSummaryPrintUtil } from '../utils/as-summary-print.util';
 import type { ForceSlot, ForceAlignment } from '../models/force-slot.model';
+import { MULFACTION_EXTINCT, MULFACTION_MERCENARY } from '../models/mulfactions.model';
 import { LanceTypeIdentifierUtil } from '../utils/lance-type-identifier.util';
+import { FormationAbilityAssignmentUtil } from '../utils/formation-ability-assignment.util';
+import { formationHasTargetCopyEffect, type FormationTypeDefinition } from '../utils/formation-type.model';
+import { clearInvalidFormationTargetSelection, getFormationTargetCandidates, resolveFormationTargetGroup } from '../utils/formation-target.util';
 import { UnitSearchFiltersService } from './unit-search-filters.service';
 import type { MultiStateSelection } from '../components/multi-select-dropdown/multi-select-dropdown.component';
-import { getPositiveFactionNamesFromFilter } from '../utils/faction-filter.util';
+import { getPositiveDropdownNamesFromFilter } from '../utils/filter-name-resolution.util';
+import { getSelectedPositiveDropdownNames } from '../utils/unit-search-shared.util';
 import { type SerializedOperation, LoadOperationEntry, type OperationForceRef } from '../models/operation.model';
 import { SaveOperationDialogComponent, type OperationDialogData, type OperationDialogResult } from '../components/save-operation-dialog/save-operation-dialog.component';
 import type { OpPreviewForce } from '../components/op-preview/op-preview.component';
 import { ForceLoadingOverlayComponent, type ForceLoadingOverlayData, type ForceLoadingProgress } from '../components/force-loading-overlay/force-loading-overlay.component';
 import type { PrintAllOptions } from '../models/print-options.model';
+import { UnitAvailabilitySourceService } from './unit-availability-source.service';
+import { C3NetworkEditor } from '../models/c3-network-editor';
+import { uuidv7 } from '../utils/uuid.util';
+import { EquipmentInteractionRegistryService } from './equipment-interaction-registry.service';
+import { INVENTORY_CONTROL_TARGET_COLORS, getInventoryControlTargetLetter, type InventoryControlRuntimeTarget } from '../models/inventory-control-runtime-state.model';
+import { deriveOpforTargetCalculatorState, getOpforInventoryTargetId, resolveInventoryTargetUnitType } from '../utils/inventory-control-opfor-target.util';
 
-/*
- * Author: Drake
- */
+function parseForceTimestamp(timestamp: string | null | undefined): number | null {
+    if (!timestamp) return null;
+    const parsed = Date.parse(timestamp);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+function compareForceTimestamps(targetForce: Force, incomingForce: SerializedForce): number | null {
+    const currentTimestamp = parseForceTimestamp(targetForce.timestamp);
+    const incomingTimestamp = parseForceTimestamp(incomingForce.timestamp);
+
+    if (currentTimestamp === null || incomingTimestamp === null) return null;
+    return Math.sign(incomingTimestamp - currentTimestamp);
+}
+
+function inventoryControlTargetsEqual(
+    currentTargets: readonly InventoryControlRuntimeTarget[],
+    nextTargets: readonly InventoryControlRuntimeTarget[]
+): boolean {
+    if (currentTargets.length !== nextTargets.length) return false;
+    const nextById = new Map(nextTargets.map(target => [target.id, target]));
+    return currentTargets.every(current => {
+        const next = nextById.get(current.id);
+        return !!next
+            && current.letter === next.letter
+            && current.name === next.name
+            && current.color === next.color
+            && current.source === next.source
+            && current.readOnly === next.readOnly
+            && current.unitType === next.unitType
+            && current.distance === next.distance
+            && current.tnModifier === next.tnModifier
+            && recordsEqual(current.tnCalculator, next.tnCalculator);
+    });
+}
+
+function recordsEqual(
+    current: object | undefined,
+    next: object | undefined,
+    visited = new WeakMap<object, WeakSet<object>>(),
+): boolean {
+    if (current === next) return true;
+    if (!current || !next) return false;
+    let comparedWith = visited.get(current);
+    if (comparedWith?.has(next)) return true;
+    if (!comparedWith) {
+        comparedWith = new WeakSet<object>();
+        visited.set(current, comparedWith);
+    }
+    comparedWith.add(next);
+    const currentRecord = current as Record<string, unknown>;
+    const nextRecord = next as Record<string, unknown>;
+    const keys = new Set([...Object.keys(currentRecord), ...Object.keys(nextRecord)]);
+    return [...keys].every(key => {
+        const currentValue = currentRecord[key];
+        const nextValue = nextRecord[key];
+        return currentValue === nextValue
+            || (currentValue === undefined && nextValue === false)
+            || (currentValue === false && nextValue === undefined)
+            || (typeof currentValue === 'object' && currentValue !== null
+                && typeof nextValue === 'object' && nextValue !== null
+                && recordsEqual(currentValue, nextValue, visited));
+    });
+}
+
+
 @Injectable({
     providedIn: 'root'
 })
 export class ForceBuilderService {
     logger = inject(LoggerService);
     dataService = inject(DataService);
+    optionsService = inject(OptionsService);
     layoutService = inject(LayoutService);
     toastService = inject(ToastService);
     wsService = inject(WsService);
     private dialogsService = inject(DialogsService);
     private unitInitializer = inject(UnitInitializerService);
     private injector = inject(Injector);
-    private urlStateService = inject(UrlStateService);
+    private urlService = inject(UrlService);
+    private router = inject(Router);
+    private unitAvailabilitySource = inject(UnitAvailabilitySourceService);
+    private equipmentRegistryService = inject(EquipmentInteractionRegistryService);
 
     public selectedUnit = signal<ForceUnit | null>(null, { equal: () => false });
     public loadedForces = signal<ForceSlot[]>([]);
@@ -122,6 +171,7 @@ export class ForceBuilderService {
     /** Guards initializeFromUrl so it only runs once (at startup). */
     private urlInitRan = false;
     private conflictDialogRef: any;
+    private remoteConflictQueue: Promise<void> = Promise.resolve();
 
     /** Current alignment filter: 'all' shows everything, 'friendly'/'enemy' filters by alignment. */
     public alignmentFilter = signal<'friendly' | 'enemy' | 'all'>('friendly');
@@ -156,12 +206,10 @@ export class ForceBuilderService {
     });
 
     constructor() {
-        // Register as a URL state consumer - must call markConsumerReady when done reading URL
-        this.urlStateService.registerConsumer('force-builder');
-        
         this.loadUnitsFromUrlOnStartup();
         this.updateUrlOnForceChange();
-        this.monitorWebSocketConnection();
+        this.monitorEquipmentHandlerRuntime();
+        this.monitorOpforInventoryTargets();
 
         // Auto-reset alignment filter when mixed alignments no longer apply
         effect(() => {
@@ -197,8 +245,125 @@ export class ForceBuilderService {
     allLoadedUnits = computed<ForceUnit[]>(() => {
         return this.loadedForces().flatMap(s => s.force.units());
     });
+
+    isInventoryControlOpforAvailable(force: CBTForce): boolean {
+        return this.opposingCBTForces(force).length > 0;
+    }
+
+    setInventoryControlOpforEnabled(force: CBTForce, enabled: boolean): void {
+        force.inventoryControlOpforEnabled.set(enabled && this.isInventoryControlOpforAvailable(force));
+        this.syncOpforInventoryTargets(force, this.opposingCBTUnits(force));
+    }
+
+    private monitorOpforInventoryTargets(): void {
+        effect(() => {
+            const cbtForces = this.loadedForces()
+                .filter(slot => slot.force instanceof CBTForce)
+                .map(slot => slot.force as CBTForce);
+            const cbtUnits = cbtForces.flatMap(force => force.units());
+
+            for (const unit of cbtUnits) {
+                unit.getConditions();
+                unit.getActiveNarcWaterLayers();
+                unit.turnState().moveMode();
+                unit.turnState().moveDistance();
+                unit.turnState().airborne();
+                unit.turnState().cover();
+            }
+
+            for (const force of cbtForces) {
+                force.inventoryControlOpforEnabled();
+                untracked(() => this.syncOpforInventoryTargets(force, this.opposingCBTUnits(force)));
+            }
+        });
+    }
+
+    private opposingCBTForces(force: CBTForce): CBTForce[] {
+        const sourceSlot = this.loadedForces().find(slot => slot.force === force);
+        if (!sourceSlot) return [];
+        return this.loadedForces()
+            .filter(slot => slot.force instanceof CBTForce && (
+                sourceSlot.alignment === 'enemy'
+                    ? slot.alignment !== 'enemy'
+                    : slot.alignment === 'enemy'
+            ))
+            .map(slot => slot.force as CBTForce);
+    }
+
+    private opposingCBTUnits(force: CBTForce): CBTForceUnit[] {
+        return this.opposingCBTForces(force).flatMap(opposingForce => opposingForce.units());
+    }
+
+    private syncOpforInventoryTargets(force: CBTForce, enemyUnits: readonly CBTForceUnit[]): void {
+        try {
+            const currentTargets = force.getInventoryControlTargets();
+            const manualTargets = currentTargets.filter(target => target.source !== 'opfor');
+            if (!force.inventoryControlOpforEnabled() || !this.isInventoryControlOpforAvailable(force)) {
+                if (!this.isInventoryControlOpforAvailable(force)) force.inventoryControlOpforEnabled.set(false);
+                if (currentTargets.length !== manualTargets.length) force.replaceInventoryControlTargets(manualTargets);
+                return;
+            }
+
+            const existingById = new Map(currentTargets.map(target => [target.id, target]));
+            const usedLetters = new Set(manualTargets.map(target => target.letter));
+            const opforTargets = enemyUnits.map((enemyUnit, enemyIndex): InventoryControlRuntimeTarget => {
+                const id = getOpforInventoryTargetId(enemyUnit.id);
+                const existing = existingById.get(id);
+                const letter = existing && !usedLetters.has(existing.letter)
+                    ? existing.letter
+                    : this.getFirstUnusedInventoryTargetLetter(usedLetters);
+                usedLetters.add(letter);
+                const tnCalculator = deriveOpforTargetCalculatorState(enemyUnit, existing?.tnCalculator);
+                const unitType = resolveInventoryTargetUnitType(enemyUnit.getUnit());
+                return {
+                    id,
+                    letter,
+                    name: enemyUnit.getDisplayName(),
+                    color: existing?.color ?? INVENTORY_CONTROL_TARGET_COLORS[enemyIndex % INVENTORY_CONTROL_TARGET_COLORS.length],
+                    source: 'opfor',
+                    readOnly: true,
+                    unitType,
+                    distance: 1,
+                    tnCalculator,
+                    tnModifier: 0
+                };
+            });
+            const nextTargets = [...manualTargets, ...opforTargets];
+            if (!inventoryControlTargetsEqual(currentTargets, nextTargets)) {
+                force.replaceInventoryControlTargets(nextTargets);
+            }
+        } catch (error) {
+            force.inventoryControlOpforEnabled.set(false);
+            try {
+                const currentTargets = force.getInventoryControlTargets();
+                const manualTargets = currentTargets.filter(target => target.source !== 'opfor');
+                if (manualTargets.length !== currentTargets.length) {
+                    force.replaceInventoryControlTargets(manualTargets);
+                }
+            } catch (cleanupError) {
+                this.logger?.error(`Unable to clear stale OPFOR targets: ${cleanupError}`);
+            }
+            this.logger?.error(`Unable to synchronize OPFOR targets: ${error}`);
+            this.toastService?.showToast(
+                'Unable to synchronize OPFOR targets. OPFOR targeting was disabled.',
+                'error',
+                'opfor-target-sync-error'
+            );
+        }
+    }
+
+    private getFirstUnusedInventoryTargetLetter(usedLetters: ReadonlySet<string>): string {
+        for (let index = 0; ; index++) {
+            const letter = getInventoryControlTargetLetter(index);
+            if (!usedLetters.has(letter)) return letter;
+        }
+    }
     /** True when a force is loaded (non-null). */
     hasForces = computed<boolean>(() => this.loadedForces().length > 0);
+    /** True when at least one force was loaded by this user rather than supplied by a lobby. */
+    hasUserLoadedForces = computed<boolean>(() => (
+        this.loadedForces().some(slot => slot.persistInUrl !== false)
+    ));
     /** Current force's game system, or null. */
     forceGameSystem = computed<GameSystem | null>(() => this.smartCurrentForce()?.gameSystem ?? null);
 
@@ -260,17 +425,21 @@ export class ForceBuilderService {
     /**
      * Creates a ForceSlot, sets up WS and change subscriptions for a force.
      */
-    private setupForceSlot(force: Force, alignment: ForceAlignment): ForceSlot {
-        const slot: ForceSlot = { force, alignment, changeSub: null };
+    private setupForceSlot(
+        force: Force,
+        alignment: ForceAlignment,
+        { persistInUrl = true }: { persistInUrl?: boolean } = {},
+    ): ForceSlot {
+        const slot: ForceSlot = { force, alignment, changeSub: null, persistInUrl };
         const instanceId = force.instanceId();
         this.logger.info(`ForceBuilderService: Setting up force slot for "${force.displayName()}"${instanceId ? ` (instance: ${instanceId})` : ''}`);
         if (instanceId) {
-            this.wsService.subscribeToForceUpdates(instanceId, (serializedForce: SerializedForce) => {
+            this.wsService.subscribeToForceUpdates(instanceId, (serializedForce: SerializedForce, source: ForceUpdateSource) => {
                 if (serializedForce.instanceId !== force.instanceId()) {
                     this.logger.warn(`Received force update for instance ID ${serializedForce.instanceId}, but force has instance ID ${force.instanceId()}. Ignoring.`);
                     return;
                 }
-                this.replaceForceInPlace(force, serializedForce);
+                return this.reconcileRemoteForce(force, serializedForce, source);
             });
         }
         // Subscribe to force changes for auto-save
@@ -307,7 +476,9 @@ export class ForceBuilderService {
         this.teardownForceSlot(slot);
 
         // Re-setup slot with cloned force
-        const newSlot = this.setupForceSlot(cloned, slot.alignment);
+        const newSlot = this.setupForceSlot(cloned, slot.alignment, {
+            persistInUrl: slot.persistInUrl,
+        });
         this.loadedForces.update(slots => slots.map(s => s === slot ? newSlot : s));
 
         if (wasActive) {
@@ -344,14 +515,18 @@ export class ForceBuilderService {
      * the alignment filter if necessary so the new force is visible.
      * Pass `activate: false` to just add the slot without switching selection/filter.
      */
-    addLoadedForce(force: Force, alignment: ForceAlignment = 'friendly', { activate = true }: { activate?: boolean } = {}): void {
+    addLoadedForce(
+        force: Force,
+        alignment: ForceAlignment = 'friendly',
+        { activate = true, persistInUrl = true }: { activate?: boolean; persistInUrl?: boolean } = {},
+    ): void {
         // Guard against duplicate instanceIds (can occur from concurrent async loads)
         const instanceId = force.instanceId();
         if (instanceId && this.loadedForces().some(s => s.force.instanceId() === instanceId)) {
             this.logger.warn(`ForceBuilderService: Skipping duplicate force "${force.displayName()}" (instance: ${instanceId})`);
             return;
         }
-        const slot = this.setupForceSlot(force, alignment);
+        const slot = this.setupForceSlot(force, alignment, { persistInUrl });
         this.loadedForces.update(slots => [...slots, slot]);
 
         if (activate) {
@@ -550,10 +725,34 @@ export class ForceBuilderService {
     }
 
     /**
-     * Handles an incoming WS update for a specific force, updating it in-place.
+     * Reconciles an incoming remote force snapshot with the loaded force.
      */
-    private async replaceForceInPlace(targetForce: Force, serializedForce: SerializedForce) {
+    private async reconcileRemoteForce(
+        targetForce: Force,
+        serializedForce: SerializedForce,
+        source: ForceUpdateSource = 'live',
+    ) {
         if (!targetForce) return;
+        const timestampComparison = compareForceTimestamps(targetForce, serializedForce);
+        if (timestampComparison === null) {
+            this.logger.warn(`Ignoring remote force update for instance ${targetForce.instanceId()}: unable to compare timestamps.`);
+            return;
+        }
+        if (timestampComparison === -1) {
+            if (source === 'reconnect' && targetForce.owned()) {
+                try {
+                    await this.dataService.saveForceAndWaitForCloud(targetForce);
+                } catch (error) {
+                    this.logger.error(`Failed to push local force ${targetForce.instanceId()} after reconnect: ${error}`);
+                }
+            }
+            return;
+        }
+        if (timestampComparison === 0) return;
+        if (source === 'reconnect' && targetForce.owned() && this.optionsService.options().enableForceSyncConflictDialog) {
+            await this.enqueueRemoteForceConflict(targetForce, serializedForce);
+            return;
+        }
         try {
             this.urlStateInitialized.set(false);
             const selectedUnitId = this.selectedUnit()?.id;
@@ -596,13 +795,30 @@ export class ForceBuilderService {
     async loadForce(force: Force): Promise<boolean> {
         this.urlStateInitialized.set(false);
         try {
-            const cleared = await this.clear();
+            const hasLobbyForces = this.loadedForces().some(slot => slot.persistInUrl === false);
+            const cleared = hasLobbyForces
+                ? await this.clearUserLoadedForces()
+                : await this.clear();
             if (!cleared) return false; // User cancelled operation/force save prompt
             this.addLoadedForce(force, 'friendly', { activate: true });
             this.loadAllUnitsWithOverlay([force]);
         } finally {
             this.urlStateInitialized.set(true);
         }
+        return true;
+    }
+
+    private async clearUserLoadedForces(): Promise<boolean> {
+        const userSlots = this.loadedForces().filter(slot => slot.persistInUrl !== false);
+        if (userSlots.length === 0) return true;
+        if (!await this.promptSaveOperationIfNeeded()) return false;
+        for (const slot of userSlots) {
+            if (!await this.promptSaveForceIfNeeded(slot.force)) return false;
+        }
+        for (const slot of userSlots) {
+            await this.removeLoadedForce(slot.force, { skipPrompt: true });
+        }
+        this.currentOperation.set(null);
         return true;
     }
 
@@ -634,7 +850,7 @@ export class ForceBuilderService {
                 this.toastService.showToast('No editable force to insert into.', 'error');
                 return false;
             }
-            const sourceForce = await this.dataService.getForce(entry.instanceId, true);
+            const sourceForce = await this.dataService.getForce(entry.instanceId, false);
             if (!sourceForce) {
                 this.toastService.showToast('Failed to load force.', 'error');
                 return false;
@@ -644,7 +860,7 @@ export class ForceBuilderService {
             return inserted;
         }
 
-        const requestedForce = await this.dataService.getForce(entry.instanceId, true);
+        const requestedForce = await this.dataService.getForce(entry.instanceId, false);
         if (!requestedForce) {
             this.toastService.showToast('Failed to load force.', 'error');
             return false;
@@ -660,7 +876,7 @@ export class ForceBuilderService {
     }
 
     private clearForceUrlParams() {
-        this.urlStateService.setParams({
+        this.urlService.setQueryParams({
             units: null,
             name: null,
             instance: null,
@@ -687,6 +903,106 @@ export class ForceBuilderService {
         return newForce;
     }
 
+    async createGeneratedForce(entry: LoadForceEntry): Promise<Force | null> {
+        const loadUnits = entry.groups.flatMap((group) => group.units).filter((loadUnit) => loadUnit.unit !== undefined);
+        if (loadUnits.length === 0) {
+            return null;
+        }
+
+        const force = await this.createNewForce(entry.name, entry.type);
+        if (!force) {
+            return null;
+        }
+
+        let firstCreatedUnit: ForceUnit | null = null;
+
+        force.loading = true;
+        force.factionLock = true;
+        force.eraLock = true;
+        try {
+            force.faction.set(entry.faction ?? null);
+            force.era.set(entry.era ?? null);
+            force.groups.set([]);
+
+            for (const groupEntry of entry.groups) {
+                const targetGroup = force.addGroup(groupEntry.name || undefined);
+                const previewFormation = groupEntry.formationId
+                    ? LanceTypeIdentifierUtil.getDefinitionById(groupEntry.formationId, entry.type)
+                    : null;
+                targetGroup.formationLock = true;
+                targetGroup.formation.set(previewFormation);
+                for (const loadUnit of groupEntry.units) {
+                    if (!loadUnit.unit) {
+                        continue;
+                    }
+
+                    const createdUnit = await this.addUnit(
+                        loadUnit.unit,
+                        entry.type === GameSystem.ALPHA_STRIKE ? (loadUnit.skill ?? loadUnit.gunnery) : loadUnit.gunnery,
+                        loadUnit.piloting,
+                        targetGroup,
+                        entry.type,
+                    );
+                    if (!createdUnit) {
+                        continue;
+                    }
+
+                    this.applyGeneratedUnitOverrides(createdUnit, loadUnit);
+
+                    firstCreatedUnit ??= createdUnit;
+                }
+
+                targetGroup.formationHistory.clear();
+                targetGroup.formationLock = undefined;
+                targetGroup.formation.set(previewFormation);
+                if (previewFormation) {
+                    targetGroup.formationHistory.add(previewFormation.id);
+                }
+                this.reconcileASFormationAssignments(targetGroup);
+            }
+
+            if (force.name !== entry.name) {
+                force.setName(entry.name, false);
+            }
+            force.faction.set(entry.faction ?? null);
+            force.era.set(entry.era ?? null);
+            force.removeEmptyGroups();
+        } finally {
+            force.factionLock = false;
+            force.eraLock = false;
+            force.loading = false;
+        }
+
+        this.selectUnit(firstCreatedUnit ?? null);
+        return force;
+    }
+
+    private applyGeneratedUnitOverrides(createdUnit: ForceUnit, loadUnit: LoadForceUnit): void {
+        if (createdUnit instanceof ASForceUnit) {
+            if (loadUnit.alias) {
+                createdUnit.setPilotName(loadUnit.alias);
+            }
+        } else if (createdUnit instanceof CBTForceUnit) {
+            const crewById = new Map(createdUnit.getCrewMembers().map((member) => [member.getId(), member]));
+            for (const details of loadUnit.crew ?? []) {
+                const member = crewById.get(details.id);
+                if (!member) continue;
+                member.setName(details.name);
+                member.setSkill('gunnery', details.gunnery);
+                member.setSkill('piloting', getEffectivePilotingSkill(createdUnit.getUnit(), details.piloting));
+                if (details.asfGunnery !== undefined) member.setSkill('gunnery', details.asfGunnery, true);
+                if (details.asfPiloting !== undefined) member.setSkill('piloting', details.asfPiloting, true);
+            }
+            if (!loadUnit.crew?.length && loadUnit.alias) {
+                createdUnit.getCrewMembers()[0]?.setName(loadUnit.alias);
+            }
+        }
+
+        if (loadUnit.commander) {
+            createdUnit.setFormationCommander(true, false);
+        }
+    }
+
     /**
      * Adds a new unit to the force. The unit is cloned to prevent
      * modifications to the original object, and it's set as the
@@ -695,7 +1011,7 @@ export class ForceBuilderService {
      * @param gunnerySkill Optional gunnery skill to set for the crew
      * @param pilotingSkill Optional piloting skill to set for the crew
      */
-    async addUnit(unit: Unit, gunnerySkill?: number, pilotingSkill?: number, group?: UnitGroup, gameSystemOverride?: GameSystem): Promise<ForceUnit | null> {
+    async addUnit(unit: UnitSummary, gunnerySkill?: number, pilotingSkill?: number, group?: UnitGroup, gameSystemOverride?: GameSystem): Promise<ForceUnit | null> {
         let targetForce = this.smartCurrentForce();
         if (!targetForce) {
             targetForce = await this.createNewForce('', gameSystemOverride);
@@ -715,21 +1031,29 @@ export class ForceBuilderService {
 
         // Set crew skills if provided
         if (gunnerySkill !== undefined || pilotingSkill !== undefined) {
-            const crewMembers = newForceUnit.getCrewMembers();
             newForceUnit.disabledSaving = true;
-            if (pilotingSkill !== undefined) {
-                pilotingSkill = getEffectivePilotingSkill(unit, pilotingSkill);
-            }
-            for (const crew of crewMembers) {
-                if (gunnerySkill !== undefined) {
-                    crew.setSkill('gunnery', gunnerySkill);
+            try {
+                if (newForceUnit instanceof ASForceUnit) {
+                    if (typeof gunnerySkill === 'number') {
+                        newForceUnit.setPilotSkill(gunnerySkill);
+                    }
+                } else if (newForceUnit instanceof CBTForceUnit) {
+                    const crewMembers = newForceUnit.getCrewMembers();
+                    const effectivePilotingSkill = pilotingSkill === undefined
+                        ? undefined
+                        : getEffectivePilotingSkill(unit, pilotingSkill);
+                    for (const crew of crewMembers) {
+                        if (gunnerySkill !== undefined) {
+                            crew.setSkill('gunnery', gunnerySkill);
+                        }
+                        if (effectivePilotingSkill !== undefined) {
+                            crew.setSkill('piloting', effectivePilotingSkill);
+                        }
+                    }
                 }
-                if (pilotingSkill !== undefined) {
-                    crew.setSkill('piloting', pilotingSkill);
-                }
+            } finally {
+                newForceUnit.disabledSaving = false;
             }
-
-            newForceUnit.disabledSaving = false;
         }
 
         this.selectUnit(newForceUnit);
@@ -742,6 +1066,7 @@ export class ForceBuilderService {
         });
         this.generateFactionAndForceNameIfNeeded(targetForce, firstUnit);
         if (unitGroup) {
+            this.applyFormationFilterToGroup(unitGroup, firstUnit);
             this.assignFormationIfNeeded(unitGroup);
         }
         return newForceUnit;
@@ -774,6 +1099,17 @@ export class ForceBuilderService {
 
         try {
             const newForceUnit = force.addUnit(unitData, group);
+            const fixedPilotingSkill = getFixedPilotingSkill(unitData);
+            if (newForceUnit instanceof CBTForceUnit && fixedPilotingSkill !== null) {
+                newForceUnit.disabledSaving = true;
+                try {
+                    for (const crew of newForceUnit.getCrewMembers()) {
+                        crew.setSkill('piloting', fixedPilotingSkill);
+                    }
+                } finally {
+                    newForceUnit.disabledSaving = false;
+                }
+            }
             // addUnit appends to end — move it to right after the source
             const updatedUnits = group.units();
             const newIndex = updatedUnits.findIndex(u => u.id === newForceUnit.id);
@@ -897,8 +1233,12 @@ export class ForceBuilderService {
         }
 
         this.generateFactionAndForceNameIfNeeded(targetForce);
-        if (unitGroup) {
+        if (unitGroup && targetForce.groups().includes(unitGroup)) {
             this.assignFormationIfNeeded(unitGroup);
+        } else {
+            // removeUnit also removes an emptied group and clears target ids;
+            // reconcile the surviving force so copied abilities do not linger.
+            this.reconcileASFormationAssignmentsForForce(targetForce);
         }
     }
 
@@ -909,7 +1249,7 @@ export class ForceBuilderService {
      * @param newUnitData The new Unit data to replace with
      * @returns The new ForceUnit if successful, null if cancelled
      */
-    async replaceUnit(originalUnit: ForceUnit, newUnitData: Unit): Promise<ForceUnit | null> {
+    async replaceUnit(originalUnit: ForceUnit, newUnitData: UnitSummary): Promise<ForceUnit | null> {
         const targetForce = originalUnit.force;
         if (!targetForce) {
             return null;
@@ -1043,30 +1383,34 @@ export class ForceBuilderService {
             ? new CBTForce(force.name, this.dataService, this.unitInitializer, this.injector)
             : new ASForce(force.name, this.dataService, this.unitInitializer, this.injector);
 
+        newForce.setNote(force.note, false);
         newForce.faction.set(force.faction());
         newForce.factionLock = force.factionLock;
         newForce.loading = true;
 
         try {
-            const allUnits = this.dataService.getUnits();
-            const unitMap = new Map(allUnits.map(u => [u.name, u]));
-
             // First, clear any default groups
             newForce.groups.set([]);
+            const convertedGroupBySourceId = new Map<string, UnitGroup>();
 
             // Recreate groups and units - process one group at a time
             for (const sourceGroup of force.groups()) {
                 const newGroup = newForce.addGroup();
+                convertedGroupBySourceId.set(sourceGroup.id, newGroup);
                 newGroup.name.set(sourceGroup.name());
-                newGroup.formation.set(sourceGroup.formation());
-                newGroup.formationLock = sourceGroup.formationLock;
-                if (!newGroup.formationLock && sourceGroup.formation()) {
-                    newGroup.formationHistory.add(sourceGroup.formation()!.id);
+                const sourceFormation = sourceGroup.formation();
+                const convertedFormation = sourceFormation
+                    ? LanceTypeIdentifierUtil.getDefinitionById(sourceFormation.id, newForce.gameSystem)
+                    : null;
+                newGroup.formation.set(convertedFormation);
+                newGroup.formationLock = sourceGroup.formationLock && convertedFormation ? true : undefined;
+                if (!newGroup.formationLock && convertedFormation) {
+                    newGroup.formationHistory.add(convertedFormation.id);
                 }
 
                 for (const sourceUnit of sourceGroup.units()) {
                     const unitName = sourceUnit.getUnit().name;
-                    const unit = unitMap.get(unitName);
+                    const unit = this.dataService.getUnitByName(unitName);
                     if (!unit) {
                         this.logger.warn(`Unit "${unitName}" not found during conversion`);
                         continue;
@@ -1082,13 +1426,28 @@ export class ForceBuilderService {
                     } finally {
                         newForceUnit.disabledSaving = false;
                     }
+                    void newForceUnit.load().catch((error: unknown) => {
+                        const detail = error instanceof Error ? error.message : String(error);
+                        this.logger.error(`Failed to initialize converted unit "${unitName}": ${detail}`);
+                    });
                 }
 
-                this.assignFormationIfNeeded(newGroup); // we re-evaluate all formations after conversion since unit changes may affect validity
             }
 
+            for (const sourceGroup of force.groups()) {
+                const convertedGroup = convertedGroupBySourceId.get(sourceGroup.id);
+                const sourceTargetId = sourceGroup.formationTargetGroupId();
+                if (convertedGroup && sourceTargetId) {
+                    convertedGroup.formationTargetGroupId.set(convertedGroupBySourceId.get(sourceTargetId)?.id ?? null);
+                }
+            }
+            for (const convertedGroup of convertedGroupBySourceId.values()) {
+                this.assignFormationIfNeeded(convertedGroup);
+            }
+            this.reconcileASFormationAssignmentsForForce(newForce);
+
             // Set a new instance ID and save
-            newForce.instanceId.set(generateUUID());
+            newForce.instanceId.set(uuidv7());
         } finally {
             newForce.loading = false;
         }
@@ -1115,6 +1474,7 @@ export class ForceBuilderService {
         if (sourceSystem === GameSystem.ALPHA_STRIKE) {
             // AS → CBT
             const asSource = sourceUnit as ASForceUnit;
+            const cbtTarget = targetUnit as CBTForceUnit;
             const sourceName = asSource.alias();
             const sourceSkill = asSource.getPilotSkill();
             const newCrew = targetUnit.getCrewMembers();
@@ -1122,9 +1482,11 @@ export class ForceBuilderService {
                 if (sourceName) newCrew[0].setName(sourceName);
                 newCrew[0].setSkill('gunnery', sourceSkill);
             }
+            cbtTarget.setFormationCommander(asSource.commander());
         } else {
             // CBT → AS
             const asTarget = targetUnit as ASForceUnit;
+            const cbtSource = sourceUnit as CBTForceUnit;
             const sourceCrew = sourceUnit.getCrewMembers();
             if (sourceCrew.length > 0) {
                 const name = sourceCrew[0].getName();
@@ -1132,6 +1494,7 @@ export class ForceBuilderService {
                 if (name) asTarget.setPilotName(name);
                 asTarget.setPilotSkill(gunnery);
             }
+            asTarget.setFormationCommander(cbtSource.commander());
         }
     }
 
@@ -1143,8 +1506,7 @@ export class ForceBuilderService {
     convertUnitForForce(sourceUnit: ForceUnit, sourceForce: Force, targetForce: Force): ForceUnit | null {
         const unitName = sourceUnit.getUnit()?.name;
         if (!unitName) return null;
-        const allUnits = this.dataService.getUnits();
-        const unitData = allUnits.find(u => u.name === unitName);
+        const unitData = this.dataService.getUnitByName(unitName);
         if (!unitData) return null;
         const newUnit = targetForce.createCompatibleUnit(unitData);
         newUnit.disabledSaving = true;
@@ -1153,6 +1515,10 @@ export class ForceBuilderService {
         } finally {
             newUnit.disabledSaving = false;
         }
+        void newUnit.load().catch((error: unknown) => {
+            const detail = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Failed to initialize converted unit "${unitName}": ${detail}`);
+        });
         return newUnit;
     }
 
@@ -1173,15 +1539,23 @@ export class ForceBuilderService {
             return;
         }
 
+        const formation = respectFilter ? this.pickFormationFromFilter(force.gameSystem) : null;
+        let faction = formation ? this.pickFactionForFormation(formation) : null;
+
         // If respectFilter is true and a faction filter is active, prefer picking from those factions
-        let faction = respectFilter ? this.pickFactionFromFilter() : null;
+        faction ??= respectFilter ? this.pickFactionFromFilter() : null;
 
         if (!faction) {
+            const eras = this.dataService.getEras();
             faction = ForceNamerUtil.pickBestFaction(
                 force.units(),
                 this.dataService.getFactions(),
-                this.dataService.getEras(),
-                force.faction()
+                eras,
+                force.faction(),
+                this.unitAvailabilitySource.createForceAvailabilityContextForUnits(
+                    force.units().map((unit) => unit.getUnit()),
+                    eras,
+                )
             );
         }
         if (faction?.id === force.faction()?.id) {
@@ -1189,7 +1563,7 @@ export class ForceBuilderService {
         }
         force.faction.set(faction);
         force.setName(
-            ForceNamerUtil.generateForceNameForFaction(faction),
+            ForceNamerUtil.generateForceNameForFaction(faction, this.dataService.getForceNameWords()),
             false
         );
     }
@@ -1206,8 +1580,8 @@ export class ForceBuilderService {
             if (!eraFilter?.interactedWith || !eraFilter.value) {
                 return null;
             }
-            const selectedEraNames = eraFilter.value as string[];
-            if (!Array.isArray(selectedEraNames) || selectedEraNames.length === 0) {
+            const selectedEraNames = getSelectedPositiveDropdownNames(eraFilter.value);
+            if (selectedEraNames.length === 0) {
                 return null;
             }
             return this.dataService.getEraByName(selectedEraNames[0]) ?? null;
@@ -1229,29 +1603,98 @@ export class ForceBuilderService {
                 return null;
             }
             const allFactionNames = this.dataService.getFactions().map(f => f.name);
-            const positiveFactions = getPositiveFactionNamesFromFilter(
+            const positiveFactions = getPositiveDropdownNamesFromFilter(
                 factionFilter.value as MultiStateSelection,
                 allFactionNames,
                 factionFilter.wildcardPatterns
             );
-            if (positiveFactions.length === 0) {
-                return null;
+            const candidateFactions = positiveFactions
+                .map((name) => this.dataService.getFactionByName(name))
+                .filter((faction): faction is Faction => !!faction && faction.id !== MULFACTION_EXTINCT);
+            if (candidateFactions.length === 0) {
+                return this.dataService.getFactionById(MULFACTION_MERCENARY) ?? null;
             }
-            const pickedName = positiveFactions[Math.floor(Math.random() * positiveFactions.length)];
-            return this.dataService.getFactionByName(pickedName) ?? null;
+
+            return candidateFactions[Math.floor(Math.random() * candidateFactions.length)] ?? null;
         } catch {
             // UnitSearchFiltersService not available, fall through
             return null;
         }
     }
 
+    private pickFormationFromFilter(gameSystem: GameSystem): FormationTypeDefinition | null {
+        try {
+            const filtersService = this.injector.get(UnitSearchFiltersService);
+            return filtersService.getActiveFormationTargetDefinition(gameSystem);
+        } catch {
+            return null;
+        }
+    }
+
+    private pickFactionForFormation(formation: FormationTypeDefinition): Faction | null {
+        const exclusiveFactionNames = formation.exclusiveFaction ?? [];
+        if (exclusiveFactionNames.length === 0) {
+            return null;
+        }
+
+        const matchingFactions = this.dataService.getFactions()
+            .filter((faction) => faction.id !== MULFACTION_EXTINCT && this.factionMatchesFormation(faction, exclusiveFactionNames))
+            .sort((left, right) => {
+                const leftIndex = this.getFormationFactionOrderIndex(left, exclusiveFactionNames);
+                const rightIndex = this.getFormationFactionOrderIndex(right, exclusiveFactionNames);
+                return leftIndex !== rightIndex
+                    ? leftIndex - rightIndex
+                    : left.name.localeCompare(right.name);
+            });
+
+        return matchingFactions[0] ?? null;
+    }
+
+    private factionMatchesFormation(faction: Faction, exclusiveFactionNames: readonly string[]): boolean {
+        const factionName = faction.name.toLocaleLowerCase();
+        return exclusiveFactionNames.some((exclusiveFactionName) => (
+            factionName.includes(exclusiveFactionName.toLocaleLowerCase())
+        ));
+    }
+
+    private getFormationFactionOrderIndex(faction: Faction, exclusiveFactionNames: readonly string[]): number {
+        const factionName = faction.name.toLocaleLowerCase();
+        const index = exclusiveFactionNames.findIndex((exclusiveFactionName) => (
+            factionName.includes(exclusiveFactionName.toLocaleLowerCase())
+        ));
+
+        return index >= 0 ? index : Number.MAX_SAFE_INTEGER;
+    }
+
+    private applyFormationFilterToGroup(group: UnitGroup, respectFilter: boolean): void {
+        if (!respectFilter || group.formationLock) {
+            return;
+        }
+
+        const formation = this.pickFormationFromFilter(group.force.gameSystem);
+        if (!formation) {
+            return;
+        }
+
+        group.formationHistory.clear();
+        group.formationLock = true;
+        group.formation.set(formation);
+    }
+
     public assignFormationIfNeeded(group: UnitGroup) {
         if (group.units().length === 0) {
             group.formation.set(null);
             group.formationLock = false; // Unlock name so it can update with new formation name
+            group.formationTargetGroupId.set(null);
+            this.reconcileASFormationAssignments(group);
+            group.force.groups().forEach(clearInvalidFormationTargetSelection);
             return;
         }
-        if (group.formationLock) return; // Don't change formation if it's already locked
+        if (group.formationLock) {
+            this.reconcileASFormationAssignments(group);
+            group.force.groups().forEach(clearInvalidFormationTargetSelection);
+            return;
+        }
         // Pick the best formation (deterministic, most specific wins),
         // upgrading when a better match becomes available.
         const best = LanceTypeIdentifierUtil.getBestMatchForGroup(group);
@@ -1261,6 +1704,22 @@ export class ForceBuilderService {
                 group.formationHistory.add(best.definition.id);
             }
         }
+        this.reconcileASFormationAssignments(group);
+        group.force.groups().forEach(clearInvalidFormationTargetSelection);
+    }
+
+    private reconcileASFormationAssignments(group: UnitGroup | null | undefined): void {
+        if (!group || group.force.gameSystem !== GameSystem.ALPHA_STRIKE) {
+            return;
+        }
+
+        FormationAbilityAssignmentUtil.reconcileGroupAndDependents(group as UnitGroup<ASForceUnit>);
+    }
+
+    public reconcileASFormationAssignmentsForForce(force: Force): void {
+        if (force.gameSystem === GameSystem.ALPHA_STRIKE) {
+            FormationAbilityAssignmentUtil.reconcileForceFormationAssignments(force as ASForce);
+        }
     }
 
     public showFormationInfo(group: UnitGroup): void {
@@ -1268,16 +1727,48 @@ export class ForceBuilderService {
         if (!targetForce) return;
         const formation = group.activeFormation();
         if (!formation) return;
-        this.dialogsService.createDialog(FormationInfoDialogComponent, {
+        const usesFormationTarget = formationHasTargetCopyEffect(formation);
+        const targetOptions = usesFormationTarget
+            ? getFormationTargetCandidates(group).map((candidate) => ({
+                id: candidate.id,
+                label: `${candidate.groupDisplayName()} — ${candidate.activeFormation()!.name}`,
+            }))
+            : undefined;
+        const currentTargetId = usesFormationTarget ? resolveFormationTargetGroup(group)?.id ?? null : undefined;
+        const ref = this.dialogsService.createDialog<FormationInfoDialogResult | undefined, FormationInfoDialogComponent, FormationInfoDialogData>(FormationInfoDialogComponent, {
             data: {
                 formation,
                 gameSystem: targetForce.gameSystem,
-                formationDisplayName: group.formationDisplayName(),
+                formationDisplayName: group.formationDisplayName() ?? undefined,
                 unitCount: group.units().length,
                 isValid: group.hasValidFormation(),
                 requirementsFiltered: group.isFormationRequirementsFiltered(),
-                requirementsFilterNotice: group.formationRequirementsFilterNotice(),
-            } as FormationInfoDialogData
+                requirementsFilterCompositionName: group.formationRequirementsFilterCompositionName() ?? undefined,
+                requirementsFilterNotice: group.formationRequirementsFilterNotice() ?? undefined,
+                formationTargetOptions: targetOptions,
+                formationTargetGroupId: currentTargetId,
+                formationTargetEditable: !targetForce.readOnly(),
+            }
+        });
+        ref.closed.pipe(take(1)).subscribe((result) => {
+            if (targetForce.readOnly()
+                || !result
+                || !targetForce.groups().includes(group)
+                || !formationHasTargetCopyEffect(group.activeFormation())) {
+                return;
+            }
+            const selectedTargetId = result.formationTargetGroupId;
+            const currentCandidateIds = new Set(getFormationTargetCandidates(group).map((candidate) => candidate.id));
+            const validTargetId = selectedTargetId
+                && currentCandidateIds.has(selectedTargetId)
+                ? selectedTargetId
+                : null;
+            if (validTargetId === group.formationTargetGroupId()) {
+                return;
+            }
+            group.formationTargetGroupId.set(validTargetId);
+            this.reconcileASFormationAssignments(group);
+            targetForce.emitChanged();
         });
     }
 
@@ -1322,6 +1813,7 @@ export class ForceBuilderService {
             this.selectedUnit.set(otherUnits[0] ?? null);
         }
         force.removeGroup(group);
+        this.reconcileASFormationAssignmentsForForce(force);
     }
 
     public shareForce(): void {
@@ -1345,7 +1837,26 @@ export class ForceBuilderService {
         this.openC3Network(force, force.readOnly());
     }
 
-    public async showForceOrgDialog(organizationId?: string): Promise<DialogRef> {
+    /**
+     * Navigates to the TO&E page (/toe), which opens the org dialog.
+     * The returned `closed` observable emits when the page is left again.
+     */
+    public async showForceOrgDialog(organizationId?: string): Promise<{ closed: Observable<void> }> {
+        await this.router.navigate(['/toe'], {
+            queryParams: { toe: organizationId ?? null },
+            queryParamsHandling: 'merge',
+        });
+        const closed = this.router.events.pipe(
+            filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+            filter(e => !e.urlAfterRedirects.startsWith('/toe')),
+            take(1),
+            map(() => undefined as void),
+        );
+        return { closed };
+    }
+
+    /** Opens the TO&E org dialog. Called by the /toe routed page. */
+    public async openForceOrgDialog(organizationId?: string): Promise<DialogRef> {
         const { ForceOrgDialogComponent } = await import('../components/force-org-dialog/force-org-dialog.component');
         return this.dialogsService.createDialog(ForceOrgDialogComponent, {
             data: organizationId ? { organizationId } : undefined,
@@ -1361,83 +1872,65 @@ export class ForceBuilderService {
         const currentForce = this.currentForce();
         if (!currentForce) return;
 
-        const optionsService = this.injector.get(OptionsService);
         const { PrintOptionsDialogComponent } = await import('../components/print-options-dialog/print-options-dialog.component');
         const ref = this.dialogsService.createDialog<PrintAllOptions | null>(PrintOptionsDialogComponent, {
             disableClose: false,
             data: {
-                gameSystem: currentForce instanceof CBTForce ? GameSystem.CLASSIC : GameSystem.ALPHA_STRIKE
+                gameSystem: currentForce.gameSystem,
+                printSummary: async (printOptions: PrintAllOptions) => {
+                    if (currentForce instanceof CBTForce) {
+                        await CBTSummaryPrintUtil.print(currentForce, printOptions);
+                    } else if (currentForce instanceof ASForce) {
+                        await ASSummaryPrintUtil.print(
+                            currentForce,
+                            this.injector.get(AsAbilityLookupService),
+                            this.optionsService.options().ASUseHex,
+                            printOptions,
+                        );
+                    }
+                },
             }
         });
         const printOptions = await firstValueFrom(ref.closed);
         if (!printOptions) return;
-
-        // Lazy-inject UI services to avoid circular dependencies
         if (currentForce instanceof CBTForce) {
-            const sheetService = this.injector.get(SheetService);
-            await CBTPrintUtil.multipagePrint(sheetService, currentForce.units(), printOptions);
+            await CBTPrintUtil.multipagePrint({
+                dataService: this.dataService,
+                unitInitializer: this.unitInitializer,
+                injector: this.injector,
+            }, currentForce.units(), printOptions);
         } else if (currentForce instanceof ASForce) {
             const appRef = this.injector.get(ApplicationRef);
-            await ASPrintUtil.multipagePrint(appRef, this.injector, optionsService, currentForce.groups(), printOptions, true, currentForce);
+            await ASPrintUtil.multipagePrint(appRef, this.injector, this.optionsService, currentForce.groups(), printOptions);
         }
     }
 
-    /* ----------------------------------------
-     * Remote conflict detection and resolution
-     */
-
-    private monitorWebSocketConnection() {
-        // Monitor WebSocket connection state changes
+    private monitorEquipmentHandlerRuntime(): void {
         effect(() => {
-            const isConnected = this.wsService.wsConnected();
-            if (isConnected) {
-                // WebSocket just came online - fire and forget :D
+            for (const { force } of this.loadedForces()) {
+                force.c3Network();
                 untracked(() => {
-                    this.checkForCloudConflict();
+                    this.equipmentRegistryService.getRegistry().onForceRuntimeChanged(force, this.toastService);
                 });
             }
         });
     }
 
-    private async checkForCloudConflict(): Promise<void> {
-        // Check all loaded forces for conflicts
-        for (const slot of this.loadedForces()) {
-            const force = slot.force;
-            const instanceId = force.instanceId();
-            if (!instanceId) continue;
-            this.logger.info('Checking for cloud conflict for force with instance ID ' + instanceId);
-            try {
-                const cloudForce = await this.dataService.getForce(instanceId, force.owned());
-                if (!cloudForce) continue;
-                const localTimestamp = force.timestamp ? new Date(force.timestamp).getTime() : 0;
-                const cloudTimestamp = cloudForce.timestamp ? new Date(cloudForce.timestamp).getTime() : 0;
-
-                if (cloudTimestamp > localTimestamp) {
-                    this.logger.warn(`Conflict detected for force "${force.displayName()}" (${instanceId}).`);
-                    if (!force.owned()) {
-                        this.logger.info(`ForceBuilderService: Force "${force.displayName()}" downloading cloud version.`);
-                        this.urlStateInitialized.set(false);
-                        try {
-                            this.replaceForceInPlace(force, await this.dataService.getForce(instanceId, false) as any);
-                        } finally {
-                            this.urlStateInitialized.set(true);
-                        }
-                        this.toastService.showToast(`Cloud version of "${force.displayName()}" loaded.`, 'success');
-                        continue;
-                    }
-                    await this.handleCloudConflict(force, cloudForce, localTimestamp, cloudTimestamp);
-                }
-            } catch (error) {
-                this.logger.error(`Error checking for cloud conflict on "${force.displayName()}": ${error}`);
-            }
-        }
+    private enqueueRemoteForceConflict(localForce: Force, remoteForce: SerializedForce): Promise<void> {
+        const previousConflict = this.remoteConflictQueue ?? Promise.resolve();
+        this.remoteConflictQueue = previousConflict
+            .then(() => this.handleRemoteForceConflict(localForce, remoteForce))
+            .catch(error => {
+                this.logger.error(`Failed to resolve force sync conflict: ${error}`);
+            });
+        return this.remoteConflictQueue;
     }
 
-    private async handleCloudConflict(localForce: Force, cloudForce: Force, localTimestamp: number, cloudTimestamp: number): Promise<void> {
-        const formatDate = (timestamp: number) => {
-            if (!timestamp) return 'Unknown';
-            return new Date(timestamp).toLocaleString();
-        };
+    private async handleRemoteForceConflict(localForce: Force, remoteForce: SerializedForce): Promise<void> {
+        const localTimestamp = parseForceTimestamp(localForce.timestamp) ?? 0;
+        const remoteTimestamp = parseForceTimestamp(remoteForce.timestamp) ?? 0;
+        const formatDate = (timestamp: number) => timestamp ? new Date(timestamp).toLocaleString() : 'Unknown';
+
         if (this.conflictDialogRef) {
             this.conflictDialogRef.close();
             this.conflictDialogRef = undefined;
@@ -1447,7 +1940,7 @@ export class ForceBuilderService {
             disableClose: true,
             data: <ConfirmDialogData<string>>{
                 title: 'Sync Conflict Detected',
-                message: `"${localForce.displayName()}" was modified on another device while you were offline. The cloud version is newer. (${formatDate(cloudTimestamp)} > ${formatDate(localTimestamp)})`,
+                message: `"${localForce.displayName()}" was modified on another device while you were offline. The cloud version is newer. (${formatDate(remoteTimestamp)} > ${formatDate(localTimestamp)})`,
                 buttons: [
                     { label: 'LOAD CLOUD', value: 'cloud', class: 'primary' },
                     { label: 'KEEP LOCAL', value: 'local' },
@@ -1458,9 +1951,7 @@ export class ForceBuilderService {
 
         const result = await firstValueFrom(this.conflictDialogRef.closed);
         if (result === 'cloud') {
-            // Replace the local force in-place with the cloud version
-            const serialized = cloudForce.serialize();
-            localForce.update(serialized);
+            localForce.update(remoteForce);
             await this.dataService.saveForce(localForce, true);
             this.toastService.showToast(`Cloud version of "${localForce.displayName()}" loaded.`, 'success');
         } else if (result === 'local') {
@@ -1474,7 +1965,6 @@ export class ForceBuilderService {
             const cloned = localForce.clone();
             cloned.setName(localForce.displayName() + ' (Cloned)', false);
 
-            // Unload old, load clone
             await this.removeLoadedForce(localForce);
             this.addLoadedForce(cloned, alignment, { activate: false });
             const units = cloned.units();
@@ -1488,7 +1978,6 @@ export class ForceBuilderService {
         }
     }
 
-
     /* ----------------------------------------
      * URL State Management
      */
@@ -1497,13 +1986,14 @@ export class ForceBuilderService {
         effect(() => {
             const params = this.queryParameters();
             const selectedUnit = this.selectedUnit();
-            
-            const sel = selectedUnit?.force?.instanceId ? selectedUnit?.id : null;
+            const selectedSlot = selectedUnit ? this.getForceSlot(selectedUnit.force) : undefined;
+            const sel = selectedUnit?.force?.instanceId() && selectedSlot?.persistInUrl !== false
+                ? selectedUnit.id
+                : null;
             if (!this.urlStateInitialized()) {
                 return;
             }
-            // Use centralized URL state service to avoid race conditions
-            this.urlStateService.setParams({
+            this.urlService.setQueryParams({
                 gs: params.gs,
                 units: params.units,
                 name: params.name,
@@ -1542,7 +2032,7 @@ export class ForceBuilderService {
     }
 
     private async initializeFromUrl(): Promise<void> {
-        const params = this.urlStateService.initialState.params;
+        const params = this.urlService.initialParams;
 
         // Handle operation= param (load entire operation by ID)
         const operationId = params.get('operation');
@@ -1550,7 +2040,6 @@ export class ForceBuilderService {
             const loaded = await this.loadOperationFromUrl(operationId);
             if (loaded) {
                 this.urlStateInitialized.set(true);
-                this.urlStateService.markConsumerReady('force-builder');
                 return;
             }
             // Operation not found: fall through to normal force loading
@@ -1573,12 +2062,11 @@ export class ForceBuilderService {
             }
         } else if (params.has('instance')) {
             // None of the instance IDs were found: clear them from URL
-            this.urlStateService.setParams({ instance: null });
+            this.urlService.setQueryParams({ instance: null });
         }
 
         // Mark as initialized so the update effect can start running.
         this.urlStateInitialized.set(true);
-        this.urlStateService.markConsumerReady('force-builder');
     }
 
     /**
@@ -1602,7 +2090,7 @@ export class ForceBuilderService {
     private async loadOperationFromUrl(operationId: string): Promise<boolean> {
         const loaded = await this.loadOperation(operationId, { skipPrompts: true });
         if (loaded) {
-            this.restoreSelectionFromUrl(this.urlStateService.initialState.params);
+            this.restoreSelectionFromUrl(this.urlService.initialParams);
         }
         return loaded;
     }
@@ -1758,13 +2246,15 @@ export class ForceBuilderService {
                 this.toastService.showToast('No editable force to insert into.', 'error');
                 return;
             }
-            if (result instanceof LoadForceEntry) {
-                const sourceForce = await this.dataService.getForce(result.instanceId, true);
-                if (!sourceForce) {
+            if (result instanceof Force) {
+                await this.insertForceInto(result, targetForce);
+            } else if (result instanceof LoadForceEntry) {
+                const forceToInsert = await this.dataService.getForce(result.instanceId, false);
+                if (!forceToInsert) {
                     this.toastService.showToast('Failed to load force.', 'error');
                     return;
                 }
-                await this.insertForceInto(sourceForce, targetForce);
+                await this.insertForceInto(forceToInsert, targetForce);
             } else {
                 const pack = result as ResolvedPack;
                 if (pack.units && pack.units.length > 0) {
@@ -1777,8 +2267,14 @@ export class ForceBuilderService {
         const isAdd = mode === 'add';
         const addAlignment: ForceAlignment = alignment ?? 'friendly';
 
-        if (result instanceof LoadForceEntry) {
-            const requestedForce = await this.dataService.getForce(result.instanceId, true);
+        if (result instanceof Force) {
+            if (isAdd) {
+                await this.addForce(result, addAlignment);
+            } else {
+                await this.loadForce(result);
+            }
+        } else if (result instanceof LoadForceEntry) {
+            const requestedForce = await this.dataService.getForce(result.instanceId, false);
             if (!requestedForce) {
                 this.toastService.showToast('Failed to load force.', 'error');
                 return;
@@ -1850,6 +2346,65 @@ export class ForceBuilderService {
         }
     }
 
+    async showForceGeneratorDialog(): Promise<void> {
+        await this.showSearchForceGeneratorDialog();
+    }
+
+    /** Navigates to the force generator page (/forcegenerator), which opens the dialog. */
+    async showSearchForceGeneratorDialog(options: { importCurrentForce?: boolean } = {}): Promise<void> {
+        if (!this.dataService.isDataReady()) {
+            this.toastService.showToast('Data is still loading.', 'info');
+            return;
+        }
+        await this.router.navigate(['/forcegenerator'], {
+            queryParamsHandling: 'preserve',
+            state: { importCurrentForce: options.importCurrentForce === true },
+        });
+    }
+
+    /** Opens the force generator dialog. Called by the /forcegenerator routed page. */
+    async openSearchForceGeneratorDialog(options: { importCurrentForce?: boolean } = {}): Promise<DialogRef | null> {
+        const megaMekDataReady = await this.dataService.ensureMegaMekCatalogsInitialized();
+        if (!megaMekDataReady) {
+            this.toastService.showToast('MegaMek force generator data could not be loaded.', 'error');
+            return null;
+        }
+
+        const { SearchForceGeneratorDialogComponent } = await import('../components/search-force-generator-dialog/search-force-generator-dialog.component');
+        const dialogRef = this.dialogsService.createDialog<SearchForceGeneratorDialogResult | null>(SearchForceGeneratorDialogComponent, {
+            disableClose: true,
+            data: {
+                importCurrentForce: options.importCurrentForce === true,
+            },
+        });
+        void firstValueFrom(dialogRef.closed).then(result => this.finalizeGeneratedForceDialog(result ?? null));
+        return dialogRef;
+    }
+
+    private async finalizeGeneratedForceDialog(
+        result: { forceEntry: LoadForceEntry; config: { gameSystem: GameSystem }; totalCost: number } | null,
+    ): Promise<void> {
+        const unitCount = result?.forceEntry.groups.reduce(
+            (sum, group) => sum + group.units.filter((unitEntry) => unitEntry.unit).length,
+            0,
+        ) ?? 0;
+        if (!result || unitCount === 0) {
+            return;
+        }
+
+        const force = await this.createGeneratedForce(result.forceEntry);
+        if (!force) {
+            this.toastService.showToast('Failed to generate a new force.', 'error');
+            return;
+        }
+
+        const budgetMetric = result.config.gameSystem === GameSystem.ALPHA_STRIKE ? 'PV' : 'BV';
+        this.toastService.showToast(
+            `Generated ${unitCount} units for ${result.forceEntry.faction?.name ?? 'Unknown Faction'} (${budgetMetric} ${result.totalCost.toLocaleString()}).`,
+            'info',
+        );
+    }
+
     /**
      * Copies groups and units from a source force into the target force.
      * If the game systems differ, units are converted automatically.
@@ -1883,13 +2438,19 @@ export class ForceBuilderService {
         let insertedCount = 0;
 
         const newGroups: UnitGroup[] = [];
+        const insertedGroupBySourceId = new Map<string, UnitGroup>();
 
         for (const sourceGroup of sourceGroups) {
             const newGroup = targetForce.addGroup(sourceGroup.name());
-            newGroup.formation.set(sourceGroup.formation());
-            newGroup.formationLock = sourceGroup.formationLock;
-            if (!newGroup.formationLock && sourceGroup.formation()) {
-                newGroup.formationHistory.add(sourceGroup.formation()!.id);
+            insertedGroupBySourceId.set(sourceGroup.id, newGroup);
+            const sourceFormation = sourceGroup.formation();
+            const insertedFormation = sourceFormation
+                ? LanceTypeIdentifierUtil.getDefinitionById(sourceFormation.id, targetForce.gameSystem)
+                : null;
+            newGroup.formation.set(insertedFormation);
+            newGroup.formationLock = sourceGroup.formationLock && insertedFormation ? true : undefined;
+            if (!newGroup.formationLock && insertedFormation) {
+                newGroup.formationHistory.add(insertedFormation.id);
             }
 
             for (const sourceUnit of sourceGroup.units()) {
@@ -1903,8 +2464,7 @@ export class ForceBuilderService {
                     // Same game system: look up fresh unit data and copy pilot info
                     const unitName = sourceUnit.getUnit()?.name;
                     if (!unitName) continue;
-                    const allUnits = this.dataService.getUnits();
-                    const unitData = allUnits.find(u => u.name === unitName);
+                    const unitData = this.dataService.getUnitByName(unitName);
                     if (!unitData) continue;
 
                     const newForceUnit = targetForce.addUnit(unitData, newGroup);
@@ -1920,10 +2480,19 @@ export class ForceBuilderService {
             newGroups.push(newGroup);
         }
 
+        for (const sourceGroup of sourceGroups) {
+            const newGroup = insertedGroupBySourceId.get(sourceGroup.id);
+            const sourceTargetId = sourceGroup.formationTargetGroupId();
+            if (newGroup && sourceTargetId) {
+                newGroup.formationTargetGroupId.set(insertedGroupBySourceId.get(sourceTargetId)?.id ?? null);
+            }
+        }
+
         this.generateFactionAndForceNameIfNeeded(targetForce);
         for (const group of newGroups) {
             this.assignFormationIfNeeded(group);
         }
+        this.reconcileASFormationAssignmentsForForce(targetForce);
         const systemNote = needsConversion ? ' (units were converted)' : '';
         this.toastService.showToast(
             `Inserted ${insertedCount} unit(s) from "${sourceForce.displayName()}" into "${targetForce.displayName()}"${systemNote}.`,
@@ -1985,12 +2554,17 @@ export class ForceBuilderService {
                 asTarget.setPilotName(pilotName);
             }
             asTarget.setPilotSkill(asSource.pilotSkill());
-            const abilities = asSource.pilotAbilities();
+            const abilities = asSource.manualPilotAbilities();
             if (abilities && abilities.length > 0) {
                 asTarget.setPilotAbilities([...abilities]);
             }
+            asTarget.setFormationAbilities([...asSource.formationAbilities()]);
+            asTarget.setFormationCommander(asSource.commander());
         } else {
             // Classic BattleTech
+            const cbtSource = sourceUnit as CBTForceUnit;
+            const cbtTarget = targetUnit as CBTForceUnit;
+            const sourceBaseUnit = sourceUnit.getUnit();
             const fromCrew = sourceUnit.getCrewMembers();
             const toCrew = targetUnit.getCrewMembers();
             const crewCount = Math.min(fromCrew.length, toCrew.length);
@@ -2004,8 +2578,13 @@ export class ForceBuilderService {
                     }
                     toMember.setSkill('gunnery', fromMember.getSkill('gunnery'));
                     toMember.setSkill('piloting', fromMember.getSkill('piloting'));
+                    if (sourceBaseUnit?.subtype === 'Land-Air BattleMek') {
+                        toMember.setSkill('gunnery', fromMember.getSkill('gunnery', true), true);
+                        toMember.setSkill('piloting', fromMember.getSkill('piloting', true), true);
+                    }
                 }
             }
+            cbtTarget.setFormationCommander(cbtSource.commander());
         }
     }
 
@@ -2122,6 +2701,7 @@ export class ForceBuilderService {
             alignment: slot.alignment,
             type: slot.force.gameSystem,
             factionId: slot.force.faction()?.id,
+            eraId: slot.force.era()?.id,
             bv: slot.force.gameSystem !== 'as' ? slot.force.totalBv() : undefined,
             pv: slot.force.gameSystem === 'as' ? slot.force.totalBv() : undefined,
         }));
@@ -2172,6 +2752,8 @@ export class ForceBuilderService {
             }
         }
 
+        await this.cacheLoadedOperationForcesLocally(slots);
+
         const forces: OperationForceRef[] = slots.map(slot => ({
             instanceId: slot.force.instanceId()!,
             alignment: slot.alignment,
@@ -2179,7 +2761,7 @@ export class ForceBuilderService {
         }));
 
         const op: SerializedOperation = {
-            operationId: generateUUID(),
+            operationId: uuidv7(),
             name: result.name,
             note: result.note,
             timestamp: Date.now(),
@@ -2194,10 +2776,16 @@ export class ForceBuilderService {
                 name: op.name,
                 note: op.note,
                 timestamp: op.timestamp,
-                forces: forces.map(f => ({
-                    instanceId: f.instanceId,
-                    alignment: f.alignment,
-                    timestamp: f.timestamp,
+                forces: slots.map(slot => ({
+                    instanceId: slot.force.instanceId()!,
+                    alignment: slot.alignment,
+                    timestamp: slot.force.timestamp || new Date().toISOString(),
+                    name: slot.force.displayName(),
+                    type: slot.force.gameSystem,
+                    factionId: slot.force.faction()?.id,
+                    eraId: slot.force.era()?.id,
+                    bv: slot.force.gameSystem !== 'as' ? slot.force.totalBv() : undefined,
+                    pv: slot.force.gameSystem === 'as' ? slot.force.totalBv() : undefined,
                 })),
                 local: true,
                 cloud: true,
@@ -2236,6 +2824,7 @@ export class ForceBuilderService {
             alignment: slot.alignment,
             type: slot.force.gameSystem,
             factionId: slot.force.faction()?.id,
+            eraId: slot.force.era()?.id,
             bv: slot.force.gameSystem !== 'as' ? slot.force.totalBv() : undefined,
             pv: slot.force.gameSystem === 'as' ? slot.force.totalBv() : undefined,
         }));
@@ -2285,6 +2874,10 @@ export class ForceBuilderService {
             }
         }
 
+        if (currentOp.owned) {
+            await this.cacheLoadedOperationForcesLocally(slots);
+        }
+
         const forces: OperationForceRef[] = slots.map(slot => ({
             instanceId: slot.force.instanceId()!,
             alignment: slot.alignment,
@@ -2305,10 +2898,16 @@ export class ForceBuilderService {
             currentOp.name = result.name;
             currentOp.note = result.note;
             currentOp.timestamp = op.timestamp;
-            currentOp.forces = forces.map(f => ({
-                instanceId: f.instanceId,
-                alignment: f.alignment,
-                timestamp: f.timestamp,
+            currentOp.forces = slots.map(slot => ({
+                instanceId: slot.force.instanceId()!,
+                alignment: slot.alignment,
+                timestamp: slot.force.timestamp || new Date().toISOString(),
+                name: slot.force.displayName(),
+                type: slot.force.gameSystem,
+                factionId: slot.force.faction()?.id,
+                eraId: slot.force.era()?.id,
+                bv: slot.force.gameSystem !== 'as' ? slot.force.totalBv() : undefined,
+                pv: slot.force.gameSystem === 'as' ? slot.force.totalBv() : undefined,
             }));
             this.currentOperation.set(currentOp);
             this.toastService.showToast('Operation updated.', 'success');
@@ -2379,6 +2978,14 @@ export class ForceBuilderService {
         const entry = await this.dataService.getOperation(operationId);
         if (!entry) return false;
 
+        if (entry.owned) {
+            try {
+                await this.dataService.cacheForcesLocally(entry.forces.map((forceInfo) => forceInfo.instanceId));
+            } catch (error) {
+                this.logger.warn(`Failed to cache operation forces locally: ${error}`);
+            }
+        }
+
         this.urlStateInitialized.set(false);
         try {
             // Clear everything
@@ -2422,7 +3029,7 @@ export class ForceBuilderService {
                 const ownedSlots = slots.filter(s => s.force.owned());
                 if (ownedSlots.length > 0 && ownedSlots.every(s => s.alignment === 'enemy')) {
                     const switchSides = await this.dialogsService.requestConfirmation(
-                        'Your forces are currently assigned to the opposing side in this operation. Would you like to switch sides?',
+                        'Your forces are currently assigned to the hostile side in this operation. Would you like to switch sides?',
                         'Switch Sides?',
                         'info'
                     );
@@ -2445,6 +3052,12 @@ export class ForceBuilderService {
             return true;
         } finally {
             this.urlStateInitialized.set(true);
+        }
+    }
+
+    private async cacheLoadedOperationForcesLocally(slots: readonly ForceSlot[]): Promise<void> {
+        for (const slot of slots) {
+            await this.dataService.saveSerializedForceToLocalStorage(slot.force.serialize());
         }
     }
 
@@ -2538,6 +3151,7 @@ export class ForceBuilderService {
                 group.formationHistory.clear(); // We unset, we reset!
                 group.formationLock = false;
                 group.formation.set(null);
+                group.formationTargetGroupId.set(null);
                 group.setName(undefined);
                 this.assignFormationIfNeeded(group);
             } else
@@ -2556,7 +3170,13 @@ export class ForceBuilderService {
                 } else {
                     group.setName(result.name);
                 }
+                this.assignFormationIfNeeded(group);
+                group.formationTargetGroupId.set(result.formationTargetGroupId);
+                if (!resolveFormationTargetGroup(group)) {
+                    group.formationTargetGroupId.set(null);
+                }
             }
+            this.reconcileASFormationAssignments(group);
         }
     }
 
@@ -2604,7 +3224,7 @@ export class ForceBuilderService {
         return true;
     }
 
-    public async editPilotOfUnit(unit: ForceUnit, pilot?: CrewMember): Promise<void> {
+    public async editPilotOfUnit(unit: ForceUnit): Promise<void> {
         if (unit.readOnly()) return;
         const baseUnit = unit.getUnit();
         if (!baseUnit) return;
@@ -2615,16 +3235,20 @@ export class ForceBuilderService {
             return;
         }
 
-        // Handle Classic BattleTech units
-        if (!pilot) {
-            const crewMembers = unit.getCrewMembers();
-            if (crewMembers.length === 0) {
-                this.toastService.showToast('This unit has no crew to edit.', 'error');
-                return;
-            }
-            pilot = crewMembers[0];
+        if (!(unit instanceof CBTForceUnit)) {
+            return;
         }
-        const disablePiloting = baseUnit.type === 'ProtoMek' || ((baseUnit.type === 'Infantry') && (!canAntiMech(baseUnit)));
+
+        const cbtUnit = unit;
+
+        // Handle Classic BattleTech units
+        const crewMembers = cbtUnit.getCrewMembers();
+        if (crewMembers.length === 0) {
+            this.toastService.showToast('This unit has no crew to edit.', 'error');
+            return;
+        }
+        const group = cbtUnit.getGroup() as UnitGroup<CBTForceUnit> | null;
+        const disablePiloting = baseUnit.type === 'ProtoMek' || ((baseUnit.type === 'Infantry') && (!baseUnit.canAntiMech));
         let labelPiloting;
         if (baseUnit.type === 'Infantry') {
             labelPiloting = 'Anti-Mech';
@@ -2637,15 +3261,24 @@ export class ForceBuilderService {
             EditPilotDialogComponent,
             {
                 data: {
-                    name: pilot.getName(),
-                    gunnery: pilot.getSkill('gunnery'),
-                    piloting: pilot.getSkill('piloting'),
+                    unitId: cbtUnit.id,
+                    crew: crewMembers.map((member) => ({
+                        id: member.getId(),
+                        name: member.getName(),
+                        gunnery: member.getSkill('gunnery'),
+                        piloting: member.getSkill('piloting'),
+                        asfGunnery: baseUnit.subtype === 'Land-Air BattleMek' ? member.getSkill('gunnery', true) : undefined,
+                        asfPiloting: baseUnit.subtype === 'Land-Air BattleMek' ? member.getSkill('piloting', true) : undefined,
+                    })),
                     labelGunnery: `Gunnery Skill`,
                     labelPiloting: `${labelPiloting} Skill`,
                     disablePiloting: disablePiloting,
-                    preSkillBv: unit instanceof CBTForceUnit
-                        ? unit.getBaseBv() + unit.tagBV() + unit.c3Tax()
-                        : undefined,
+                    commander: cbtUnit.commander(),
+                    group,
+                    factionId: cbtUnit.force.faction()?.id,
+                    isAerospace: baseUnit.type === 'Aero',
+                    era: cbtUnit.force.era(),
+                    preSkillBv: cbtUnit.getPreSkillBv(),
                     unit: baseUnit,
                 }
             }
@@ -2654,14 +3287,49 @@ export class ForceBuilderService {
         const result = await firstValueFrom(ref.closed);
         if (!result) return;
 
-        if (result.name !== undefined && result.name !== pilot.getName()) {
-            pilot.setName(result.name);
+        const crewById = new Map(crewMembers.map((member) => [member.getId(), member]));
+        let crewChanged = false;
+        cbtUnit.disabledSaving = true;
+        try {
+            for (const editedMember of result.crew) {
+                const member = crewById.get(editedMember.id);
+                if (!member) continue;
+                if (editedMember.name !== member.getName()) {
+                    member.setName(editedMember.name);
+                    crewChanged = true;
+                }
+                if (editedMember.gunnery !== member.getSkill('gunnery')) {
+                    member.setSkill('gunnery', editedMember.gunnery);
+                    crewChanged = true;
+                }
+                const effectivePiloting = getEffectivePilotingSkill(baseUnit, editedMember.piloting);
+                if (effectivePiloting !== member.getSkill('piloting')) {
+                    member.setSkill('piloting', effectivePiloting);
+                    crewChanged = true;
+                }
+                if (editedMember.asfGunnery !== undefined && editedMember.asfGunnery !== member.getSkill('gunnery', true)) {
+                    member.setSkill('gunnery', editedMember.asfGunnery, true);
+                    crewChanged = true;
+                }
+                if (editedMember.asfPiloting !== undefined && editedMember.asfPiloting !== member.getSkill('piloting', true)) {
+                    member.setSkill('piloting', editedMember.asfPiloting, true);
+                    crewChanged = true;
+                }
+            }
+        } finally {
+            cbtUnit.disabledSaving = false;
         }
-        if (result.gunnery !== undefined) {
-            pilot.setSkill('gunnery', result.gunnery);
-        }
-        if (result.piloting !== undefined) {
-            pilot.setSkill('piloting', result.piloting);
+        if (crewChanged) cbtUnit.setModified();
+
+        if (group) {
+            const commanderUnitId = result.commander
+                ? cbtUnit.id
+                : group.units().find((candidate) => candidate.id !== cbtUnit.id && candidate.commander())?.id ?? null;
+            for (const candidate of group.units()) {
+                candidate.setFormationCommander(candidate.id === commanderUnitId);
+            }
+        } else {
+            cbtUnit.setFormationCommander(result.commander);
         }
     };
 
@@ -2669,15 +3337,25 @@ export class ForceBuilderService {
      * Opens the edit dialog for an Alpha Strike unit's pilot.
      */
     private async editASPilot(unit: ASForceUnit): Promise<void> {
+        const group = unit.getGroup() as UnitGroup<ASForceUnit> | null;
         const ref = this.dialogsService.createDialog<EditASPilotResult | null, EditASPilotDialogComponent, EditASPilotDialogData>(
             EditASPilotDialogComponent,
             {
                 data: {
+                    unitId: unit.id,
                     name: unit.alias() || '',
                     skill: unit.pilotSkill(),
-                    abilities: unit.pilotAbilities(),
+                    abilities: unit.manualPilotAbilities(),
+                    formationAbilities: unit.formationAbilities(),
+                    commander: unit.commander(),
+                    group,
+                    factionId: unit.force.faction()?.id,
+                    isAerospace: unit.isAerospace(),
+                    era: unit.force.era(),
+                    unitType: unit.getUnit().type,
+                    unitSubtype: unit.getUnit().subtype,
                     unitTypeCode: unit.getUnit().as?.TP,
-                    basePv: unit.getUnit().pv,
+                    basePv: unit.getUnit().as?.PV,
                 }
             }
         );
@@ -2695,7 +3373,7 @@ export class ForceBuilderService {
             unit.setPilotSkill(result.skill);
         }
         if (result.abilities !== undefined) {
-            const currentAbilities = unit.pilotAbilities();
+            const currentAbilities = unit.manualPilotAbilities();
             const abilitiesChanged = result.abilities.length !== currentAbilities.length ||
                 result.abilities.some((a, i) => {
                     const current = currentAbilities[i];
@@ -2714,6 +3392,18 @@ export class ForceBuilderService {
                 unit.setPilotAbilities(result.abilities);
             }
         }
+
+        if (group) {
+            FormationAbilityAssignmentUtil.reconcileGroupAndDependents(group, {
+                abilityOverrides: result.formationAbilityOverrides ?? new Map([[unit.id, result.formationAbilities]]),
+                commanderUnitId: result.commander
+                    ? unit.id
+                    : group.units().find((candidate) => candidate.id !== unit.id && candidate.commander())?.id ?? null,
+            });
+        } else {
+            unit.setFormationAbilities(result.formationAbilities);
+            unit.setFormationCommander(result.commander);
+        }
     }
 
     /**
@@ -2722,6 +3412,11 @@ export class ForceBuilderService {
      * @param readOnly Whether the dialog should be read-only
      */
     public async openC3Network(force: Force, readOnly: boolean = false): Promise<void> {
+        await this.loadAllUnitsWithOverlay([force]);
+        if (force.units().some(unit => !unit.isLoaded())) {
+            this.toastService.showToast('Unable to configure C3 until every unit is loaded.', 'error');
+            return;
+        }
         const { C3NetworkDialogComponent, } = await import('../components/c3-network-dialog/c3-network-dialog.component');
         type C3NetworkDialogData = import('../components/c3-network-dialog/c3-network-dialog.component').C3NetworkDialogData;
         type C3NetworkDialogResult = import('../components/c3-network-dialog/c3-network-dialog.component').C3NetworkDialogResult;
@@ -2759,11 +3454,12 @@ export class ForceBuilderService {
         for (const force of forces) {
             const units = force.units();
             if (units.some(u => !u.isLoaded())) {
+                const faction = force.faction();
                 entries.push({
                     force,
                     progress: {
                         forceName: force.displayName(),
-                        factionImg: force.faction()?.img || null,
+                        factionImg: faction ? getFactionImg(faction) || null : null,
                         loadedUnits: computed(() => units.filter(u => u.isLoaded()).length),
                         totalUnits: units.length
                     }
@@ -2825,6 +3521,16 @@ export class ForceBuilderService {
             retryResolve = null;
 
             if (skipped) break;
+        }
+
+        for (const force of forces) {
+            if (force.units().some(unit => !unit.isLoaded())) continue;
+            const unitsById = new Map(force.units().map(unit => [unit.id, unit]));
+            const currentNetworks = force.c3Networks();
+            const validatedNetworks = C3NetworkEditor.clean(currentNetworks, unitsById);
+            if (JSON.stringify(validatedNetworks) !== JSON.stringify(currentNetworks)) {
+                force.setNetwork(validatedNetworks);
+            }
         }
 
         dialogRef.close();

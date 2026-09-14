@@ -132,6 +132,8 @@ import { ResolveService } from './resolve.service';
                         }
                         <!-- DIRECTIVE-122 — the two battle-damage totals for the iteration ledger. Taken auto-sums the
                              digital sheets (GM-editable); given is a plain GM number (OpFor damage isn't stored). -->
+                        <!-- PD3 P1 (PD3-12) — the reconcile's witness: what the battle-state sync pulled, or that it FAILED -->
+                        @if (res.reconcileNote(); as rn) { <div class="gate-note rn-line" [class.rn-fail]="rn.failed" data-testid="resolve-reconcile" [attr.data-ok]="rn.failed ? '0' : '1'" [attr.data-damaged]="rn.damaged">{{ rn.text }}</div> }
                         <div class="fs-head">Battle damage</div>
                         <div class="fs-dmg">
                             <label class="rnotes"><span>Damage taken</span><input type="number" min="0" step="1" [value]="res.dmgTakenShown()" (input)="res.setDmgTaken($any($event.target).value)" placeholder="own damage points" /></label>
@@ -145,15 +147,19 @@ import { ResolveService } from './resolve.service';
                             @for (g of res.gates; track g) { <option [value]="g">override → {{ g }}</option> }
                         </select>
                     </div>
+                } @else if (res.companylessNoDeploy()) {
+                    <!-- GM-3 P2 — a TABLE WITH NO COMPANY and nothing deployed: this is not the GM's forfeit (he fields nobody
+                         by design). Refuse with a reason; the players must claim + deploy first. No slip is minted. -->
+                    <p class="cmsg gate" data-testid="resolve-refuse">No units are on the field — a table resolves the players' units. Wait for a joined company to claim and deploy, or Build / Edit the OpFor. Nothing to resolve yet.</p>
                 } @else {
                     <!-- HOTFIX-022 A — no deployed force: resolve cannot be a win, only a forfeit/loss -->
                     <p class="cmsg gate">No force deployed — deploy before resolving, or mark this operation a forfeit/loss. A mission resolved with nothing on the field can only be a <b class="t-FAILURE">FAILURE</b> (no default win, GM override included).</p>
                 }
                 <div class="cbtns">
-                    <button type="button" class="cbtn" (click)="res.cancelResolve()">Cancel</button>
+                    <button type="button" class="cbtn" (click)="res.cancelResolve()">{{ res.companylessNoDeploy() ? 'Close' : 'Cancel' }}</button>
                     @if (res.deployedCount()) {
                         <button type="button" class="cbtn go" (click)="res.confirmResolve()">Resolve &raquo;</button>
-                    } @else {
+                    } @else if (!res.companylessNoDeploy()) {
                         <button type="button" class="cbtn go" (click)="res.confirmResolve()">Mark forfeit / loss &raquo;</button>
                     }
                 </div>
@@ -169,6 +175,8 @@ import { ResolveService } from './resolve.service';
         .ph { font-family: var(--label); font-weight: 600; letter-spacing: 2.5px; font-size: 13px; text-transform: uppercase; border-bottom: 1.5px solid var(--ink); padding-bottom: 6px; margin: 0 0 12px; }
         .ph.flat { border: none; margin: 0 0 6px; padding: 0; }
         .gate-note { font-family: var(--mono); font-size: 10px; letter-spacing: .4px; color: var(--ink2); font-style: italic; margin-top: 6px; }
+        .rn-line { font-style: normal; font-weight: 600; color: var(--ink); } /* PD3 P1 — the reconcile's witness line */
+        .rn-line.rn-fail { color: var(--stamp); }
         .cmodal { position: fixed; inset: 0; background: rgba(10, 8, 4, .55); display: flex; align-items: center; justify-content: center; padding: 20px 20px calc(20px + var(--bce-footer-h, 0px)); z-index: 50; } /* IMPORT-7 A — clear the legal footer */
         /* HOTFIX-038 — cap the box to the viewport + scroll internally so a tall resolve form's confirm stays reachable. */
         .cbox { background: var(--paper); border: 2px solid var(--ink); max-width: 480px; width: 100%; padding: 18px 20px; max-height: calc(100dvh - 40px); overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }

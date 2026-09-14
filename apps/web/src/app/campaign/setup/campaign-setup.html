@@ -32,13 +32,17 @@
     <div class="cg" role="group" aria-label="Campaign system">
         <span class="cg-l">Campaign system</span>
         <div class="cg-opts">
-            <button type="button" class="cg-b" [class.on]="campaignSystem() === 'traditional'" [attr.aria-pressed]="campaignSystem() === 'traditional'" (click)="setCampaignSystem('traditional')">
+            <button type="button" class="cg-b" [class.on]="campaignSystem() === 'traditional'" [disabled]="gmSession()" [attr.aria-pressed]="campaignSystem() === 'traditional'" (click)="setCampaignSystem('traditional')">
                 Traditional <small>Campaign Operations rules</small>
             </button>
             <button type="button" class="cg-b" [class.on]="campaignSystem() === 'hotspots'" [attr.aria-pressed]="campaignSystem() === 'hotspots'" (click)="setCampaignSystem('hotspots')">
                 Hot Spots <small>Chaos Campaign rules</small>
             </button>
         </div>
+        <!-- GM-1 P1 — the GM door pre-commits Hot Spots; say so instead of offering a dead choice. -->
+        @if (gmSession()) {
+            <div class="era-lock" data-testid="gm-session-lock"><span class="el-dot" aria-hidden="true"></span>Game Master session &mdash; Hot Spots, set by the door</div>
+        }
     </div>
 
     <!-- DIRECTIVE-108 (3) — Hot Spot campaign, only under Hot Spots. Data-driven; only available:true selectable.

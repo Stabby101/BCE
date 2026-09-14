@@ -1,0 +1,104 @@
+<!-- FORKED FROM campaign/walk/field-walk.html @ 2fa97a0 - DIRECTIVE-ODM-13 Phase 1 (a DRIFT SURFACE).
+     Divergences: the R2 trio both sides, the strip-yield preview replaces the credit column, the materiel
+     footer replaces the money total. Nothing here prices anything. -->
+<div class="fw-overlay" (click)="later()">
+    <div class="fw" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Walk the field">
+        <div class="fw-head">
+            <div class="fw-htext">
+                <div class="fw-title">Walk the field <span class="fw-flag">materiel only — no market</span></div>
+                <div class="fw-sub">{{ branchName() }} — every machine triaged off its <b>live end-state</b>. The fleet is the cap: @if (fleetReady()) { <b>{{ liftBays() }}</b> 'Mech bays · <b>{{ cargoCap() }} t</b> doored holds · <b>{{ hoursWindow() }} h</b> field crew } @else { <b>fleet manifest loading…</b> } · cold-storage slots <b>{{ prizeSlots() }}</b>. Cargo moves only through a DOOR — a 0-door hold loads nothing afield. What you do not take, the enemy recovers.</div>
+            </div>
+            <button type="button" class="fw-x" (click)="later()" aria-label="Walk later">✕</button>
+        </div>
+
+        <!-- BLUFOR -->
+        <section class="fw-side blufor">
+            <div class="fw-shead"><span class="badge">BLUFOR</span><span class="sh-t">Your force</span><span class="sh-c">{{ recoversSelected() }} riding home</span></div>
+            @for (r of blu(); track r.instanceId) {
+                <div class="fw-row sev-{{ r.readout.severity }}">
+                    <div class="fw-unit"><span class="fw-name">{{ r.label }}</span><span class="fw-tons">{{ r.tons }}t</span></div>
+                    <div class="fw-readout">
+                        <span class="sev sev-{{ r.readout.severity }}">{{ sevLabel(r.readout.severity) }}</span>
+                        <span class="ro">armor {{ pct(r.readout.armorPct) }}%</span>
+                        @if (r.readout.internalBreaches.length) { <span class="ro warn">internal {{ r.readout.internalBreaches.join('/') }}</span> }
+                        @if (r.readout.engineDead) { <span class="ro crit">ENGINE</span> }
+                        @if (r.readout.gyroDead) { <span class="ro crit">GYRO</span> }
+                        @if (r.readout.legsKilled) { <span class="ro crit">LEGS</span> }
+                        @if (r.readout.destroyedCrits && !r.readout.unitDestroyed) { <span class="ro">{{ r.readout.destroyedCrits }} crits</span> }
+                        @if (r.readout.unitDestroyed) { <span class="ro crit">DESTROYED</span> }
+                    </div>
+                    <div class="fw-q">
+                        <button type="button" class="q1" [class.no]="!effQ1(r)" (click)="toggleQ1(r)" title="Q1 — can we get it to the ship? click to override">Q1 {{ effQ1(r) ? 'YES' : 'NO' }}</button>
+                        <span class="q1 q2" [class.no]="!q2(r)" [title]="q2Title(r)">Q2 {{ q2(r) ? 'YES' : 'NO' }}</span>
+                        <button type="button" class="q1 q3" [class.no]="!effQ3(r)" (click)="toggleQ3(r)" [title]="'Q3 — is the weight justified? ' + r.q3Reason + ' (click to override — logged)'">Q3 {{ effQ3(r) ? 'YES' : 'NO' }}</button>
+                        @if (r.pilot && r.pilot.status !== 'OK') { <span class="pil" [class.kia]="r.pilot.status === 'KIA'">{{ r.pilot.status === 'KIA' ? '☠ PILOT KIA' : '✚ PILOT INJURED · ' + r.pilot.recoveryDays + 'd' }}</span> }
+                    </div>
+                    <div class="fw-disp">
+                        <select (change)="setDisp(r, $any($event.target).value)" [attr.aria-label]="r.label + ' disposition'">
+                            @for (o of bluOptions; track o.v) { <option [value]="o.v" [selected]="o.v === effDisp(r)">{{ o.l }}</option> }
+                        </select>
+                        <span class="fw-credit">@if (effDisp(r) === 'STRIP') { {{ yieldLabel(r) }} } @else if (effDisp(r) === 'RECOVER') { <span class="tri tri-{{ r.readout.severity }}">triage {{ r.readout.severity }}</span> } @else { — }</span>
+                        @if (mac7Note(r); as n) { <div class="gate-note">{{ n }}</div> }
+                        @if (unpricedNote(r); as u) { <div class="gate-note">{{ u }}</div> }
+                    </div>
+                </div>
+            }
+            @if (!blu().length) { <div class="fw-none">No BLUFOR engaged.</div> }
+        </section>
+
+        <!-- OPFOR -->
+        <section class="fw-side opfor">
+            <div class="fw-shead"><span class="badge">OPFOR</span><span class="sh-t">Enemy machines</span><span class="sh-c">{{ capturesSelected() }}/{{ prizeSlots() }} captures</span></div>
+            @for (r of opf(); track r.instanceId) {
+                <div class="fw-row sev-{{ r.readout.severity }}">
+                    <div class="fw-unit"><span class="fw-name">{{ r.label }}</span><span class="fw-tons">{{ r.tons }}t</span></div>
+                    <div class="fw-readout">
+                        <span class="sev sev-{{ r.readout.severity }}">{{ sevLabel(r.readout.severity) }}</span>
+                        <span class="ro">armor {{ pct(r.readout.armorPct) }}%</span>
+                        @if (r.readout.internalBreaches.length) { <span class="ro warn">internal {{ r.readout.internalBreaches.join('/') }}</span> }
+                        @if (r.readout.engineDead) { <span class="ro crit">ENGINE</span> }
+                        @if (r.readout.gyroDead) { <span class="ro crit">GYRO</span> }
+                        @if (r.readout.legsKilled) { <span class="ro crit">LEGS</span> }
+                        @if (r.readout.unitDestroyed) { <span class="ro crit">DESTROYED</span> }
+                    </div>
+                    <div class="fw-q">
+                        <button type="button" class="q1" [class.no]="!effQ1(r)" (click)="toggleQ1(r)" title="Q1 — recoverable? click to override">Q1 {{ effQ1(r) ? 'YES' : 'NO' }}</button>
+                        <span class="q1 q2" [class.no]="!q2(r)" [title]="q2Title(r)">Q2 {{ q2(r) ? 'YES' : 'NO' }}</span>
+                        <button type="button" class="q1 q3" [class.no]="!effQ3(r)" (click)="toggleQ3(r)" [title]="'Q3 — is the weight justified? ' + r.q3Reason + ' (click to override — logged)'">Q3 {{ effQ3(r) ? 'YES' : 'NO' }}</button>
+                        <span class="val">{{ yieldLabel(r) }} if stripped</span>
+                    </div>
+                    <div class="fw-disp">
+                        <select (change)="setDisp(r, $any($event.target).value)" [attr.aria-label]="r.label + ' disposition'">
+                            @for (o of opfOptions; track o.v) { <option [value]="o.v" [selected]="o.v === effDisp(r)" [disabled]="o.v === 'RECOVER' && captureDisabled(r)">{{ o.l }}</option> }
+                        </select>
+                        <span class="fw-credit">@if (effDisp(r) === 'STRIP') { {{ yieldLabel(r) }} } @else if (effDisp(r) === 'RECOVER') { <span class="tri">→ cold storage · {{ r.tons }} t · 1 bay</span> } @else { — }</span>
+                        @if (captureGate(r); as g) { <div class="gate-note">{{ g }}</div> }
+                        @if (mac7Note(r); as n) { <div class="gate-note">{{ n }}</div> }
+                        @if (unpricedNote(r); as u) { <div class="gate-note">{{ u }}</div> }
+                    </div>
+                </div>
+            }
+            @if (!opf().length) { <div class="fw-none">No OpFor on the field.</div> }
+        </section>
+
+        <div class="fw-foot">
+            @if (fleetReady() && manifest(); as m) {
+                <div class="fw-total" data-testid="odm-walk-manifest">LOAD MANIFEST — components <b>{{ m.componentTons }} t</b> · ammunition <b>{{ m.ammoTons }} t</b> · hulks <b>{{ m.hulks }}</b> ({{ m.hulkTons }} t) — bays <b [class.fw-over]="overBays()">{{ m.baysUsed }}/{{ m.liftBays }}</b> · doored holds <b [class.fw-over]="overCargo()">{{ m.cargoUsed }}/{{ m.cargoTons }} t</b> · field crew <b [class.fw-over]="overHours()">{{ m.fieldHours }}/{{ m.fieldHoursWindow }} h</b> · captures <b>{{ capturesSelected() }}</b>/{{ prizeSlots() }}</div>
+            } @else {
+                <div class="fw-total" data-testid="odm-walk-manifest">LOAD MANIFEST — <b>fleet manifest loading…</b> the walk waits for the ships before it can cap-check.</div>
+            }
+            @if (overHours()) { <div class="gate-note" data-testid="odm-walk-hours-gate">Over the extraction window — the field crew has {{ manifest()?.fieldHoursWindow }} h. Leave something on the field (no override: the clock is physics).</div> }
+            @if (needsForce() && !overHours()) {
+                <div class="fw-force" data-testid="odm-walk-force">
+                    <span class="gate-note">Over the fleet's lift — Q2 NO. DOCTRINE: the fleet cannot lift the whole company in one wave — two-wave operations are the present truth; an overload rides as deck cargo on the GM's order. Force it with a logged reason, or lighten the load.</span>
+                    <input type="text" [value]="forceReason()" (input)="forceReason.set($any($event.target).value)" placeholder="GM reason (logged to the walk record + AAR)" aria-label="GM override reason" />
+                </div>
+            }
+            @if (refusal(); as why) { <div class="gate-note fw-refusal" data-testid="odm-walk-refusal">{{ why }}</div> }
+            <div class="fw-acts">
+                <button type="button" class="fw-later" (click)="later()">Walk later</button>
+                <button type="button" class="fw-go" data-testid="odm-walk-confirm" [disabled]="!fleetReady()" (click)="confirm()">Confirm dispositions &raquo;</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -6,7 +6,7 @@
  */
 import type { CBTForceUnit } from '../../../models/cbt-force-unit.model';
 import { GameSystem } from '../../../models/common.model';
-import type { Unit } from '../../../models/units.model';
+import type { UnitSummary as Unit } from '../../../models/unit-summary.model';
 
 /** DIRECTIVE-083 — the result of the game-system card selector. */
 export type ComposedCard =

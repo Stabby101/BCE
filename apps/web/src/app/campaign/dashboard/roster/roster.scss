@@ -200,3 +200,14 @@ button.ct:disabled { opacity: .55; }
     .leftcol { flex: 1 1 auto; min-width: 0; }
     .sheet { flex: 0 0 auto; min-width: 0; width: 100%; }
 }
+
+/* ── DIRECTIVE-PD3 P4 — the HS row actions (Sell ▸ / Release) + the inline pilot rename ── */
+.pren { flex: 0 0 auto; border: none; background: transparent; color: var(--ink2); font-size: 13px; line-height: 1; padding: 4px 6px; cursor: pointer; min-width: 28px; min-height: 28px; }
+.pren:hover, .pren:focus-visible { color: var(--stamp); outline: none; }
+.pren.save { color: var(--ok); font-weight: 700; }
+.pname-in { flex: 1 1 8ch; min-width: 8ch; font-family: var(--type); font-size: 13px; padding: 4px 6px; border: 1.3px solid var(--ink); background: var(--paper); color: var(--ink); }
+.ru-acts .ru-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.rubtn { font-family: var(--label); font-weight: 600; letter-spacing: .5px; font-size: 11px; text-transform: uppercase; border: 1.3px solid var(--ink); background: var(--paper); color: var(--ink); padding: 6px 10px; cursor: pointer; min-height: 36px; }
+.rubtn:hover, .rubtn:focus-visible { border-color: var(--stamp); color: var(--stamp); outline: none; }
+.rubtn.rel.armed { background: var(--stamp); color: var(--paper); border-color: var(--stamp); }
+

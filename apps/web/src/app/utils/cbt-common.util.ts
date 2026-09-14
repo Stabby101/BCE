@@ -1,43 +1,31 @@
-/*
- * Copyright (C) 2026 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { DEFAULT_PILOTING_SKILL } from "../models/crew-member.model";
-import type { Unit } from "../models/units.model";
-import { canAntiMech, NO_ANTIMEK_SKILL } from "./infantry.util";
+import type { UnitSummary } from "../models/unit-summary.model";
+
+const NO_ANTIMEK_SKILL = 8;
 
 /**
- * Author: Drake
+ * Returns the fixed Piloting value for units whose Piloting cannot be changed.
+ * Returns `null` when the unit uses the requested Piloting value.
  */
+export function getFixedPilotingSkill(unit: UnitSummary): number | null {
+    if (unit.type === 'ProtoMek') {
+        return DEFAULT_PILOTING_SKILL;
+    }
+    if (unit.type !== 'Infantry' || unit.canAntiMech) {
+        return null;
+    }
+    if (unit.subtype.includes('Mechanized')) {
+        return DEFAULT_PILOTING_SKILL;
+    }
+    if (unit.subtype.includes('Conventional Infantry')) {
+        return NO_ANTIMEK_SKILL;
+    }
+    return DEFAULT_PILOTING_SKILL;
+}
 
 /**
  * Returns the effective piloting skill for a unit, enforcing CBT skill rating rules:
@@ -53,18 +41,6 @@ import { canAntiMech, NO_ANTIMEK_SKILL } from "./infantry.util";
  * @param pilotingSkill - The raw/requested piloting skill
  * @returns The effective piloting skill after applying CBT rules
  */
-export function getEffectivePilotingSkill(unit: Unit, pilotingSkill: number): number {
-    if (unit.type === 'ProtoMek') {
-        return DEFAULT_PILOTING_SKILL;
-    }
-    if (unit.type === 'Infantry' && !canAntiMech(unit)) {
-        if (unit.subtype.includes('Mechanized')) {
-            return DEFAULT_PILOTING_SKILL;
-        }
-        if (unit.subtype.includes('Conventional Infantry')) {
-            return NO_ANTIMEK_SKILL;
-        }
-        return DEFAULT_PILOTING_SKILL; // Default for other infantry types without anti-Mech capability (BA!)
-    }
-    return pilotingSkill;
+export function getEffectivePilotingSkill(unit: UnitSummary, pilotingSkill: number): number {
+    return getFixedPilotingSkill(unit) ?? pilotingSkill;
 }

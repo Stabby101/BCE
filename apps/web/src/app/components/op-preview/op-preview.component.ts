@@ -1,47 +1,18 @@
-/*
- * Copyright (C) 2026 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, model } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { type CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import type { ForceAlignment } from '../../models/force-slot.model';
 import type { GameSystem } from '../../models/common.model';
-import { FactionImgPipe } from '../../pipes/faction-img.pipe';
+import { FactionId, getFactionImg } from '../../models/factions.model';
+import { DataService } from '../../services/data.service';
 
 /*
- * Author: Drake
  *
- * Reusable operation preview showing Friendly vs Opposing sides
+ * Reusable operation preview showing Friendly vs Hostile sides
  * with force names, BV/PV values, and totals.
  */
 
@@ -53,27 +24,78 @@ export interface OpPreviewForce {
     type?: GameSystem;
     bv?: number;
     pv?: number;
-    factionId?: number;
+    factionId?:  FactionId;
+    eraId?: number;
     exists?: boolean;
+}
+
+interface OpPreviewDisplayForce extends OpPreviewForce {
+    factionImgUrl?: string;
+    eraImgUrl?: string;
+    eraName?: string;
 }
 
 @Component({
     selector: 'op-preview',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CommonModule, FactionImgPipe, DragDropModule],
+    imports: [CommonModule, DragDropModule],
     templateUrl: './op-preview.component.html',
     styleUrls: ['./op-preview.component.scss']
 })
 export class OpPreviewComponent {
+    dataService = inject(DataService);
+    
     /** The forces to display in the preview. */
     forces = model.required<OpPreviewForce[]>();
     
     /** Whether to allow drag and drop between the two lists. */
     allowDragDrop = input<boolean>(false);
 
-    friendlyForces = computed(() => this.forces().filter(f => f.alignment === 'friendly'));
-    enemyForces = computed(() => this.forces().filter(f => f.alignment === 'enemy'));
+    private displayForces = computed<OpPreviewDisplayForce[]>(() => {
+        const factionImgCache = new Map<FactionId, string | undefined>();
+        const eraCache = new Map<number, { imgUrl?: string; name?: string }>();
+
+        return this.forces().map(force => {
+            const factionId = force.factionId;
+            const eraId = force.eraId;
+
+            let factionImgUrl: string | undefined;
+            if (factionId != null) {
+                if (!factionImgCache.has(factionId)) {
+                    const faction = this.dataService.getFactionById(factionId);
+                    factionImgCache.set(factionId, faction ? getFactionImg(faction) : undefined);
+                }
+                factionImgUrl = factionImgCache.get(factionId);
+            }
+
+            let eraImgUrl: string | undefined;
+            let eraName: string | undefined;
+            if (eraId != null) {
+                if (!eraCache.has(eraId)) {
+                    const era = this.dataService.getEraById(eraId);
+                    eraCache.set(eraId, {
+                        imgUrl: era?.img || era?.icon,
+                        name: era?.name,
+                    });
+                }
+
+                const eraInfo = eraCache.get(eraId);
+                eraImgUrl = eraInfo?.imgUrl;
+                eraName = eraInfo?.name;
+            }
+
+            return {
+                ...force,
+                factionImgUrl,
+                eraImgUrl,
+                eraName,
+            };
+        });
+    });
+
+    friendlyForces = computed(() => this.displayForces().filter(f => f.alignment === 'friendly'));
+    enemyForces = computed(() => this.displayForces().filter(f => f.alignment === 'enemy'));
 
     friendlyBv = computed(() =>
         this.friendlyForces()
@@ -102,7 +124,7 @@ export class OpPreviewComponent {
     hasCbt = computed(() => this.forces().some(f => (f.type || 'cbt') !== 'as'));
     hasAs = computed(() => this.forces().some(f => f.type === 'as'));
 
-    onDrop(event: CdkDragDrop<OpPreviewForce[]>, targetAlignment: ForceAlignment) {
+    onDrop(event: CdkDragDrop<OpPreviewDisplayForce[]>, targetAlignment: ForceAlignment) {
         if (!this.allowDragDrop()) return;
 
         const item = event.item.data as OpPreviewForce;

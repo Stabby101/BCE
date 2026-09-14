@@ -15,10 +15,16 @@
  *  - Small-group prominence: a section that fits shows every faction; only long
  *    sets (big Inner Sphere / Clan) keep a collapsible same-affinity tail.
  */
-import type { Faction, FactionAffinity } from '../../models/factions.model';
+import type { Faction } from '../../models/factions.model';
 import type { Era } from '../../models/eras.model';
 import { FACTION_FLAVOR, META_FACTION_DENY, PIRATE_FACTIONS, type FactionFlavor } from './faction-flavor';
 import { FORMATION_OOB, type FormationRecord } from './formation-oob';
+
+// BCE-EDIT (REBASE-1 P1 c): the affinity grouping is a BCE faction-select concept. Upstream's
+// `factions.model` dropped its `FactionAffinity` type export at the pin (`getFactionAffinity` now
+// returns a plain `string`), so the union BCE's section grouping relies on is defined here, at the
+// one site that uses it (see ARCH_GROUPS / GROUP_ORDER / GROUP_LABEL below).
+export type FactionAffinity = 'Inner Sphere' | 'IS Clan' | 'HW Clan' | 'Periphery' | 'Mercenary' | 'Other';
 
 export interface FactionView {
     faction: Faction;

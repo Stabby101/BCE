@@ -1,38 +1,10 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import type { GameSystem } from '../models/common.model';
-import type { Unit } from '../models/units.model';
+import type { UnitSearchNormalization } from '../models/unit-search-result.model';
+import type { UnitSummary } from '../models/unit-summary.model';
 import { filterStateToSemanticText } from './semantic-filter.util';
 import type {
     UnitSearchWorkerCorpusSnapshot,
@@ -50,6 +22,10 @@ interface UnitSearchWorkerCorpusCache {
 interface BuildWorkerExecutionQueryArgs {
     effectiveFilterState: FilterState;
     effectiveTextSearch: string;
+    /** Original committed clauses; preserving these avoids flattening repeated constraints. */
+    semanticTokenTexts?: readonly string[];
+    /** Raw grouped query to preserve before applying UI-only filters. */
+    preservedQuery?: string;
     gameSystem: GameSystem;
     totalRangesCache: Record<string, [number, number]>;
 }
@@ -66,6 +42,13 @@ interface BuildWorkerSearchRequestArgs {
     forceTotalBvPv: number;
     pilotGunnerySkill: number;
     pilotPilotingSkill: number;
+    normalization: UnitSearchNormalization | null;
+}
+
+const SEMANTIC_TEXT_ESCAPE_PATTERN = /([()=><!"'&\\])/g;
+
+function escapePlainTextForWorkerExecutionQuery(text: string): string {
+    return text.replace(SEMANTIC_TEXT_ESCAPE_PATTERN, '\\$1');
 }
 
 export function getWorkerCorpusVersion(searchCorpusVersion: string | number, tagsVersion: number): string {
@@ -75,7 +58,7 @@ export function getWorkerCorpusVersion(searchCorpusVersion: string | number, tag
 export function getWorkerCorpusSnapshot(
     cache: UnitSearchWorkerCorpusCache,
     corpusVersion: string,
-    units: Unit[],
+    units: UnitSummary[],
     indexes: UnitSearchWorkerIndexSnapshot,
     factionEraIndex: UnitSearchWorkerFactionEraSnapshot,
 ): { snapshot: UnitSearchWorkerCorpusSnapshot; cache: UnitSearchWorkerCorpusCache } {
@@ -102,15 +85,27 @@ export function getWorkerCorpusSnapshot(
 export function buildWorkerExecutionQuery({
     effectiveFilterState,
     effectiveTextSearch,
+    semanticTokenTexts = [],
+    preservedQuery,
     gameSystem,
     totalRangesCache,
 }: BuildWorkerExecutionQueryArgs): string {
-    return filterStateToSemanticText(
+    const groupedQuery = preservedQuery?.trim();
+    const uiFilterText = filterStateToSemanticText(
         effectiveFilterState,
-        effectiveTextSearch,
+        groupedQuery ? '' : escapePlainTextForWorkerExecutionQuery(effectiveTextSearch),
         gameSystem,
         totalRangesCache,
     ).trim();
+
+    if (groupedQuery) {
+        return uiFilterText ? `(${groupedQuery}) ${uiFilterText}` : groupedQuery;
+    }
+
+    return [uiFilterText, ...semanticTokenTexts]
+        .map(part => part.trim())
+        .filter(Boolean)
+        .join(' ');
 }
 
 export function buildWorkerSearchRequest(args: BuildWorkerSearchRequestArgs): UnitSearchWorkerQueryRequest {
@@ -126,5 +121,6 @@ export function buildWorkerSearchRequest(args: BuildWorkerSearchRequestArgs): Un
         forceTotalBvPv: args.forceTotalBvPv,
         pilotGunnerySkill: args.pilotGunnerySkill,
         pilotPilotingSkill: args.pilotPilotingSkill,
+        normalization: args.normalization,
     };
 }

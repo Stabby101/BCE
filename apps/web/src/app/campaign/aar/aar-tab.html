@@ -9,18 +9,29 @@
 } @else {
     <div class="aar-list">
         @for (it of items(); track it.branchId) {
-            <button type="button" class="aar-item" (click)="open(it)">
+            <!-- TABLE-2 T2-1 — row is a div role=button (not <button>) so the ODM "WALK THE FIELD ▸" control can be a real nested <button>. -->
+            <div class="aar-item" role="button" tabindex="0" [attr.data-branch]="it.branchId" (click)="open(it)" (keydown.enter)="open(it)" (keydown.space)="$event.preventDefault(); open(it)">
                 <span class="ai-main">
                     <span class="ai-name">{{ it.opName }}</span>
                     <span class="ai-ctx">{{ it.context }}</span>
                 </span>
                 <span class="ai-meta">
-                    @if (it.pendingWalk) { <span class="ai-pend" [class.settled]="isHotspots()">{{ isHotspots() ? 'SETTLED' : 'WALK PENDING' }}</span> }
+                    @if (it.pendingWalk) {
+                        @if (walkable) {
+                            <!-- TABLE-2 T2-1/T2-4 — the badge IS the button, per-mission. keydown.stopPropagation so Enter/Space
+                                 on the WALK button don't ALSO bubble to the row div's key handlers (which would open the AAR doc). -->
+                            <button type="button" class="ai-pend ai-walk" (click)="requestWalk(it); $event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" (keydown.space)="$event.stopPropagation()">WALK THE FIELD ▸</button>
+                        } @else {
+                            <span class="ai-pend" [class.settled]="isHotspots()">{{ isHotspots() ? 'SETTLED' : 'WALK PENDING' }}</span>
+                        }
+                    } @else if (it.walked && walkable) {
+                        <span class="ai-pend ai-walked">WALKED</span>
+                    }
                     <span class="ai-badge t-{{ it.tier }}">{{ it.tier }}@if (it.override) { · OVR }</span>
                     <span class="ai-date">{{ it.dateText }}</span>
                     <span class="ai-open">OPEN »</span>
                 </span>
-            </button>
+            </div>
         }
     </div>
 }
@@ -59,7 +70,12 @@
             @for (s of d.sections; track s.id) {
                 <h2>{{ s.title }}</h2>
                 @if (s.author) {
-                    <div class="byline">Prepared by <b>{{ s.author.name }}</b> — {{ s.author.roleFamily }}@if (s.refined) { <span class="refined-tag no-print">✦ refined</span> }<span class="rules"> · standing rules: {{ s.author.rules }}</span></div>
+                    <!-- S61 (2026-09-12): the persona's standing rules are NARRATOR STYLE instructions (the D-035 refine
+                         contract), not player-facing flavour — they fed the byline as visible document text and leaked into
+                         the rendered/printed AAR (a Traditional/HS + ODM leak; the template is SHARED). The byline now shows
+                         the officer's name and role only; `s.author.rules` stays on AarVoiceRef and reaches the AI PROMPT
+                         via NarratorService.refine → voiceCard(speechRules), never the DOM. -->
+                    <div class="byline">Prepared by <b>{{ s.author.name }}</b> — {{ s.author.roleFamily }}@if (s.refined) { <span class="refined-tag no-print">✦ refined</span> }</div>
                 } @else {
                     <div class="byline unsigned">UNSIGNED — no staff officer on record for this section</div>
                 }

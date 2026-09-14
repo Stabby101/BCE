@@ -9,7 +9,7 @@ import { Component, ChangeDetectionStrategy, computed, inject, input } from '@an
 import { UnitIconComponent } from '../../components/unit-icon/unit-icon.component';
 import { MechSilhouetteComponent } from './mech-silhouette';
 import { SpriteResolverService, type SpriteSubject } from './sprite-resolver.service';
-import type { Unit } from '../../models/units.model';
+import type { UnitSummary as Unit } from '../../models/unit-summary.model';
 
 @Component({
     selector: 'bce-unit-sprite',

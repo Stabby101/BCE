@@ -10,7 +10,7 @@ import { resolveMekbayEraId } from '../faction/faction-select'; // PURE era-id m
 import { generatePilots } from '../barracks/pilot-generator';
 import { ensureForgeData, type ForgeRegion } from './forge/hs-forge-data'; // HSFORGE-1 P2 — the theater picker's region table
 import type { ProtoInstance } from '../force/force-generator';
-import type { Unit } from '../../models/units.model';
+import type { UnitSummary as Unit } from '../../models/unit-summary.model';
 
 /**
  * DIRECTIVE-113 — the Hot Spots "Mercenary Command" creation step. Replaces the Traditional date-force / faction /
@@ -193,7 +193,15 @@ export class MercCommandComponent {
     });
     protected readonly catalogVisible = computed(() => this.catalog().slice(0, VISIBLE_CAP));
     protected readonly chosenBV = computed(() => this.chosen().reduce((s, u) => s + (u.bv || 0), 0));
-    protected readonly canBegin = computed(() => this.chosen().length > 0);
+    // GM-3 P2 — a gmSession may begin with ZERO units: "Host a table" (era + theater only, no company of the GM's own).
+    // A plain campaign still requires ≥1 unit (byte-untouched). The table path is gated on gmSession, which the GM door sets.
+    protected readonly gmSess = computed(() => this.state.gmSession());
+    protected readonly canBegin = computed(() => this.chosen().length > 0 || this.state.gmSession());
+    /** GM-3 P2 — begin() takes the empty-table path (no company, no warchest) when a gmSession has chosen nothing. */
+    protected readonly hostingTable = computed(() => this.state.gmSession() && this.chosen().length === 0);
+    protected readonly gmDifficulty = this.state.gmDifficulty;
+    protected setDifficulty(v: number): void { this.state.setGmDifficulty(v); }
+    protected difficultyLabel(v: number): string { return v <= 0.9 ? 'Green' : v <= 1.0 ? 'Standard' : v <= 1.3 ? 'Veteran' : 'Elite'; }
 
     protected money(n: number): string { return Math.round(n).toLocaleString('en-US'); }
     protected setProfile(id: string): void { this.profileId.set(id); }
@@ -282,6 +290,29 @@ export class MercCommandComponent {
         const era = s.era();
         const name = this.commandName().trim() || 'Mercenary Command';
         const startDate = s.startDate() ?? { y: era?.from ?? 3025, m: 0, d: 1 };
+        // GM-3 P2 — THE TABLE WITH NO COMPANY: era + theater + difficulty → an EMPTY gmSession. No roster, NO warchest
+        // (warchestSP left null — never seeded), no accepted contract; only the dashboard-entry labels + the table's clock.
+        // The GM hosts and referees; he brings his own company (if he wants) through the player handshake, like anyone.
+        if (this.hostingTable()) {
+            s.setForce('MERC');
+            s.setFaction(this.commandName().trim() || 'GM Table');
+            s.setUnit('__custom__');
+            s.setUnitSize({ id: 'custom', name: 'GM Table', count: 0 });
+            s.setCommandName(this.commandName().trim() || 'GM Table');
+            s.setRating(this.rating());
+            s.setLogisticsProfile('merc-market');
+            s.setResources('normal'); // the dashboard-entry guard's benign C-bill label (unused in SP mode)
+            s.setStartDate(startDate);
+            s.setStartingForce([]); // NO company of the GM's own
+            s.setPilots([]);
+            s.setContractScale(1); // a default; the session contract carries the hot spot's authored Scale at Present
+            s.setCurrentDate(startDate);
+            s.setCurrentLocation(null);
+            // deliberately NO warchest.seed — warchestSP stays null (the companylessTable signal the 5 branches read)
+            void this.store.beginSave();
+            void this.router.navigate(['/campaign']);
+            return;
+        }
 
         const force: ProtoInstance[] = this.chosen().map((u) => ({
             instanceId: this.uid(), unitRef: u.name, chassis: u.chassis, model: u.model, mulId: u.id, tons: u.tons, bv: u.bv,

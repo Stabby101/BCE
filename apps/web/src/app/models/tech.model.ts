@@ -1,51 +1,27 @@
-/*
- * Copyright (C) 2026 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import type { Unit } from "./units.model";
+import type { UnitSummary } from "./unit-summary.model";
 
-export type TechBase = 'Inner Sphere' | 'Clan' | 'Mixed';
+export type TechBase = 'Inner Sphere' | 'Clan';
 export type TechBaseAvailability = 'IS' | 'Clan' | 'All';
 
+export type UnitTechBaseDisplay = TechBase | `Mixed (${TechBase})`;
 
-export function getUnitsAverageTechBase(units: Unit[]): TechBase {
+export function getUnitTechBaseDisplay(unit: Pick<UnitSummary, 'techBase' | 'mixed'>): UnitTechBaseDisplay {
+    return unit.mixed ? `Mixed (${unit.techBase})` : unit.techBase;
+}
+
+
+export function getUnitsAverageTechBase(units: UnitSummary[]): TechBase {
     const counts: Partial<Record<TechBase, number>> = {};
     for (const unit of units) {
-        const tb = unit.techBase;
-        if (tb === 'Mixed') {
+        if (unit.mixed) {
             counts['Clan'] = (counts['Clan'] || 0) + 1;
             counts['Inner Sphere'] = (counts['Inner Sphere'] || 0) + 1;
         } else {
-            counts[tb] = (counts[tb] || 0) + 1;
+            counts[unit.techBase] = (counts[unit.techBase] || 0) + 1;
         }
     }
     let majority: TechBase = 'Inner Sphere';

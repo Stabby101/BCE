@@ -1,0 +1,245 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
+import { computed, Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+
+import { LoggerService } from '../logger.service';
+import { withServiceWorkerBypass } from '../../utils/service-worker-bypass.util';
+import { uuidv7 } from '../../utils/uuid.util';
+
+type CatalogDataSource = 'cache' | 'remote';
+
+@Injectable({ providedIn: 'root' })
+export class CatalogDownloadTrackerService {
+    private readonly activeDownloadCount = signal(0);
+    public readonly isDownloading = computed(() => this.activeDownloadCount() > 0);
+
+    public async trackDownload<T>(download: () => Promise<T>): Promise<T> {
+        this.activeDownloadCount.update((count) => count + 1);
+        try {
+            return await download();
+        } finally {
+            this.activeDownloadCount.update((count) => Math.max(0, count - 1));
+        }
+    }
+}
+
+export abstract class CatalogBaseService<THydrateInput, TStored extends THydrateInput, TRemoteBody = TStored> {
+    protected readonly http = inject(HttpClient);
+    protected readonly logger = inject(LoggerService);
+    private readonly downloadTracker = inject(CatalogDownloadTrackerService);
+    protected etag = '';
+    private initialized = false;
+    private initializationPromise: Promise<void> | null = null;
+
+    public initialize(): Promise<void> {
+        if (this.initialized) {
+            return Promise.resolve();
+        }
+        if (this.initializationPromise) {
+            return this.initializationPromise;
+        }
+
+        this.initializationPromise = this.performInitialization()
+            .then(() => {
+                this.initialized = true;
+            })
+            .finally(() => {
+                this.initializationPromise = null;
+            });
+        return this.initializationPromise;
+    }
+
+    protected async afterInitialize(): Promise<void> {}
+
+    private async performInitialization(): Promise<void> {
+        const localData = await this.loadFromCache();
+        const validLocalData = localData && this.tryHydrateData(localData, 'cache')
+            ? localData
+            : undefined;
+
+        if (!validLocalData) {
+            this.etag = '';
+        }
+
+        const remoteEtag = await this.getRemoteEtag();
+        if (!remoteEtag) {
+            if (this.hasHydratedData()) {
+                this.logger.info(`${this.catalogKey} loaded from cache (offline or remote unavailable).`);
+            } else {
+                await this.fetchRemote();
+            }
+        } else if (this.etag && this.etag === remoteEtag) {
+            this.logger.info(`${this.catalogKey} is up to date. (ETag: ${remoteEtag})`);
+        } else {
+            await this.fetchRemote(validLocalData);
+        }
+
+        await this.afterInitialize();
+    }
+
+    protected abstract get catalogKey(): string;
+    protected abstract get remoteUrl(): string;
+    protected abstract hasHydratedData(): boolean;
+    protected abstract loadFromCache(): Promise<THydrateInput | undefined>;
+    protected abstract saveToCache(data: TStored): Promise<void>;
+    protected abstract hydrate(data: THydrateInput): void;
+    protected abstract normalizeFetchedData(data: TRemoteBody, etag: string): TStored;
+
+    protected getDatasetSize(_data: THydrateInput): number | undefined {
+        return undefined;
+    }
+
+    /**
+     * This method is used to determine the minimum acceptable size of a newly fetched remote dataset. If the size of the new dataset is below this threshold, it will be rejected as invalid. 
+     * This is to prevent loading incomplete or corrupted datasets that could break the application.
+     */
+    protected getMinimumDatasetSize(): number {
+        return 1;
+    }
+
+    /**
+     * This method is used to determine the minimum acceptable size of a newly fetched remote dataset relative to the previously loaded dataset. 
+     * It is only applied if the previous dataset size is above the threshold defined by `getMinimumRelativeComparisonSize()`.
+     */
+    protected getMinimumRelativeDatasetSize(): number | undefined {
+        return 0.75;
+    }
+
+    /**
+     * This method defines the minimum size a previously loaded dataset must have for the relative size check to be applied when validating a newly fetched remote dataset. 
+     * This is to avoid rejecting new datasets that are legitimately smaller than the previous one when the previous dataset is too small to be a reliable reference for comparison.
+     * For example, if the previous dataset has only 10 entries, it might be normal for a new dataset to have only 7 entries after an update, and rejecting it for being below 75% of the previous size would be too strict.
+     */
+    protected getMinimumRelativeComparisonSize(): number {
+        return 100;
+    }
+
+    protected async getRemoteEtag(): Promise<string> {
+        try {
+            const response = await firstValueFrom(this.http.head(withServiceWorkerBypass(this.remoteUrl), {
+                observe: 'response',
+                responseType: 'text',
+            }));
+            return response.headers.get('ETag') || '';
+        } catch (error: any) {
+            this.logger.warn(`Failed to fetch ETag for ${this.remoteUrl}: ${error?.message ?? error}`);
+            return '';
+        }
+    }
+
+    protected async fetchRemote(previousData?: THydrateInput): Promise<void> {
+        await this.downloadTracker.trackDownload(async () => {
+            this.logger.info(`Downloading ${this.catalogKey}...`);
+
+            const response = await firstValueFrom(this.http.get<TRemoteBody>(withServiceWorkerBypass(this.remoteUrl), {
+                observe: 'response',
+                reportProgress: false,
+            }));
+
+            const body = response.body;
+            if (!body) {
+                throw new Error(`No body received for ${this.catalogKey}`);
+            }
+
+            const etag = response.headers.get('ETag') || uuidv7();
+            const wrappedData = this.normalizeFetchedData(body, etag);
+
+            try {
+                this.validateData(wrappedData, 'remote', previousData);
+                this.hydrate(wrappedData);
+                this.ensureHydratedData('remote');
+            } catch (error) {
+                let restoredPreviousData = false;
+                if (previousData) {
+                    try {
+                        this.hydrate(previousData);
+                        this.ensureHydratedData('cache');
+                        restoredPreviousData = true;
+                        this.logger.warn(`Preserved cached ${this.catalogKey} after rejecting the remote update.`);
+                    } catch (restoreError) {
+                        this.logger.error(`Failed to restore cached ${this.catalogKey}: ${this.describeError(restoreError)}`);
+                    }
+                }
+
+                const message = `Rejected ${this.catalogKey} update: ${this.describeError(error)}`;
+                this.logger.error(message);
+                if (restoredPreviousData) {
+                    return;
+                }
+                throw new Error(message);
+            }
+
+            await this.saveToCache(wrappedData);
+            this.logger.info(`${this.catalogKey} updated. (ETag: ${etag})`);
+        });
+    }
+
+    private tryHydrateData(data: THydrateInput, source: CatalogDataSource): boolean {
+        try {
+            this.validateData(data, source);
+            this.hydrate(data);
+            this.ensureHydratedData(source);
+            return true;
+        } catch (error) {
+            this.logger.warn(`Ignoring invalid ${source} ${this.catalogKey} dataset: ${this.describeError(error)}`);
+            return false;
+        }
+    }
+
+    private validateData(data: THydrateInput, source: CatalogDataSource, previousData?: THydrateInput): void {
+        const size = this.getDatasetSize(data);
+        if (size === undefined) {
+            return;
+        }
+
+        const minimumDatasetSize = this.getMinimumDatasetSize();
+        if (size < minimumDatasetSize) {
+            throw new Error(`expected at least ${minimumDatasetSize} entries, received ${size}`);
+        }
+
+        if (source !== 'remote' || !previousData) {
+            return;
+        }
+
+        const previousSize = this.getDatasetSize(previousData);
+        const minimumRelativeDatasetSize = this.getMinimumRelativeDatasetSize();
+        if (
+            previousSize === undefined
+            || minimumRelativeDatasetSize === undefined
+            || previousSize < this.getMinimumRelativeComparisonSize()
+        ) {
+            return;
+        }
+
+        const minimumAcceptedSize = Math.max(
+            minimumDatasetSize,
+            Math.ceil(previousSize * minimumRelativeDatasetSize),
+        );
+
+        if (size < minimumAcceptedSize) {
+            throw new Error(
+                `received only ${size} entries after previously loading ${previousSize}`,
+            );
+        }
+    }
+
+    private ensureHydratedData(source: CatalogDataSource): void {
+        if (this.hasHydratedData()) {
+            return;
+        }
+
+        throw new Error(`${source} ${this.catalogKey} dataset hydrated to an empty catalog`);
+    }
+
+    private describeError(error: unknown): string {
+        if (error instanceof Error) {
+            return `${error.name}: ${error.message}`;
+        }
+
+        return String(error);
+    }
+}

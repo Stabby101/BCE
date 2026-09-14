@@ -173,13 +173,13 @@ describe('IMPORT-4 — one-sided / two-sided emission', () => {
         const hs = draftToHotSpot(twoSided());
         expect(hs.sides).toBeDefined();
         expect(hs.sides!.a.role).toBe('attacker');
-        expect(hs.sides!.b.role).toBe('defender');
+        expect(hs.sides!.b!.role).toBe('defender');
         expect(hs.sides!.a.faction).toBe('Federated Suns');
-        expect(hs.sides!.b.faction).toBe('Draconis Combine');
+        expect(hs.sides!.b!.faction).toBe('Draconis Combine');
         expect(hs.sides!.a.contract.enemyFaction).toBe('Draconis Combine'); // OpFor = the OTHER side
-        expect(hs.sides!.b.contract.enemyFaction).toBe('Federated Suns');
+        expect(hs.sides!.b!.contract.enemyFaction).toBe('Federated Suns');
         expect(hs.sides!.a.contract.steps.basePay).toBe(6);
-        expect(hs.sides!.b.contract.steps.basePay).toBe(7);
+        expect(hs.sides!.b!.contract.steps.basePay).toBe(7);
         expect(hs.sides!.a.synthesized).toBeUndefined(); // authored, not best-effort
         expect(hs.employer).toBe('AFFS High Command');    // top-level from side A
         expect(hs.contract.enemyFaction).toBe('Draconis Combine'); // top-level = side A's view (legacy readers)
@@ -187,7 +187,7 @@ describe('IMPORT-4 — one-sided / two-sided emission', () => {
 
     it('enforces opposed roles at emission (Side B is the opposite of Side A even if the draft is malformed)', () => {
         const d = twoSided(); d.sideB.role = 'attacker'; // malformed same-role draft
-        expect(draftToHotSpot(d).sides!.b.role).toBe('defender');
+        expect(draftToHotSpot(d).sides!.b!.role).toBe('defender');
     });
 
     it('a complete pair validates; a half-filled / same-role / duplicate-faction pair is a save error', () => {
@@ -243,11 +243,11 @@ describe('IMPORT-5 — single-sided flag (C), transport carries (D), per-side id
         d.sideB = { ...emptySide('defender'), title: 'Hold the Line', type: 'Garrison', employer: 'DCMS', employerDesc: 'The Combine defenders.', faction: 'Draconis Combine', situation: 'Hold at all costs.', basePay: 7 };
         const hs = draftToHotSpot(d);
         expect(hs.sides!.a.title).toBe('Break the Thrust');
-        expect(hs.sides!.b.title).toBe('Hold the Line');
+        expect(hs.sides!.b!.title).toBe('Hold the Line');
         expect(hs.sides!.a.type).toBe('Objective Raid');
-        expect(hs.sides!.b.type).toBe('Garrison');
+        expect(hs.sides!.b!.type).toBe('Garrison');
         expect(hs.sides!.a.situation).toBe('Shatter the salient.');
-        expect(hs.sides!.b.employerDesc).toBe('The Combine defenders.');
+        expect(hs.sides!.b!.employerDesc).toBe('The Combine defenders.');
         // top-level (legacy / `sides`-less reader + offer-card world header) falls back to side A
         expect(hs.title).toBe('Break the Thrust');
         expect(hs.type).toBe('Objective Raid');

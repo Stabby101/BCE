@@ -88,7 +88,11 @@ import { Location } from '@angular/common';
         </div>
     `,
     styles: [`
-        .lp { max-width:760px; margin:0 auto; padding:28px 20px 72px; color:#1a1407; background:#f4ecd8; min-height:100vh;
+        /* GM-1d-c — THIS host is the page's scroll container (both bundles share the document lock: body overflow:hidden).
+           The notices run several screens on a phone; without this the page could not be scrolled by touch or wheel on ANY
+           device — the COMPLIANCE-1 text was unreadable past the first screen. Ends above the reserved legal footer. */
+        :host { display:block; height:calc(100dvh - var(--bce-footer-h, 0px)); overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; }
+        .lp { max-width:760px; margin:0 auto; padding:28px 20px 72px; color:#1a1407; background:#f4ecd8; min-height:100%;
             font:15px/1.6 var(--type, system-ui), Segoe UI, Roboto, sans-serif; box-sizing:border-box; }
         .lp-back { background:none; border:1.4px solid #7a2d1e; color:#7a2d1e; border-radius:4px; padding:6px 12px;
             font-weight:600; letter-spacing:.04em; cursor:pointer; margin-bottom:18px; }

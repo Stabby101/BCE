@@ -1,6 +1,10 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
 import type { Era } from '../../models/eras.model';
 import type { Faction } from '../../models/factions.model';
-import type { ASUnitTypeCode, Unit } from '../../models/units.model';
+import type { ASUnitTypeCode, UnitSummary } from '../../models/unit-summary.model';
 import {
     compileGroupFacts,
     compileGroupFactsList,
@@ -10,7 +14,7 @@ import {
     getNormalizedOrgUnitType,
 } from './org-facts.util';
 import { groupMatchesChildRole } from './org-role-match.util';
-import { resolveOrgDefinitionSpec } from './org-registry.util';
+import { resolveOrgDefinition } from './org-registry.util';
 import {
     getDynamicTierForModifier,
     getRepeatCountForTierDelta,
@@ -27,7 +31,7 @@ import {
     type OrgChildRoleSpec,
     type OrgComposedCountRule,
     type OrgComposedPatternRule,
-    type OrgDefinitionSpec,
+    type OrgDefinition,
     type OrgGroupBucketName,
     type OrgGroupProvenance,
     type OrgLeafCountRule,
@@ -416,7 +420,7 @@ interface AbstractAtomicGroupPlan {
 }
 
 interface ResolveContext {
-    readonly definition: OrgDefinitionSpec;
+    readonly definition: OrgDefinition;
     readonly ciFormationRules: readonly OrgCIFormationRule[];
     readonly leafCountRules: readonly OrgLeafCountRule[];
     readonly leafPatternRules: readonly OrgLeafPatternRule[];
@@ -465,7 +469,12 @@ interface ResolvedState {
 
 interface CIFragmentToken {
     readonly moveClass: NonNullable<ReturnType<typeof getCIMoveClass>>;
-    readonly allocations: readonly GroupUnitAllocation[];
+    readonly allocations: readonly CISquadAllocation[];
+}
+
+interface CISquadAllocation {
+    readonly unit: UnitSummary;
+    readonly squads: number;
 }
 
 const ABSTRACT_UNIT_BUCKET_NAMES: readonly OrgUnitBucketName[] = [
@@ -477,7 +486,7 @@ const ABSTRACT_UNIT_BUCKET_NAMES: readonly OrgUnitBucketName[] = [
     'transport',
 ];
 
-const resolveContextTemplateByDefinition = new WeakMap<OrgDefinitionSpec, ResolveContextTemplate>();
+const resolveContextTemplateByDefinition = new WeakMap<OrgDefinition, ResolveContextTemplate>();
 const compiledRuleStageMetadataByRule = new WeakMap<OrgRuleDefinition, CompiledRuleStageMetadata>();
 const compiledGroupFactsByGroup = new WeakMap<GroupSizeResult, GroupFacts>();
 
@@ -706,7 +715,7 @@ function isSubRegularModifierKey(
     return metadata.allowedModifierKeysByStage['sub-regular']?.has(modifierKey) ?? false;
 }
 
-function getRuleRegistry(definition?: OrgDefinitionSpec, registry?: OrgRuleRegistry): OrgRuleRegistry {
+function getRuleRegistry(definition?: OrgDefinition, registry?: OrgRuleRegistry): OrgRuleRegistry {
     return registry ?? definition?.registry ?? DEFAULT_ORG_RULE_REGISTRY;
 }
 
@@ -775,17 +784,51 @@ function makeGroupName(type: string | null, modifierKey: string): string {
     return `${modifierKey}${type ?? 'Force'}`;
 }
 
+function getRuleDisplayName(rule: Pick<OrgRuleDefinition, 'type' | 'displayName'>): string {
+    return rule.displayName ?? rule.type;
+}
+
 function createLeafGroup(
     rule: OrgLeafCountRule | OrgLeafPatternRule,
     modifierStep: ModifierStep,
     units: readonly UnitFacts[],
+    formationMatchingIgnoredUnits: readonly UnitSummary[] = [],
 ): GroupSizeResult {
     return {
-        name: makeGroupName(rule.type, modifierStep.modifierKey),
+        name: makeGroupName(getRuleDisplayName(rule), modifierStep.modifierKey),
         type: rule.type,
+        displayName: rule.displayName,
         modifierKey: modifierStep.modifierKey,
         countsAsType: rule.countsAs ?? null,
         tier: modifierStep.tier,
+        provenance: 'produced-group',
+        units: units.map((facts) => facts.unit),
+        formationMatchingIgnoredUnits: formationMatchingIgnoredUnits.length > 0
+            ? [...formationMatchingIgnoredUnits]
+            : undefined,
+        tag: rule.tag,
+        priority: rule.priority,
+    };
+}
+
+function createLeafFragmentGroup(
+    rule: OrgLeafCountRule,
+    count: number,
+    units: readonly UnitFacts[],
+): GroupSizeResult {
+    const fragmentType = rule.fragmentType;
+    if (!fragmentType) {
+        throw new Error('Leaf fragment group requested without fragmentType');
+    }
+
+    return {
+        name: makeFragmentGroupName(fragmentType, count),
+        type: fragmentType,
+        modifierKey: '',
+        countsAsType: null,
+        tier: rule.fragmentTier ?? rule.tier,
+        count,
+        isFragment: true,
         provenance: 'produced-group',
         units: units.map((facts) => facts.unit),
         tag: rule.tag,
@@ -799,8 +842,9 @@ function createComposedGroup(
     children: readonly GroupSizeResult[],
 ): GroupSizeResult {
     return {
-        name: makeGroupName(rule.type, modifierStep.modifierKey),
+        name: makeGroupName(getRuleDisplayName(rule), modifierStep.modifierKey),
         type: rule.type,
+        displayName: rule.displayName,
         modifierKey: modifierStep.modifierKey,
         countsAsType: rule.countsAs ?? null,
         tier: modifierStep.tier,
@@ -818,10 +862,12 @@ function createAtomicGroupTemplate(
     tier: number,
     tag: GroupSizeResult['tag'],
     priority: GroupSizeResult['priority'],
+    displayName?: string,
 ): GroupSizeResult {
     return {
-        name: makeGroupName(type, modifierKey),
+        name: makeGroupName(displayName ?? type, modifierKey),
         type: type as GroupSizeResult['type'],
+        displayName,
         modifierKey,
         countsAsType,
         tier,
@@ -839,12 +885,13 @@ function createAtomicFragmentTemplate(
     priority: GroupSizeResult['priority'],
 ): GroupSizeResult {
     return {
-        name: makeCountedGroupName(type, count),
+        name: makeFragmentGroupName(type, count),
         type: type as GroupSizeResult['type'],
         modifierKey: '',
         countsAsType: null,
         tier,
         count,
+        isFragment: true,
         provenance: 'produced-group',
         tag,
         priority,
@@ -866,10 +913,7 @@ function buildAbstractGroupFactsFromUnits(
         descendantUnitBucketCounts.set(bucketName, new Map<OrgBucketValue, number>());
     }
 
-    const allocationByUnit = new Map(units.map((facts) => [facts.unit, unitAllocations?.find((allocation) => allocation.unit === facts.unit)?.troopers ?? facts.scalars.troopers]));
-
     for (const facts of units) {
-        const troopers = allocationByUnit.get(facts.unit) ?? facts.scalars.troopers;
         const unitType = getNormalizedOrgUnitType(facts.unit);
         unitTypeCounts.set(unitType, (unitTypeCounts.get(unitType) ?? 0) + 1);
         unitClassCounts.set(facts.classKey, (unitClassCounts.get(facts.classKey) ?? 0) + 1);
@@ -878,8 +922,7 @@ function buildAbstractGroupFactsFromUnits(
         }
         for (const [key, value] of Object.entries(facts.scalars)) {
             if (typeof value === 'number') {
-                const numericValue = key === 'troopers' ? troopers : value;
-                unitScalarSums.set(key as UnitNumericScalarName, (unitScalarSums.get(key as UnitNumericScalarName) ?? 0) + numericValue);
+                unitScalarSums.set(key as UnitNumericScalarName, (unitScalarSums.get(key as UnitNumericScalarName) ?? 0) + value);
             }
         }
         for (const bucketName of ABSTRACT_UNIT_BUCKET_NAMES) {
@@ -896,6 +939,7 @@ function buildAbstractGroupFactsFromUnits(
         countsAsType: groupTemplate.countsAsType,
         modifierKey: groupTemplate.modifierKey,
         tier: groupTemplate.tier,
+        isFragment: groupTemplate.isFragment === true,
         provenance: 'produced-group',
         tag: groupTemplate.tag,
         priority: groupTemplate.priority,
@@ -936,6 +980,7 @@ function createAbstractLeafGroupRecord(
     rule: OrgLeafCountRule | OrgLeafPatternRule,
     modifierStep: ModifierStep,
     units: readonly UnitFacts[],
+    formationMatchingIgnoredUnits: readonly UnitSummary[] = [],
 ): PlannedGroupRecord {
     const template = createAtomicGroupTemplate(
         rule.type,
@@ -944,12 +989,39 @@ function createAbstractLeafGroupRecord(
         modifierStep.tier,
         rule.tag,
         rule.priority,
+        rule.displayName,
     );
     const facts = buildAbstractGroupFactsFromUnits(template, units);
 
     return createAbstractAtomicGroupRecord(
         facts,
-        () => createLeafGroup(rule, modifierStep, units),
+        () => createLeafGroup(rule, modifierStep, units, formationMatchingIgnoredUnits),
+        'leaf',
+    );
+}
+
+function createAbstractLeafFragmentRecord(
+    rule: OrgLeafCountRule,
+    count: number,
+    units: readonly UnitFacts[],
+): PlannedGroupRecord {
+    const fragmentType = rule.fragmentType;
+    if (!fragmentType) {
+        throw new Error('Leaf fragment record requested without fragmentType');
+    }
+
+    const template = createAtomicFragmentTemplate(
+        fragmentType,
+        count,
+        rule.fragmentTier ?? rule.tier,
+        rule.tag,
+        rule.priority,
+    );
+    const facts = buildAbstractGroupFactsFromUnits(template, units);
+
+    return createAbstractAtomicGroupRecord(
+        facts,
+        () => createLeafFragmentGroup(rule, count, units),
         'leaf',
     );
 }
@@ -958,7 +1030,7 @@ function createAbstractCIParentRecord(
     rule: OrgCIFormationRule,
     modifierStep: ModifierStep,
     tokens: readonly CIFragmentToken[],
-    unitFactsByUnit: ReadonlyMap<Unit, UnitFacts>,
+    unitFactsByUnit: ReadonlyMap<UnitSummary, UnitFacts>,
 ): PlannedGroupRecord {
     const allocations = aggregateTokenAllocations(tokens);
     const units = allocations
@@ -971,6 +1043,7 @@ function createAbstractCIParentRecord(
         modifierStep.tier,
         rule.tag,
         rule.priority,
+        rule.displayName,
     );
     const facts = buildAbstractGroupFactsFromUnits(template, units, allocations);
 
@@ -985,7 +1058,7 @@ function createAbstractCIFragmentRecord(
     rule: OrgCIFormationRule,
     count: number,
     tokens: readonly CIFragmentToken[],
-    unitFactsByUnit: ReadonlyMap<Unit, UnitFacts>,
+    unitFactsByUnit: ReadonlyMap<UnitSummary, UnitFacts>,
 ): PlannedGroupRecord {
     const allocations = aggregateTokenAllocations(tokens);
     const units = allocations
@@ -1119,19 +1192,48 @@ function makeCountedGroupName(type: string, count: number): string {
     return count <= 1 ? type : `${count}x ${type}`;
 }
 
+function makeFragmentGroupName(type: string, count: number): string {
+    if (count <= 1) {
+        return type;
+    }
+
+    if (type === 'Unit') {
+        return `${count} Units`;
+    }
+
+    return makeCountedGroupName(type, count);
+}
+
+function getCISquadCount(unit: UnitSummary): number {
+    const squads = unit.squads ?? 1;
+    return Number.isFinite(squads) ? Math.max(0, Math.floor(squads)) : 0;
+}
+
+function getAllocationSquadCount(allocation: CISquadAllocation | GroupUnitAllocation): number {
+    const squads = allocation.squads ?? getCISquadCount(allocation.unit);
+    return Number.isFinite(squads) ? Math.max(0, Math.floor(squads)) : 0;
+}
+
+function createCISquadAllocation(facts: UnitFacts): CISquadAllocation {
+    return { unit: facts.unit, squads: getCISquadCount(facts.unit) };
+}
+
 function aggregateTokenAllocations(tokens: readonly CIFragmentToken[]): GroupUnitAllocation[] {
-    const allocationByUnit = new Map<Unit, number>();
+    const squadsByUnit = new Map<UnitSummary, number>();
 
     for (const token of tokens) {
         for (const allocation of token.allocations) {
-            allocationByUnit.set(allocation.unit, (allocationByUnit.get(allocation.unit) ?? 0) + allocation.troopers);
+            squadsByUnit.set(allocation.unit, (squadsByUnit.get(allocation.unit) ?? 0) + getAllocationSquadCount(allocation));
         }
     }
 
-    return Array.from(allocationByUnit.entries()).map(([unit, troopers]) => ({ unit, troopers }));
+    return Array.from(squadsByUnit.entries()).map(([unit, squads]) => ({
+        unit,
+        squads,
+    }));
 }
 
-function getUnitsFromAllocations(allocations: readonly GroupUnitAllocation[]): Unit[] {
+function getUnitsFromAllocations(allocations: readonly GroupUnitAllocation[]): UnitSummary[] {
     return allocations.map((allocation) => allocation.unit);
 }
 
@@ -1153,8 +1255,9 @@ function createCIParentGroup(
 ): GroupSizeResult {
     const unitAllocations = aggregateTokenAllocations(tokens);
     return {
-        name: makeGroupName(rule.type, modifierStep.modifierKey),
+        name: makeGroupName(getRuleDisplayName(rule), modifierStep.modifierKey),
         type: rule.type,
+        displayName: rule.displayName,
         modifierKey: modifierStep.modifierKey,
         countsAsType: rule.countsAs ?? null,
         tier: modifierStep.tier,
@@ -1173,13 +1276,14 @@ function createCIFragmentGroup(
 ): GroupSizeResult {
     const unitAllocations = aggregateTokenAllocations(tokens);
     return {
-        name: makeCountedGroupName(rule.fragmentType, count),
+        name: makeFragmentGroupName(rule.fragmentType, count),
         type: rule.fragmentType,
         modifierKey: '',
         countsAsType: null,
         tier: rule.fragmentTier,
         provenance: 'produced-group',
         count,
+        isFragment: true,
         units: getUnitsFromAllocations(unitAllocations),
         unitAllocations,
         tag: rule.tag,
@@ -1187,69 +1291,27 @@ function createCIFragmentGroup(
     };
 }
 
-function partitionAllocationsToFragments(
+function createCIFragmentTokensFromSquadAllocations(
     moveClass: NonNullable<ReturnType<typeof getCIMoveClass>>,
-    allocations: readonly GroupUnitAllocation[],
-    troopersPerFragment: number,
-): { tokens: CIFragmentToken[]; leftoverAllocations: GroupUnitAllocation[] } {
-    const working = allocations
-        .filter((allocation) => allocation.troopers > 0)
-        .map((allocation) => ({ ...allocation }));
+    allocations: readonly CISquadAllocation[],
+): CIFragmentToken[] {
     const tokens: CIFragmentToken[] = [];
-    let allocationIndex = 0;
 
-    while (allocationIndex < working.length) {
-        const remainingTroopersAvailable = working
-            .slice(allocationIndex)
-            .reduce((sum, allocation) => sum + allocation.troopers, 0);
-        if (remainingTroopersAvailable < troopersPerFragment) {
-            break;
+    for (const allocation of allocations) {
+        let remainingSquads = getAllocationSquadCount(allocation);
+        while (remainingSquads > 0) {
+            tokens.push({
+                moveClass,
+                allocations: [{ unit: allocation.unit, squads: 1 }],
+            });
+            remainingSquads -= 1;
         }
-
-        let remainingTroopers = troopersPerFragment;
-        const fragmentAllocations: GroupUnitAllocation[] = [];
-        let cursor = allocationIndex;
-
-        while (cursor < working.length && remainingTroopers > 0) {
-            const allocation = working[cursor];
-            if (allocation.troopers <= 0) {
-                cursor += 1;
-                continue;
-            }
-
-            const consumedTroopers = Math.min(allocation.troopers, remainingTroopers);
-            fragmentAllocations.push({ unit: allocation.unit, troopers: consumedTroopers });
-            allocation.troopers -= consumedTroopers;
-            remainingTroopers -= consumedTroopers;
-
-            if (allocation.troopers <= 0) {
-                cursor += 1;
-            }
-        }
-
-        if (remainingTroopers > 0) {
-            break;
-        }
-
-        while (allocationIndex < working.length && working[allocationIndex].troopers <= 0) {
-            allocationIndex += 1;
-        }
-
-        tokens.push({
-            moveClass,
-            allocations: fragmentAllocations,
-        });
     }
 
-    return {
-        tokens,
-        leftoverAllocations: working
-            .filter((allocation) => allocation.troopers > 0)
-            .map((allocation) => ({ unit: allocation.unit, troopers: allocation.troopers })),
-    };
+    return tokens;
 }
 
-function getMoveClassFromAllocations(allocations: readonly GroupUnitAllocation[]): NonNullable<ReturnType<typeof getCIMoveClass>> | null {
+function getMoveClassFromAllocations(allocations: readonly (CISquadAllocation | GroupUnitAllocation)[]): NonNullable<ReturnType<typeof getCIMoveClass>> | null {
     const moveClasses = new Set(
         allocations
             .map((allocation) => getCIMoveClass(allocation.unit))
@@ -1260,16 +1322,10 @@ function getMoveClassFromAllocations(allocations: readonly GroupUnitAllocation[]
 }
 
 function sliceAllocationsToTokens(
-    allocations: readonly GroupUnitAllocation[],
+    allocations: readonly CISquadAllocation[],
     moveClass: NonNullable<ReturnType<typeof getCIMoveClass>>,
-    troopersPerFragment: number,
 ): CIFragmentToken[] | null {
-    const partitioned = partitionAllocationsToFragments(moveClass, allocations, troopersPerFragment);
-    if (partitioned.leftoverAllocations.length > 0) {
-        return null;
-    }
-
-    return partitioned.tokens;
+    return createCIFragmentTokensFromSquadAllocations(moveClass, allocations);
 }
 
 function getModifierStepForGroup(
@@ -1285,8 +1341,9 @@ function getCIFragmentTokensFromGroup(
     group: GroupSizeResult,
     entryByMoveClass: ReadonlyMap<NonNullable<ReturnType<typeof getCIMoveClass>>, OrgCIFormationEntry>,
 ): CIFragmentToken[] | null {
-    const allocations = group.unitAllocations
-        ?? group.units?.map((unit) => ({ unit, troopers: unit.internal || 0 }))
+    const allocations: CISquadAllocation[] = group.unitAllocations
+        ?.map((allocation) => ({ unit: allocation.unit, squads: getAllocationSquadCount(allocation) }))
+        ?? group.units?.map((unit) => ({ unit, squads: getCISquadCount(unit) }))
         ?? [];
     if (allocations.length === 0) {
         return null;
@@ -1302,8 +1359,8 @@ function getCIFragmentTokensFromGroup(
         return null;
     }
 
-    if (group.type === rule.fragmentType) {
-        const tokens = sliceAllocationsToTokens(allocations, moveClass, entry.troopers);
+    if (group.isFragment || group.type === rule.fragmentType) {
+        const tokens = sliceAllocationsToTokens(allocations, moveClass);
         if (!tokens) {
             return null;
         }
@@ -1320,7 +1377,7 @@ function getCIFragmentTokensFromGroup(
         return null;
     }
 
-    const tokens = sliceAllocationsToTokens(allocations, moveClass, entry.troopers);
+    const tokens = sliceAllocationsToTokens(allocations, moveClass);
     if (!tokens) {
         return null;
     }
@@ -1359,7 +1416,7 @@ function materializeCIFormationTokenRecords(
     rule: OrgCIFormationRule,
     tokens: readonly CIFragmentToken[],
     entry: OrgCIFormationEntry,
-    unitFactsByUnit: ReadonlyMap<Unit, UnitFacts>,
+    unitFactsByUnit: ReadonlyMap<UnitSummary, UnitFacts>,
 ): PlannedGroupRecord[] {
     const descriptor = getCIEntryDescriptor(rule, entry);
     const groups: PlannedGroupRecord[] = [];
@@ -1393,16 +1450,16 @@ export function evaluateCIFormationRule(
     const entryByMoveClass = new Map(rule.entries.map((entry) => [entry.moveClass, entry]));
     let leftoverCount = 0;
 
-    const allocationsByMoveClass = new Map<NonNullable<ReturnType<typeof getCIMoveClass>>, GroupUnitAllocation[]>();
+    const allocationsByMoveClass = new Map<NonNullable<ReturnType<typeof getCIMoveClass>>, CISquadAllocation[]>();
     for (const facts of eligibleUnits) {
         const moveClass = getCIMoveClass(facts.unit);
-        if (!moveClass || !entryByMoveClass.has(moveClass)) {
+        const allocation = createCISquadAllocation(facts);
+        if (!moveClass || !entryByMoveClass.has(moveClass) || allocation.squads <= 0) {
             leftoverCount += 1;
             continue;
         }
 
         const existing = allocationsByMoveClass.get(moveClass);
-        const allocation = { unit: facts.unit, troopers: facts.scalars.troopers };
         if (existing) {
             existing.push(allocation);
         } else {
@@ -1415,11 +1472,7 @@ export function evaluateCIFormationRule(
         if (!entry) {
             continue;
         }
-        const partitioned = partitionAllocationsToFragments(moveClass, allocations, entry.troopers);
-        const tokens = partitioned.tokens;
-        if (partitioned.leftoverAllocations.length > 0) {
-            leftoverCount += partitioned.leftoverAllocations.length;
-        }
+        const tokens = createCIFragmentTokensFromSquadAllocations(moveClass, allocations);
         const descriptor = getCIEntryDescriptor(rule, entry);
         let remaining = tokens.length;
         for (const step of descriptor.stepsDescending) {
@@ -1462,17 +1515,17 @@ export function materializeCIFormationRule(
     const entryByMoveClass = new Map(rule.entries.map((entry) => [entry.moveClass, entry]));
     const leftoverUnitFacts: UnitFacts[] = [];
     const leftoverUnitAllocations: GroupUnitAllocation[] = [];
-    const allocationsByMoveClass = new Map<NonNullable<ReturnType<typeof getCIMoveClass>>, GroupUnitAllocation[]>();
+    const allocationsByMoveClass = new Map<NonNullable<ReturnType<typeof getCIMoveClass>>, CISquadAllocation[]>();
 
     for (const facts of eligibleUnits) {
         const moveClass = getCIMoveClass(facts.unit);
-        if (!moveClass || !entryByMoveClass.has(moveClass)) {
+        const allocation = createCISquadAllocation(facts);
+        if (!moveClass || !entryByMoveClass.has(moveClass) || allocation.squads <= 0) {
             leftoverUnitFacts.push(facts);
             continue;
         }
 
         const existing = allocationsByMoveClass.get(moveClass);
-        const allocation = { unit: facts.unit, troopers: facts.scalars.troopers };
         if (existing) {
             existing.push(allocation);
         } else {
@@ -1486,9 +1539,7 @@ export function materializeCIFormationRule(
         if (!entry) {
             continue;
         }
-        const partitioned = partitionAllocationsToFragments(moveClass, allocations, entry.troopers);
-        const tokens = partitioned.tokens;
-        leftoverUnitAllocations.push(...partitioned.leftoverAllocations);
+        const tokens = createCIFragmentTokensFromSquadAllocations(moveClass, allocations);
         groups.push(...materializeCIFormationTokens(rule, tokens, entry));
     }
 
@@ -1511,17 +1562,17 @@ function materializeCIFormationRuleRecords(
     const unitFactsByUnit = new Map(eligibleUnits.map((facts) => [facts.unit, facts]));
     const leftoverUnitFacts: UnitFacts[] = [];
     const leftoverUnitAllocations: GroupUnitAllocation[] = [];
-    const allocationsByMoveClass = new Map<NonNullable<ReturnType<typeof getCIMoveClass>>, GroupUnitAllocation[]>();
+    const allocationsByMoveClass = new Map<NonNullable<ReturnType<typeof getCIMoveClass>>, CISquadAllocation[]>();
 
     for (const facts of eligibleUnits) {
         const moveClass = getCIMoveClass(facts.unit);
-        if (!moveClass || !entryByMoveClass.has(moveClass)) {
+        const allocation = createCISquadAllocation(facts);
+        if (!moveClass || !entryByMoveClass.has(moveClass) || allocation.squads <= 0) {
             leftoverUnitFacts.push(facts);
             continue;
         }
 
         const existing = allocationsByMoveClass.get(moveClass);
-        const allocation = { unit: facts.unit, troopers: facts.scalars.troopers };
         if (existing) {
             existing.push(allocation);
         } else {
@@ -1535,9 +1586,8 @@ function materializeCIFormationRuleRecords(
         if (!entry) {
             continue;
         }
-        const partitioned = partitionAllocationsToFragments(moveClass, allocations, entry.troopers);
-        leftoverUnitAllocations.push(...partitioned.leftoverAllocations);
-        records.push(...materializeCIFormationTokenRecords(rule, partitioned.tokens, entry, unitFactsByUnit));
+        const tokens = createCIFragmentTokensFromSquadAllocations(moveClass, allocations);
+        records.push(...materializeCIFormationTokenRecords(rule, tokens, entry, unitFactsByUnit));
     }
 
     return {
@@ -1545,6 +1595,22 @@ function materializeCIFormationRuleRecords(
         leftoverUnitFacts: [...ineligibleUnits, ...leftoverUnitFacts],
         leftoverUnitAllocations,
     };
+}
+
+function isCIFragmentCandidateForRule(
+    facts: GroupFacts,
+    rule: OrgCIFormationRule,
+): boolean {
+    if (facts.isFragment) {
+        return facts.type === rule.fragmentType;
+    }
+
+    if (facts.type !== rule.fragmentType && facts.type !== rule.type) {
+        return false;
+    }
+
+    const ciCount = facts.unitTypeCounts.get('CI') ?? 0;
+    return ciCount > 0 && facts.unitTypeCounts.size === 1;
 }
 
 function normalizeCIFormationGroups(
@@ -1556,13 +1622,7 @@ function normalizeCIFormationGroups(
     for (const rule of context.ciFormationRules) {
         const entryByMoveClass = new Map(rule.entries.map((entry) => [entry.moveClass, entry]));
         const groupFacts = getCompiledGroupFactsList(nextPool);
-        const candidates = groupFacts.filter((facts) => {
-            if (facts.type !== rule.fragmentType && facts.type !== rule.type) {
-                return false;
-            }
-            const ciCount = facts.unitTypeCounts.get('CI') ?? 0;
-            return ciCount > 0 && facts.unitTypeCounts.size === 1;
-        });
+        const candidates = groupFacts.filter((facts) => isCIFragmentCandidateForRule(facts, rule));
         if (candidates.length === 0) {
             continue;
         }
@@ -1671,6 +1731,17 @@ function resolvePatternBucketValues(
     return availableBucketValues.filter((bucketValue) => bucketValue.startsWith(matcher.prefix));
 }
 
+function getPatternRefBucketValues(
+    ref: OrgPatternReferenceName,
+    pattern: OrgPatternSpec,
+    availableBucketValues: readonly string[],
+): readonly string[] {
+    const matcher = pattern.bucketGroups?.[ref];
+    return matcher
+        ? resolvePatternBucketValues(matcher, availableBucketValues)
+        : [String(ref)];
+}
+
 function isPatternBucketListMatcher(
     matcher: OrgPatternBucketMatcher,
 ): matcher is readonly OrgBucketValue[] {
@@ -1689,9 +1760,7 @@ function getPatternRefTotal(
     pattern: OrgPatternSpec,
     availableBucketValues: readonly string[],
 ): number {
-    const values = pattern.bucketGroups?.[ref]
-        ? resolvePatternBucketValues(pattern.bucketGroups[ref], availableBucketValues)
-        : [String(ref)];
+    const values = getPatternRefBucketValues(ref, pattern, availableBucketValues);
 
     return values.reduce((sum, bucketValue) => sum + (allocation.get(bucketValue) ?? 0), 0);
 }
@@ -1707,9 +1776,7 @@ function getPatternRefNumericTotal(
     pattern: OrgPatternSpec,
     availableBucketValues: readonly string[],
 ): number {
-    const values = pattern.bucketGroups?.[ref]
-        ? resolvePatternBucketValues(pattern.bucketGroups[ref], availableBucketValues)
-        : [String(ref)];
+    const values = getPatternRefBucketValues(ref, pattern, availableBucketValues);
 
     return values.reduce(
         (sum, bucketValue) => sum + parseBucketNumericValue(bucketValue) * (allocation.get(bucketValue) ?? 0),
@@ -1915,6 +1982,38 @@ function buildWorkingBucketUnits(
     return working;
 }
 
+function getLeafPatternFormationMatchingIgnoredUnits(
+    rule: OrgLeafPatternRule,
+    pattern: OrgPatternSpec,
+    units: readonly UnitFacts[],
+    registry: OrgRuleRegistry,
+): UnitSummary[] {
+    const ignoredPatternRefs = rule.formationMatching?.ignoredPatternRefs;
+    if (!ignoredPatternRefs || ignoredPatternRefs.length === 0 || units.length === 0) {
+        return [];
+    }
+
+    const bucketValueByUnit = new Map(
+        units.map((facts) => [facts.unit, String(getUnitBucketValue(rule.bucketBy, facts, registry))]),
+    );
+    const availableBucketValues = Array.from(new Set(bucketValueByUnit.values()));
+    const ignoredBucketValues = new Set<string>();
+
+    for (const ref of ignoredPatternRefs) {
+        for (const bucketValue of getPatternRefBucketValues(ref, pattern, availableBucketValues)) {
+            ignoredBucketValues.add(String(bucketValue));
+        }
+    }
+
+    if (ignoredBucketValues.size === 0) {
+        return [];
+    }
+
+    return units
+        .filter((facts) => ignoredBucketValues.has(bucketValueByUnit.get(facts.unit) ?? ''))
+        .map((facts) => facts.unit);
+}
+
 function materializeSinglePatternCandidate(
     pattern: OrgPatternSpec,
     workingUnits: ReadonlyMap<string, UnitFacts[]>,
@@ -2073,7 +2172,18 @@ function materializeLeafPatternWithCandidates(
 
     const selections = materializeLeafPatternsShared(rule.patterns, unitsByBucket, guard);
     for (const selection of selections) {
-        groups.push(createLeafGroup(rule, getPatternModifierStep(descriptor, selection.pattern.copySize), selection.candidate.units));
+        const ignoredUnits = getLeafPatternFormationMatchingIgnoredUnits(
+            rule,
+            selection.pattern,
+            selection.candidate.units,
+            registry,
+        );
+        groups.push(createLeafGroup(
+            rule,
+            getPatternModifierStep(descriptor, selection.pattern.copySize),
+            selection.candidate.units,
+            ignoredUnits,
+        ));
         selection.candidate.units.forEach((unit) => selectedFactIds.add(unit.factId));
     }
 
@@ -2100,7 +2210,18 @@ function materializeLeafPatternWithCandidateRecords(
 
     const selections = materializeLeafPatternsShared(rule.patterns, unitsByBucket, guard);
     for (const selection of selections) {
-        records.push(createAbstractLeafGroupRecord(rule, getPatternModifierStep(descriptor, selection.pattern.copySize), selection.candidate.units));
+        const ignoredUnits = getLeafPatternFormationMatchingIgnoredUnits(
+            rule,
+            selection.pattern,
+            selection.candidate.units,
+            registry,
+        );
+        records.push(createAbstractLeafGroupRecord(
+            rule,
+            getPatternModifierStep(descriptor, selection.pattern.copySize),
+            selection.candidate.units,
+            ignoredUnits,
+        ));
         selection.candidate.units.forEach((unit) => selectedFactIds.add(unit.factId));
     }
 
@@ -2156,6 +2277,11 @@ export function materializeLeafCountRule(
                 groups.push(createLeafGroup(rule, step, selected));
             }
         }
+
+        if (rule.fragmentType && mixedRemaining.length > 0) {
+            mixedRemaining.forEach((facts) => usedFactIds.add(facts.factId));
+            groups.push(createLeafFragmentGroup(rule, mixedRemaining.length, mixedRemaining));
+        }
     }
 
     return {
@@ -2202,6 +2328,11 @@ function materializeLeafCountRuleRecords(
                 selected.forEach((facts) => usedFactIds.add(facts.factId));
                 records.push(createAbstractLeafGroupRecord(rule, step, selected));
             }
+        }
+
+        if (rule.fragmentType && mixedRemaining.length > 0) {
+            mixedRemaining.forEach((facts) => usedFactIds.add(facts.factId));
+            records.push(createAbstractLeafFragmentRecord(rule, mixedRemaining.length, mixedRemaining));
         }
     }
 
@@ -2419,6 +2550,7 @@ function getGroupFactsSignatureKey(group: GroupFacts): string {
         group.countsAsType ?? 'null',
         group.modifierKey,
         String(group.tier),
+        group.isFragment ? 'fragment' : 'non-fragment',
         group.provenance,
         group.tag ?? '',
         String(group.priority ?? 0),
@@ -3488,8 +3620,8 @@ export function materializeComposedPatternRule(
 }
 
 export function evaluateOrgDefinition(
-    definition: OrgDefinitionSpec,
-    units: readonly Unit[],
+    definition: OrgDefinition,
+    units: readonly UnitSummary[],
     groups: readonly GroupSizeResult[] = [],
 ): OrgDefinitionEvaluationResult {
     const unitFacts = compileUnitFactsList(units);
@@ -3526,11 +3658,11 @@ export function evaluateOrgDefinition(
 
 export function evaluateFactionOrgDefinition(
     faction: Faction,
-    units: readonly Unit[],
+    units: readonly UnitSummary[],
     groups: readonly GroupSizeResult[] = [],
     era?: Era | null,
 ): OrgDefinitionEvaluationResult {
-    return evaluateOrgDefinition(resolveOrgDefinitionSpec(faction, era), units, groups);
+    return evaluateOrgDefinition(resolveOrgDefinition(faction, era), units, groups);
 }
 
 function compareGroupScore(left: GroupSizeResult, right: GroupSizeResult): number {
@@ -3601,7 +3733,7 @@ function compareOrderedComposedRules(
 }
 
 function getRuleTierByTypeFromDefinition(
-    definition: OrgDefinitionSpec,
+    definition: OrgDefinition,
     type: GroupSizeResult['type'],
 ): number | null {
     if (!type) {
@@ -3614,7 +3746,7 @@ function getRuleTierByTypeFromDefinition(
 
 function getMinimumChildTierForComposedRule(
     rule: OrgComposedCountRule | OrgComposedPatternRule,
-    definition: OrgDefinitionSpec,
+    definition: OrgDefinition,
 ): number {
     const childTiers = rule.childRoles
         .flatMap((role) => role.matches)
@@ -3624,7 +3756,7 @@ function getMinimumChildTierForComposedRule(
     return childTiers.length > 0 ? Math.min(...childTiers) : rule.tier;
 }
 
-function getResolveContext(definition: OrgDefinitionSpec): ResolveContext {
+function getResolveContext(definition: OrgDefinition): ResolveContext {
     let template = resolveContextTemplateByDefinition.get(definition);
     if (!template) {
         const knownGroupTypes = new Set<string>();
@@ -3832,7 +3964,7 @@ function materializeLeafRulesByStageRecords(
         }
 
         const targetSteps = getModifierStepForRuleStage(metadata, stage);
-        if (targetSteps.length === 0) {
+        if (targetSteps.length === 0 && !rule.fragmentType) {
             continue;
         }
 
@@ -3864,6 +3996,11 @@ function materializeLeafRulesByStageRecords(
                     selected.forEach((facts) => usedIds.add(facts.factId));
                     records.push(createAbstractLeafGroupRecord(rule, step, selected));
                 }
+            }
+
+            if (rule.fragmentType && mixedWorking.length > 0) {
+                mixedWorking.forEach((facts) => usedIds.add(facts.factId));
+                records.push(createAbstractLeafFragmentRecord(rule, mixedWorking.length, mixedWorking));
             }
         }
 
@@ -4462,7 +4599,8 @@ function createUpdatedParentRecord(
                 const baseGroup = parentRecord.materialize();
                 updatedRecord.materializedGroup = {
                     ...baseGroup,
-                    name: makeGroupName(rule.type, modifierStep.modifierKey),
+                    name: makeGroupName(getRuleDisplayName(rule), modifierStep.modifierKey),
+                    displayName: rule.displayName,
                     modifierKey: modifierStep.modifierKey,
                     tier: modifierStep.tier,
                     children: [
@@ -5105,8 +5243,8 @@ function normalizeTopLevelGroups(groups: readonly GroupSizeResult[]): GroupSizeR
     return [...groups].sort(compareGroupScore);
 }
 
-function collectAllGroupUnits(group: GroupSizeResult): Unit[] {
-    const result: Unit[] = [];
+function collectAllGroupUnits(group: GroupSizeResult): UnitSummary[] {
+    const result: UnitSummary[] = [];
 
     if (group.units) {
         result.push(...group.units);
@@ -5188,8 +5326,9 @@ function createSyntheticGroupForRule(
     modifierStep: ModifierStep,
 ): GroupSizeResult {
     return {
-        name: makeGroupName(rule.type, modifierStep.modifierKey),
+        name: makeGroupName(getRuleDisplayName(rule), modifierStep.modifierKey),
         type: rule.type,
+        displayName: rule.displayName,
         modifierKey: modifierStep.modifierKey,
         countsAsType: rule.countsAs ?? null,
         tier: modifierStep.tier,
@@ -5215,8 +5354,9 @@ function createAbstractProducedGroupTemplate(
     modifierStep: ModifierStep,
 ): GroupSizeResult {
     return {
-        name: makeGroupName(rule.type, modifierStep.modifierKey),
+        name: makeGroupName(getRuleDisplayName(rule), modifierStep.modifierKey),
         type: rule.type,
+        displayName: rule.displayName,
         modifierKey: modifierStep.modifierKey,
         countsAsType: rule.countsAs ?? null,
         tier: modifierStep.tier,
@@ -5298,6 +5438,7 @@ function createAbstractComposedGroupRecord(
         countsAsType: rule.countsAs ?? null,
         modifierKey: modifierStep.modifierKey,
         tier: modifierStep.tier,
+        isFragment: materializedGroupTemplate.isFragment === true,
         provenance: 'produced-group',
         tag: rule.tag,
         directChildCount: childRecords.length,
@@ -5413,7 +5554,7 @@ function applyForeignDisplayName(
 }
 
 function preprocessGroupsForDefinition(
-    definition: OrgDefinitionSpec,
+    definition: OrgDefinition,
     groupResults: readonly GroupSizeResult[],
 ): GroupSizeResult[] {
     const context = getResolveContext(definition);
@@ -5453,8 +5594,8 @@ function preprocessGroupsForDefinition(
 }
 
 function resolveWithDefinition(
-    definition: OrgDefinitionSpec,
-    units: readonly Unit[],
+    definition: OrgDefinition,
+    units: readonly UnitSummary[],
     groups: readonly GroupSizeResult[],
 ): GroupSizeResult[] {
     activeOrgSolveMetrics = createMutableOrgSolveMetrics();
@@ -5567,12 +5708,12 @@ function resolveWithDefinition(
 }
 
 export function resolveFromUnits(
-    units: readonly Unit[],
+    units: readonly UnitSummary[],
     faction: Faction,
     era: Era | null = null,
     _hierarchicalAggregation: boolean = false,
 ): GroupSizeResult[] {
-    const definition = resolveOrgDefinitionSpec(faction, era);
+    const definition = resolveOrgDefinition(faction, era);
     return resolveWithDefinition(definition, units, []);
 }
 
@@ -5582,7 +5723,7 @@ export function resolveFromGroups(
     era: Era | null = null,
     _hierarchicalAggregation: boolean = false,
 ): GroupSizeResult[] {
-    const definition = resolveOrgDefinitionSpec(faction, era);
+    const definition = resolveOrgDefinition(faction, era);
     const context = getResolveContext(definition);
     if (groupResults.length === 1 && isStableSingleGroupResolveResult(groupResults[0], context)) {
         return [groupResults[0]];

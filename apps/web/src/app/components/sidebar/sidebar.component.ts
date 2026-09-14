@@ -1,3 +1,7 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, signal, computed, input, viewChild, ElementRef, Renderer2 } from '@angular/core';
 import { type Portal, PortalModule } from '@angular/cdk/portal';
@@ -10,6 +14,7 @@ import { ForceBuilderViewerComponent } from '../force-builder-viewer/force-build
 import { SwipeDirective, type SwipeEndEvent, type SwipeStartEvent } from '../../directives/swipe.directive';
 import { BUILD_BRANCH } from '../../build-meta';
 import { DialogsService } from '../../services/dialogs.service';
+import { ConnectionStatusBadgeComponent } from '../connection-status-badge/connection-status-badge.component';
 
 /*
  * Main Sidebar component
@@ -19,7 +24,7 @@ import { DialogsService } from '../../services/dialogs.service';
     selector: 'sidebar',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CommonModule, PortalModule, CdkMenuModule, SidebarFooterComponent, ForceBuilderViewerComponent, SwipeDirective],
+    imports: [CommonModule, PortalModule, CdkMenuModule, SidebarFooterComponent, ForceBuilderViewerComponent, SwipeDirective, ConnectionStatusBadgeComponent],
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss'],
 })
@@ -324,7 +329,7 @@ export class SidebarComponent {
 
     public onSwipeCancel() {
         this.layout.isMenuDragging.set(false);
-        this.layout.menuOpenRatio.set(this.layout.menuOpenRatio() >= 0.5 ? 1 : 0);
+        this.layout.menuOpenRatio.update(v => v >= 0.5 ? 1 : 0);
     }
 
     // backdrop click to close overlay

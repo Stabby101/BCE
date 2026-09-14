@@ -17,6 +17,7 @@ import type { CBTForceUnit } from '../../models/cbt-force-unit.model';
 import { SvgInteractionService } from '../../components/page-viewer/svg-interaction.service';
 import type { ZoomPanServiceInterface } from '../../components/page-viewer/zoom-pan.interface';
 import { PageInteractionOverlayComponent } from '../../components/page-viewer/overlay/page-interaction-overlay.component';
+import { PageViewerStateService } from '../../components/page-viewer/internal/page-viewer-state.service'; // REBASE-1 P1 (e): SvgInteractionService + the overlay inject this component-scoped state; provided here (not the full <page-viewer>) so the standalone sheet has it
 import { GameSystem } from '../../models/common.model';
 import { NewCampaignState } from '../new-campaign-state';
 import { AlphaStrikeCardComponent } from '../../components/alpha-strike-card/alpha-strike-card.component';
@@ -28,7 +29,13 @@ import { AlphaStrikeCardComponent } from '../../components/alpha-strike-card/alp
     selector: 'bce-battle-sheet',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [SvgInteractionService], // one interaction service per sheet (component lifecycle cleans it up)
+    // REBASE-1 P1 (e): the pin's page-viewer refactor made SvgInteractionService + PageInteractionOverlayComponent
+    // inject PageViewerStateService, a COMPONENT-scoped service the fork's page-viewer did not require here. bce-battle-sheet
+    // uses those internals WITHOUT a <page-viewer> ancestor (which is the only other provider), so a player/battle sheet threw
+    // NG0201 ("No provider found for PageViewerStateService", Source: PlayerSheetComponent) and never rendered its SVG. Provide
+    // the one leaf state service here (it has no deps of its own) — a single instance shared by the interaction service and the
+    // overlay child, exactly as PageViewerComponent shares it. One interaction service + one state per sheet (component-scoped).
+    providers: [SvgInteractionService, PageViewerStateService],
     imports: [PageInteractionOverlayComponent, AlphaStrikeCardComponent],
     template: `
         <div class="bsheet-wrap">
@@ -65,13 +72,28 @@ export class BattleSheetComponent {
     private readonly interaction = inject(SvgInteractionService);
     private readonly injector = inject(Injector);
     // SvgInteractionService only reads these two flags off the zoom-pan service (picker gesture gating).
-    private readonly zoomStub: ZoomPanServiceInterface = { pointerMoved: false, isPanning: false };
+    // REBASE-1 P1 c: upstream added a required `cancelGesture()` to the interface; a no-op suffices here —
+    // this stub feeds only the picker-gating flag reads, there is no real gesture to cancel on the sheet.
+    private readonly zoomStub: ZoomPanServiceInterface = { pointerMoved: false, isPanning: false, cancelGesture: () => {} };
     private wired: SVGSVGElement | null = null;
 
     // D-083 — the game-system fork (CBT default → the unchanged path below).
     protected readonly isAs = computed(() => this.state.gameSystem() === GameSystem.ALPHA_STRIKE);
     protected readonly asUnit = computed(() => this.fu()?.getUnit() ?? null); // `as` is slice-stripped in v1 → degrades
     protected readonly asReady = computed(() => !!this.asUnit()?.as);
+
+    // REBASE-1 P3 item 2 — the to-hit overlay. The pin's Targets button lives inside page-interaction-overlay, which
+    // rides the player's .ps-zoom transform and slides off-screen after a pick/zoom (item-1's class). Expose the pin's
+    // own openTargets so a viewport-PINNED trigger on player-sheet (outside the transform, like .ps-endphase) can reach
+    // it. NO vendored edit: we call the overlay's unchanged openTargets(event) with a synthetic event anchored to the
+    // pinned trigger — the WeaponTargetsMenu/TnCalculator open as CDK overlays at the document root, viewport-fixed.
+    private readonly overlay = viewChild(PageInteractionOverlayComponent);
+    /** True when the interactive to-hit path is live: a real CBT sheet (not AS) with the phase overlay mounted. */
+    readonly toHitReady = computed(() => !this.isAs() && !!this.fu() && this.phaseOverlay());
+    /** Open the pin's to-hit (weapon targets) overlay for this sheet's unit, anchored to `anchor` (the pinned trigger). */
+    openTargetsAt(anchor: HTMLElement): void {
+        this.overlay()?.openTargets({ stopPropagation: () => {}, currentTarget: anchor } as unknown as MouseEvent);
+    }
 
     constructor() {
         effect(() => {

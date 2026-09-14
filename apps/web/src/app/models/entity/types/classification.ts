@@ -1,0 +1,60 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
+/** Broad Classic BattleTech classification exposed by an entity. */
+export type UnitType =
+  | 'Aero'
+  | 'Handheld Weapon'
+  | 'Infantry'
+  | 'Mek'
+  | 'Naval'
+  | 'ProtoMek'
+  | 'Tank'
+  | 'VTOL';
+
+/** Detailed Classic BattleTech classification exposed by an entity. */
+export type UnitSubtype =
+  | 'Aerodyne DropShip'
+  | 'Aerodyne Small Craft'
+  | 'Aerospace Fighter'
+  | 'Aerospace Fighter Omni'
+  | 'Battle Armor'
+  | 'BattleMek'
+  | 'BattleMek Omni'
+  | 'Civilian Aerodyne DropShip'
+  | 'Civilian Aerodyne Small Craft'
+  | 'Civilian Space Station'
+  | 'Civilian Spheroid DropShip'
+  | 'Combat Vehicle'
+  | 'Combat Vehicle Omni'
+  | 'Conventional Fighter'
+  | 'Conventional Infantry'
+  | 'Fixed Wing Support Vehicle'
+  | 'Fixed Wing Support Vehicle Omni'
+  | 'Handheld Weapon'
+  | 'Hovercraft'
+  | 'Hovercraft Omni'
+  | 'Industrial Mek'
+  | 'JumpShip'
+  | 'Land-Air BattleMek'
+  | 'Mechanized Conventional Infantry'
+  | 'Military Space Station'
+  | 'Motorized Conventional Infantry'
+  | 'Naval Vessel'
+  | 'ProtoMek'
+  | 'Quad BattleMek'
+  | 'Quad BattleMek Omni'
+  | 'Quad Industrial Mek'
+  | 'Quad ProtoMek'
+  | 'QuadVee BattleMek'
+  | 'QuadVee BattleMek Omni'
+  | 'Spheroid DropShip'
+  | 'Spheroid Small Craft'
+  | 'Submarine'
+  | 'Support Vehicle'
+  | 'Support Vehicle Omni'
+  | 'Tripod BattleMek'
+  | 'Tripod BattleMek Omni'
+  | 'WarShip'
+  | 'WiGE';

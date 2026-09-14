@@ -5,7 +5,7 @@
     <div class="cl-head">
         <h3 class="ph">Roster / claim board</h3>
         <div class="cl-counts">
-            <span class="cl-dot on"></span>{{ connectedCount() }} connected · {{ bluforCount() }} BLUFOR · {{ opforCount() }} OPFOR
+            <span class="cl-dot on"></span>{{ connectedCount() }} connected · {{ bluforCount() }} BLUFOR · {{ opforCount() }} OPFOR@if (pendingPlayers() > 0) {<span class="cl-pending-sum" data-testid="cc-pending-sum"> · ⏳ {{ pendingPlayers() }} with unshared picks — not yet ended</span>}
         </div>
     </div>
 
@@ -24,7 +24,7 @@
                 <!-- ODM-9 FORK: the D-130 HS builder button STRIPPED (isHotspots is always false here; ODM's OpFor is the authored roll) -->
             </h4>
             @if (side.units.length === 0) {
-                <p class="cl-empty" [attr.data-testid]="side.key === 'opfor' ? 'odm-claims-opfor-empty' : null">No {{ side.label }} units yet@if (side.key === 'blufor') { — set a unit to <b>Deployed</b> on the roster}@if (side.key === 'opfor') { — OpFor for this operation is authored: see the ⚔ OPFOR tab in the Briefing}.</p>
+                <p class="cl-empty" [attr.data-testid]="side.key === 'opfor' ? 'odm-claims-opfor-empty' : null">No {{ side.label }} units yet@if (side.key === 'blufor') { — set a unit to <b>Deployed</b> on the roster}@if (side.key === 'opfor') { @if (isComposed()) { — the GM composed this operation without an opposing force } @else { — OpFor for this operation is authored: see the ⚔ OPFOR tab in the Briefing} }.</p>
             } @else {
                 <ul class="cl-list">
                     @for (i of side.units; track i.instanceId) {
@@ -36,6 +36,7 @@
                                 <span class="cl-dot" [class.on]="presence(i.instanceId) === true" [class.off]="presence(i.instanceId) === false"
                                       [title]="presence(i.instanceId) ? 'connected' : 'claim held — device disconnected'"></span>
                                 <span class="cl-held">{{ h }}</span>
+                                @if (pendingFor(i.instanceId) > 0) {<span class="cl-pending" data-testid="cc-pending" [attr.data-count]="pendingFor(i.instanceId)" title="damage picked but the phase is not ended — not shared with the table yet">⏳ {{ pendingFor(i.instanceId) }}</span>}
                                 <button type="button" class="cl-kick" (click)="kickClaim(i.instanceId)">Kick</button>
                             } @else {
                                 <span class="cl-free">UNCLAIMED</span>
@@ -56,6 +57,7 @@
                     <li class="cl-row spec">
                         <span class="cl-dot" [class.on]="p.connected" [class.off]="!p.connected" [title]="p.connected ? 'connected' : 'disconnected'"></span>
                         <span class="cl-mech">{{ p.name }}</span>
+                        @if ((p.pendingPhase ?? 0) > 0) {<span class="cl-pending" data-testid="cc-pending" [attr.data-count]="p.pendingPhase" title="damage picked but the phase is not ended">⏳ {{ p.pendingPhase }}</span>}
                         <span class="cl-pside" [class.blu]="p.side === 'BLUFOR'" [class.opf]="p.side === 'OPFOR'">{{ p.side }}</span>
                         <button type="button" class="cl-reassign" (click)="reassign(p.token, p.side === 'BLUFOR' ? 'OPFOR' : 'BLUFOR')">→ {{ p.side === 'BLUFOR' ? 'OPFOR' : 'BLUFOR' }}</button>
                         <button type="button" class="cl-kick" (click)="kick(p.token)">Kick</button>

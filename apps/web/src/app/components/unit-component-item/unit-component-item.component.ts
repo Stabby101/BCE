@@ -1,47 +1,15 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { CommonModule } from '@angular/common';
 import { Component, ChangeDetectionStrategy, input, inject, computed, type ElementRef, viewChild } from '@angular/core';
-import type { Unit, UnitComponent } from '../../models/units.model';
+import type { UnitSummary, UnitComponent } from '../../models/unit-summary.model';
 import { getWeaponTypeCSSClass } from '../../utils/equipment.util';
 import { FloatingOverlayService } from '../../services/floating-overlay.service';
 
-type ComponentDisplayStyle = 'normal' | 'small' | 'tiny' | 'text';
+type ComponentDisplayStyle = 'normal' | 'small' | 'tiny' | 'text' | 'additional';
 
-/**
- * Author: Drake
- */
 @Component({
     selector: 'unit-component-item',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,37 +22,42 @@ type ComponentDisplayStyle = 'normal' | 'small' | 'tiny' | 'text';
 })
 export class UnitComponentItemComponent {
     public floatingOverlayService = inject(FloatingOverlayService);
-    unit = input.required<Unit>();
+    unit = input.required<UnitSummary>();
     damaged = input<boolean>(false);
     comp = input<UnitComponent | null>(null);
     displayStyle = input<ComponentDisplayStyle>('normal');
-    componentEl = viewChild<ElementRef<HTMLDivElement>>('component');
+    componentEl = viewChild<ElementRef<HTMLElement>>('component');
 
     typeClass = computed(() => {
-        return getWeaponTypeCSSClass(this.comp()?.t ?? '');
+        const component = this.comp();
+        return getWeaponTypeCSSClass(component?.t ?? '', component?.eq);
     });
 
     hostDisplay = computed(() => this.displayStyle() === 'text' ? 'inline' : 'block');
+    isInteractive = computed(() => this.displayStyle() !== 'additional');
 
     constructor() {}
 
     onCompClick(event: MouseEvent) {
+        if (!this.isInteractive()) return;
         event.stopPropagation();
         event.preventDefault();
         this.showFloatingOverlay();
     }
 
-    onPointerEnter(event: MouseEvent) {
+    onPointerEnter(event: PointerEvent) {
         this.showFloatingOverlay();
     }
 
     showFloatingOverlay() {
+        if (!this.isInteractive()) return;
         const el = this.componentEl()?.nativeElement;
         if (!el) return;
         this.floatingOverlayService.show(this.unit(), this.comp(), el);
     }
 
     onPointerLeave(event: PointerEvent) {
+        if (!this.isInteractive()) return;
         if (event.pointerType !== 'mouse') return; // only care about mouse pointers
         this.floatingOverlayService.hideWithDelay();
     }

@@ -11,7 +11,7 @@
  *      already-persisted -1 (and the hire path's 0) inert with ZERO data writes — no repair pass.
  *   3. chassis+model, then bare chassis (the loose matches, unchanged).
  */
-import type { Unit } from '../../../models/units.model';
+import type { UnitSummary as Unit } from '../../../models/unit-summary.model';
 
 export interface ResolvableInstance {
     unitRef: string;

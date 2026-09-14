@@ -1,73 +1,49 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, type ElementRef, inject, Injector, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, type ComponentRef, DestroyRef, type ElementRef, inject, Injector, type OnDestroy, signal, viewChild } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { takeUntilDestroyed, outputToObservable } from '@angular/core/rxjs-interop';
-import { ForceBuilderService } from '../../services/force-builder.service';
-import type { Force, UnitGroup } from '../../models/force.model';
-import { type FormationTypeDefinition, isNoFormation } from '../../utils/formation-type.model';
+import { OptionsService } from '../../services/options.service';
+import type { UnitGroup } from '../../models/force.model';
+import { formatSummaryMovement } from '../../models/pilot-abilities.model';
+import { formationHasTargetCopyEffect, formationInheritsParentEffects, type FormationTypeDefinition, isNoFormation, NO_FORMATION, NO_FORMATION_ID } from '../../utils/formation-type.model';
 import { FormationInfoComponent } from '../formation-info/formation-info.component';
 import { OverlayManagerService } from '../../services/overlay-manager.service';
-import { FormationDropdownPanelComponent, type FormationDisplayItem } from './formation-dropdown-panel.component';
+import { AUTOMATIC_FORMATION_KEY, FormationDropdownPanelComponent, type FormationDisplayItem, type FormationDropdownActiveOption, type FormationDropdownActiveTarget, type FormationDropdownPointerHoverEvent } from './formation-dropdown-panel.component';
 import { FormationNamerUtil } from '../../utils/formation-namer.util';
-import { FORMATION_DEFINITIONS } from '../../utils/formation-definitions';
-/*
- * Author: Drake
- */
+import { getFormationDefinition, getFormationDefinitions } from '../../utils/formation-blueprints';
+import { FormationRequirementEngine } from '../../utils/formation-requirement-engine.util';
+import { DropdownPointerActivationGuard, nextDropdownTarget, nextDropdownTargetInCurrentLane, scrollActiveOptionIntoView } from '../../utils/dropdown-interaction.utils';
+import { getFormationTargetCandidates, resolveFormationTargetGroup } from '../../utils/formation-target.util';
+
+
+
 export interface RenameGroupDialogData {
-    group: UnitGroup;
+  group: UnitGroup;
 }
 
 export interface RenameGroupDialogResult {
-    /** Custom group name (empty string = unset / auto-generate). */
-    name: string;
-    /** Selected formation definition, or null to clear. */
-    formation: FormationTypeDefinition | null;
-    action: 'confirm' | 'unset';
+  /** Custom group name (empty string = unset / auto-generate). */
+  name: string;
+  /** Selected formation definition, or null to clear. */
+  formation: FormationTypeDefinition | null;
+  /** Concrete group whose formation bonus is copied, when required by the selected formation. */
+  formationTargetGroupId: string | null;
+  action: 'confirm' | 'unset';
 }
 
 @Component({
-    selector: 'rename-group-dialog',
-    standalone: true,
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormationInfoComponent],
-    host: {
-        class: 'fullscreen-dialog-host glass'
-    },
-    template: `
+  selector: 'rename-group-dialog',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormationInfoComponent],
+  host: {
+    class: 'fullscreen-dialog-host glass'
+  },
+  template: `
     <div class="wide-dialog">
       <div class="wide-dialog-body">
 
@@ -101,7 +77,15 @@ export interface RenameGroupDialogResult {
         <div class="form-fields">
           <label class="field-label">Formation</label>
           <div #formationTriggerWrapper class="input-wrapper">
-            <button class="formation-selector bt-select" [class.danger]="!isSelectedFormationValid()" (click)="toggleFormationDropdown()">
+            <button
+              class="formation-selector bt-select"
+              [class.danger]="!isSelectedFormationValid()"
+              aria-haspopup="listbox"
+              [attr.aria-controls]="formationOptionsId"
+              [attr.aria-expanded]="formationDropdownOpen()"
+              (click)="toggleFormationDropdown()"
+              (keydown)="onFormationTriggerKeydown($event)"
+            >
               @if (selectedFormation(); as formation) {
                 @if (isNoFormation(formation)) {
                   <span class="placeholder">No Formation</span>
@@ -124,18 +108,39 @@ export interface RenameGroupDialogResult {
               aria-label="Pick random formation"
             ></button>
           </div>
+          @if (selectedFormationUsesTarget()) {
+            <div class="formation-target-field">
+              <label class="field-label" for="rename-group-formation-target">Supported Formation</label>
+              <select
+                id="rename-group-formation-target"
+                class="bt-select formation-target-select"
+                [value]="selectedFormationTargetGroupId() ?? ''"
+                (change)="onFormationTargetChange($event)"
+              >
+                <option value="" [selected]="!selectedFormationTargetGroupId()">Select a formation</option>
+                @for (option of formationTargetOptions; track option.id) {
+                  <option [value]="option.id" [selected]="option.id === selectedFormationTargetGroupId()">{{ option.label }}</option>
+                }
+              </select>
+              @if (formationTargetOptions.length === 0) {
+                <p class="formation-target-warning">No eligible formation is available in this force.</p>
+              } @else if (!selectedFormationTargetGroupId()) {
+                <p class="formation-target-warning">Select the formation whose assigned abilities this formation copies.</p>
+              }
+            </div>
+          }
           @if (selectedFormation(); as formation) {
             @if (!isNoFormation(formation)) {
             @if (!isSelectedFormationValid()) {
             <div class="formation-warning">
               @if (getRequirementsText(formation); as reqText) {
                 <div class="formation-warning-body">
-                  <strong>Missing requirements:</strong>
+                  <strong class="formation-warning-title">Missing requirements:</strong>
                   @if (getParentRequirementsText(formation); as parentReqText) {
-                    <span class="formation-warning-req"><strong>{{ getParentFormationName(formation) }}:</strong> {{ parentReqText }}</span>
-                    <span class="formation-warning-req"><strong>{{ formation.name }}:</strong> {{ reqText }}</span>
+                    <span class="formation-warning-req"><strong>{{ getParentFormationName(formation) }}: </strong><span [innerHTML]="parentReqText"></span></span>
+                    <span class="formation-warning-req"><strong>{{ formation.name }}: </strong><span [innerHTML]="reqText"></span></span>
                   } @else {
-                    <span class="formation-warning-req">{{ reqText }}</span>
+                    <span class="formation-warning-req" [innerHTML]="reqText"></span>
                   }
                 </div>
               } @else {
@@ -149,17 +154,16 @@ export interface RenameGroupDialogResult {
                 <svg class="expand-icon" width="16" height="16" viewBox="0 0 10 10" fill="currentColor"><path d="M3 1l5 4-5 4z"/></svg>
               </summary>
               <div class="selected-formation-details">
-                <formation-info [formation]="formation" [gameSystem]="data.group.force.gameSystem" [unitCount]="data.group.units().length" [isValid]="isSelectedFormationValid()" [requirementsFiltered]="isSelectedFormationRequirementsFiltered()" [requirementsFilterNotice]="selectedFormationRequirementsFilterNotice()"></formation-info>
+                <formation-info [formation]="formation" [gameSystem]="data.group.force.gameSystem" [unitCount]="data.group.units().length" [isValid]="isSelectedFormationValid()" [requirementsFiltered]="isSelectedFormationRequirementsFiltered()" [requirementsFilterCompositionName]="selectedFormationRequirementsFilterCompositionName()" [requirementsFilterNotice]="selectedFormationRequirementsFilterNotice()"></formation-info>
               </div>
             </details>
             }
           }
         </div>
-
+        @if (!data.group.formationLock) {
+            <p class="formation-hint">The formation will change dynamically based on group composition. Confirm to lock it in.</p>
+        }
       </div>
-      @if (!data.group.formationLock) {
-        <p class="formation-hint">The formation will change dynamically based on group composition. Confirm to lock it in.</p>
-      }
       <div class="wide-dialog-actions">
         <button (click)="submit()" class="bt-button">CONFIRM</button>
         <button (click)="submitUnset()" class="bt-button">UNSET</button>
@@ -167,7 +171,7 @@ export interface RenameGroupDialogResult {
       </div>
     </div>
     `,
-    styles: [`
+  styles: [`
         .hint {
             font-size: 0.85em;
             color: var(--text-color-tertiary);
@@ -202,6 +206,23 @@ export interface RenameGroupDialogResult {
 
         .placeholder {
             color: #888;
+        }
+
+        .formation-target-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .formation-target-select {
+            width: 100%;
+        }
+
+        .formation-target-warning {
+            color: var(--bt-orange, #f2a900);
+            font-size: 0.85em;
+            margin: 0;
         }
 
         .random-button {
@@ -269,9 +290,12 @@ export interface RenameGroupDialogResult {
             padding: 6px 10px;
             margin-top: 4px;
             font-size: 0.85em;
-            color: red;
             background: rgba(255, 0, 0, 0.08);
             border-left: 3px solid red;
+        }
+
+        .formation-warning-title {
+            color: red;
         }
 
         .formation-warning-body {
@@ -286,7 +310,7 @@ export interface RenameGroupDialogResult {
 
         .formation-hint {
             font-size: 0.85em;
-            color: var(--text-color-tertiary);
+            color: var(--bt-yellow);
             margin: 4px 0 0;
             text-align: center;
         }
@@ -328,180 +352,438 @@ export interface RenameGroupDialogResult {
     `]
 })
 
-export class RenameGroupDialogComponent {
-    inputRef = viewChild.required<ElementRef<HTMLDivElement>>('inputRef');
-    formationTriggerWrapper = viewChild.required<ElementRef<HTMLDivElement>>('formationTriggerWrapper');
+export class RenameGroupDialogComponent implements OnDestroy {
+  inputRef = viewChild.required<ElementRef<HTMLDivElement>>('inputRef');
+  formationTriggerWrapper = viewChild.required<ElementRef<HTMLDivElement>>('formationTriggerWrapper');
 
-    public dialogRef: DialogRef<RenameGroupDialogResult | null, RenameGroupDialogComponent> = inject(DialogRef);
-    readonly data: RenameGroupDialogData = inject(DIALOG_DATA);
-    private forceBuilder = inject(ForceBuilderService);
-    private overlayManager = inject(OverlayManagerService);
-    private injector = inject(Injector);
-    private destroyRef = inject(DestroyRef);
+  public dialogRef: DialogRef<RenameGroupDialogResult | null, RenameGroupDialogComponent> = inject<DialogRef<RenameGroupDialogResult | null, RenameGroupDialogComponent>>(DialogRef);
+  readonly data: RenameGroupDialogData = inject(DIALOG_DATA);
+  private optionsService = inject(OptionsService);
+  private overlayManager = inject(OverlayManagerService);
+  private injector = inject(Injector);
+  private destroyRef = inject(DestroyRef);
+  private readonly formationPointerActivationGuard = new DropdownPointerActivationGuard();
+  private formationPanelRef: ComponentRef<FormationDropdownPanelComponent> | null = null;
+  private formationClosedSubscription: { unsubscribe(): void } | null = null;
+  readonly formationOptionsId = 'renameGroupFormation-options';
 
-    /** Tracks whether the name input has text */
-    nameHasText = signal<boolean>(!!this.data.group.name());
+  /** Tracks whether the name input has text */
+  nameHasText = signal<boolean>(!!this.data.group.name());
 
-    /** Currently selected formation */
-    selectedFormation = signal<FormationTypeDefinition | null>(this.data.group.formation());
+  /** Currently selected formation */
+  selectedFormation = signal<FormationTypeDefinition | null>(this.data.group.formation());
 
-    /** All formation definitions with validity flag. */
-    formationDisplayList: FormationDisplayItem[] = (() => {
-        const validMatches = FormationNamerUtil.getAvailableFormationDefinitions(this.data.group);
-        const validMap = new Map(validMatches.map(m => [m.definition.id, m]));
-        return FORMATION_DEFINITIONS
-            .filter(def => def.validator)
-            .map(def => {
-                const match = validMap.get(def.id);
-                return {
-                    definition: def,
-                  displayName: FormationNamerUtil.composeFormationDisplayName(def, this.data.group, match?.requirementsFiltered ?? false),
-                    isValid: !!match,
-                  requirementsFiltered: match?.requirementsFiltered ?? false,
-                  requirementsFilterNotice: match?.requirementsFilterNotice,
-                };
-            });
-    })();
+  /** Eligible concrete formations and the currently restored target selection. */
+  readonly formationTargetOptions = getFormationTargetCandidates(this.data.group).map((candidate) => ({
+    id: candidate.id,
+    label: `${candidate.groupDisplayName()} — ${candidate.activeFormation()!.name}`,
+  }));
+  selectedFormationTargetGroupId = signal<string | null>(resolveFormationTargetGroup(this.data.group)?.id ?? null);
+  selectedFormationUsesTarget = computed(() => formationHasTargetCopyEffect(this.selectedFormation()));
 
-    /** Whether the currently selected formation is valid for the group. */
-    isSelectedFormationValid = computed<boolean>(() => {
-        const sel = this.selectedFormation();
-        if (!sel || isNoFormation(sel)) return true;
-        return this.formationDisplayList.some(f => f.definition.id === sel.id && f.isValid);
+  /** Whether the formation dropdown overlay is open. */
+  formationDropdownOpen = signal(false);
+
+  /** Keyboard/pointer active formation option key while the dropdown is open. */
+  activeFormationKey = signal(AUTOMATIC_FORMATION_KEY);
+
+  /** Keyboard/pointer active formation target while the dropdown is open. */
+  activeFormationTarget = signal<FormationDropdownActiveTarget>('entry');
+
+  /** All formation definitions with validity flag. */
+  formationDisplayList: FormationDisplayItem[] = (() => {
+    const validMatches = FormationNamerUtil.getAvailableFormationDefinitions(this.data.group);
+    const validMap = new Map(validMatches.map(m => [m.definition.id, m]));
+    return getFormationDefinitions(this.data.group.force.gameSystem)
+      .filter(def => FormationRequirementEngine.hasBlueprint(def.id))
+      .map(def => {
+        const match = validMap.get(def.id);
+        return {
+          definition: def,
+          displayName: FormationNamerUtil.composeFormationDisplayName(def, this.data.group, match?.requirementsFiltered ?? false),
+          isValid: !!match,
+          requirementsFiltered: match?.requirementsFiltered ?? false,
+          requirementsFilterCompositionName: match?.requirementsFilterCompositionName,
+          requirementsFilterNotice: match?.requirementsFilterNotice,
+        };
+      });
+  })();
+
+  /** Whether the currently selected formation is valid for the group. */
+  isSelectedFormationValid = computed<boolean>(() => {
+    const sel = this.selectedFormation();
+    if (!sel || isNoFormation(sel)) return true;
+    return this.formationDisplayList.some(f => f.definition.id === sel.id && f.isValid);
+  });
+
+  /** Whether the currently selected formation required organization-level filtering. */
+  isSelectedFormationRequirementsFiltered = computed<boolean>(() => {
+    const sel = this.selectedFormation();
+    if (!sel || isNoFormation(sel)) return false;
+    return this.formationDisplayList.some(f => f.definition.id === sel.id && f.isValid && f.requirementsFiltered);
+  });
+
+  selectedFormationRequirementsFilterNotice = computed<string | undefined>(() => {
+    const sel = this.selectedFormation();
+    if (!sel || isNoFormation(sel)) return undefined;
+    return this.formationDisplayList.find(f => f.definition.id === sel.id && f.isValid)?.requirementsFilterNotice;
+  });
+
+  selectedFormationRequirementsFilterCompositionName = computed<string | undefined>(() => {
+    const sel = this.selectedFormation();
+    if (!sel || isNoFormation(sel)) return undefined;
+    return this.formationDisplayList.find(f => f.definition.id === sel.id && f.isValid)?.requirementsFilterCompositionName;
+  });
+
+  /** Placeholder name based on the currently selected formation. */
+  placeholderName = computed<string>(() => {
+    const sel = this.selectedFormation();
+    if (sel && !isNoFormation(sel)) {
+      return FormationNamerUtil.composeFormationDisplayName(
+        sel,
+        this.data.group,
+        this.isSelectedFormationRequirementsFiltered(),
+      );
+    }
+    return this.data.group.organizationalName() ?? 'Group';
+  });
+
+  constructor() { }
+
+  /** Clear the name input */
+  clearName(): void {
+    const nativeEl = this.inputRef().nativeElement;
+    if (!nativeEl) return;
+    nativeEl.textContent = '';
+    nativeEl.innerHTML = '';
+    this.nameHasText.set(false);
+    nativeEl.focus();
+  }
+
+  /** Clear leftover <br> / whitespace so :empty placeholder works */
+  onInputCleanup(event: Event): void {
+    const el = event.target as HTMLElement;
+    const hasText = !!el.textContent?.trim();
+    this.nameHasText.set(hasText);
+    if (!hasText) {
+      el.innerHTML = '';
+    }
+  }
+
+  onFormationTargetChange(event: Event): void {
+    const targetGroupId = (event.target as HTMLSelectElement).value || null;
+    this.selectedFormationTargetGroupId.set(
+      targetGroupId && this.formationTargetOptions.some((option) => option.id === targetGroupId)
+        ? targetGroupId
+        : null,
+    );
+  }
+
+  /** Expose isNoFormation to the template */
+  isNoFormation = isNoFormation;
+
+  /** Get requirements text for a formation definition. */
+  getRequirementsText(formation: FormationTypeDefinition): string | null {
+    if (!formation.requirements) return null;
+    const requirements = formation.requirements;
+    return requirements ? formatSummaryMovement(requirements, this.optionsService.options().ASUseHex) : null;
+  }
+
+  /** Get parent formation requirements text */
+  getParentRequirementsText(formation: FormationTypeDefinition): string | null {
+    if (!formationInheritsParentEffects(formation) || !formation.parent) return null;
+    const parent = getFormationDefinition(formation.parent, this.data.group.force.gameSystem);
+    if (!parent?.requirements) return null;
+    const requirements = parent.requirements;
+    return requirements ? formatSummaryMovement(requirements, this.optionsService.options().ASUseHex) : null;
+  }
+
+  /** Get parent formation name */
+  getParentFormationName(formation: FormationTypeDefinition): string {
+    if (!formationInheritsParentEffects(formation) || !formation.parent) return '';
+    return getFormationDefinition(formation.parent, this.data.group.force.gameSystem)?.name ?? '';
+  }
+
+  /** Compose a display name for a formation definition */
+  getDisplayName(definition: FormationTypeDefinition): string {
+    return FormationNamerUtil.composeFormationDisplayName(definition, this.data.group, this.isSelectedFormationRequirementsFiltered());
+  }
+
+  submit(): void {
+    const name = this.inputRef().nativeElement.textContent?.trim() || '';
+    this.dialogRef.close({
+      name,
+      formation: this.selectedFormation(),
+      formationTargetGroupId: this.selectedFormationUsesTarget() ? this.selectedFormationTargetGroupId() : null,
+      action: 'confirm',
     });
+  }
 
-    /** Whether the currently selected formation required organization-level filtering. */
-    isSelectedFormationRequirementsFiltered = computed<boolean>(() => {
-        const sel = this.selectedFormation();
-        if (!sel || isNoFormation(sel)) return false;
-      return this.formationDisplayList.some(f => f.definition.id === sel.id && f.isValid && f.requirementsFiltered);
+  submitUnset(): void {
+    this.dialogRef.close({ name: '', formation: null, formationTargetGroupId: null, action: 'unset' });
+  }
+
+  fillRandomFormation(): void {
+    const validList = this.formationDisplayList.filter(item => item.isValid);
+    if (validList.length === 0) {
+      this.selectedFormation.set(null);
+      return;
+    }
+    const currentId = this.selectedFormation()?.id ?? null;
+    const candidates = validList.length > 1
+      ? validList.filter(item => item.definition.id !== currentId)
+      : validList;
+    const randomIndex = Math.floor(Math.random() * candidates.length);
+    this.selectedFormation.set(candidates[randomIndex].definition);
+  }
+
+  toggleFormationDropdown(): void {
+    if (this.formationDropdownOpen()) {
+      this.closeFormationDropdown();
+      return;
+    }
+    this.openFormationDropdown();
+  }
+
+  openFormationDropdown(): void {
+    if (this.formationDropdownOpen()) return;
+    this.formationPointerActivationGuard.suppress();
+    this.activeFormationKey.set(this.selectedFormationKey());
+    this.activeFormationTarget.set('entry');
+    this.formationDropdownOpen.set(true);
+
+    const triggerWrapper = this.formationTriggerWrapper();
+    if (!triggerWrapper) {
+      this.formationDropdownOpen.set(false);
+      return;
+    }
+
+    const portal = new ComponentPortal(FormationDropdownPanelComponent, null, this.injector);
+
+    const { componentRef, closed } = this.overlayManager.createManagedOverlay(
+      'formation-dropdown',
+      triggerWrapper,
+      portal,
+      {
+        closeOnOutsideClick: true,
+        panelClass: 'formation-dropdown-overlay',
+        matchTriggerWidth: true,
+        anchorActiveSelector: '.none-option.active, .formation-option-wrapper.active'
+      }
+    );
+
+    this.formationPanelRef = componentRef;
+    this.syncFormationPanelInputs();
+
+    outputToObservable(componentRef.instance.selected)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((formation: FormationTypeDefinition | null) => {
+        this.selectedFormation.set(formation);
+        this.closeFormationDropdown();
+      });
+
+    outputToObservable(componentRef.instance.pointerHovered)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(event => this.activatePointerFormationOption(event));
+
+    this.formationClosedSubscription = closed.subscribe(() => {
+      this.formationDropdownOpen.set(false);
+      this.formationPanelRef = null;
+      this.formationClosedSubscription = null;
     });
+  }
 
-    selectedFormationRequirementsFilterNotice = computed<string | undefined>(() => {
-      const sel = this.selectedFormation();
-      if (!sel || isNoFormation(sel)) return undefined;
-      return this.formationDisplayList.find(f => f.definition.id === sel.id && f.isValid)?.requirementsFilterNotice;
-    });
-
-    /** Placeholder name based on the currently selected formation. */
-    placeholderName = computed<string>(() => {
-        const sel = this.selectedFormation();
-        if (sel && !isNoFormation(sel)) {
-        return FormationNamerUtil.composeFormationDisplayName(
-          sel,
-          this.data.group,
-          this.isSelectedFormationRequirementsFiltered(),
-        );
+  onFormationTriggerKeydown(event: KeyboardEvent): void {
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.openFormationDropdown();
+        this.moveActiveFormationOptionInCurrentLane(1);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.openFormationDropdown();
+        this.moveActiveFormationOptionInCurrentLane(-1);
+        break;
+      case 'Home':
+        event.preventDefault();
+        this.openFormationDropdown();
+        this.activateKeyboardFormationOption(0);
+        break;
+      case 'End':
+        event.preventDefault();
+        this.openFormationDropdown();
+        this.activateKeyboardFormationOption(this.visibleFormationOptionTargets().length - 1);
+        break;
+      case 'Tab':
+        if (!this.formationDropdownOpen()) break;
+        event.preventDefault();
+        this.moveActiveFormationOptionSequentially(event.shiftKey ? -1 : 1);
+        break;
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        if (this.formationDropdownOpen()) {
+          this.selectActiveFormationOption();
+        } else {
+          this.openFormationDropdown();
         }
-        return this.data.group.organizationalName() ?? 'Group';
-    });
+        break;
+      case 'Escape':
+        event.preventDefault();
+        this.closeFormationDropdown();
+        break;
+    }
+  }
 
-    constructor() { }
+  activatePointerFormationOption(event: FormationDropdownPointerHoverEvent): void {
+    if (this.formationPointerActivationGuard.shouldIgnore(event)) return;
+    if (event.selectionKey === this.activeFormationKey() && event.target === this.activeFormationTarget()) return;
 
-    /** Clear the name input */
-    clearName(): void {
-        const nativeEl = this.inputRef().nativeElement;
-        if (!nativeEl) return;
-        nativeEl.textContent = '';
-        nativeEl.innerHTML = '';
-        this.nameHasText.set(false);
-        nativeEl.focus();
+    this.activeFormationKey.set(event.selectionKey);
+    this.activeFormationTarget.set(event.target);
+    this.syncFormationPanelInputs(false);
+  }
+
+  ngOnDestroy(): void {
+    this.closeFormationDropdown();
+  }
+
+  private closeFormationDropdown(): void {
+    this.formationDropdownOpen.set(false);
+    this.formationClosedSubscription?.unsubscribe();
+    this.formationClosedSubscription = null;
+    this.formationPanelRef = null;
+    this.overlayManager.closeManagedOverlay('formation-dropdown');
+  }
+
+  private syncFormationPanelInputs(scrollActiveIntoView = true): void {
+    const panelRef = this.formationPanelRef;
+    if (!panelRef) return;
+
+    panelRef.setInput('formations', this.formationDisplayList);
+    panelRef.setInput('selectedFormationId', this.selectedFormation()?.id ?? null);
+    panelRef.setInput('gameSystem', this.data.group.force.gameSystem);
+    panelRef.setInput('label', 'Select formation');
+    panelRef.setInput('optionsId', this.formationOptionsId);
+    panelRef.setInput('activeKey', this.activeFormationKey());
+    panelRef.setInput('activeTarget', this.activeFormationTarget());
+    panelRef.changeDetectorRef.detectChanges();
+
+    if (scrollActiveIntoView) {
+      scrollActiveOptionIntoView(
+        panelRef.location.nativeElement as HTMLElement,
+        '[data-scroll-container]',
+        '.dropdown-option.keyboard-active, .formation-option-wrapper.keyboard-active'
+      );
+    }
+  }
+
+  private moveActiveFormationOptionInCurrentLane(delta: number): void {
+    const targets = this.visibleFormationOptionTargets();
+    const activeTarget = nextDropdownTargetInCurrentLane(
+      targets,
+      this.activeFormationTarget(),
+      target => this.matchesActiveFormationTarget(target),
+      delta,
+    );
+    if (!activeTarget) return;
+
+    this.activateKeyboardFormationTarget(activeTarget);
+  }
+
+  private moveActiveFormationOptionSequentially(delta: number): void {
+    const activeTarget = nextDropdownTarget(
+      this.visibleFormationOptionTargets(),
+      target => this.matchesActiveFormationTarget(target),
+      delta,
+    );
+    if (!activeTarget) return;
+
+    this.activateKeyboardFormationTarget(activeTarget);
+  }
+
+  private activateKeyboardFormationOption(index: number): void {
+    const targets = this.visibleFormationOptionTargets();
+    if (targets.length === 0) return;
+
+    this.formationPointerActivationGuard.suppress();
+    const activeTarget = targets[Math.max(0, Math.min(index, targets.length - 1))];
+    this.activateKeyboardFormationTarget(activeTarget);
+  }
+
+  private activateKeyboardFormationTarget(activeTarget: FormationDropdownActiveOption): void {
+    this.formationPointerActivationGuard.suppress();
+    this.activeFormationKey.set(activeTarget.selectionKey);
+    this.activeFormationTarget.set(activeTarget.target);
+    this.syncFormationPanelInputs();
+  }
+
+  private selectActiveFormationOption(): void {
+    if (this.activeFormationTarget() === 'details') {
+      this.toggleActiveFormationDetails();
+      return;
     }
 
-    /** Clear leftover <br> / whitespace so :empty placeholder works */
-    onInputCleanup(event: Event): void {
-        const el = event.target as HTMLElement;
-        const hasText = !!el.textContent?.trim();
-        this.nameHasText.set(hasText);
-        if (!hasText) {
-            el.innerHTML = '';
-        }
-    }
+    this.selectedFormation.set(this.formationForKey(this.activeFormationKey()));
+    this.closeFormationDropdown();
+  }
 
-    /** Expose isNoFormation to the template */
-    isNoFormation = isNoFormation;
+  private selectedFormationKey(): string {
+    const selectedFormation = this.selectedFormation();
+    if (!selectedFormation) return AUTOMATIC_FORMATION_KEY;
+    return isNoFormation(selectedFormation) ? NO_FORMATION_ID : selectedFormation.id;
+  }
 
-    /** Get requirements text for a formation definition, including parent requirements */
-    getRequirementsText(formation: FormationTypeDefinition): string | null {
-        if (!formation.requirements) return null;
-        return formation.requirements(this.data.group.force.gameSystem) || null;
-    }
+  private visibleFormationOptionTargets(): FormationDropdownActiveOption[] {
+    return this.formationPanelRef?.instance.visibleOptionTargets() ?? this.allFormationOptionTargets();
+  }
 
-    /** Get parent formation requirements text */
-    getParentRequirementsText(formation: FormationTypeDefinition): string | null {
-        if (!formation.parent) return null;
-        const parent = FORMATION_DEFINITIONS.find(d => d.id === formation.parent);
-        if (!parent?.requirements) return null;
-        return parent.requirements(this.data.group.force.gameSystem) || null;
-    }
+  private allFormationOptionTargets(): FormationDropdownActiveOption[] {
+    const valid = this.sortFormationDisplayItems(this.formationDisplayList.filter(item => item.isValid));
+    const invalid = this.sortFormationDisplayItems(this.formationDisplayList.filter(item => !item.isValid));
+    return [
+      { selectionKey: AUTOMATIC_FORMATION_KEY, target: 'entry' },
+      { selectionKey: NO_FORMATION_ID, target: 'entry' },
+      ...valid.flatMap(item => this.formationOptionTargets(item.definition.id)),
+      ...invalid.flatMap(item => this.formationOptionTargets(item.definition.id)),
+    ];
+  }
 
-    /** Get parent formation name */
-    getParentFormationName(formation: FormationTypeDefinition): string {
-        if (!formation.parent) return '';
-        return FORMATION_DEFINITIONS.find(d => d.id === formation.parent)?.name ?? '';
-    }
+  private formationOptionTargets(selectionKey: string): FormationDropdownActiveOption[] {
+    return [
+      { selectionKey, target: 'entry' },
+      { selectionKey, target: 'details' },
+    ];
+  }
 
-    /** Compose a display name for a formation definition */
-    getDisplayName(definition: FormationTypeDefinition): string {
-        return FormationNamerUtil.composeFormationDisplayName(definition, this.data.group, this.isSelectedFormationRequirementsFiltered());
-    }
+  private matchesActiveFormationTarget(target: FormationDropdownActiveOption): boolean {
+    return target.selectionKey === this.activeFormationKey() && target.target === this.activeFormationTarget();
+  }
 
-    submit(): void {
-        const name = this.inputRef().nativeElement.textContent?.trim() || '';
-        this.dialogRef.close({ name, formation: this.selectedFormation(), action: 'confirm' });
-    }
+  private toggleActiveFormationDetails(): void {
+    const selectionKey = this.activeFormationKey();
+    if (selectionKey === AUTOMATIC_FORMATION_KEY || selectionKey === NO_FORMATION_ID) return;
 
-    submitUnset(): void {
-        this.dialogRef.close({ name: '', formation: null, action: 'unset' });
-    }
+    const panelRef = this.formationPanelRef;
+    if (!panelRef) return;
 
-    fillRandomFormation(): void {
-        const validList = this.formationDisplayList.filter(item => item.isValid);
-        if (validList.length === 0) {
-            this.selectedFormation.set(null);
-            return;
-        }
-        const currentId = this.selectedFormation()?.id ?? null;
-        const candidates = validList.length > 1
-            ? validList.filter(item => item.definition.id !== currentId)
-            : validList;
-        const randomIndex = Math.floor(Math.random() * candidates.length);
-        this.selectedFormation.set(candidates[randomIndex].definition);
-    }
+    panelRef.instance.toggleExpandedId(selectionKey);
+    panelRef.changeDetectorRef.detectChanges();
+    this.syncFormationPanelInputs(false);
+  }
 
-    toggleFormationDropdown(): void {
-        this.overlayManager.closeManagedOverlay('formation-dropdown');
+  private sortFormationDisplayItems(items: FormationDisplayItem[]): FormationDisplayItem[] {
+    return [...items].sort((left, right) => left.displayName.localeCompare(right.displayName));
+  }
 
-        const triggerWrapper = this.formationTriggerWrapper();
-        if (!triggerWrapper) return;
+  private formationForKey(selectionKey: string): FormationTypeDefinition | null {
+    if (selectionKey === AUTOMATIC_FORMATION_KEY) return null;
+    if (selectionKey === NO_FORMATION_ID) return NO_FORMATION;
+    return this.formationDisplayList.find(item => item.definition.id === selectionKey)?.definition ?? null;
+  }
 
-        const portal = new ComponentPortal(FormationDropdownPanelComponent, null, this.injector);
-
-        const { componentRef } = this.overlayManager.createManagedOverlay(
-            'formation-dropdown',
-            triggerWrapper,
-            portal,
-            {
-                closeOnOutsideClick: true,
-                panelClass: 'formation-dropdown-overlay',
-                matchTriggerWidth: true,
-                anchorActiveSelector: '.none-option.active, .formation-option-wrapper.active'
-            }
-        );
-
-        componentRef.setInput('formations', this.formationDisplayList);
-        componentRef.setInput('selectedFormationId', this.selectedFormation()?.id ?? null);
-        componentRef.setInput('gameSystem', this.data.group.force.gameSystem);
-
-        outputToObservable(componentRef.instance.selected)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((formation: FormationTypeDefinition | null) => {
-                this.selectedFormation.set(formation);
-                this.overlayManager.closeManagedOverlay('formation-dropdown');
-            });
-    }
-
-    close(value: RenameGroupDialogResult | null = null): void {
-        this.dialogRef.close(value);
-    }
+  close(value: RenameGroupDialogResult | null = null): void {
+    this.dialogRef.close(value);
+  }
 }

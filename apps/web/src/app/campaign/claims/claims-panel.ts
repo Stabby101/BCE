@@ -8,6 +8,8 @@
  */
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
+import { TableModeService } from '../gm/table-mode.service'; // GM-1 P1
+import { sideLabelsOf } from '../gm/side-labels'; // GM-1 P4 — SIDE A/B display names
 import { CampaignSaveStore } from '../campaign-save-store';
 import { deployedSet } from '../force/deployed';
 import type { ProtoInstance } from '../force/force-generator';
@@ -25,6 +27,7 @@ import { OpforBuilderComponent } from './opfor-builder'; // D-130 — GM manual 
 })
 export class ClaimsPanelComponent {
     private readonly state = inject(NewCampaignState);
+    protected readonly table = inject(TableModeService); // GM-1 P1 — constant false outside a GM session
     private readonly store = inject(CampaignSaveStore);
     protected readonly rt = inject(ClaimRealtimeService);
 
@@ -39,7 +42,7 @@ export class ClaimsPanelComponent {
      *  exactly what generateOpFor received (mission-generator:179 `opforFaction = seed?.opforFaction ?? ac.target`) —
      *  falling back to the active chaos contract's enemyFaction. Advisory anyway (the off-list toggle overrides). */
     protected readonly opforFaction = computed(() =>
-        this.state.acceptedContract()?.target ?? this.state.activeChaosContract()?.enemyFaction ?? '');
+        this.state.offerFor()?.target ?? this.state.contractFor()?.enemyFaction ?? '');
     protected readonly playerBv = computed(() => this.state.missionSpec()?.playerBv ?? 0);
     protected readonly builderOpen = signal(false);
     protected openBuilder(): void { if (this.isHotspots() && this.state.missionSpec()) this.builderOpen.set(true); }
@@ -52,13 +55,16 @@ export class ClaimsPanelComponent {
         if (!spec) return;
         const opforForce = rebuilt;
         const opforBv = opforForce.reduce((a, b) => a + (b.bv ?? 0), 0);
-        this.state.setMissionSpec({ ...spec, opforForce, opforBv });
+        this.state.setMissionSpec({ ...spec, opforForce, opforBv, opforManual: true });
         void this.store.persistCurrent();
         this.builderOpen.set(false);
     }
+    // GM-1 P4 — SIDE A/SIDE B labels from the D-133 names (gmSession + signed/presented only; the wire and
+    // every side gate stay BLUFOR/OPFOR — null falls back to today's labels byte-identically).
+    private readonly sideNames = computed(() => sideLabelsOf(this.state));
     protected readonly sides = computed(() => [
-        { key: 'blufor', label: 'BLUFOR', sub: 'deployed company', units: this.deployed() },
-        { key: 'opfor', label: 'OPFOR', sub: 'mission OpFor', units: this.opfor() },
+        { key: 'blufor', label: this.sideNames() ? `SIDE A — ${this.sideNames()!.a}` : 'BLUFOR', sub: this.sideNames() ? 'side A' : 'deployed company', units: this.deployed() },
+        { key: 'opfor', label: this.sideNames() ? `SIDE B — ${this.sideNames()!.b}` : 'OPFOR', sub: this.sideNames() ? 'side B' : 'mission OpFor', units: this.opfor() },
     ]);
     protected readonly engagementKey = computed(() => engagementKeyOf(this.state.missionTree()));
     protected readonly frozen = computed(() => engagementFrozen(this.state.missionTree()));
@@ -99,6 +105,15 @@ export class ClaimsPanelComponent {
         if (!token) return null;
         return this.lobby().find((p) => p.token === token)?.connected ?? false;
     }
+    /** REBASE-1 P3 item 1b — the un-ended-pick count of a claimed unit's holder (the pin fans damage only at END PHASE,
+     *  so this is the GM's "who still has unshared damage before Resolve" signal). 0 = nothing pending / no dot. */
+    protected pendingFor(instanceId: string): number {
+        const token = this.rt.claims()[instanceId]?.holderToken;
+        if (!token) return 0;
+        return this.lobby().find((p) => p.token === token)?.pendingPhase ?? 0;
+    }
+    /** REBASE-1 P3 item 1b — how many JOINED participants still have un-ended picks (the header/Resolve warning). */
+    protected readonly pendingPlayers = computed(() => this.lobby().filter((p) => (p.pendingPhase ?? 0) > 0).length);
     /** Kick a claimed unit's holder: release the unit back to UNCLAIMED + remove the player (one confirm). */
     protected kickClaim(instanceId: string): void {
         const c = this.rt.claims()[instanceId];

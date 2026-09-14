@@ -174,7 +174,8 @@
     transition: color 0.2s;
 }
 
-.force-faction-icon {
+.force-faction-icon,
+.force-era-icon {
     width: 1.2em;
     height: 1.2em;
     object-fit: contain;
@@ -186,7 +187,6 @@
 
 .force-total {
     font-size: 0.8em;
-    font-weight: bold;
     color: var(--text-color-secondary);
 }
 
@@ -221,7 +221,7 @@
     padding: 4px 2px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 
     .force-view:not(.dragging) & {
         touch-action: pan-y !important;

@@ -17,7 +17,10 @@ import { formatDate } from '../clock/campaign-clock';
 import type { ForgeNpc } from '../mission/forge-types';
 import type { MissionBranch } from '../mission/mission-tree';
 
-export const CONTACT_STATUSES = ['active', 'burned', 'dead', 'captured', 'promoted'] as const;
+// ODM-12b C2 — hoisted to the pure `contact-status` module (the ODM fork imports it from there, not
+// from this component). Imported for local use + re-exported so every existing importer is unchanged.
+import { CONTACT_STATUSES } from './contact-status';
+export { CONTACT_STATUSES };
 
 interface ContactVm {
     npcId: string;

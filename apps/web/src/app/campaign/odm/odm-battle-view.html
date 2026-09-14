@@ -12,7 +12,7 @@
 } @else if (nothingDeployed()) {
     <div class="bv-empty">
         <div class="bve-h">No 'Mechs on the field</div>
-        <p class="note">Set a 'Mech's condition to <b>DEPLOYED</b> on the <b>Unit Roster</b> to bring it to the battle view. The OpFor comes from <b>BEGIN OPERATION</b> on the Missions tab — the authored packet's force, rolled for this playthrough.</p>
+        <p class="note">Set a 'Mech's condition to <b>DEPLOYED</b> on the <b>Unit Roster</b> to bring it to the battle view. The OpFor comes from <b>BEGIN OPERATION</b> on the Missions tab — @if (isComposed()) { the force the GM composed for this operation. } @else { the authored packet's force, rolled for this playthrough. }</p>
     </div>
 } @else {
     <!-- ── BLUFOR ── -->
@@ -63,14 +63,14 @@
                     }
                 </div>
             } @else {
-                <div class="bv-sub" data-testid="odm-opfor-empty">OpFor for this operation is AUTHORED — see the ⚔ OPFOR tab in the Briefing (and the printed packet).</div>
+                <div class="bv-sub" data-testid="odm-opfor-empty">@if (isComposed()) { The GM composed this operation without an opposing force — none is fielded. } @else { OpFor for this operation is AUTHORED — see the ⚔ OPFOR tab in the Briefing (and the printed packet). }</div>
             }
         </section>
     } @else if (skirmish()) {
         <section class="bv-side opfor idle">
             <div class="side-head">
                 <span class="badge ghost">OPFOR</span>
-                <span class="sh-name">OpFor for this operation is AUTHORED — see the ⚔ OPFOR tab in the Briefing (and the printed packet).</span>
+                <span class="sh-name">@if (isComposed()) { The GM composed this operation without an opposing force — none is fielded. } @else { OpFor for this operation is AUTHORED — see the ⚔ OPFOR tab in the Briefing (and the printed packet). }</span>
             </div>
         </section>
     }

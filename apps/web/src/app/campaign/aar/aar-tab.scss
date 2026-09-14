@@ -33,6 +33,10 @@
 .ai-pend { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--paper); background: var(--stamp); padding: 2px 6px; }
 /* DIRECTIVE-119 — Hot Spots: SETTLED reads as a positive/finalized state (green --ok), not the red WALK-PENDING warning. */
 .ai-pend.settled { background: var(--ok); }
+/* TABLE-2 T2-1/T2-4 — the ODM per-mission walk control: the WALK-PENDING badge IS a button. Button reset so it reads as the badge. */
+.ai-walk { border: none; cursor: pointer; }
+.ai-walk:hover, .ai-walk:focus-visible { outline: 1.5px solid var(--paper); outline-offset: 1px; }
+.ai-pend.ai-walked { background: var(--ok); }
 .ai-date { font-family: var(--mono); font-size: 10.5px; color: var(--ink2); }
 .ai-open { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 11px; text-transform: uppercase; color: var(--stamp); }
 

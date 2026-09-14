@@ -30,6 +30,12 @@ export class OdmBattleViewComponent {
     protected readonly skirmish = computed(() => this.ready() && !this.hasMission() && this.blufor().length > 0);
     /** ODM-10 — the header names the operation (the ODM-9 carrier's typeName = the authored title). */
     protected readonly operationName = computed(() => this.state.missionSpec()?.typeName ?? null);
+    /** ODM-18 P3 — is the ACTIVE operation GM-composed? The empty-OpFor copy sends the reader to an OPFOR
+     *  packet tab; for a composed operation there is no packet and no tab, so that line would be a lie. */
+    protected readonly isComposed = computed(() => {
+        const id = this.state.odmActiveNodeId();
+        return !!id && this.state.odmGmMissions().some((m) => m.id === id);
+    });
 
     constructor() {
         void this.svc.build();

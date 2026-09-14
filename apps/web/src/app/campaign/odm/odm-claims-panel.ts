@@ -22,6 +22,12 @@ import { BceUnitSpriteComponent } from '../sprite/unit-sprite';
 })
 export class OdmClaimsPanelComponent {
     private readonly state = inject(NewCampaignState);
+    /** ODM-18 P3 — a GM-COMPOSED operation has no packet and no ⚔ OPFOR tab; sending the reader there
+     *  would be an affirmative falsehood (the authored copy stays verbatim in the @else). */
+    protected readonly isComposed = computed(() => {
+        const id = this.state.odmActiveNodeId();
+        return !!id && this.state.odmGmMissions().some((m) => m.id === id);
+    });
     private readonly store = inject(CampaignSaveStore);
     protected readonly rt = inject(ClaimRealtimeService);
 
@@ -74,6 +80,15 @@ export class OdmClaimsPanelComponent {
         if (!token) return null;
         return this.lobby().find((p) => p.token === token)?.connected ?? false;
     }
+    /** REBASE-1 P3 item 1b — the un-ended-pick count of a claimed unit's holder (the pin fans damage only at END PHASE
+     *  — the GM's "who still has unshared damage before Resolve" signal). 0 = nothing pending. */
+    protected pendingFor(instanceId: string): number {
+        const token = this.rt.claims()[instanceId]?.holderToken;
+        if (!token) return 0;
+        return this.lobby().find((p) => p.token === token)?.pendingPhase ?? 0;
+    }
+    /** REBASE-1 P3 item 1b — how many JOINED participants still have un-ended picks (the header summary). */
+    protected readonly pendingPlayers = computed(() => this.lobby().filter((p) => (p.pendingPhase ?? 0) > 0).length);
     /** Kick a claimed unit's holder: release the unit back to UNCLAIMED + remove the player (one confirm). */
     protected kickClaim(instanceId: string): void {
         const c = this.rt.claims()[instanceId];

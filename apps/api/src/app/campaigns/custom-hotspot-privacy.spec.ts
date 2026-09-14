@@ -56,4 +56,20 @@ describe('custom-hotspot privacy + takedown (CampaignsService)', () => {
         expect(svc.removeCustomHotspot('camp-A', 'no-such-id')).toBe(false);
         expect(svc.removeCustomHotspot('no-such-campaign', 'hs-custom-0-0')).toBe(false);
     });
+
+    // ── GM-1 P2 — the takedown reaches the gmOnly layout (a GM session's chamber; the panel's dead-lever catch) ──
+    it('admin takedown removes a custom hotspot stored UNDER gmOnly (a GM-session campaign)', () => {
+        svc.upsert(rec('camp-GM', { gmSession: true, gmOnly: { customHotSpots: [{ id: 'hs-custom-9', title: 'Infringing', custom: true }] } }), ownerA);
+        expect(svc.removeCustomHotspot('camp-GM', 'hs-custom-9')).toBe(true);
+        const after = svc.get('camp-GM', ownerA)!;
+        expect(((after.snapshot as { gmOnly: { customHotSpots: unknown[] } }).gmOnly).customHotSpots).toEqual([]);
+        expect((after.snapshot as { gmSession?: boolean }).gmSession).toBe(true); // the rest of the snapshot intact
+    });
+    it('takedown searches BOTH layouts without short-circuiting (a duplicated id dies everywhere)', () => {
+        svc.upsert(rec('camp-Dup', { customHotSpots: [{ id: 'hs-dup', custom: true }], gmOnly: { customHotSpots: [{ id: 'hs-dup', custom: true }] } }), ownerA);
+        expect(svc.removeCustomHotspot('camp-Dup', 'hs-dup')).toBe(true);
+        const after = svc.get('camp-Dup', ownerA)!;
+        expect((after.snapshot as { customHotSpots: unknown[] }).customHotSpots).toEqual([]);
+        expect(((after.snapshot as { gmOnly: { customHotSpots: unknown[] } }).gmOnly).customHotSpots).toEqual([]);
+    });
 });

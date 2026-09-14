@@ -1,42 +1,12 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { Component, ChangeDetectionStrategy, computed } from '@angular/core';
 import { UpperCasePipe } from '@angular/common';
 import { AsLayoutBaseComponent } from './layout-base.component';
 
 /*
- * Author: Drake
  *
  * Large Vessel Card 2 (DropShip) layout component for Alpha Strike cards.
  * Used for: DA, DS, SC (second card)
@@ -94,7 +64,7 @@ interface EffectiveArcDamage extends ArcDamage {
     ],
     host: {
         '[class.interactive]': 'interactive()',
-        '[class.monochrome]': 'cardStyle() === "monochrome"',
+        '[class.monochrome]': 'cardStyle() === "default"',
     }
 })
 export class AsLayoutLargeVessel2Component extends AsLayoutBaseComponent {
@@ -141,7 +111,7 @@ export class AsLayoutLargeVessel2Component extends AsLayoutBaseComponent {
                 mslM: d(stats.frontArc?.MSL.dmgM),
                 mslL: d(stats.frontArc?.MSL.dmgL),
                 mslE: d(stats.frontArc?.MSL.dmgE),
-                spe: stats.frontArc?.specials,
+                spe: stats.frontArc?.specials.join(', '),
             },
             {
                 label: 'AFT ARC DAMAGE',
@@ -162,7 +132,7 @@ export class AsLayoutLargeVessel2Component extends AsLayoutBaseComponent {
                 mslM: d(stats.rearArc?.MSL.dmgM),
                 mslL: d(stats.rearArc?.MSL.dmgL),
                 mslE: d(stats.rearArc?.MSL.dmgE),
-                spe: stats.rearArc?.specials,
+                spe: stats.rearArc?.specials.join(', '),
             },
             {
                 label: 'LEFT SIDE DAMAGE',
@@ -183,7 +153,7 @@ export class AsLayoutLargeVessel2Component extends AsLayoutBaseComponent {
                 mslM: d(stats.leftArc?.MSL.dmgM),
                 mslL: d(stats.leftArc?.MSL.dmgL),
                 mslE: d(stats.leftArc?.MSL.dmgE),
-                spe: stats.leftArc?.specials,
+                spe: stats.leftArc?.specials.join(', '),
             },
             {
                 label: 'RIGHT SIDE DAMAGE',
@@ -204,7 +174,7 @@ export class AsLayoutLargeVessel2Component extends AsLayoutBaseComponent {
                 mslM: d(stats.rightArc?.MSL.dmgM),
                 mslL: d(stats.rightArc?.MSL.dmgL),
                 mslE: d(stats.rightArc?.MSL.dmgE),
-                spe: stats.rightArc?.specials,
+                spe: stats.rightArc?.specials.join(', '),
             },
         ];
     });

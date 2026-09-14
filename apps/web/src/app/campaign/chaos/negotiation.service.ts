@@ -15,9 +15,9 @@ import { Injectable, computed, effect, inject, signal, untracked } from '@angula
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
 import { WarchestService } from './warchest.service';
-import { MissionTreeService } from '../mission/mission-tree.service'; // D-110b — start the tree on accept
+import { NEGOTIATION_HOST } from './negotiation-host'; // GM-2 P2b — the tree edge lives in the host (R0.4's cut), never here
 import { CHAOS_CONTRACT_TYPES, CONTRACT_COLUMNS, COLUMN_LABEL, stepValue, nextValidStep, repCostUp, sacrificeDropTarget, repBudgetFor, canRaiseTerm, type ContractColumn } from './chaos-contract-steps';
-import { resolved, syntheticOfferFromChaos, authoredIntensity, type ChaosContract } from './chaos-contract'; // IMPORT-6 Part A — authored intensity, never clamped
+import { resolved, syntheticOfferFromChaos, authoredIntensity, isSessionContract, GM_SELF_KEY, type ChaosContract, type VoidedContract } from './chaos-contract'; // IMPORT-6 Part A — authored intensity, never clamped · GM-3 P1 — the session contract
 import { hotspotSeedId, hotspotTypeId, resolveSides, opposingFaction, type CatalogHotSpot, type SideOffer } from './hotspots-catalog';
 
 @Injectable()
@@ -25,11 +25,15 @@ export class NegotiationService {
     private readonly state = inject(NewCampaignState);
     private readonly store = inject(CampaignSaveStore);
     private readonly warchest = inject(WarchestService);
-    private readonly missionTree = inject(MissionTreeService); // D-110b
+    private readonly host = inject(NEGOTIATION_HOST); // D-110b (the tree) · GM-2 P2b (the participant sign path) — supplied by the host component
 
     readonly types = CHAOS_CONTRACT_TYPES;
-    readonly active = this.state.activeChaosContract;
-    readonly rep = computed(() => this.state.reputation() ?? 1);
+    readonly active = computed(() => this.state.contractFor()); // GM-2 P2a — the ONE accessor (no key → the primary)
+    /** GM-2 P2b — a PARTICIPANT negotiates against ITS OWN home reputation (off the mint's provenance), never the GM's. */
+    readonly participantRep = signal<number | null>(null);
+    /** GM-2 P2b — Command Rights LOCKED to the primary's step for a participant (displayed, never negotiable, no rep cost). */
+    readonly lockedCommand = signal<number | null>(null);
+    readonly rep = computed(() => this.participantRep() ?? this.state.reputation() ?? 1);
 
     // ── negotiation state ──
     readonly typeId = signal<string>(CHAOS_CONTRACT_TYPES[0].id);
@@ -68,6 +72,9 @@ export class NegotiationService {
     //    whose terms are open in the modal (repurposes the retired D-124c `negotiateDraw` signal). accept() builds the
     //    contract from the negotiated terms + this hotspot's SCENARIO (world/tracks/OpFor/tree) — never a Forge roll. ──
     readonly negotiating = signal<CatalogHotSpot | null>(null);
+    /** GM-2 P2a — when set, accept() signs THIS participant's contract into the gmOnly map (GM as broker) and touches
+     *  none of the primary's side effects. Cleared on sign / discard. */
+    readonly forParticipant = signal<{ key: string; label: string } | null>(null);
     // D-133 — the chosen SIDE ('a' authored / 'b' opposing) open in the negotiation modal.
     readonly negSide = signal<'a' | 'b'>('a');
     /** The SideOffer + opposing faction open in the negotiation modal (drives the header). */
@@ -87,6 +94,25 @@ export class NegotiationService {
         if (this.state.campaignSystem() !== 'hotspots' || this.active()) return;
         const s = resolveSides(h)[side];
         if (!s) return; // IMPORT-5 Part C — a single-sided hot spot has no side B; the board only offers side 'a' for it
+        this.forParticipant.set(null); this.participantRep.set(null); this.lockedCommand.set(null);
+        this.seedFrom(h, side, s);
+    }
+    /** GM-2 P2a — open the SAME modal for a joined company's OWN contract (GM as broker). Bypasses the "a contract is
+     *  active" guard on purpose: the primary is signed first (it owns the track); each participant's contract is then
+     *  negotiated on the primary's hot spot, on the given side (the P4 wire side, flipped for a side-B player). A
+     *  single-sided hot spot only has side 'a'. GM sessions only. */
+    negotiateForParticipant(h: CatalogHotSpot, side: 'a' | 'b', participant: { key: string; label: string }, rep: number | null = null, lockedCommand: number | null = null): void {
+        if (this.state.campaignSystem() !== 'hotspots' || !this.state.gmSession()) return;
+        const sides = resolveSides(h);
+        const sd: 'a' | 'b' = sides[side] ? side : 'a';
+        const s = sides[sd];
+        if (!s) return;
+        this.forParticipant.set(participant);
+        this.participantRep.set(rep); // P2b — THEIR rep
+        this.lockedCommand.set(lockedCommand); // P2b — Command locked to the primary's step
+        this.seedFrom(h, sd, s);
+    }
+    private seedFrom(h: CatalogHotSpot, side: 'a' | 'b', s: SideOffer): void {
         // set the hotspot + side FIRST so resetNegotiation re-seeds from this side's terms
         this.negotiating.set(h); this.negSide.set(side);
         this.typeId.set(hotspotTypeId(h));
@@ -97,11 +123,17 @@ export class NegotiationService {
         // completed the contract at chain end with the author's remaining tracks orphaned. Traditional never enters here.
         this.intensity.set(authoredIntensity(s.contract));
         this.steps.set({ ...s.contract.steps });
+        this.applyCommandLock();
         this.raises.set({ basePay: 0, command: 0, salvage: 0, support: 0, transport: 0 });
         this.repUsed.set(0); this.sacrificesUsed.set(0);
     }
+    /** GM-2 P2b — a participant's Command step is the primary's, whatever the authored side says; re-applied on every seed / reset. */
+    private applyCommandLock(): void {
+        const lc = this.lockedCommand();
+        if (lc != null && this.forParticipant()) this.steps.update((st) => ({ ...st, command: lc }));
+    }
     /** D-128 — close the modal without signing (✕ / overlay-click / Discard); clears the negotiating hotspot + resets terms. */
-    discardNegotiation(): void { this.negotiating.set(null); this.resetNegotiation(); }
+    discardNegotiation(): void { this.negotiating.set(null); this.forParticipant.set(null); this.participantRep.set(null); this.lockedCommand.set(null); this.resetNegotiation(); }
 
     // ── D-124e — offer-board hotspot PREVIEW: a read-only contract-offer summary (system + travel + gist + WHO you
     //    fight for / who opposes). NO tactical/OpFor detail is read into this view. Additive; offer/pick/reroll unchanged. ──
@@ -177,6 +209,7 @@ export class NegotiationService {
     repCost(col: ContractColumn): number | null { return repCostUp(col, this.steps()[col]); }
     /** D-128 — a term can be Rep-raised iff its row-cost is payable within the Rep budget AND the per-Scale row cap. */
     canRaise(col: ContractColumn): boolean {
+        if (col === 'command' && this.forParticipant()) return false; // GM-2 P2b — Command is LOCKED to the primary for a participant (the belt, not the markup)
         return canRaiseTerm(repCostUp(col, this.steps()[col]), this.repUsed(), this.repBudget(), this.raises()[col], this.scale());
     }
     repRaise(col: ContractColumn): void {
@@ -193,6 +226,7 @@ export class NegotiationService {
     canSacrifice(): boolean {
         const drop = this.sacDrop(), raise = this.sacRaise();
         if (this.sacrificesUsed() >= 2 || drop === raise) return false;
+        if (this.forParticipant() && (drop === 'command' || raise === 'command')) return false; // P2b — the lock holds through a sacrifice too
         if (sacrificeDropTarget(drop, this.steps()[drop]) == null) return false;
         const rt = nextValidStep(raise, this.steps()[raise], 1);
         if (rt == null) return false;
@@ -218,8 +252,8 @@ export class NegotiationService {
         const rt = nextValidStep(col, this.steps()[col], 1);
         return rt != null && this.raises()[col] + (rt - this.steps()[col]) <= this.scale();
     }
-    canDrop(col: ContractColumn): boolean { return this.dropValid(col) && col !== this.sacRaise(); }
-    canRaiseSac(col: ContractColumn): boolean { return this.raiseValid(col) && col !== this.sacDrop(); }
+    canDrop(col: ContractColumn): boolean { return this.dropValid(col) && col !== this.sacRaise() && !(col === 'command' && this.forParticipant()); } // P2b — never the locked Command
+    canRaiseSac(col: ContractColumn): boolean { return this.raiseValid(col) && col !== this.sacDrop() && !(col === 'command' && this.forParticipant()); } // P2b
     /** True iff SOME valid (drop, raise) pair exists — else "no sacrifice available" (every term capped/maxed). */
     readonly sacPossible = computed(() => {
         const drops = CONTRACT_COLUMNS.filter((c) => this.dropValid(c));
@@ -254,6 +288,7 @@ export class NegotiationService {
         // PICKED SIDE's terms (matches negotiateHotspot's seed), so Reset on side B doesn't snap back to side A.
         const draw = this.negotiating();
         this.steps.set(draw ? { ...(resolveSides(draw)[this.negSide()]?.contract.steps ?? draw.contract.steps) } : { ...this.type().defaultSteps });
+        this.applyCommandLock(); // P2b
         this.raises.set({ basePay: 0, command: 0, salvage: 0, support: 0, transport: 0 });
         this.repUsed.set(0);
         this.sacrificesUsed.set(0);
@@ -264,7 +299,8 @@ export class NegotiationService {
      *  the offer hand for Back-to-contracts, then clears the hand (a fresh 5 re-deals after this contract completes).
      *  Unifies the retired accept()/pickHotspot. */
     accept(): void {
-        if (this.state.campaignSystem() !== 'hotspots' || this.active()) return;
+        // GM-2 P2a — a PARTICIPANT's contract is signed WHILE the primary is active (the primary owns the track); the guard holds for the primary
+        if (this.state.campaignSystem() !== 'hotspots' || (this.active() && !this.forParticipant())) return;
         const h = this.negotiating();
         if (!h) return; // no card open — nothing to sign
         const side = this.negSide(); const s = resolveSides(h)[side]; // D-133 — the picked side
@@ -279,6 +315,17 @@ export class NegotiationService {
             lengthMonths: s.contract.lengthMonths ?? Math.max(s.contract.intensity, 1), // D-131 — the month WINDOW (authored, else intensity)
             side, sideRole: s.role, employer: s.employer, // D-133 — the picked side (role + who you signed with)
         };
+        // GM-2 P2a — a PARTICIPANT's contract: written to the map under gmOnly (fanned to its own device only), with NONE
+        // of the primary's side effects — the singular, the offer hand, the scale copy, the tree mint, the transport post.
+        // The track is the primary's; this company merely signs its own terms on it.
+        const fp = this.forParticipant();
+        if (fp) {
+            // P2b — the signing ledger rides the contract: the rep spent here + the net transport (settled on the first slip)
+            const { offerSnapshot: _os, ...pcBase } = contract; void _os; // the offer hand is the PRIMARY's back-out restore — a participant contract never carries it (and the wire allowlist refuses it)
+            this.host.signParticipant(fp.key, { ...pcBase, id: `pc-${fp.key}-${h.id}`, repSpent: this.repUsed(), transportSp: this.transportPaid() });
+            this.forParticipant.set(null); this.participantRep.set(null); this.lockedCommand.set(null); this.negotiating.set(null);
+            return;
+        }
         this.state.setActiveChaosContract(contract);
         this.state.setContractScale(scale);
         this.state.setHotSpotOffer([]); // D-128 — the hand is spent at signing; a fresh 5 re-deals after completion
@@ -288,7 +335,7 @@ export class NegotiationService {
         // the undefined root: mintRoot tolerates an absent root (mints a generic AVAILABLE root), so accept() no longer
         // throws before minting the tree — the operations-board picker + the contract-card "▶ Play a track" now appear.
         const root = h.tracks.find((t) => t.root) ?? h.tracks[0]; // seed the tree from the hotspot's root track (never Forge)
-        this.missionTree.mintRoot(off, root ? { seedId: hotspotSeedId(h.id, root.id), name: root.name, trackType: root.templateId } : undefined); // D-129 — carry the root track type to the flow node (0-track → generic root)
+        this.host.mintRoot(off, root ? { seedId: hotspotSeedId(h.id, root.id), name: root.name, trackType: root.templateId } : undefined); // D-129 — carry the root track type to the flow node (0-track → generic root)
         const transportCover = Math.round((300 * scale * resolved(steps).transport) / 100);
         this.warchest.post(`Transport — ${h.title}`, 300 * scale, transportCover); // cost gross, cover reimbursed
         this.negotiating.set(null); // signed — close the modal
@@ -298,7 +345,8 @@ export class NegotiationService {
     // ── D-128 — Back out of a freshly-signed contract (pre-deployment only) ──
     /** True only while the contract is still pristine (signed, root AVAILABLE, no track generated / no spec). */
     canBackOut(): boolean {
-        return this.state.campaignSystem() === 'hotspots' && !!this.active() && !this.missionTree.hasGeneratedTrack();
+        // GM-3 P1 — a SESSION contract is never backed out here (no party to refund or dock): the GM un-presents it on the GM tab
+        return this.state.campaignSystem() === 'hotspots' && !!this.active() && !isSessionContract(this.active()) && !this.host.hasGeneratedTrack();
     }
     backOutTitle(): string {
         return this.canBackOut()
@@ -313,16 +361,74 @@ export class NegotiationService {
         if (!this.canBackOut()) return;
         const c = this.active();
         if (!c) return;
-        const off = this.state.acceptedContract(); // the synthetic offer, to archive its (empty) tree
+        const off = this.state.offerFor(); // the synthetic offer, to archive its (empty) tree (GM-2 P2a — through the accessor)
         const cover = Math.round((300 * c.scale * resolved(c.steps).transport) / 100);
         this.warchest.post('Contract abandoned — transport refund', -(300 * c.scale - cover), 0); // negative cost = income
         this.state.setReputation(Math.max(0, (this.state.reputation() ?? 1) - 1)); // walking a signed deal costs 1 Rep
         this.state.setHotSpotOffer(c.offerSnapshot ?? []); // restore the hand that was on offer at signing (legacy → empty → re-deal)
         this.state.setActiveChaosContract(null);
         this.state.setAcceptedContract(null);
-        this.missionTree.closeTree(off ?? undefined); // discard the minted root
+        this.state.clearParticipantContracts(); // GM-2 P2a — the session's participant contracts go with the primary
+        this.host.closeTree(off ?? undefined); // discard the minted root
         // DECISION: endContract does NOT reset contractScale (it's re-set on the next accept); backOut mirrors it exactly.
         void this.store.persistCurrent();
+    }
+
+    // ── GM-3 P1 — THE SESSION CONTRACT (a GM session's party-less primary) ──
+    /** Present ▸ on a GM session mints the SESSION CONTRACT from the hot spot's AUTHORED terms for the side the table plays:
+     *  Scale · steps · lengthMonths · that side's target — NO party (nobody's warchest or reputation is touched: no transport
+     *  post, no hand spent, no offer snapshot), stored as the singular so `contractFor(participant) ?? primary` falls back to
+     *  it and every direct read gets a template. The tree starts HERE (hook 1), not at a sign. gmSession-only by guard; a
+     *  plain campaign can never reach it (accept() is its sole sign path, byte-untouched). Returns false when refused. */
+    presentSession(h: CatalogHotSpot, side: 'a' | 'b' = 'a'): boolean {
+        if (!this.state.gmSession() || this.state.campaignSystem() !== 'hotspots' || this.state.activeChaosContract()) return false;
+        const sides = resolveSides(h); const s = sides[side] ?? sides.a; if (!s) return false;
+        const pickedSide: 'a' | 'b' = sides[side] ? side : 'a';
+        const contract: ChaosContract = {
+            id: 'sc-' + this.state.warchestLedger().length + '-' + h.id, // deterministic id (no Date.now)
+            type: hotspotTypeId(h), scale: s.contract.scale, intensity: authoredIntensity(s.contract), steps: { ...s.contract.steps }, status: 'active',
+            acceptedDate: this.state.currentDate() ?? this.state.startDate() ?? null, tracksDone: 0, // presented date = the month window's start (hook 2)
+            enemyFaction: opposingFaction(h, pickedSide), hotspotId: h.id, // the chosen side's target (hook 3) — every participant signs this side
+            lengthMonths: s.contract.lengthMonths ?? Math.max(s.contract.intensity, 1),
+            side: pickedSide, sideRole: s.role, employer: s.employer,
+            party: 'session',
+        };
+        this.state.setActiveChaosContract(contract);
+        this.state.setContractScale(contract.scale);
+        const off = syntheticOfferFromChaos(contract);
+        this.state.setAcceptedContract(off); // "a contract is active" holds for every guard that reads the synthetic offer
+        const root = h.tracks.find((t) => t.root) ?? h.tracks[0];
+        this.host.mintRoot(off, root ? { seedId: hotspotSeedId(h.id, root.id), name: root.name, trackType: root.templateId } : undefined); // hook 1 — the tree starts at Present
+        // GM-3 P1/P2 — voidedContracts are NOT cleared here: on a REPLACE (a different card presented while signers exist) the
+        // voids unpresentSession just recorded must survive into the new session so the voided devices get their notice +
+        // refund. They are idempotent by voidId (applyVoidToSnapshot), so a stale one is a harmless no-op; the FRESH-present
+        // clear lives in the GM panel's doPresent (only when no session contract was active). // DECISION
+        void this.store.persistCurrent();
+        return true;
+    }
+    /** Un-present (hook 5): NO rep dock, no transport refund — nobody was party. Every signed participant is VOIDED WITH A
+     *  NOTICE (gmOnly.voidedContracts → the per-recipient `participantVoid` attach) and the rep a slip already settled at
+     *  home is REFUNDED on its device (repRefund); the GM's own participant contract (he fielded) refunds his rep directly.
+     *  The tree is discarded, the presentation cleared. Refuses on anything but a session contract. */
+    unpresentSession(): boolean {
+        const c = this.state.activeChaosContract();
+        if (!this.state.gmSession() || !c || !isSessionContract(c)) return false;
+        const off = this.state.offerFor();
+        const at = Date.now();
+        const voided: Record<string, VoidedContract> = {};
+        for (const [key, pc] of Object.entries(this.state.participantContracts())) {
+            const repRefund = pc.repSettled ? Math.max(0, Math.round(pc.repSpent ?? 0)) : 0; // unsettled = never debited at home → nothing to return
+            if (key === GM_SELF_KEY) { if (repRefund) this.state.setReputation((this.state.reputation() ?? 0) + repRefund); continue; }
+            voided[key] = { voidId: `void-${pc.id}-${at}`, contractId: pc.id, ...(c.hotspotId ? { hotspotId: c.hotspotId } : {}), repRefund, at };
+        }
+        this.state.setVoidedContracts(voided);
+        this.state.setActiveChaosContract(null);
+        this.state.setAcceptedContract(null);
+        this.state.clearParticipantContracts();
+        this.host.closeTree(off ?? undefined);
+        this.state.setPresentedHotspot(null);
+        void this.store.persistCurrent();
+        return true;
     }
 
     constructor() {

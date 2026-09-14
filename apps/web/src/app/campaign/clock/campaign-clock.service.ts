@@ -87,7 +87,9 @@ export class CampaignClockService {
     private advanceTo(from: CampaignDate, to: CampaignDate): void {
         this.registry.fire(monthBoundariesBetween(from, to));
         this.state.setCurrentDate(to);
-        this.bays.burnDays(daysBetween(from, to)); // D-033: burn repair tech-hours over the elapsed days (settles completions)
+        // ODM-13 P2 (sanctioned gate #5, the payTick:packId pattern) — a pack campaign's bays are the ODM fork's
+        // (parts-consuming, no bench rate); its own currentDate-effect drives the burn (classic→odm is fenced).
+        if (!this.state.packId()) this.bays.burnDays(daysBetween(from, to)); // D-033: burn repair tech-hours over the elapsed days (settles completions)
         void this.store.persistCurrent();
     }
 
@@ -135,6 +137,7 @@ export class CampaignClockService {
      *  and log a clear "Payroll shortfall: −X unpaid" notice. The Overview surfaces both the notice + a flag. */
     private payrollTick(boundary: CampaignDate): void {
         if (this.state.campaignSystem() === 'hotspots') return; // D-109 — Hot Spots uses SP maintenance, not C-bill payroll
+        if (this.state.packId()) return; // ODM-11 (sanctioned gate, the payTick:packId pattern) — a survival campaign pays NOBODY: no payroll drain
         const payroll = this.state.personnel()?.monthlyPayroll ?? 0;
         if (payroll <= 0) return;
         const treasury = this.state.treasury() ?? 0;
@@ -156,6 +159,7 @@ export class CampaignClockService {
      *  what's possible (treasury floors at 0), record the unpaid remainder + month, log a clear notice. */
     private maintenanceTick(boundary: CampaignDate): void {
         if (this.state.campaignSystem() === 'hotspots') return; // D-109 — Hot Spots uses SP maintenance (monthlyWarchestTick)
+        if (this.state.packId()) return; // ODM-11 (sanctioned gate) — ODM attrition is STOCKS (ODM-11), not a C-bill maintenance drain
         const maintenance = forceMaintenance(this.state.startingForce());
         if (maintenance <= 0) return;
         const treasury = this.state.treasury() ?? 0;
@@ -176,15 +180,22 @@ export class CampaignClockService {
      *  contract this slice). No-op under Traditional (the C-bill payroll/maintenance ticks run there instead). */
     private monthlyWarchestTick(boundary: CampaignDate): void {
         if (this.state.campaignSystem() !== 'hotspots') return;
-        const scale = this.state.contractScale() ?? 1;
+        // GM-3 P2 — a TABLE WITH NO COMPANY has no warchest of its own (warchestSP null): nothing to maintain, nobody to pay.
+        // Skip the whole tick so a month advance never bleeds a phantom −500 SP or writes ledger rows to a non-existent
+        // company (R0.2 worst-five #2). A plain campaign / a GM who built or brought a company has warchestSP set → runs as today.
+        if (this.state.companylessTable()) return;
+        const scale = this.state.scaleFor() ?? 1; // GM-2 P2a — through the ONE accessor
         // D-139 — the Maintenance + Base Pay pair post SILENTLY (automated), then coalesce into ONE
         // "Monthly settlement · net ±N SP" toast so a month advance never storms two-per-month.
         const before = this.state.warchestSP() ?? 0;
         this.warchest.post('Maintenance', this.warchest.maintenance(scale), 0, boundary, { silent: true });
         // D-110 — Base Pay (§6): while under an ACTIVE contract, collect 500 SP × scale × basePay% as income
         // (negative cost). No contract → no base pay, and Maintenance still bleeds (book-faithful).
-        const contract = this.state.activeChaosContract();
-        if (contract?.status === 'active') {
+        const contract = this.state.contractFor();
+        // GM-3 P1 — the SESSION CONTRACT (a GM session's party-less primary) pays nobody's warchest from the month tick: the
+        // GM is not a party to it (if he fields, his participant contract pays him per track on the slip). A plain campaign's
+        // contract never carries `party` → the branch is dead there, byte-identical.
+        if (contract?.status === 'active' && contract.party !== 'session') {
             const basePay = Math.round((500 * scale * resolved(contract.steps).basePay) / 100);
             if (basePay > 0) this.warchest.post('Base Pay', -basePay, 0, boundary, { silent: true });
         }

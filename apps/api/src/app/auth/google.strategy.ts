@@ -7,6 +7,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, type Profile } from 'passport-google-oauth20';
 import type { OAuthProfile } from './auth.types';
+import { devEndpointOverrides } from './oauth-dev-endpoints'; // GM-1c: the harness's local stand-in provider (dev-login-gated)
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -16,6 +17,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
             clientSecret: process.env.BCE_GOOGLE_CLIENT_SECRET as string,
             callbackURL: `${process.env.BCE_OAUTH_CALLBACK_URL ?? ''}/google/callback`,
             scope: ['email', 'profile'],
+            ...devEndpointOverrides('GOOGLE'), // {} in prod (BCE_ALLOW_DEV_LOGIN unset) → the strategy's own endpoints
         });
     }
 

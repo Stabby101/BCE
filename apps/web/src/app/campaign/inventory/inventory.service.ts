@@ -92,7 +92,12 @@ export class InventoryService {
                 // weapon tally (E/M/B/A or a hydrated WeaponEquipment) by display name → the spare-weapon spread
                 const isWeapon = c.t === 'E' || c.t === 'M' || c.t === 'B' || c.t === 'A' || c.eq instanceof WeaponEquipment;
                 if (isWeapon && c.n) weaponMap.set(c.n, (weaponMap.get(c.n) ?? 0) + (c.q || 1));
-                // ammo class — slim stub at/rs (D-057) first, else the full-catalog hydrated WeaponEquipment
+                // ammo class — slim stub at/rs (D-057) first, else the full-catalog hydrated WeaponEquipment.
+                // SLICE-1 CONSTRAINT — this branch has NO type gate, deliberately: it keys on `at`, which is
+                // the LAUNCHER's ammo class. Since SLICE-1 a slice also carries `X` (ammunition) comps, and if
+                // generate-slices.mjs ever emitted `at` on an X row this loop would count the load TWICE — once
+                // for the launcher, once for its ammo — silently inflating every force's ammo demand. The
+                // generator's at/rs join is WEAPON-ONLY (WEAPON_T there) and that is what keeps this correct.
                 const eq = c.eq instanceof WeaponEquipment ? c.eq : null;
                 const ammoType = c.at ?? eq?.ammoType;
                 const rackSize = c.rs ?? eq?.rackSize;

@@ -18,10 +18,13 @@
  */
 import { Component, ChangeDetectionStrategy, computed, effect, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { NewCampaignState } from '../new-campaign-state';
-import { computeLedger } from '../economy-ledger';
+import { NewCampaignState, type OdmStocks } from '../new-campaign-state';
+// ODM-11 FORK STRIP: computeLedger import removed — the merc monthly P&L never renders in the survival fork.
+import { odmStartingStocks, fuelPct, opsRemaining, daysCrackingPerOp, fuelState, binBreach, ODM_EXPOSURE_LEVELS } from './odm-stocks'; // ODM-11
+import { tradeForInstance, TRADE_LABEL, TRADE_ORDER, UNASSIGNED_LABEL, type OdmTrade } from './odm-trades'; // ODM-15 — the barracks by trade
+import { identityOf, foldPilots, reconcileRosterSkills } from './odm-stables'; // ODM-15b — the stables migration (+ the 2026-08-28 skill reconciliation)
 import { ARCH_NAMES, CUSTOM_UNIT } from '../faction/faction-data';
-import { shipForSize } from '../size-capital/resources';
+// ODM-11 FORK STRIP: shipForSize import removed with the resources-derived transport card (the Covenant is named directly).
 import { OrdersService } from '../orders/orders.service';
 import { orderText as houseOrderText } from '../orders/house-orders';
 import { OdmRosterComponent as RosterComponent } from './odm-roster'; // ODM-1 fork
@@ -37,7 +40,8 @@ import { capitalSystemIdFor } from '../star/star-capitals';
 import type { ContractOffer } from '../contract/contract-market';
 import type { SupportTerms } from '../contract/contract-terms';
 import { CampaignClockService } from '../clock/campaign-clock.service';
-import { CLOCK_TUNABLES, formatDate, type SpanId } from '../clock/campaign-clock';
+import { CLOCK_TUNABLES, formatDate, addDays, campaignWeek, type SpanId } from '../clock/campaign-clock'; // S60 — the header week off the one clock
+import { OdmGmFactsComponent } from './odm-gm-facts'; // ODM-22 — the read-only GM facts card (campaign id)
 // ODM-9b FORK STRIP: MissionGeneratorService import removed (No-Forge — its callers were the Quick Mission
 // hub + a dead generateMission(); the carrier mint in beginOperation rolls ONLY the authored ODM-7 draw)
 import { NONE_NARRATOR, MISSION_TUNABLES } from '../mission/mission-spec';
@@ -47,21 +51,28 @@ import { OdmBattleViewComponent as BattleViewComponent } from './odm-battle-view
 import { MissionTreeService } from '../mission/mission-tree.service';
 import type { MissionBranch } from '../mission/mission-tree'; // the __d110b deployAndActivate seam's test branch
 import { deployedSet } from '../force/deployed';
-import { FieldWalkComponent } from '../walk/field-walk';
-import { FieldWalkService } from '../walk/field-walk.service';
-import { RepairBaysComponent } from '../repair/repair-bays.component';
-import { InventoryTabComponent } from '../inventory/inventory-tab';
-import { InventoryService } from '../inventory/inventory.service';
-import { SupportPersonnelComponent } from '../personnel/support-personnel';
-import { HiringHallComponent } from '../personnel/hiring-hall';
+import { OdmFieldWalkComponent as FieldWalkComponent } from './odm-field-walk'; // ODM-13 fork (the R2 materiel walk)
+import { OdmFieldWalkService } from './odm-field-walk.service'; // ODM-13 — the survival walk writer (no C-bill path exists)
+import { OdmFleetService } from './odm-fleet.service'; // ODM-17 P2-f — fleet status on the Overview
+import { OdmReassignService } from './odm-reassign.service'; // ODM-25 — the Barracks overlay can change a posting
+import { TRADE_CHOICES } from './odm-trades'; // ODM-25b — the trade editor's vocabulary (the host supplies it)
+import { OdmIntentApplyService } from './odm-intent-apply.service'; // ODM-18 P1
+import { OdmProjectionService } from './odm-projection.service'; // ODM-18 P1
+import { OdmRepairBaysComponent as RepairBaysComponent } from './odm-repair-bays.component'; // ODM-13 P2 fork (parts-consuming, no bench rate)
+import { OdmInventoryTabComponent as InventoryTabComponent } from './odm-inventory-tab'; // ODM-13 P3 fork (the quartermaster's ledger — no trade surface, Ruling 3c)
+import { OdmQuartermasterService } from './odm-quartermaster.service'; // ODM-13 — the ammo-less seed + the Ruling-1 migration
+import { OdmSupportPersonnelComponent as SupportPersonnelComponent } from './odm-support-personnel'; // ODM-13 P3 fork (nobody is paid, nobody dismissed)
+// ODM-13 P3 — the Classic staff-for-C-bills hall does NOT mount here (Ruling 3c / ODM-11: no replacements arrive).
 import { PersonnelService } from '../personnel/personnel.service';
-import { AarTabComponent } from '../aar/aar-tab';
-import { IntelTabComponent } from '../intel/intel-tab';
+import { OdmAarTabComponent as AarTabComponent } from './odm-aar-tab'; // ODM-14 fork (the AAR speaks with the authored crew, never the voice-cast roll)
+import { OdmIntelTabComponent as IntelTabComponent } from './odm-intel-tab'; // ODM-12 fork (the authored contact registry, never the forge's casting)
 import { PilotDetailComponent } from '../barracks/pilot-detail';
 import { PilotService } from '../barracks/pilot.service';
 import { OdmResolveService as ResolveService } from './odm-resolve.service'; // ODM-1 fork // DIRECTIVE-HARDEN-4 — the resolve subsystem
 import { OdmCreateService } from './odm-create.service'; // ODM-3 — pack tree fetch + briefing deep-link
-import { hasAuthoredNodes, mintOdmBranches, reconcileOdmTree, type OdmDate, type OdmTreeData } from './odm-tree'; // ODM-3 + ODM-5
+import { hasAuthoredNodes, mintOdmBranches, odmSpecIsCurrent, reconcileOdmTree, type OdmDate, type OdmTreeData } from './odm-tree'; // ODM-3 + ODM-5 + ORDER-10 P7
+import { mergeGmMissions } from './odm-gm-mission'; // ODM-18 P3 §S-1 — the merged node set
+import { OdmComposerComponent } from './odm-composer'; // ODM-18 P3 — the GM mission composer
 import { rollOpfor, seedToNumber } from './odm-opfor-roll'; // ODM-9 — the carrier mint rolls the SAME seed the briefing shows
 import { DataService } from '../../services/data.service'; // ODM-9 — the stamp-first roll's catalog fallback
 import type { MissionSpec } from '../mission/mission-spec';
@@ -69,6 +80,7 @@ import type { ProtoInstance } from '../force/force-generator';
 import { OdmResolveModalComponent as ResolveModalComponent } from './odm-resolve-modal'; // ODM-1 fork
 import { OdmBriefingComponent } from './odm-briefing'; // ODM-2 — the mission-packet briefing surface
 import { SettingsTabComponent } from '../narrator/settings-tab';
+import { OdmRollbackComponent } from './odm-rollback'; // ODM-18 P2 — the GM rollback list (fork-only mount)
 import { NarratorConsoleComponent } from '../narrator/narrator-console';
 import { LegalFooterComponent } from '../../shared/legal-footer'; // COMPLIANCE-3 — inline notice in the dashboard chrome
 import { OdmClaimsPanelComponent as ClaimsPanelComponent } from './odm-claims-panel'; // ODM-9 fork (empty-state copy)
@@ -82,7 +94,7 @@ interface TabDef {
 const TABS: readonly TabDef[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'roster', label: 'Unit Roster' },
-    { id: 'inventory', label: 'Inventory' },
+    { id: 'inventory', label: 'Quartermaster' }, // ODM-13 P3 — the fork surface's name (id unchanged: deep links stable)
     { id: 'barracks', label: 'Barracks' },
     { id: 'missions', label: 'Missions' }, // D-072: the lifecycle hub — folds Force Preview (was MekBay) + Claims + AAR as sub-tabs
     { id: 'briefing', label: 'Briefing' }, // ODM-2: the mission-packet surface (package/FRAGORD + GM-only OPFOR)
@@ -110,7 +122,7 @@ function hashSeedFallback(input: string): string {
     selector: 'bce-odm-dashboard',
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'theme-dossier' },
-    imports: [RosterComponent, FlowComponent, ExitConfirmComponent, SaveDialogComponent, MissionPackageComponent, DeployRosterComponent, BattleViewComponent, FieldWalkComponent, RepairBaysComponent, InventoryTabComponent, SupportPersonnelComponent, HiringHallComponent, AarTabComponent, IntelTabComponent, PilotDetailComponent, SettingsTabComponent, NarratorConsoleComponent, ClaimsPanelComponent, LobbyPanelComponent, StarMapTabComponent, CurrentLocationComponent, ResolveModalComponent, OdmBriefingComponent, LegalFooterComponent],
+    imports: [RosterComponent, FlowComponent, ExitConfirmComponent, SaveDialogComponent, MissionPackageComponent, DeployRosterComponent, BattleViewComponent, FieldWalkComponent, RepairBaysComponent, InventoryTabComponent, SupportPersonnelComponent, AarTabComponent, IntelTabComponent, PilotDetailComponent, SettingsTabComponent, OdmRollbackComponent, OdmGmFactsComponent, OdmComposerComponent, NarratorConsoleComponent, ClaimsPanelComponent, LobbyPanelComponent, StarMapTabComponent, CurrentLocationComponent, ResolveModalComponent, OdmBriefingComponent, LegalFooterComponent],
     providers: [ResolveService],
     templateUrl: './odm-dashboard.html',
     // SHARED Classic sheet + a small FORK-OWNED sheet for odm-only additions (ODM-5 window chrome) — Classic scss untouched.
@@ -119,6 +131,20 @@ function hashSeedFallback(input: string): string {
     // (this restores the GM's OWN identity, not a game-join code). A separate stylesheet so dashboard.scss
     // stays under its 20kB per-component budget. Shown once per device until "I've saved it".
     styles: [`
+        /* ODM-22 — the GM clock correction. Visually SUBORDINATE to the advance buttons on purpose: it is a
+           repair tool, not a second way to run the campaign. The note carries the honesty. */
+        .ccorr { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px; }
+        .ccorrb { font-size:11px; padding:2px 10px; cursor:pointer; }
+        .ccorrb:disabled { opacity:.45; cursor:not-allowed; }
+        .ccorrn { font-size:11px; opacity:.7; max-width:60ch; line-height:1.35; }
+        /* ODM-18 P1 — the two-key donor-strip queue (player-raised, GM-decided) */
+        .strip-queue { border:1.6px solid var(--stamp); border-left-width:5px; padding:10px 14px; margin-top:14px; background:var(--paper2, var(--paper)); }
+        .sq-h { font-family:var(--label); font-weight:700; letter-spacing:1.2px; font-size:10.5px; color:var(--stamp); margin-bottom:6px; }
+        .sq-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:4px 0; font-size:13px; }
+        .sq-who { font-weight:700; }
+        .sq-btn { font:inherit; font-size:12px; padding:4px 12px; border:1.4px solid var(--ink2); background:transparent; cursor:pointer; }
+        .sq-btn.ok { border-color:var(--ok, #3a7d44); color:var(--ok, #3a7d44); font-weight:700; }
+        .sq-btn.no { border-color:var(--stamp); color:var(--stamp); }
         .rec-banner { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:14px; padding:11px 14px;
             border:1.6px solid #c79a3a; border-left-width:5px; background:linear-gradient(90deg, rgba(199,154,58,.14), var(--paper2)); }
         .rec-banner .rec-ico { font-size:20px; line-height:1; }
@@ -144,8 +170,10 @@ function hashSeedFallback(input: string): string {
         .qm-deploy { font-family:var(--label); font-weight:700; letter-spacing:1px; text-transform:uppercase; font-size:13px; padding:11px 18px;
             border:1.8px solid var(--ok, #3a7d44); background:var(--paper); color:var(--ok, #3a7d44); cursor:pointer; }
         .qm-deploy:hover { background:var(--ok, #3a7d44); color:var(--paper); }
-        /* HF-016 — collapsible combat-pilot (MechWarriors) group header */
+        /* HF-016 — collapsible barracks TRADE group headers (ODM-15: MechWarriors · Vehicle crews · Aerospace pilots · Unassigned) */
         .bk-grouphd { display:flex; align-items:center; gap:8px; width:100%; background:var(--paper); border:none; border-bottom:1.4px solid var(--ink); padding:8px 4px; margin-bottom:10px; cursor:pointer; text-align:left; font-family:var(--label); font-weight:600; letter-spacing:1.5px; text-transform:uppercase; font-size:13px; color:var(--ink); }
+        /* ODM-15 — the infirmary/fallen trade chip (unified casualty ledgers keep ONE list; the chip names the trade) */
+        .bk-trade { font-family:var(--mono); font-size:8.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink2); border:1px solid color-mix(in srgb, var(--ink2) 45%, transparent); border-radius:3px; padding:0 5px; margin-left:7px; vertical-align:1px; }
         .bk-grouphd:hover { background:var(--paper2); }
         .bk-grouphd .caret { display:inline-block; transition:transform .12s; color:var(--ink2); font-size:11px; }
         .bk-grouphd .caret.open { transform:rotate(90deg); }
@@ -189,7 +217,7 @@ export class OdmDashboardComponent {
     private readonly pilotSvc = inject(PilotService);
     // DIRECTIVE-HARDEN-4 — the resolve subsystem (dashboard-provided = the original field lifetime).
     protected readonly res = inject(ResolveService);
-    private readonly inventorySvc = inject(InventoryService);
+    private readonly quartermaster = inject(OdmQuartermasterService); // ODM-13
     private readonly personnelSvc = inject(PersonnelService);
     private readonly auth = inject(AuthService); // DEPLOY-009: drives the guest recovery-code banner
     private readonly star = inject(StarSystemsService); // D-079 — Star Map systems (lazy chunk)
@@ -208,8 +236,7 @@ export class OdmDashboardComponent {
     // ODM-1 FORK: the container only ever hosts packId:'odm' campaigns (Traditional base) — the Classic TABS, no 3-way.
     protected readonly tabs = computed<readonly TabDef[]>(() => TABS);
     protected readonly activeTab = signal<string>('overview');
-    // HF-016: the barracks combat-pilot (MechWarriors) group is collapsible + starts COLLAPSED.
-    protected readonly pilotsOpen = signal(false);
+    // HF-016 posture carried by ODM-15's per-trade groups (tradesOpen below) — all start collapsed.
     // D-072: the Missions/Quick-Mission lifecycle sub-tab — brief → Force Preview (deploy) → Claims (play) →
     // AAR (resolve). One signal serves both hubs (campaign 'missions' + Quick Mission 'quickmission').
     // HOTFIX-029 — 'claims' removed: the Claims board moved into the Lobby tab (its natural home alongside the
@@ -231,10 +258,32 @@ export class OdmDashboardComponent {
         try { void navigator.clipboard?.writeText(c); this.copied.set(true); setTimeout(() => this.copied.set(false), 1500); } catch { /* */ }
     }
 
+    protected readonly intentApply = inject(OdmIntentApplyService); // ODM-18 P1 — the console verbs land here (+ the two-key strip queue)
     constructor() {
+        void this.fleetSvc.ensureLoaded(); // ODM-17 P2-f — the Overview fleet card reads pack truth
+        // ODM-18 P1 — dashboard-lifetime: the projection builder (the pack-401-walled surfaces, published
+        // for player devices); the intent apply is the `intentApply` field (the pending-strips card reads it).
+        inject(OdmProjectionService);
+        // ODM-18 P1 (ruling 1) — the gmNotes RELOCATION, forward-only + REACTIVE: any pilots[].gmNotes
+        // (legacy saves, the stables fold, a shared-editor write) moves under gmOnly.pilotNotes and the row
+        // is stripped — the fanned pilots array reaches every joined player, and the field NAMED gmNotes
+        // keeps its name's promise. Idempotent; fires before any persist can fan a note.
+        effect(() => {
+            const pilots = this.state.pilots() ?? [];
+            if (!pilots.some((p) => p.gmNotes)) return;
+            const notes = { ...this.state.gmPilotNotes() };
+            for (const p of pilots) if (p.gmNotes) notes[p.pilotId] = notes[p.pilotId] ? `${notes[p.pilotId]}\n${p.gmNotes}` : p.gmNotes;
+            this.state.setGmPilotNotes(notes);
+            this.state.setPilots(pilots.map((p) => (p.gmNotes ? { ...p, gmNotes: undefined } : p)));
+            void this.store.persistCurrent();
+        });
         // DIRECTIVE-HARDEN-4 — hand the resolve service the dashboard-owned modal signals (same instances).
         this.res.bindHostUi({ packageOpen: this.packageOpen, walkOpen: this.walkOpen });
-        this.res.bindOdmTree(this.odmTreeData); // ODM-3 — resolve reads node defs (flags checklist) + reconciles unlocks
+        // ODM-3 — resolve reads node defs (flags checklist) + reconciles unlocks. ODM-18 P3 §S-2: bound to the
+        // MERGED set, so a composed mission resolves through the SAME ODM block — the 4-tier picker renders,
+        // odmOutcomes records, and clock.advanceDays(node.opDays) books the real time cost. Bound to the
+        // authored data alone, odmNodeDef() would return null and all three would vanish silently.
+        this.res.bindOdmTree(this.odmTreeAll);
         // A refresh / direct nav with an empty state → back to cover.
         if (!this.state.era() || !this.state.resources()) {
             void this.router.navigate(['/']);
@@ -261,15 +310,38 @@ export class OdmDashboardComponent {
         void this.odmEnsureTree();
         // D-036: pre-D-036 pilots gain bios + records-begin ONCE (forward-only, stored).
         if (this.pilotSvc.ensureBios()) void this.store.persistCurrent();
-        // D-056: roll the starting inventory at Begin / back-fill an older save ONCE (async — awaits
-        // MekBay data + the era-legal catalog; forward-only, persists only when it actually stored).
-        void this.inventorySvc.ensureStartingInventory().then((changed) => { if (changed) void this.store.persistCurrent(); });
+        // ODM-13 (Rulings 1 + 3e): the quartermaster seam — the ODM seed rolls NO ammunition category, and a
+        // pre-ODM-13 save's inventory ammo lines migrate ONCE into the bins (marker + log; persists inside).
+        void this.quartermaster.ensure();
+        // ODM-15 A3 — forward-only trade migration (the D-036 pattern): a pre-ODM-15 pilot with an
+        // assignment gets the trade stamped from the currently-assigned instance's catalog type, ONCE.
+        // Spares with no assignment stay unstamped (ruling A4 — they render "Unassigned", never a guess).
+        if (this.ensureTrades()) void this.store.persistCurrent();
+        // ODM-15b — the STABLES migration (forward-only, D-036 pattern): a campaign that minted the twin
+        // records folds each duplicated authored identity to ONE person on their primary ride; the
+        // secondary hull is unassigned (a spare machine, its stable linkage preserved on the pilot).
+        void this.ensureStables();
+        // ODM roster skill reconciliation (2026-08-28) — forward-only, triple-bounded (identity + msn 0 +
+        // exact pre-edit pair); log lines dedupe by exact text so nothing refires on later loads.
+        {
+            const rsk = reconcileRosterSkills(this.state.pilots() ?? []);
+            const existing = new Set((this.state.campaignLog() ?? []).map((e) => e.text));
+            const lines = [
+                ...rsk.applied.map((s) => `Roster reconciliation — ${s} (authored skill edit; msn 0, pre-edit pair matched)`),
+                ...rsk.leftAlone.map((s) => `Roster reconciliation — ${s}`),
+            ].filter((s) => !existing.has(s));
+            if (rsk.applied.length) this.state.setPilots(rsk.pilots);
+            if (lines.length) {
+                const today = this.state.currentDate() ?? this.state.startDate() ?? { y: 2767, m: 0, d: 1 };
+                this.state.setCampaignLog([...(this.state.campaignLog() ?? []), ...lines.map((text) => ({ date: today, text, kind: 'admin' as const }))]);
+            }
+            if (rsk.applied.length || lines.length) void this.store.persistCurrent();
+        }
         // D-058: roll the starting SUPPORT roster at Begin / back-fill an older save ONCE (sync — generated
         // purely from force size × tier × seed; forward-only, persists only when it actually stored).
         if (this.personnelSvc.ensureStartingPersonnel()) void this.store.persistCurrent();
-        // HOTFIX-023 (2): roll the D-059 hiring market for ALL campaigns (incl. custom / no-starting-force) so the
-        // Hiring Hall is never a blank tab — not only lazily when the bce-hiring-hall component effect happens to run.
-        if (this.personnelSvc.ensureHiringMarket()) void this.store.persistCurrent();
+        // ODM-13 P3 — the Classic staff-for-C-bills hall does not mount in this fork (Ruling 3c), so its
+        // candidate roll (HOTFIX-023's ensureHiringMarket) is NOT called: no surface reads it here.
         // D-079: back-fill currentLocation on a pre-D-079 save (forward-only, ONCE) to the faction capital,
         // then lazy-load the star map (its own ~72 KB chunk) so the Overview location line + GM setter resolve.
         if (!this.state.currentLocation() && this.state.faction()) { this.state.setCurrentLocation(capitalSystemIdFor(this.state.faction())); void this.store.persistCurrent(); }
@@ -284,9 +356,12 @@ export class OdmDashboardComponent {
                 deployAll: (): void => this.state.setStartingForce((this.state.startingForce() ?? []).map((u) => ({ ...u, condition: 'Deployed' }))),
                 // HOTFIX-029 test seam: open the lobby deployment gate deterministically (ACTIVE engagement +
                 // all units Deployed) so a harness can exercise the gated join/copy/QR affordances.
+// ORDER-4 H18 — the test seam's synthetic engagement is UNIQUE per activation: the server now CLOSES a resolved
+// engagement key and refuses battle writes to it, so a fixed 'test-active' re-activated after a resolve was a closed
+// key (gm2p2a T2k went red — a fixture artefact: a real re-generate mints a new branch id). Dev-seam only (localStorage-gated).
                 deployAndActivate: (): void => {
                     this.state.setStartingForce((this.state.startingForce() ?? []).map((u) => ({ ...u, condition: 'Deployed' })));
-                    this.state.setMissionTree([{ branchId: 'test-active', state: 'ACTIVE', name: 'Test Engagement' } as MissionBranch]);
+                    this.state.setMissionTree([{ branchId: `test-active-${Date.now().toString(36)}`, state: 'ACTIVE', name: 'Test Engagement' } as MissionBranch]);
                     void this.store.persistCurrent(); // persist so a joined player's snapshot sees the deploy
                 },
                 snap: (): unknown => ({
@@ -469,12 +544,73 @@ export class OdmDashboardComponent {
         this.clock.advance(span);
     }
 
+    /* ── DIRECTIVE-ODM-22 — THE GM CLOCK CORRECTION. The clock is ADVANCE-ONLY by construction, so a GM who
+       over-advances at the table has no way back short of a console or a destructive restore. Neither is
+       usable mid-session. THE PRINCIPLE: a correction that requires a console is a MISSING FEATURE.
+
+       WHAT IT DOES: moves currentDate back ONE DAY and persists. THAT IS ALL. It deliberately does NOT
+       re-run reconcile backwards, un-burn repair hours, reverse a monthly tick, or un-heal anyone — all of
+       that is forward-only by construction and unwinding it is what makes a date EDIT dangerous. The
+       resulting state has derived values sitting slightly AHEAD of the clock, which is exactly why the log
+       line below is mandatory: it is the audit trail that explains to a future reader why.
+
+       ODM-ONLY THIS PASS. campaign-clock.service.ts is SHARED (Traditional + HS ride it), so the control
+       lives here rather than in the service. The NEED is universal — every GM over-advances — and this is a
+       global candidate, but it earns that on its own pass with its own goldens.
+
+       BOUNDED DELIBERATELY: one day, no week/month, no date picker. A month back crosses tick boundaries and
+       multiplies the inconsistency; a picker invites arbitrary jumps that leave no trace of intent. Pressing
+       it repeatedly IS the feature — five presses leave five log lines, and repeated small corrections are
+       self-documenting in a way a date field never is. ── */
+    /** HARD FLOOR — the campaign start. Below it there is no coherent state to describe. */
+    protected readonly canCorrectClock = computed(() => {
+        const cur = this.state.currentDate(), start = this.state.startDate();
+        if (!cur) return false;
+        if (!start) return true; // no start on record — nothing to floor against
+        return Date.UTC(cur.y, cur.m, cur.d) > Date.UTC(start.y, start.m, start.d);
+    });
+    /** The most recent resolved-mission date, if any — a CONFIRM-PAST, never a block (see below). */
+    private lastResolutionDate(): { y: number; m: number; d: number } | null {
+        const dates = (this.state.missionTree() ?? [])
+            .map((b) => b.resolution?.resolvedDate)
+            .filter((d): d is { y: number; m: number; d: number } => !!d);
+        if (!dates.length) return null;
+        return dates.reduce((a, b) => (Date.UTC(b.y, b.m, b.d) > Date.UTC(a.y, a.m, a.d) ? b : a));
+    }
+    protected correctClockBack(): void {
+        const cur = this.state.currentDate();
+        if (!cur || !this.canCorrectClock()) return;
+        const to = addDays(cur, -1);
+        const start = this.state.startDate();
+        if (start && Date.UTC(to.y, to.m, to.d) < Date.UTC(start.y, start.m, start.d)) return; // belt: the hard floor
+        /* THE RESOLUTION FLOOR IS A CONFIRM, NOT A BLOCK (PM ruling, adopting the argument): the audit trail
+           is the safety, not the refusal. Going back before a resolved mission IS incoherent — but a GM who
+           discovers the resolution was itself entered late must be able to cross it, and every press writes a
+           log line, so crossing is self-documenting. Record rather than prevent. */
+        const res = this.lastResolutionDate();
+        if (res && Date.UTC(to.y, to.m, to.d) < Date.UTC(res.y, res.m, res.d)) {
+            if (!confirm(`That moves the clock to ${formatDate(to)}, BEFORE the last resolved mission (${formatDate(res)}).\n\nThat mission's record, its booked days and its after-action all sit after this date. Correcting past it is allowed and will be logged — but nothing about the mission is undone.\n\nContinue?`)) return;
+        }
+        this.state.setCurrentDate(to);
+        this.state.setCampaignLog([...(this.state.campaignLog() ?? []), {
+            date: to,
+            text: `GM clock correction — ${formatDate(cur)} → ${formatDate(to)}. The date moved only: repair hours, monthly ticks and recovery already banked stay banked, so some records sit ahead of the clock.`,
+            kind: 'admin' as const,
+        }]);
+        void this.store.persistCurrent();
+    }
+
     // ── Mission spec (D-023) — the active contract's generated mission + its briefing view. ──
     /** The active mission spec, only when it belongs to the current contract (else stale → none). */
     protected readonly missionSpec = computed(() => {
         const spec = this.state.missionSpec();
         const ac = this.state.acceptedContract();
-        return spec && ac && spec.contractId === ac.id ? spec : null;
+        // ORDER-10 P7 — the carrier spec is CURRENT only when it belongs to the ACTIVE branch (the same
+        // source the header reads, odmSpecIsCurrent). A RESOLVED mission's spec (e.g. Pale Candle) that
+        // lingers past its branch — as it can on resume, when a DIFFERENT branch (Last Bearing) is ACTIVE —
+        // is never the GM's current brief. (The contractId guard alone can't tell ODM tracks apart: they
+        // all carry 'odm-standing-orders'. HS is safe there because each contract mints a distinct id.)
+        return spec && ac && spec.contractId === ac.id && odmSpecIsCurrent(spec, this.branches()) ? spec : null;
     });
     protected readonly hasMission = computed(() => !!this.missionSpec());
     /** Briefing prose — a VIEW rendered from the spec (DATA-003); NONE-mode narrator this slice. */
@@ -528,7 +664,17 @@ export class OdmDashboardComponent {
     protected readonly canGenerateBranch = computed(() => !this.activeBranch());
     // ── ODM-3 — the authored tree ──
     protected readonly odmTreeData = signal<OdmTreeData | null>(null);
-    private odmNode(id: string) { return this.odmTreeData()?.nodes.find((n) => n.id === id); }
+    /** ODM-18 P3 §S-1 — THE MERGED NODE SET: authored tree.json ∪ the PUBLISHED composed missions. Every
+     *  runtime node lookup reads this, never the authored data alone: reconcileOdmTree strips any branch it
+     *  cannot find a node for (the ODM-4 Part A Forge-residue hardening, deliberately UNWEAKENED), so a
+     *  published mission survives the clock/mount/resolve reconciles only because it legitimately HAS a node
+     *  here. Authored nodes are appended-to, never rewritten — they reconcile byte-identically. */
+    protected readonly odmTreeAll = computed<OdmTreeData | null>(() => mergeGmMissions(this.odmTreeData(), this.state.odmGmMissions(), this.state.gmMissionDrafts()));
+    private odmNode(id: string) { return this.odmTreeAll()?.nodes.find((n) => n.id === id); }
+    protected readonly activeGmMission = computed(() => {
+        const id = this.state.odmActiveNodeId();
+        return id ? (this.state.odmGmMissions().find((m) => m.id === id) ?? null) : null;
+    });
     /** The authored packet id behind a board card / the active mission (null = packet pending — PM still writing it). */
     protected odmPacketOf(branchId: string): string | null { return this.odmNode(branchId)?.packet ?? null; }
     protected odmIsAuthored(branchId: string): boolean { return !!this.odmNode(branchId); }
@@ -537,7 +683,7 @@ export class OdmDashboardComponent {
     protected nodeGateText(branchId: string): string { return this.odmNode(branchId)?.gate?.text ?? ''; }
     protected readonly activeNodePacket = computed(() => {
         const id = this.state.odmActiveNodeId();
-        return id ? (this.odmTreeData()?.nodes.find((n) => n.id === id)?.packet ?? null) : null;
+        return id ? (this.odmTreeAll()?.nodes.find((n) => n.id === id)?.packet ?? null) : null;
     });
     /** ODM-5 — the campaign date as the tree's `now` (clock falls back to start). */
     protected readonly odmNow = computed<OdmDate | null>(() => this.state.currentDate() ?? this.state.startDate() ?? null);
@@ -545,26 +691,31 @@ export class OdmDashboardComponent {
      *  Idempotent — the second pass after its own write is a no-op. */
     private readonly odmClockReconcile = effect(() => {
         const now = this.odmNow();
-        const data = this.odmTreeData();
-        if (!now || !data) return;
+        const authored = this.odmTreeData();
+        const data = this.odmTreeAll();
+        if (!now || !data || !authored) return;
         const cur = this.state.missionTree() ?? [];
-        if (!hasAuthoredNodes(cur, data)) return; // pre-migration — odmEnsureTree owns that path
-        const next = reconcileOdmTree(cur, data, this.state.odmOutcomes(), now);
+        if (!hasAuthoredNodes(cur, authored)) return; // pre-migration (the AUTHORED test) — odmEnsureTree owns that path
+        const next = reconcileOdmTree(cur, data, this.state.odmOutcomes(), now); // §S-1: MERGED — a published mission is not residue
         if (JSON.stringify(next) !== JSON.stringify(cur)) { this.state.setMissionTree(next); void this.store.persistCurrent(); }
     });
     private async odmEnsureTree(): Promise<void> {
         const data = await this.create.treeJson();
         if (!data?.nodes?.length) return; // pack unreachable — keep whatever exists, NEVER crash (retry next mount)
         this.odmTreeData.set(data);
+        const merged = mergeGmMissions(data, this.state.odmGmMissions(), this.state.gmMissionDrafts()) ?? data; // §S-1
         const cur = this.state.missionTree() ?? [];
         const now = this.odmNow() ?? undefined;
         const next = hasAuthoredNodes(cur, data)
-            ? reconcileOdmTree(cur, data, this.state.odmOutcomes(), now)
-            : mintOdmBranches(data, now); // pre-ODM-3 save: the synthetic guerrilla tree is replaced wholesale
+            ? reconcileOdmTree(cur, merged, this.state.odmOutcomes(), now)
+            : mintOdmBranches(merged, now); // pre-ODM-3 save: the synthetic guerrilla tree is replaced wholesale
         let changed = JSON.stringify(next) !== JSON.stringify(cur);
-        // ODM-4 Part A — Forge SPEC residue: authored begins mint no spec, so any lingering missionSpec in an
-        // odm campaign is flow-minted Forge output (the live "Long Fallow" breach) → cleared with its branch.
-        if (this.state.missionSpec() && !next.some((b) => b.state === 'ACTIVE')) { this.state.setMissionSpec(null); changed = true; }
+        // ODM-4 Part A + ORDER-10 P7 — a carrier missionSpec that is NOT current for the reconciled tree is
+        // dropped: `next` has no ACTIVE branch this spec belongs to. The old guard (`!next.some(ACTIVE)`) only
+        // caught a fully-idle tree; it MISSED the P7 shape — a resolved mission's spec lingering while a
+        // DIFFERENT branch is ACTIVE. odmSpecIsCurrent is the shared rule; odmEnsureTree runs on every mount,
+        // so this is the SAME clear applied on the live reconcile AND on resume/hydrate (one rule, two entries).
+        if (this.state.missionSpec() && !odmSpecIsCurrent(this.state.missionSpec(), next)) { this.state.setMissionSpec(null); changed = true; }
         if (changed) { this.state.setMissionTree(next); void this.store.persistCurrent(); }
     }
     /** ODM-3 addendum A (JAMES RULING, DOCTRINE §7b): ODM missions are NEVER Forge-generated — every tree
@@ -574,9 +725,9 @@ export class OdmDashboardComponent {
      *  branch (legacy save) still takes the Classic path. */
     protected beginOperation(id: string): void {
         if (!this.canGenerateBranch()) return;
-        const data = this.odmTreeData();
+        const data = this.odmTreeAll();
         const node = data?.nodes.find((n) => n.id === id);
-        if (!data || !node) { void this.tree.generateBranch(id); return; } // legacy-only fallback
+        if (!data || !node) { void this.tree.generateBranch(id); return; } // legacy-only fallback (a composed node IS in the merged set, so it never lands here)
         this.state.missionTree.update((t) => (t ?? []).map((b) => (b.branchId === id ? { ...b, state: 'ACTIVE' as const } : b)));
         this.state.odmActiveNodeId.set(id);
         // ODM-7 — mint/ROTATE the mission-INSTANCE seed on EVERY begin (re-begin = new seed = a different but
@@ -597,7 +748,15 @@ export class OdmDashboardComponent {
     private async mintOdmSpec(node: NonNullable<ReturnType<OdmTreeData['nodes']['find']>>, seed: string): Promise<void> {
         let opforForce: ProtoInstance[] = [];
         let opforBv = 0;
-        if (node.packet) {
+        // ODM-18 P3 — a COMPOSED mission carries its own hand-built force. Taken VERBATIM: beginOperation
+        // rotates the mission seed on every begin (right for an authored ROLL, wrong for a GM's exact
+        // roster — §S-9), so the composed force is stored on the published record and re-used, never
+        // re-rolled. Instance ids were minted at publish in the odm-<seed8>-<i> shape.
+        const composed = this.state.odmGmMissions().find((m) => m.id === node.id);
+        if (composed) {
+            opforForce = composed.opforForce ?? [];
+            opforBv = composed.opforBv ?? 0;
+        } else if (node.packet) {
             const fspec = await this.create.opforSpec(node.packet); // null in LAN (the ruled opfor* gate) / unauthored
             if (fspec) {
                 try {
@@ -628,9 +787,21 @@ export class OdmDashboardComponent {
             type: 'GUERRILLA_WARFARE', // the standing order's generator family — never player-visible (typeName renders)
             typeName: node.title,
             posture: 'raid',
-            objectives: [], // the briefing packet is the mission document (DOCTRINE §7b)
+            // ODM-18 P3 — the composed trio rides the EXISTING carrier field: filledObjectives' no-forge
+            // fallback returns these verbatim, so they reach the resolve dialog's three rows, the snapshotted
+            // resolution.aar.objectives, the AAR objective table AND the player brief with no consumer change.
+            // An authored mission keeps [] (its briefing packet is the mission document — DOCTRINE §7b).
+            objectives: composed
+                ? [composed.objectives.primary, composed.objectives.secondary, composed.objectives.bonus].filter((x) => !!x.trim())
+                : [],
             opforForce, opforBv, playerBv: 0,
-            terrain: { biome: node.system, note: 'Authored operation — the briefing packet is the mission document.' },
+            terrain: {
+                biome: node.system,
+                // §S-7 — the authored sentence is a LIE for a composed operation (there is no packet).
+                note: composed
+                    ? 'GM-composed operation — the brief on this card is the mission document.'
+                    : 'Authored operation — the briefing packet is the mission document.',
+            },
             deployment: { player: '', opfor: '' },
             victoryConditions: [],
             clauses: { command: 'Independent', salvageExchange: false, salvagePct: 100, supportKind: 'none', supportPct: 0, transportPct: 0 },
@@ -686,10 +857,11 @@ export class OdmDashboardComponent {
     }
 
     // ── D-031 Walk the field — the post-RESOLVE dispositions screen (skippable + resumable). ──
-    private readonly fieldWalk = inject(FieldWalkService);
+    private readonly fieldWalk = inject(OdmFieldWalkService); // ODM-13 — same pending law, fork-owned writer
     protected readonly walkPending = this.fieldWalk.pendingCount;
     protected readonly walkOpen = signal(false);
-    protected openWalk(): void { this.walkOpen.set(true); }
+    // TABLE-2 T2-1 — open the walk for a SPECIFIC mission (from the AAR row); arg-less opens the first pending (the banner).
+    protected openWalk(branchId?: string): void { this.fieldWalk.selectedWalkBranchId.set(branchId ?? null); this.walkOpen.set(true); }
 
     // ── D-032 House orders — the non-merc mission ignition (the contract market's sibling). ──
 // ODM-1 FORK: house-orders members STRIPPED (the contract layer never comes along)
@@ -741,34 +913,35 @@ export class OdmDashboardComponent {
         return d ? formatDate(d) : '—';
     });
     protected readonly eraText = computed(() => this.state.era()?.name ?? '—');
+    /** S60 (2026-09-12) — the ODM header's WK was the same literal "1" S54 found on the campaign dashboard (the fork carried it). The
+     *  campaign week off the ONE clock (campaignWeek = floor(daysBetween/7)+1), the same source the autosave's "Day N" derives from. */
+    protected readonly weekText = computed(() => String(campaignWeek(this.state.startDate(), this.clock.currentDate())));
 
     // ── Overview stat cards ──
     protected readonly forceCount = computed(() => this.state.unitSize()?.count ?? 0);
-    /** Live treasury (D-022) — the capital value made mutable; falls back to capital for pre-D-022 state. */
-    protected readonly treasuryShort = computed(() => {
-        const t = this.state.treasury() ?? this.state.capital()?.amount;
-        return t != null ? this.short(t) : '—';
-    });
-    protected readonly treasuryTier = computed(() => this.state.capital()?.tier ?? '—');
-    protected readonly transport = computed<{ value: string; sub: string }>(() => {
-        const res = this.state.resources();
-        const ship = shipForSize(this.state.unitSize()?.id);
-        if (res === 'established') return { value: '1+', sub: `${ship} + Invader JumpShip` };
-        if (res === 'normal') return { value: '1', sub: `${ship} DropShip` };
-        if (res === 'lean') return { value: '—', sub: 'Lean — no transport' };
-        return { value: '—', sub: '' };
-    });
+    // ── TESTER-ODM-1 #3/#4/#5 — the numbers a GM quotes out loud, each counting what its label says ──
+    /** PEOPLE, not hulls (the ODM-15b stables fold makes these differ: one pilot can hold two machines). */
+    protected readonly pilotCount = computed(() => (this.state.pilots() ?? []).filter((p) => p.status !== 'KIA').length);
+    protected readonly mechCount = computed(() => (this.state.startingForce() ?? []).filter((i) => i.unitType !== 'vehicle').length);
+    protected readonly vehicleCount = computed(() => (this.state.startingForce() ?? []).filter((i) => i.unitType === 'vehicle').length);
+    /** The ODM treasury is authored on the pack (state.treasury); the merc capital signal is null in the fork. */
+    protected readonly treasuryAmount = computed(() => Math.round(this.state.treasury() ?? this.state.capital()?.amount ?? 0));
+    // ODM-11 FORK STRIP: treasuryShort/treasuryTier (the Classic M-rounded card — 50,000 read `0M`) and the
+    // resources-derived transport card removed — the fork renders treasuryOdm + names the Iron Covenant.
 
     // ── Campaign log (templated from state) ──
     protected readonly log = computed(() => {
         const d = this.dateText();
         const c = this.state.capital();
-        const n = this.forceCount();
         const lines = [
             `Campaign initiated. ${this.commandName()} deployed.`,
             'Standing orders in effect. Hold the Circle.', // ODM-1 FORK (was the isMerc contract/orders line)
-            `Force mustered: ${n} ’Mechs, ${n} warriors.`,
-            `Treasury seeded: ${c ? c.amount.toLocaleString('en-US') : '—'} C-bills.`,
+            // TESTER-ODM-1 #4 — the company is not 28 'Mechs: ODM-15's own trade split is 16 'Mechs and
+            // 12 vehicles, and the warrior count is PEOPLE (the stables fold made it differ from the hulls).
+            `Force mustered: ${this.mechCount()} ’Mechs, ${this.vehicleCount()} vehicles, ${this.pilotCount()} warriors.`,
+            // TESTER-ODM-1 #5 — the ODM treasury is authored on the pack, not on state.capital(): the merc
+            // capital signal is null in the fork, so this line rendered a bare em-dash where a number goes.
+            `Treasury seeded: ${(c?.amount ?? this.treasuryAmount()).toLocaleString('en-US')} C-bills.`,
         ];
         const base = lines.map((text) => ({ t: d, text }));
         // D-029: the dated purchase/sale/admin entries from the campaign log (newest last).
@@ -776,41 +949,73 @@ export class OdmDashboardComponent {
         return [...base, ...entries];
     });
 
-    protected short(n: number): string {
-        return n >= 1e9 ? (n / 1e9).toFixed(2).replace(/\.00$/, '') + 'B' : Math.round(n / 1e6) + 'M';
-    }
+    // ODM-11 FORK STRIP: short() (the M/B rounder behind the `0M` Treasury bug) removed with treasuryShort.
 
-    // ── DIRECTIVE-074 — Overview economy summary (the D-058 ledger via the SHARED computeLedger — same numbers
-    //    as the inventory tab, single source) + a transaction log of recent money in/out. ──
-    protected readonly ledger = computed(() => computeLedger(this.state));
+    // ── ODM-11 FORK STRIP: the D-074/D-075 monthly-economy members (ledger/lastPayroll/payrollShortfall/
+    //    costsAtRisk) REMOVED — a survival campaign models ATTRITION, not cash flow; the merc P&L (and its
+    //    "take a contract / cut staff" advice) is false on occupied Terra. The txn log stays (Part C:
+    //    C-bills remain, narrowed to bribes/black market/silence). ──
     /** Recent MONEY events only (signed amount + resulting balance), reverse-chron, capped at 15 (scroll for the rest). */
     protected readonly txnLog = computed(() => (this.state.campaignLog() ?? []).filter((e) => e.amount != null).slice().reverse().slice(0, 15));
     protected money(n: number): string { return Math.round(n).toLocaleString('en-US'); }
     protected absVal(n: number): number { return Math.abs(n); }
     protected txnDate(d: { y: number; m: number; d: number }): string { return `${d.y}-${String(d.m + 1).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`; }
 
-    // ── DIRECTIVE-075 — payroll: the monthly-debit cue, the shortfall flag, and the next-month pre-warning ──
-    /** The latest "Personnel payroll" debit (the visible monthly cue that the tick fired — not silent). */
-    protected readonly lastPayroll = computed(() => {
-        const e = [...(this.state.campaignLog() ?? [])].reverse().find((x) => /^Personnel payroll/.test(x.text) && x.amount != null);
-        return e ? { amount: Math.abs(e.amount as number), date: this.txnDate(e.date) } : null;
-    });
-    /** Recorded payroll shortfalls (D-075) — the Overview flag; the future T-040 turnover system consumes them. */
-    protected readonly payrollShortfall = computed(() => {
-        const list = this.state.payrollShortfalls() ?? [];
-        if (!list.length) return null;
-        const last = list[list.length - 1];
-        const kinds = [...new Set(list.map((x) => x.kind ?? 'payroll'))].join(' + '); // D-076: payroll and/or maintenance
-        return { count: list.length, total: list.reduce((s, x) => s + x.unpaid, 0), lastMonth: this.txnDate(last.month), kinds };
-    });
-    /** Pre-warning: next month's obligations (payroll + unit maintenance) won't be covered by treasury + income. */
-    protected readonly costsAtRisk = computed(() => {
-        const l = this.ledger();
-        const due = l.payroll + l.maintenance;
-        return due > 0 && l.treasury + l.income < due;
-    });
+    // ── DIRECTIVE-ODM-11 — the SURVIVAL economy: stocks, not payroll. v1 displays + GM-adjusts (R2);
+    //    below-floor WARNS and never gates BEGIN OPERATION (R1). Numbers from the authored pack ledger. ──
+    /** The live stocks — a pre-ODM-11 campaign (odmStocks null) displays the authored seed; the first GM
+     *  adjust MATERIALIZES it into the snapshot (no silent auto-write on load). */
+    // ── ODM-17 P2-f — fleet status on the Overview (one line per ship; the depth lives on the Force page).
+    //    Same data source as the roster + the walk (OdmFleetService + the live stocks) — zero duplicate state.
+    private readonly fleetSvc = inject(OdmFleetService);
+    protected readonly fleetVessels = computed(() => this.fleetSvc.vessels() ?? []);
+    protected readonly liftBudget = this.fleetSvc.liftBudget;
+    protected isJumpV(v: { class: string }): boolean { return /JumpShip/i.test(v.class); }
 
-    // ── Barracks (D-020/D-036) — the personnel registry; KIA pilots file under the memorial. ──
+    protected readonly stocks = computed<OdmStocks>(() => this.state.odmStocks() ?? odmStartingStocks());
+    protected readonly stockBins = computed(() => Object.entries(this.stocks().bins).map(([name, b]) => ({ name, ...b, breach: binBreach(b.tons, b.floorTons) })));
+    protected readonly fuelPctV = computed(() => fuelPct(this.stocks()));
+    protected readonly opsRemainingV = computed(() => opsRemaining(this.stocks()));
+    protected readonly daysCrackingV = computed(() => daysCrackingPerOp(this.stocks()));
+    protected readonly fuelStateV = computed(() => fuelState(this.stocks()));
+    protected readonly anyBreach = computed(() => this.stockBins().some((b) => b.breach));
+    protected fmtTons(n: number): string { return (Math.round(n * 10) / 10).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+    /** Part B — Treasury, legible: 50,000 renders as 50,000 (the Classic M-rounding read `0M`). */
+    protected readonly treasuryOdm = computed(() => {
+        const t = this.state.treasury() ?? this.state.capital()?.amount;
+        return t != null ? Math.round(t).toLocaleString('en-US') : '—';
+    });
+    /** Part B — EXPOSURE (replaces the inert Threat meter): a GM-SET assessment, honestly labelled. */
+    protected readonly exposureV = computed(() => this.stocks().exposure);
+    protected readonly exposureLevels = ODM_EXPOSURE_LEVELS;
+    // the GM manual adjust (R2) — edits a draft copy; Save materializes + persists.
+    protected readonly stocksAdjustOpen = signal(false);
+    protected stocksDraft: { fuelTons: number; exposure: string; bins: { name: string; tons: number }[] } = { fuelTons: 0, exposure: 'LOW', bins: [] };
+    protected openStocksAdjust(): void {
+        const s = this.stocks();
+        this.stocksDraft = { fuelTons: s.fuelTons, exposure: s.exposure, bins: Object.entries(s.bins).map(([name, b]) => ({ name, tons: b.tons })) };
+        this.stocksAdjustOpen.set(true);
+    }
+    protected cancelStocksAdjust(): void { this.stocksAdjustOpen.set(false); }
+    protected saveStocksAdjust(): void {
+        const cur = this.stocks();
+        const bins = { ...cur.bins };
+        for (const d of this.stocksDraft.bins) {
+            const t = Number(d.tons);
+            if (bins[d.name] && Number.isFinite(t) && t >= 0) bins[d.name] = { ...bins[d.name], tons: t };
+        }
+        const fuel = Number(this.stocksDraft.fuelTons);
+        this.state.odmStocks.set({
+            ...cur,
+            fuelTons: Number.isFinite(fuel) && fuel >= 0 ? Math.min(fuel, cur.fuelCapacityTons) : cur.fuelTons,
+            bins,
+            exposure: this.stocksDraft.exposure || cur.exposure,
+        });
+        this.stocksAdjustOpen.set(false);
+        void this.store.persistCurrent();
+    }
+
+    // ── Barracks (D-020/D-036; ODM-15 by-trade) — the personnel registry; KIA pilots file under the memorial. ──
     protected readonly pilotRoster = computed(() => {
         const pilots = this.state.pilots() ?? [];
         const byId = new Map((this.state.startingForce() ?? []).map((i) => [i.instanceId, i]));
@@ -832,6 +1037,7 @@ export class OdmDashboardComponent {
                     assignment: inst ? `${inst.chassis} ${inst.model}`.trim() : 'SPARE',
                     assigned: !!inst,
                     commander: !!inst?.isCommander,
+                    trade: (p.trade as OdmTrade | undefined) ?? null, // ODM-15 — the stamped trade (null = unassigned/legacy)
                 };
             })
             .sort(
@@ -843,6 +1049,113 @@ export class OdmDashboardComponent {
                     a.name.localeCompare(b.name),
             );
     });
+    /* ODM-15 Part B — one collapsible group per trade PRESENT, in TRADE_ORDER, "Unassigned — awaiting
+     * posting" trailing (stampless pilots — ruling A4: an honest gap, never a MechWarriors default).
+     * Zero-member groups do not render at all: an empty "Aerospace pilots 0" header is a promise the
+     * campaign may not keep. Same card markup, whole-barracks bk-sum untouched. */
+    protected readonly pilotGroups = computed(() => {
+        const roster = this.pilotRoster();
+        const groups: { key: string; label: string; people: typeof roster }[] = [];
+        for (const t of TRADE_ORDER) {
+            const people = roster.filter((p) => p.trade === t);
+            if (people.length) groups.push({ key: t, label: TRADE_LABEL[t], people });
+        }
+        const unassigned = roster.filter((p) => !p.trade || !TRADE_ORDER.includes(p.trade));
+        if (unassigned.length) groups.push({ key: 'unassigned', label: UNASSIGNED_LABEL, people: unassigned });
+        return groups;
+    });
+    /** HF-016 posture, per group: the set holds the EXPANDED groups — empty set = ALL COLLAPSED at start. */
+    protected readonly tradesOpen = signal<Set<string>>(new Set());
+    protected tradeOpen(key: string): boolean { return this.tradesOpen().has(key); }
+    protected toggleTrade(key: string): void {
+        this.tradesOpen.update((s) => { const n = new Set(s); if (n.has(key)) n.delete(key); else n.add(key); return n; });
+    }
+    /** The infirmary/fallen trade chip (Part B, CC's call taken: one muted span, only when known). */
+    protected tradeChip(id: string): string {
+        const t = (this.state.pilots() ?? []).find((p) => p.pilotId === id)?.trade as OdmTrade | undefined;
+        return t && TRADE_ORDER.includes(t) ? TRADE_LABEL[t] : '';
+    }
+    /** ODM-15b — fold duplicated AUTHORED identities (the twins a pre-15b mint created) to one record per
+     *  person, on the primary ride. Rails, in order: the pack's pilotPrimary marker (fetched; the Mongoose
+     *  is ACTIVE, so the condition rail alone cannot split Aldous) → prefer-active → report + leave (never
+     *  fold by guess). The fold is LOSSLESS (odm-stables.foldPilots — diverging text is appended to
+     *  gmNotes, never dropped); the person→both-hulls linkage is PRESERVED on `stableHulls` (ADDENDUM:
+     *  groundwork for the future familiarity mechanic = not destroying data; no mechanic reads it yet). */
+    private async ensureStables(): Promise<void> {
+        const pilots = this.state.pilots() ?? [];
+        const byIdent = new Map<string, typeof pilots>();
+        for (const p of pilots) {
+            if (!p.named) continue; // authored identities only — the ruled scope
+            const k = identityOf(p.name, p.callsign);
+            byIdent.set(k, [...(byIdent.get(k) ?? []), p]);
+        }
+        const twins = [...byIdent.values()].filter((g) => g.length === 2);
+        if (!twins.length) return;
+        const instById = new Map((this.state.startingForce() ?? []).map((i) => [i.instanceId, i]));
+        // The primary marker lives in the pack roster (chassis+variant keyed) — fetch once, null-tolerant.
+        const roster = await this.create.rosterJson();
+        const secondaryKeys = new Set((roster?.units ?? []).filter((u) => u.pilotPrimary === false).map((u) => `${u.chassis}|${u.variant}`.toLowerCase()));
+        let next = this.state.pilots() ?? [];
+        let folded = 0;
+        const noteMerges: [string, string][] = []; // ODM-18 P1 — [folded-away id, survivor id] for the store merge below
+        for (const pair of twins) {
+            const seat = (p: (typeof pilots)[number]) => (p.assignedInstanceId ? instById.get(p.assignedInstanceId) : undefined);
+            const isSecondary = (p: (typeof pilots)[number]) => { const i = seat(p); return !!i && secondaryKeys.has(`${i.chassis}|${i.model}`.toLowerCase()); };
+            const isActive = (p: (typeof pilots)[number]) => seat(p)?.condition === 'Active';
+            let primary = pair.find((p) => !isSecondary(p) && !!seat(p));
+            let secondary = pair.find((p) => p !== primary);
+            if (!primary || pair.every((p) => !isSecondary(p))) {
+                // no marker resolution (roster unreachable / unmarked) → the condition rail
+                const act = pair.filter(isActive);
+                if (act.length === 1) { primary = act[0]; secondary = pair.find((p) => p !== primary); }
+                else { this.state.logNotice(`Barracks reconciliation SKIPPED — two records for ${pair[0].name} and no marker or condition splits them; fix the pack marker.`, null, 'admin'); continue; }
+            }
+            if (!primary || !secondary) continue;
+            const hulls = [primary.assignedInstanceId, secondary.assignedInstanceId].filter((x): x is string => !!x);
+            const foldedRec = { ...foldPilots(primary, secondary), stableHulls: [...new Set([...(primary.stableHulls ?? []), ...hulls])] };
+            next = next.filter((p) => p.pilotId !== secondary!.pilotId).map((p) => (p.pilotId === primary!.pilotId ? foldedRec : p));
+            noteMerges.push([secondary.pilotId, primary.pilotId]);
+            folded++;
+            const secInst = seat(secondary);
+            this.state.logNotice(`Barracks reconciliation — ${primary.name} consolidated to one record (rides ${seat(primary)?.chassis ?? 'their machine'}; the ${secInst?.chassis ?? 'second hull'} stands down as a spare machine of their stable).`, null, 'admin');
+        }
+        if (folded) {
+            // ODM-18 P1 — the gmNotes RELOCATION can win the race to a twin's notes (the reactive effect
+            // strips rows before this async fold runs), leaving a store entry keyed by the folded-away id.
+            // Merge it under the survivor so the fold stays LOSSLESS in BOTH homes, whichever ran first.
+            const notes = { ...this.state.gmPilotNotes() };
+            let notesChanged = false;
+            for (const [from, to] of noteMerges) {
+                if (notes[from]) {
+                    notes[to] = notes[to] ? `${notes[to]}\n${notes[from]}` : notes[from];
+                    delete notes[from];
+                    notesChanged = true;
+                }
+            }
+            if (notesChanged) this.state.setGmPilotNotes(notes);
+            this.state.setPilots(next);
+            void this.store.persistCurrent();
+        }
+    }
+    /** ODM-15 A3 — the forward-only migration: stamp assigned-but-unstamped pilots from the catalog type
+     *  of the instance they crew (unitType fallback when the catalog can't resolve). Returns changed. */
+    private ensureTrades(): boolean {
+        const pilots = this.state.pilots() ?? [];
+        if (!pilots.length) return false;
+        const byId = new Map((this.state.startingForce() ?? []).map((i) => [i.instanceId, i]));
+        let changed = false;
+        const next = pilots.map((p) => {
+            if (p.trade || !p.assignedInstanceId) return p;
+            const inst = byId.get(p.assignedInstanceId);
+            if (!inst) return p;
+            const trade = tradeForInstance(inst, this.data.getUnitByName(inst.unitRef)?.type);
+            if (!trade) return p;
+            changed = true;
+            return { ...p, trade };
+        });
+        if (changed) this.state.setPilots(next);
+        return changed;
+    }
     protected readonly hasBarracks = computed(() => (this.state.pilots() ?? []).length > 0);
     protected readonly barracksCount = computed(() => {
         const all = this.state.pilots() ?? [];
@@ -864,7 +1177,46 @@ export class OdmDashboardComponent {
     );
     // ── D-036 pilot detail (explode from a Barracks card; the roster hosts its own instance) ──
     protected readonly detailPilot = signal<string | null>(null);
+    // ── ODM-18 P1 (ruling 1) — GM-private pilot notes (gmOnly.pilotNotes; the fan strips them) ──
+    protected gmNoteFor(pilotId: string): string { return this.state.gmPilotNotes()[pilotId] ?? ''; }
+    protected saveGmNote(pilotId: string, text: string): void {
+        const notes = { ...this.state.gmPilotNotes() };
+        if (text) notes[pilotId] = text; else delete notes[pilotId];
+        this.state.setGmPilotNotes(notes);
+        void this.store.persistCurrent();
+    }
+
     protected openPilot(id: string): void {
         this.detailPilot.set(id);
+    }
+
+    // ── ODM-25 — the Barracks overlay changes a posting too. The Barracks is where a GM works pilot-by-pilot,
+    //    so leaving the control on the roster alone would have rebuilt the original complaint one screen over.
+    //    Every derivation is the SHARED one in OdmReassignService: same trade rule, same annotations, same
+    //    warnings as the roster pull-down (ODM-18 ruling 5 — one operation cannot own two ideas of itself). ──
+    private readonly crew = inject(OdmReassignService);
+    protected readonly postingOptions = computed(() => {
+        const id = this.detailPilot();
+        return id ? this.crew.postingOptions(id) : [];
+    });
+    protected changePosting(pilotId: string, instanceId: string): void {
+        if (instanceId) {
+            const warn = this.crew.displacementWarning(pilotId, instanceId);
+            if (warn && !confirm(warn)) return;
+            this.crew.reassign(instanceId, pilotId);
+            return;
+        }
+        const from = (this.state.pilots() ?? []).find((p) => p.pilotId === pilotId)?.assignedInstanceId;
+        if (!from) return;
+        const warn = this.crew.standDownWarning(from);
+        if (warn && !confirm(warn)) return;
+        this.crew.reassign(from, '');
+    }
+    /** ODM-25b — the trade correction, same shape as the roster's. Both hosts call the same service. */
+    protected readonly tradeOptions = TRADE_CHOICES;
+    protected changeTrade(pilotId: string, trade: string): void {
+        const warn = this.crew.tradeChangeWarning(pilotId, trade);
+        if (warn && !confirm(warn)) return;
+        this.crew.setTrade(pilotId, trade);
     }
 }

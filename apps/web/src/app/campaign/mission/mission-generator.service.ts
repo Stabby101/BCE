@@ -6,6 +6,7 @@
  * (reload-identical). ONE active mission; REROLL regenerates. All canon/template logic is pure
  * (mission-spec.ts). Merc/contract-driven only — non-merc keeps the seed stub.
  */
+import { deployedSet } from '../force/deployed'; // GM-2 P3 — the sizing input on a GM session
 import { Injectable, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
@@ -72,7 +73,7 @@ export class MissionGeneratorService {
             // first so `forced` doesn't win): a preferred seedId is returned when era-plausible + present, else the
             // family pool. + read the LOCKED fork children's nextSeedId wiring (advancing child links, recovery child doesn't).
             (window as unknown as Record<string, unknown>)['__d097select'] = async (preferredId: string | null, family?: string): Promise<unknown> => {
-                const ac = this.state.acceptedContract(); if (!ac) return null;
+                const ac = this.state.offerFor(); if (!ac) return null;
                 const sel = await this.selectForgeSeed(ac, family ?? ac.missionType, 'HIGH', preferredId);
                 return { selected: sel.seed?.seedId ?? null, family: sel.seed?.family ?? null };
             };
@@ -105,7 +106,7 @@ export class MissionGeneratorService {
         // the ledger length so a headless render can prove the drift (win→higher, loss→lower) + persistence.
         if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage.getItem('bce.test.d077')) {
             (window as unknown as Record<string, unknown>)['__d077state'] = (): unknown => {
-                const ac = this.state.acceptedContract();
+                const ac = this.state.offerFor();
                 const prior = ac ? [...this.state.outcomeLedger()].reverse().find((r) => r.threadTag === ac.id) : null;
                 return { level: this.state.escalationLevelFor(ac?.id), campaign: this.state.escalationCampaign(), ledger: this.state.outcomeLedger().length, priorTier: prior?.tier ?? null, priorWorld: prior?.world ?? null, bvTarget: Math.round(this.lastBvTarget) };
             };
@@ -119,7 +120,7 @@ export class MissionGeneratorService {
         if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage.getItem('bce.test.d102')) {
             const ENEMY_FLAGS = new Set(['opfor-commander', 'recurring-villain']);
             (window as unknown as Record<string, unknown>)['__d102cast'] = (): unknown => {
-                const ac = this.state.acceptedContract();
+                const ac = this.state.offerFor();
                 const spec = this.state.missionSpec();
                 const npcs = this.pack.npcs(); const vc = this.pack.voices();
                 const cast = Object.entries(this.state.npcAssignments()).map(([flag, id]) => { const n = npcs.find((x) => x.npcId === id); return { flag, side: ENEMY_FLAGS.has(flag) ? 'enemy' : 'employer', name: n?.name, affinity: n?.factionAffinity ?? [] }; });
@@ -136,14 +137,19 @@ export class MissionGeneratorService {
      *  field — units in the repair bays ('In repair') are excluded, so a depleted command draws a proportionate
      *  OpFor instead of one sized to its full (partly un-deployable) roster. A healthy force is unchanged. */
     private playerBv(): number {
-        return (this.state.startingForce() ?? []).filter((u) => u.condition !== 'In repair').reduce((a, b) => a + (b.bv ?? 0), 0);
+        // GM-2 P3 — on a GM SESSION the fair fight is sized off what is actually DEPLOYED on side A at Generate (the
+        // brought companies arrive Deployed from the mint; whatever the GM chose to field counts too) — never the
+        // parked starter company the wizard forced at creation. Non-GM campaigns: the fieldable roster, byte-identical.
+        const force = this.state.startingForce() ?? [];
+        const pool = this.state.gmSession() ? deployedSet(force, this.state.quickMission()) : force.filter((u) => u.condition !== 'In repair');
+        return pool.reduce((a, b) => a + (b.bv ?? 0), 0);
     }
 
     /** Generate (or REROLL) the mission spec from the active contract → store in place. Returns true
      *  on success; no-op without an ACTIVE contract. OpFor is GM-facing (ROLE-002 player/GM split is
      *  deferred to the roles/engine slice — the OpFor list is not yet hidden from a player view). */
     async generate(opts?: { familyHint?: string; branchLead?: string; originSystemId?: string | null; nextSeedId?: string | null; presetSeed?: MissionSeed; branchId?: string }): Promise<boolean> {
-        const ac = this.state.acceptedContract();
+        const ac = this.state.offerFor();
         if (!ac || ac.status !== 'ACTIVE') return false;
         // D-124 — a premade-hotspot arc link needs the catalog resident so seedById('preset-hs-…') resolves the
         // authored seed (with forks). Await it here (idempotent, tiny) so chaining survives a reload mid-tree.
@@ -184,7 +190,7 @@ export class MissionGeneratorService {
         // opposingFaction(h,'b') → syntheticOfferFromChaos carried it to ac.target, so ac.target IS the opposing faction.
         // The authored per-track opfor.faction assumes side A, so side B must ignore it and use ac.target. Side A / legacy
         // (no `side`) keep the D-124 per-track override. HS-only (activeChaosContract is HS); Traditional byte-identical.
-        const opforFaction = this.state.activeChaosContract()?.side === 'b' ? ac.target : (sel.seed?.opforFaction ?? ac.target);
+        const opforFaction = this.state.contractFor()?.side === 'b' ? ac.target : (sel.seed?.opforFaction ?? ac.target);
         this.lastOpforFaction = opforFaction; // D-133 test seam
         // DIRECTIVE-127 — Hot Spots ilClan: draw the OpFor ONLY from the enemy faction's MUL list (no generic-RAT
         // fallback, no off-list unit). idsFor() self-gates to HS + ilClan + a mapped faction; null everywhere else
@@ -296,7 +302,7 @@ export class MissionGeneratorService {
             brief.templateRules = std.length ? std.join(' ') : undefined;
             // IMPORT-7 Part D — the Scale the GM SIGNED at (D-129 free chooser / D-136 fieldable cap) rides the brief so the
             // package + player brief can render authored scale-dependent requirements as provenance + the live value.
-            const signed = this.state.activeChaosContract()?.scale;
+            const signed = this.state.contractFor()?.scale;
             if (signed) brief.signedScale = signed;
             forge.hotspot = brief;
             forge.opName = brief.trackName;
@@ -399,7 +405,7 @@ export class MissionGeneratorService {
         };
         // D-077 — surface the active thread's PRIOR outcome to the renderer via {PRIOR_TIER}/{PRIOR_WORLD};
         // degrades when there is no prior (first op of a thread → slots stay absent → fillSlots renders empty).
-        const prior = [...this.state.outcomeLedger()].reverse().find((r) => r.threadTag === (this.state.acceptedContract()?.id ?? ''));
+        const prior = [...this.state.outcomeLedger()].reverse().find((r) => r.threadTag === (this.state.offerFor()?.id ?? ''));
         if (prior) { slots.PRIOR_TIER = prior.tier; if (prior.world) slots.PRIOR_WORLD = prior.world; }
 
         const generic: MissionForge = { seedId: '', register: '', generic: true, rolledSpecifics: {}, slots, npcFlags: [], branchLead };
@@ -471,9 +477,14 @@ export class MissionGeneratorService {
         }
         this.state.setNpcAssignments(npcA);
 
-        const sv = { ...this.state.staffVoices() };
-        for (const rf of seed.voiceSlots) if (!sv[rf]) { const id = mintVoice(this.pack.voices(), rf, employerTags); if (id) sv[rf] = id; }
-        this.state.setStaffVoices(sv);
+        // ODM-12b B3 — the SIXTH sanctioned packId gate (the payTick pattern, verbatim): a pack campaign
+        // never mints rolled staff voices. Reachable under ODM only via the legacy generateBranch fallback;
+        // the forks no longer READ staffVoices either, so the field is inert under a pack (no migration).
+        if (!this.state.packId()) {
+            const sv = { ...this.state.staffVoices() };
+            for (const rf of seed.voiceSlots) if (!sv[rf]) { const id = mintVoice(this.pack.voices(), rf, employerTags); if (id) sv[rf] = id; }
+            this.state.setStaffVoices(sv);
+        }
 
         // D-096 — the engine-composed continuity callback (PM lines verbatim; slot-filled at render like branchLead).
         // Intel line first (context), antagonist second (threat); undefined on a thread's first op (neither recurred).
@@ -483,7 +494,7 @@ export class MissionGeneratorService {
         // slots). Under a hotspot-backed contract the thread IS that one hot spot (threadTag = the contract id), so name the
         // hot spot's own world and bake it in; if it can't be derived, SUPPRESS the callback rather than name the wrong
         // planet. HS-only by construction (hotspotId is only ever stamped by the HS sign path) — no new mode-branch read.
-        const hsId = this.state.activeChaosContract()?.hotspotId;
+        const hsId = this.state.contractFor()?.hotspotId;
         const hsWorld = hsId ? this.hotspots.hotSpotById(hsId)?.world : undefined;
         const composed = hsId && !hsWorld ? undefined : [
             intelRecurred ? (clan ? D096_CONTINUITY.intelClan : D096_CONTINUITY.intelDefault) : null,

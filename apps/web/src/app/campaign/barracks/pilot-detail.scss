@@ -39,6 +39,15 @@
 .pd-kv .k { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 9.5px; text-transform: uppercase; color: var(--ink2); display: block; }
 .pd-kv .vv { font-family: var(--mono); font-size: 12.5px; color: var(--ink); }
 
+/* DIRECTIVE-ODM-25 — the editable posting row. INERT outside ODM: the markup is behind canPost(), so no
+   element in a Traditional or Hot Spots campaign ever carries these classes. A full-width, ordinary select
+   with a real target — the whole finding this fixes was a control that existed and could not be operated. */
+.pd-postrow { margin-top: 8px; }
+.pd-postrow .k { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 9.5px; text-transform: uppercase; color: var(--ink2); display: block; margin-bottom: 3px; }
+.pd-postsel { width: 100%; box-sizing: border-box; font-family: var(--mono); font-size: 12px; background: var(--paper2); border: 1.3px solid var(--ink2); color: var(--ink); padding: 8px 10px; min-height: 38px; cursor: pointer; }
+.pd-postsel:hover, .pd-postsel:focus-visible { border-color: var(--stamp); outline: none; }
+.pd-tradenote { margin: 4px 0 0; font-size: 10.5px; }
+
 .perk { border: 1.5px solid var(--ink); background: var(--paper2); padding: 9px 12px; margin-bottom: 8px; }
 .perk-hd { display: flex; align-items: baseline; gap: 10px; font-family: var(--label); letter-spacing: .5px; font-size: 13px; }
 .pts { font-family: var(--mono); font-size: 10px; color: var(--stamp); border: 1px solid var(--stamp); padding: 1px 6px; }

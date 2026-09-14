@@ -1,3 +1,7 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
 import { GameSystem } from '../models/common.model';
 import { UnitSearchWorkerClient, type SearchWorkerLike } from './unit-search-worker-client.util';
 import type {
@@ -50,6 +54,7 @@ function createRequest(revision: number, version: string): UnitSearchWorkerQuery
         forceTotalBvPv: 0,
         pilotGunnerySkill: 4,
         pilotPilotingSkill: 5,
+        normalization: null,
     };
 }
 
@@ -96,7 +101,7 @@ describe('UnitSearchWorkerClient', () => {
             revision: 1,
             corpusVersion: '1:0',
             telemetryQuery: 'old',
-            unitNames: [],
+            entries: [],
             stages: [],
             totalMs: 1,
             unitCount: 10,
@@ -107,7 +112,7 @@ describe('UnitSearchWorkerClient', () => {
             revision: 2,
             corpusVersion: '1:0',
             telemetryQuery: 'new',
-            unitNames: [],
+            entries: [],
             stages: [],
             totalMs: 1,
             unitCount: 10,

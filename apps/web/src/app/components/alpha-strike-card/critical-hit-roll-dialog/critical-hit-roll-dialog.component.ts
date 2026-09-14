@@ -1,45 +1,15 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { ChangeDetectionStrategy, Component, inject, signal, viewChild, type AfterViewInit, computed } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { DiceRollerComponent } from '../../dice-roller/dice-roller.component';
 import type { ASForceUnit } from '../../../models/as-force-unit.model';
-import type { ASUnitTypeCode } from '../../../models/units.model';
+import type { ASUnitTypeCode } from '../../../models/unit-summary.model';
 import { OptionsService } from '../../../services/options.service';
 
 /*
- * Author: Drake
  *
  * Dialog for rolling critical hits and displaying the result.
  */
@@ -214,6 +184,17 @@ const CRIT_TABLE_DROPSHIP: Record<number, CritTableEntry> = {
                 (click)="reroll()"
             />
             </div>
+
+            @if (rollModifierComments().length > 0) {
+                <div class="roll-modifier-comments">
+                    @for (comment of rollModifierComments(); track $index) {
+                        <div class="roll-modifier-comment">
+                            <span class="roll-modifier-value">{{ formatRollModifier(comment.modifier) }}</span>
+                            <span>{{ comment.comment }}</span>
+                        </div>
+                    }
+                </div>
+            }
             
             @if (result()) {
                 <div class="result-container">
@@ -325,6 +306,33 @@ const CRIT_TABLE_DROPSHIP: Record<number, CritTableEntry> = {
             background: rgba(0, 0, 0, 0.3);
         }
 
+        .roll-modifier-comments {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 280px;
+            max-width: 520px;
+            text-align: left;
+        }
+
+        .roll-modifier-comment {
+            display: flex;
+            gap: 8px;
+            align-items: baseline;
+            padding: 8px 10px;
+            background: rgba(255, 204, 0, 0.12);
+            border: 1px solid rgba(255, 204, 0, 0.35);
+            color: #ddd;
+            font-size: 0.9em;
+        }
+
+        .roll-modifier-value {
+            min-width: 2.5em;
+            text-align: right;
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
         .mitigation-message {
             padding: 12px 16px;
             font-size: 1.1em;
@@ -396,15 +404,10 @@ export class CriticalHitRollDialogComponent implements AfterViewInit {
     readonly randomColumn = signal<string | null>(null);
     readonly currentEntry = signal<CritTableEntry | null>(null);
 
-    /** Modifier to the critical hit roll (e.g., -2 for CR special) */
-    readonly rollModifier = computed(() => {
-        if (!this.forceUnit) return 0;
-        const specials = this.forceUnit.getUnit().as.specials;
-        if (!specials) return 0;
-        // CR (Critical-Resistant) special reduces crit roll by 2
-        if (specials.includes('CR')) return -2;
-        return 0;
-    });
+    /** Modifier to the critical hit roll from active unit ability effects. */
+    readonly rollModifier = computed(() => this.forceUnit?.criticalHitRollModifier('criticalHit', 0) ?? 0);
+
+    readonly rollModifierComments = computed(() => this.forceUnit?.criticalHitRollModifierComments('criticalHit', 0) ?? []);
 
     /** Ammo hit mitigation status based on unit specials */
     readonly ammoHitMitigation = computed<'none' | 'case' | 'immune'>(() => {
@@ -509,6 +512,10 @@ export class CriticalHitRollDialogComponent implements AfterViewInit {
         return !!this.cannotApplyReason() && !!this.forceUnit;
     });
 
+    formatRollModifier(modifier: number): string {
+        return `${modifier >= 0 ? '+' : ''}${modifier}`;
+    }
+
     ngAfterViewInit(): void {
         // Auto-roll when dialog opens
         setTimeout(() => {
@@ -543,7 +550,8 @@ export class CriticalHitRollDialogComponent implements AfterViewInit {
             return;
         }
         
-        const entry = this.critTable[roll];
+        const resolution = this.forceUnit?.criticalHitRollResolution('criticalHit', roll);
+        const entry = resolution ? this.getEntryForResolution(resolution) : this.critTable[roll];
         if (entry) {
             // Check if this crit type has maxHits and is already at the limit
             if (entry.maxHits && entry.pipKey && this.forceUnit) {
@@ -584,6 +592,17 @@ export class CriticalHitRollDialogComponent implements AfterViewInit {
 
         const colIndex = Math.floor(Math.random() * this.weaponColumns.length);
         this.randomColumn.set(this.weaponColumns[colIndex]);
+    }
+
+    private getEntryForResolution(resolution: 'engineHit'): CritTableEntry {
+        switch (resolution) {
+            case 'engineHit':
+                return Object.values(this.critTable ?? {}).find(entry => entry.pipKey === 'engine') ?? {
+                    critType: 'Engine Hit',
+                    description: 'Impact Resistant Armor treats modified critical hit rolls over 12 as an Engine Hit critical.',
+                    pipKey: 'engine',
+                };
+        }
     }
 
     reroll(): void {

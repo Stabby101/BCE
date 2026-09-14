@@ -1,0 +1,303 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
+import { provideZonelessChangeDetection, Injectable } from '@angular/core';
+import { HttpHeaders, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
+import { LoggerService } from '../logger.service';
+import { CatalogBaseService, CatalogDownloadTrackerService } from './catalog-base.service';
+
+const TEST_CATALOG_URL = 'https://catalog.example/test-catalog.json?ngsw-bypass=true';
+
+interface TestCatalogData {
+    items?: number[];
+    etag?: string;
+}
+
+async function settleMicrotasks(): Promise<void> {
+    for (let index = 0; index < 3; index += 1) {
+        await Promise.resolve();
+    }
+}
+
+@Injectable()
+class TestCatalogService extends CatalogBaseService<TestCatalogData, TestCatalogData> {
+    public cachedData: TestCatalogData | undefined;
+    public savedData: TestCatalogData[] = [];
+    private items: number[] = [];
+
+    protected override get catalogKey(): string {
+        return 'test_catalog';
+    }
+
+    protected override get remoteUrl(): string {
+        return 'https://catalog.example/test-catalog.json';
+    }
+
+    public getItems(): number[] {
+        return this.items;
+    }
+
+    protected override hasHydratedData(): boolean {
+        return this.items.length > 0;
+    }
+
+    protected override async loadFromCache(): Promise<TestCatalogData | undefined> {
+        return this.cachedData;
+    }
+
+    protected override async saveToCache(data: TestCatalogData): Promise<void> {
+        this.savedData.push(data);
+        this.cachedData = data;
+    }
+
+    protected override hydrate(data: TestCatalogData): void {
+        this.items = Array.isArray(data.items) ? [...data.items] : [];
+        this.etag = data.etag || '';
+    }
+
+    protected override normalizeFetchedData(data: TestCatalogData, etag: string): TestCatalogData {
+        return {
+            ...data,
+            etag,
+        };
+    }
+
+    protected override getDatasetSize(data: TestCatalogData): number {
+        return Array.isArray(data.items) ? data.items.length : 0;
+    }
+
+    protected override getMinimumDatasetSize(): number {
+        return 5;
+    }
+
+    protected override getMinimumRelativeComparisonSize(): number {
+        return 10;
+    }
+}
+
+describe('CatalogBaseService', () => {
+    let service: TestCatalogService;
+    let httpMock: HttpTestingController;
+    let logger: {
+        info: jasmine.Spy;
+        warn: jasmine.Spy;
+        error: jasmine.Spy;
+    };
+    let downloadTracker: CatalogDownloadTrackerService;
+
+    beforeEach(() => {
+        TestBed.resetTestingModule();
+
+        logger = {
+            info: jasmine.createSpy('info'),
+            warn: jasmine.createSpy('warn'),
+            error: jasmine.createSpy('error'),
+        };
+
+        TestBed.configureTestingModule({
+            providers: [
+                provideZonelessChangeDetection(),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                TestCatalogService,
+                { provide: LoggerService, useValue: logger },
+            ],
+        });
+
+        service = TestBed.inject(TestCatalogService);
+        downloadTracker = TestBed.inject(CatalogDownloadTrackerService);
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+
+    it('refetches when the cached dataset is invalid even if the ETag matches', async () => {
+        service.cachedData = { etag: 'etag-1', items: [] };
+
+        const initializePromise = service.initialize();
+        await settleMicrotasks();
+
+        const headRequest = httpMock.expectOne(TEST_CATALOG_URL);
+        expect(headRequest.request.method).toBe('HEAD');
+        headRequest.flush('', {
+            headers: new HttpHeaders({ ETag: 'etag-1' }),
+        });
+        await settleMicrotasks();
+
+        const getRequest = httpMock.expectOne(TEST_CATALOG_URL);
+        expect(getRequest.request.method).toBe('GET');
+        getRequest.flush({ items: [1, 2, 3, 4, 5, 6] }, {
+            headers: new HttpHeaders({ ETag: 'etag-1' }),
+        });
+
+        await initializePromise;
+
+        expect(service.getItems()).toEqual([1, 2, 3, 4, 5, 6]);
+        expect(service.savedData).toEqual([
+            { etag: 'etag-1', items: [1, 2, 3, 4, 5, 6] },
+        ]);
+        expect(logger.warn).toHaveBeenCalledWith(jasmine.stringMatching(/Ignoring invalid cache test_catalog dataset/));
+    });
+
+    it('reports downloading only while a catalog fetch is active', async () => {
+        expect(downloadTracker.isDownloading()).toBeFalse();
+
+        const initializePromise = service.initialize();
+        await settleMicrotasks();
+
+        const headRequest = httpMock.expectOne(TEST_CATALOG_URL);
+        headRequest.flush('', {
+            headers: new HttpHeaders({ ETag: 'etag-1' }),
+        });
+        await settleMicrotasks();
+
+        const getRequest = httpMock.expectOne(TEST_CATALOG_URL);
+        expect(downloadTracker.isDownloading()).toBeTrue();
+
+        getRequest.flush({ items: [1, 2, 3, 4, 5, 6] }, {
+            headers: new HttpHeaders({ ETag: 'etag-1' }),
+        });
+
+        await initializePromise;
+
+        expect(downloadTracker.isDownloading()).toBeFalse();
+    });
+
+    it('shares concurrent initialization and memoizes success', async () => {
+        service.cachedData = { etag: 'etag-1', items: [1, 2, 3, 4, 5, 6] };
+
+        const firstInitialization = service.initialize();
+        const secondInitialization = service.initialize();
+        expect(secondInitialization).toBe(firstInitialization);
+        await settleMicrotasks();
+
+        const headRequest = httpMock.expectOne(TEST_CATALOG_URL);
+        headRequest.flush('', { headers: new HttpHeaders({ ETag: 'etag-1' }) });
+        await Promise.all([firstInitialization, secondInitialization]);
+
+        await service.initialize();
+        httpMock.expectNone(TEST_CATALOG_URL);
+    });
+
+    it('allows initialization to retry after failure', async () => {
+        const failedInitialization = service.initialize();
+        await settleMicrotasks();
+
+        httpMock.expectOne(TEST_CATALOG_URL).flush('offline', { status: 503, statusText: 'Unavailable' });
+        await settleMicrotasks();
+        httpMock.expectOne(TEST_CATALOG_URL).flush('offline', { status: 503, statusText: 'Unavailable' });
+        await expectAsync(failedInitialization).toBeRejected();
+
+        const retry = service.initialize();
+        await settleMicrotasks();
+        httpMock.expectOne(TEST_CATALOG_URL).flush('offline', { status: 503, statusText: 'Unavailable' });
+        await settleMicrotasks();
+        httpMock.expectOne(TEST_CATALOG_URL).flush({ items: [1, 2, 3, 4, 5, 6] });
+        await retry;
+    });
+
+    it('keeps reporting downloading until all tracked catalog fetches finish', async () => {
+        let finishFirstDownload!: () => void;
+        let finishSecondDownload!: () => void;
+        const firstDownload = downloadTracker.trackDownload(() => new Promise<void>((resolve) => {
+            finishFirstDownload = resolve;
+        }));
+        const secondDownload = downloadTracker.trackDownload(() => new Promise<void>((resolve) => {
+            finishSecondDownload = resolve;
+        }));
+
+        expect(downloadTracker.isDownloading()).toBeTrue();
+
+        finishFirstDownload();
+        await settleMicrotasks();
+
+        expect(downloadTracker.isDownloading()).toBeTrue();
+
+        finishSecondDownload();
+        await Promise.all([firstDownload, secondDownload]);
+
+        expect(downloadTracker.isDownloading()).toBeFalse();
+    });
+
+    it('preserves the previous dataset when the remote update is empty', async () => {
+        service.cachedData = { etag: 'etag-old', items: [1, 2, 3, 4, 5, 6] };
+
+        const initializePromise = service.initialize();
+        await settleMicrotasks();
+
+        const headRequest = httpMock.expectOne(TEST_CATALOG_URL);
+        expect(headRequest.request.method).toBe('HEAD');
+        headRequest.flush('', {
+            headers: new HttpHeaders({ ETag: 'etag-new' }),
+        });
+        await settleMicrotasks();
+
+        const getRequest = httpMock.expectOne(TEST_CATALOG_URL);
+        expect(getRequest.request.method).toBe('GET');
+        getRequest.flush({ items: [] }, {
+            headers: new HttpHeaders({ ETag: 'etag-new' }),
+        });
+
+        await initializePromise;
+
+        expect(service.getItems()).toEqual([1, 2, 3, 4, 5, 6]);
+        expect(service.savedData).toEqual([]);
+        expect(logger.warn).toHaveBeenCalledWith('Preserved cached test_catalog after rejecting the remote update.');
+        expect(logger.error).toHaveBeenCalledWith(jasmine.stringMatching(/Rejected test_catalog update/));
+
+        await service.initialize();
+        httpMock.expectNone(TEST_CATALOG_URL);
+    });
+
+    it('rejects an invalid remote dataset when no cached data can be restored', async () => {
+        const initializePromise = service.initialize();
+        await settleMicrotasks();
+
+        httpMock.expectOne(TEST_CATALOG_URL).flush('', {
+            headers: new HttpHeaders({ ETag: 'etag-new' }),
+        });
+        await settleMicrotasks();
+        httpMock.expectOne(TEST_CATALOG_URL).flush({ items: [] }, {
+            headers: new HttpHeaders({ ETag: 'etag-new' }),
+        });
+
+        await expectAsync(initializePromise).toBeRejectedWithError(/Rejected test_catalog update/);
+        expect(service.getItems()).toEqual([]);
+        expect(service.savedData).toEqual([]);
+    });
+
+    it('rejects suspiciously shrunken remote datasets and keeps the previous data', async () => {
+        service.cachedData = {
+            etag: 'etag-old',
+            items: Array.from({ length: 20 }, (_, index) => index),
+        };
+
+        const initializePromise = service.initialize();
+        await settleMicrotasks();
+
+        const headRequest = httpMock.expectOne(TEST_CATALOG_URL);
+        expect(headRequest.request.method).toBe('HEAD');
+        headRequest.flush('', {
+            headers: new HttpHeaders({ ETag: 'etag-new' }),
+        });
+        await settleMicrotasks();
+
+        const getRequest = httpMock.expectOne(TEST_CATALOG_URL);
+        expect(getRequest.request.method).toBe('GET');
+        getRequest.flush({ items: [1, 2, 3, 4, 5] }, {
+            headers: new HttpHeaders({ ETag: 'etag-new' }),
+        });
+
+        await initializePromise;
+
+        expect(service.getItems()).toEqual(Array.from({ length: 20 }, (_, index) => index));
+        expect(service.savedData).toEqual([]);
+        expect(logger.error).toHaveBeenCalledWith(jasmine.stringMatching(/Rejected test_catalog update: Error: received only 5 entries after previously loading 20/));
+    });
+});

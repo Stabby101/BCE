@@ -92,6 +92,31 @@
                 }
                 <span class="enter" aria-hidden="true">&rsaquo;</span>
             </button>
+            <!-- ODM-20 — the deliberate escape hatch, shown ONLY where a campaign already exists (cover.ts). -->
+            @if (odmHasExisting()) {
+                <button type="button" class="odm-new" [disabled]="!online()" (click)="askOdmNew()" data-testid="odm-force-new">
+                    start a SECOND ODM campaign
+                </button>
+            }
+        }
+
+        <!-- GM-1 P1 — the MASTER GM door: renders ONLY for an entitled account (hasPack('gm-mode'); dev/LAN
+             single-tenant is permissive). Absent for everyone else — no placeholder, no gap. gm-mode is a
+             feature flag, not a pack: static copy, no server manifest fetch. -->
+        @if (gmEntitled()) {
+            <button type="button" class="door door-gm" [disabled]="!online()" [attr.aria-disabled]="!online()" (click)="startGmSession()" data-testid="gm-session-door">
+                <span class="num">&#9733;</span>
+                <span class="dmain">
+                    <span class="dtitle">Game Master Session</span>
+                    <span class="desc">Host the table — present hot spots, split the players across two sides, run the fight.</span>
+                </span>
+                @if (online()) {
+                    <span class="tag host">RESTRICTED</span>
+                } @else {
+                    <span class="tag soon">HOST OFFLINE</span>
+                }
+                <span class="enter" aria-hidden="true">&rsaquo;</span>
+            </button>
         }
 
         <button type="button" class="door" [disabled]="!online() || saveCount() === 0" [attr.aria-disabled]="!online() || saveCount() === 0" (click)="openLoad()">
@@ -176,5 +201,85 @@
     }
     @if (saveOpen()) {
         <bce-save-dialog (saved)="onCreateSaved()" (cancel)="onCreateSaveCancel()"></bce-save-dialog>
+    }
+    <!-- ODM-20 — the ANOMALY alarm. Under the singleton rule more than one ODM campaign is not supposed to
+         happen, so this reads as a warning, never a friendly picker, and it NEVER chooses for you. -->
+    @if (odmForked(); as forked) {
+        <div class="odm-forked" role="alertdialog" aria-modal="true" data-testid="odm-forked">
+            <div class="of-box">
+                <div class="of-h" data-testid="odm-forked-heading">{{ forkedHeading() }}</div>
+                <p class="of-p">ODM is meant to be ONE ongoing company. The tile used to create a new one on
+                    every tap, so most of these were never played. Nothing has been opened and
+                    <b>nothing has been deleted</b>. The campaign day is the thing to look at — it is what tells a
+                    played company from an empty one.</p>
+                <!-- THE ESCAPE HATCH, ON the screen that traps him: Resume·Last calls resumeLast() directly and
+                     never routes through startOdm(), so it bypasses this picker entirely. -->
+                <p class="of-esc" data-testid="odm-forked-escape">In a hurry? <b>Close this and use RESUME&middot;LAST</b>
+                    on the cover — it reopens the campaign you were last in without going through this list.</p>
+                <div class="of-list">
+                    @for (r of forkedPlayed(); track r.id) {
+                        <div class="of-line">
+                            <button type="button" class="of-row" (click)="enterOdm(r)" data-testid="odm-forked-pick">
+                                <span class="of-day">{{ odmDay(r) }}</span>
+                                <span class="of-name">{{ r.name || r.id }}</span>
+                                <span class="of-when">{{ odmTouched(r) }}</span>
+                            </button>
+                            <!-- ODM-24 — per-row delete on the DATED campaigns only. Two-tap, and the confirm
+                                 names the campaign DAY because that is what he recognises. -->
+                            <button type="button" class="of-del" [disabled]="deleteBusy()" (click)="askDelete(r)"
+                                    [attr.aria-label]="'Delete the campaign at ' + odmDay(r)" data-testid="odm-forked-del">&#10005;</button>
+                        </div>
+                        @if (confirmDelete()?.id === r.id) {
+                            <div class="of-confirm" data-testid="odm-forked-del-confirm">
+                                <span class="of-cq">{{ deleteQuestion(r) }}</span>
+                                <span class="of-cbtns">
+                                    <button type="button" class="of-yes" [disabled]="deleteBusy()" (click)="doDelete(r)" data-testid="odm-forked-del-yes">Delete it</button>
+                                    <button type="button" class="of-no" (click)="cancelDelete()" data-testid="odm-forked-del-no">Keep it</button>
+                                </span>
+                            </div>
+                        }
+                    }
+                    @if (forkedUnplayed().length) {
+                        <button type="button" class="of-more" (click)="toggleUnplayed()" data-testid="odm-forked-unplayed-toggle">
+                            {{ showUnplayed() ? '▾' : '▸' }} {{ forkedUnplayed().length }} unplayed instance{{ forkedUnplayed().length === 1 ? '' : 's' }} — created and never played
+                        </button>
+                        <!-- ODM-24 — the BULK action, confined to the provable set. There is deliberately NO
+                             "delete all": the played campaigns are each deleted on purpose, one at a time. -->
+                        @if (confirmBulk()) {
+                            <div class="of-confirm" data-testid="odm-forked-bulk-confirm">
+                                <span class="of-cq">Delete these {{ forkedUnplayed().length }} unplayed instances? Their clocks never left the start date, so there is nothing in them — but their checkpoint history goes too, and this cannot be undone. Nothing you have played is included.</span>
+                                <span class="of-cbtns">
+                                    <button type="button" class="of-yes" [disabled]="deleteBusy()" (click)="doDeleteUnplayed()" data-testid="odm-forked-bulk-yes">Delete these {{ forkedUnplayed().length }}</button>
+                                    <button type="button" class="of-no" (click)="cancelBulk()" data-testid="odm-forked-bulk-no">Keep them</button>
+                                </span>
+                            </div>
+                        } @else {
+                            <button type="button" class="of-bulk" [disabled]="deleteBusy()" (click)="askBulk()" data-testid="odm-forked-bulk">
+                                Delete these {{ forkedUnplayed().length }} unplayed
+                            </button>
+                        }
+                        @if (showUnplayed()) {
+                            @for (r of forkedUnplayed(); track r.id) {
+                                <button type="button" class="of-row of-dim" (click)="enterOdm(r)" data-testid="odm-forked-pick-unplayed">
+                                    <span class="of-day">{{ odmDay(r) }}</span>
+                                    <span class="of-name">{{ r.name || r.id }}</span>
+                                    <span class="of-when">{{ odmTouched(r) }}</span>
+                                </button>
+                            }
+                        }
+                    }
+                </div>
+                <!-- ODM-24 — START OVER, routed through the EXISTING force-new path (ODM-20), not a second door. -->
+                <button type="button" class="of-new" (click)="startNewFromPicker()" data-testid="odm-forked-new">
+                    None of these — start a new ODM campaign
+                </button>
+                <button type="button" class="of-cancel" (click)="dismissForked()">Cancel — open nothing</button>
+            </div>
+        </div>
+    }
+    @if (confirmOdmNew()) {
+        <bce-exit-confirm actionLabel="Create a second"
+            [question]="odmNewQuestion()"
+            (proceed)="doOdmNew()" (cancel)="cancelOdmNew()"></bce-exit-confirm>
     }
 </main>

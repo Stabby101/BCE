@@ -1,46 +1,17 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { uidTranslations } from "../models/common.model";
-import type { CriticalSlot, MountedEquipment } from "../models/force-serialization";
+import { MountedEquipment  } from '../models/mounted-equipment.model';
+import type { CriticalSlot, HeatProfile } from "../models/force-serialization";
 import { UnitSvgService } from "./unit-svg.service";
 import { AmmoEquipment } from "../models/equipment.model";
-import type { MekRules } from "../models/rules/mek-rules";
-import { resolveHitModifier } from "../models/rules/hit-modifier.util";
+import { MekRules } from "../models/rules/mek-rules";
+import { getCriticalSlotAmmoProfileKey } from "../utils/ammo-interaction.util";
+import { INVENTORY_CONTROL_PHYSICAL_BASE_DAMAGE_TEXT_ATTRIBUTE, readInventoryControlDisplayData } from "../utils/inventory-control.util";
 
-/*
- * Author: Drake
- */
+
 export class UnitSvgMekService extends UnitSvgService {
     // Mek-specific SVG handling logic goes here
     private get mekRules(): MekRules { return this.unit.rules as MekRules; }
@@ -53,6 +24,7 @@ export class UnitSvgMekService extends UnitSvgService {
         const critSlots = this.unit.getCritSlots();
         const locations = this.unit.getLocations();
         const inventory = this.unit.getInventory();
+        this.unit.getConditions();
         this.unit.phaseTrigger(); // Ensure phase changes trigger update
         // Update all displays
         this.updateBVDisplay();
@@ -64,9 +36,76 @@ export class UnitSvgMekService extends UnitSvgService {
         this.updateTurnState();
     }
 
-    private updateCritSlotDisplay(criticalSlots: CriticalSlot[]) {
+    protected override updateHeatDisplay(heat: HeatProfile): void {
+        super.updateHeatDisplay(heat);
+        this.updateLifeSupportPilotDamageWarning(heat);
+    }
+
+    private updateLifeSupportPilotDamageWarning(heat: HeatProfile): void {
         const svg = this.unit.svg();
         if (!svg) return;
+
+        const heatHits = this.mekRules.heatLifeSupportPilotHits(heat.next ?? heat.current);
+        const builtInWarning = svg.getElementById('heatLifeSupportWarning');
+        if (builtInWarning) {
+            if (heatHits === 0) {
+                builtInWarning.setAttribute('display', 'none');
+                builtInWarning.removeAttribute('aria-label');
+                builtInWarning.removeAttribute('data-pilot-hits');
+                return;
+            }
+            builtInWarning.setAttribute('aria-label', `${heatHits} Life Support heat pilot hit${heatHits === 1 ? '' : 's'}`);
+            builtInWarning.setAttribute('data-pilot-hits', heatHits.toString());
+            builtInWarning.removeAttribute('display');
+            return;
+        }
+
+        const warning = svg.getElementById('lifeSupportPilotDamageWarning');
+        if (!warning) return;
+
+        const oxygenHits = this.mekRules.submergedLifeSupportPilotHits();
+        const iconKinds: ('heat' | 'oxygen')[] = [];
+        for (let i = 0; i < heatHits; i++) iconKinds.push('heat');
+        for (let i = 0; i < oxygenHits; i++) iconKinds.push('oxygen');
+
+        warning.querySelectorAll('.lifeSupportPilotDamageIcon').forEach(icon => icon.remove());
+        if (iconKinds.length === 0) {
+            warning.setAttribute('display', 'none');
+            warning.removeAttribute('aria-label');
+            return;
+        }
+
+        const warningWidth = Number(warning.getAttribute('data-width')) || 42;
+        const iconSize = Number(warning.getAttribute('data-height')) || 15;
+        const iconGap = -1.5;
+        const iconsWidth = iconKinds.length * iconSize + (iconKinds.length - 1) * iconGap;
+        const startX = warningWidth - iconsWidth;
+        iconKinds.forEach((kind, index) => {
+            const icon = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+            icon.setAttribute('class', `lifeSupportPilotDamageIcon ${kind}`);
+            icon.setAttribute('href', kind === 'heat' ? '#lifeSupportHeatDamageIcon' : '#lifeSupportOxygenDamageIcon');
+            icon.setAttribute('x', (startX + index * (iconSize + iconGap)).toString());
+            icon.setAttribute('y', '0');
+            icon.setAttribute('width', iconSize.toString());
+            icon.setAttribute('height', iconSize.toString());
+            warning.appendChild(icon);
+        });
+
+        warning.setAttribute('aria-label', `${heatHits} heat, ${oxygenHits} oxygen-deprivation pilot damage`);
+        warning.removeAttribute('display');
+    }
+
+    protected updateCritSlotDisplay(criticalSlots: CriticalSlot[]) {
+        const svg = this.unit.svg();
+        if (!svg) return;
+        const extraHitPipsEnabled = this.unit.gameRules.id !== 'tw';
+        svg.querySelectorAll<SVGElement>('.extraHitPip').forEach(pip => {
+            if (extraHitPipsEnabled) {
+                pip.removeAttribute('display');
+            } else {
+                pip.setAttribute('display', 'none');
+            }
+        });
         const ammoProfile = new Map<string, number>();
         criticalSlots.forEach(criticalSlot => {
             const el = svg.querySelector(`.critSlot[loc="${criticalSlot.loc}"][slot="${criticalSlot.slot}"]`);
@@ -76,6 +115,11 @@ export class UnitSvgMekService extends UnitSvgService {
             const systemSlot = el.getAttribute('type') === 'sys';
             const modularArmor = el.getAttribute('modularArmor') === '1';
             const isAmmo = el.classList.contains('ammoSlot');
+            const extraHit = extraHitPipsEnabled && el.getAttribute('extraHit') === '1';
+            const hitCount = Math.max(0, criticalSlot.hits ?? 0);
+            const pipHitCapacity = (criticalSlot.armored ? 1 : 0) + (extraHit ? 1 : 0);
+            const showWholeSlotHit = hitCount === 0 || hitCount > pipHitCapacity;
+            const wholeSlotDamaged = !!criticalSlot.destroyed && showWholeSlotHit;
 
             if (isAmmo) {
                 const totalAmmo = criticalSlot?.totalAmmo || parseInt(el.getAttribute('totalAmmo') || '0');
@@ -110,44 +154,35 @@ export class UnitSvgMekService extends UnitSvgService {
                         svgText.setAttribute('lengthAdjust', 'spacingAndGlyphs');
                     }
 
-                    const key = text.startsWith("Ammo ") ? text.substring(5) : text;
-                    ammoProfile.set(
-                        key,
-                        (ammoProfile.get(key) ?? 0) + (criticalSlot.destroyed ? 0 : remainingAmmo)
-                    );
+                    const key = getCriticalSlotAmmoProfileKey(criticalSlot) ?? (text.startsWith("Ammo ") ? text.substring(5) : text);
+                    ammoProfile.set(key, (ammoProfile.get(key) ?? 0) + (this.unit.isEquipmentOperational(criticalSlot) ? remainingAmmo : 0));
                 }
             }
 
-            if (!!criticalSlot.destroyed) {
+            if (wholeSlotDamaged) {
                 el.classList.add('damaged');
                 el.classList.remove('willDamage');
             } else {
                 el.classList.remove('damaged');
-                el.classList.toggle('willDamage', !!criticalSlot.destroying);
+                el.classList.toggle('willDamage', !!criticalSlot.destroying && showWholeSlotHit);
             }
 
-            if (criticalSlot.armored && !criticalSlot.destroyed) {
-                const armorPip = el.querySelector('.armoredLocPip');
-                if (armorPip) {
-                    const isHit = (criticalSlot.hits ?? 0) > 0;
-                    if (armorPip.classList.contains('damaged') !== isHit) {
-                        armorPip.classList.add('fresh');
-                    } else if (armorPip.classList.contains('fresh')) {
-                        armorPip.classList.remove('fresh');
-                    }
-                    armorPip.classList.toggle('damaged', isHit);
-                }
+            if (criticalSlot.armored) {
+                const armoredPip = el.querySelector('.armoredLocPip');
+                this.updateCriticalSlotPip(armoredPip, hitCount > 0);
+                if (wholeSlotDamaged) armoredPip?.classList.remove('fresh');
+            }
+
+            if (extraHit) {
+                const precedingArmoredHit = criticalSlot.armored ? 1 : 0;
+                const extraHitPip = el.querySelector('.extraHitPip');
+                this.updateCriticalSlotPip(extraHitPip, hitCount > precedingArmoredHit);
+                if (wholeSlotDamaged) extraHitPip?.classList.remove('fresh');
             }
 
             if (modularArmor) {
                 el.querySelectorAll('.modularArmorPip').forEach((pipEl, index) => {
-                    const isHit = (criticalSlot.consumed ?? 0) > index;
-                    if (pipEl.classList.contains('damaged') !== isHit) {
-                        pipEl.classList.add('fresh');
-                    } else if (pipEl.classList.contains('fresh')) {
-                        pipEl.classList.remove('fresh');
-                    }
-                    pipEl.classList.toggle('damaged', isHit);
+                    this.updateCriticalSlotPip(pipEl, (criticalSlot.consumed ?? 0) > index);
                 });
             }
 
@@ -165,14 +200,17 @@ export class UnitSvgMekService extends UnitSvgService {
                 }
             }
         });
-        // Update ammo profile
-        const ammoProfileEl = svg.querySelector('#ammoProfile > text');
-        if (ammoProfileEl) {
-            const ammoList = Array.from(ammoProfile.entries())
-                .map(([key, value]) => `${key} ${value}`)
-                .join(', ');
-            ammoProfileEl.textContent = ammoList ? `Ammo: ${ammoList}` : 'Ammo:';
+        this.renderAmmoProfile(ammoProfile);
+    }
+
+    private updateCriticalSlotPip(pip: Element | null, isHit: boolean): void {
+        if (!pip) return;
+        if (pip.classList.contains('damaged') !== isHit) {
+            pip.classList.add('fresh');
+        } else {
+            pip.classList.remove('fresh');
         }
+        pip.classList.toggle('damaged', isHit);
     }
 
     protected override updateInventory() {
@@ -180,12 +218,16 @@ export class UnitSvgMekService extends UnitSvgService {
         if (!svg) return;
         const movement = this.mekRules.movementState();
         const physical = this.mekRules.physicalCombat();
+        const systemsStatus = this.mekRules.systemsStatus();
         if (!movement || !physical) return;
 
         // Partial wing heat bonus display
-        if (movement.partialWingHeatBonus !== null) {
+        if (systemsStatus.hasPartialWings) {
             const el = svg.getElementById('partialWingBonus');
-            if (el) el.textContent = `(Partial Wing +${movement.partialWingHeatBonus})`;
+            if (el) {
+                el.textContent = `(Partial Wing +${systemsStatus.partialWingsHeatBonus})`;
+                el.classList.toggle('damaged',  (systemsStatus.destroyedPartialWingsCount > 0));
+            }
         }
 
         // Movement point display
@@ -210,69 +252,162 @@ export class UnitSvgMekService extends UnitSvgService {
         }
 
         // Inventory entries — state from rules, rendering here
-        const entryStates = this.mekRules.computeAllEntryStates();
         this.unit.getInventory().forEach(entry => {
-            if (!entry.el || !entry.locations) return;
+                if (!entry.el || !entry.locations) return;
 
-            const state = entryStates.get(entry);
-            if (!state) return;
-
-            // Physical / melee damage display (reads base values from DOM, computes via rules)
-            if (entry.physical) {
-                switch (entry.name) {
-                    case 'charge':
-                        this.renderChargeSpikeBonus(entry, physical.spikeBonus);
-                        break;
-                    case 'punch':
-                        this.renderMeleeDamage(entry, 'punch', Array.from(entry.locations)[0]);
-                        break;
-                    case 'club':
-                        this.renderMeleeDamage(entry, 'club');
-                        break;
-                    case 'kick [talons]':
-                    case 'kick':
-                        this.renderMeleeDamage(entry, 'kick');
-                        break;
+                // Physical / melee damage display (reads base values from DOM, computes via rules)
+                if (entry.isIntrinsicPhysicalAttack()) {
+                    switch (entry.name) {
+                        case 'charge':
+                            this.renderChargeDamage(entry, physical.chargeDamage);
+                            break;
+                        case 'punch':
+                            this.renderMeleeDamage(entry, 'punch', Array.from(entry.locations)[0]);
+                            break;
+                        case 'club':
+                            this.renderMeleeDamage(entry, 'club');
+                            break;
+                        case 'kick [talons]':
+                        case 'kick':
+                            this.renderMeleeDamage(entry, 'kick');
+                            break;
+                    }
+                } else if (entry.equipment?.hasFlag('F_SHIELD')) {
+                    this.renderShieldDamage(entry);
+                } else if (entry.isPhysicalWeapon()) {
+                    this.renderMeleeDamage(entry, 'physWeapon', undefined, !!entry.equipment?.flags.has('S_FLAIL'));
                 }
-            } else if (entry.equipment?.flags.has('F_CLUB') || entry.equipment?.flags.has('F_HAND_WEAPON')) {
-                this.renderMeleeDamage(entry, 'physWeapon', undefined, !!entry.equipment?.flags.has('S_FLAIL'));
-            }
 
-            entry.el.classList.toggle('disabledInventory', state.isDisabled);
-            entry.el.classList.toggle('damagedInventory', state.isDamaged);
-            if (state.isDamaged || state.isDisabled) entry.el.classList.remove('selected');
-
-            // Hit modifier badge
-            this.renderHitModEntry(entry, resolveHitModifier(entry, state.hitMod || 0));
+                this.renderInventoryEntryState(entry);
+                this.renderKickArcHitModifier(entry);
         });
+        this.renderInventoryControlSelection();
+    }
+
+    protected override updateTurnState() {
+        super.updateTurnState();
+
+        const svg = this.unit.svg();
+        if (!svg) return;
+
+        const movement = this.mekRules.movementState();
+        if (!movement) return;
+
+        const runWarning = this.unit.rules.isMotiveModeAvailable('run')
+            ? this.unit.rules.getCommittedDamageMovementModePSRCheck('run')
+            : null;
+        const jumpWarning = movement.jump > 0 ? this.unit.rules.getCommittedDamageMovementModePSRCheck('jump') : null;
+        const jumpMoveElementId = svg.getElementById('mpJump') ? 'mpJump' : (svg.getElementById('mp_2') ? 'mp_2' : null);
+
+        this.syncMovementModePsrWarning(svg, 'mpRun', runWarning?.reason ?? null);
+        if (jumpMoveElementId) {
+            this.syncMovementModePsrWarning(svg, jumpMoveElementId, jumpWarning?.reason ?? null);
+        }
+    }
+
+    private syncMovementModePsrWarning(svg: SVGSVGElement, moveElementId: 'mpRun' | 'mpJump' | 'mp_2', reason: string | null) {
+        const warningEl = svg.getElementById(`${moveElementId}-psr-warning`) as SVGTextElement | null;
+        if (!warningEl) return;
+
+        const turnState = this.unit.turnState();
+        const currentMoveMode = turnState.effectiveMoveMode();
+        let selectedMoveElementId: string | null = null;
+        if (currentMoveMode === 'walk' || currentMoveMode === 'stationary') {
+            selectedMoveElementId = 'mpWalk';
+        } else if (currentMoveMode === 'run') {
+            selectedMoveElementId = 'mpRun';
+        } else if (currentMoveMode === 'jump' || currentMoveMode === 'UMU') {
+            selectedMoveElementId = svg.getElementById('mpJump') ? 'mpJump' : 'mp_2';
+        }
+
+        if (!reason) {
+            warningEl.setAttribute('display', 'none');
+            warningEl.style.display = 'none';
+            warningEl.classList.remove('currentMoveMode', 'unusedMoveMode', 'noPsrCheck');
+            return;
+        }
+
+        warningEl.removeAttribute('display');
+        warningEl.style.display = 'block';
+        const warningMoveMode = moveElementId === 'mpRun' ? 'run' : 'jump';
+        const isCurrentMoveMode = currentMoveMode === warningMoveMode;
+        const triggersPsr = isCurrentMoveMode
+            && this.unit.rules.getCommittedDamageMovementModePSRCheck(
+                warningMoveMode,
+                turnState.moveDistance(),
+            ) !== null;
+        warningEl.classList.toggle('noPsrCheck', !triggersPsr);
+
+        if (!selectedMoveElementId) {
+            warningEl.classList.remove('currentMoveMode', 'unusedMoveMode');
+            return;
+        }
+
+        const isUnused = !isCurrentMoveMode;
+        warningEl.classList.toggle('unusedMoveMode', isUnused);
+        warningEl.classList.toggle('currentMoveMode', !isUnused);
     }
 
     /** Render melee damage text: read base from DOM, compute via rules, write back. */
     private renderMeleeDamage(entry: MountedEquipment, attackType: 'punch' | 'kick' | 'club' | 'physWeapon', loc?: string, ignoreMyomer?: boolean) {
         const damageEl = entry.el!.querySelector(`:scope > .damage > text`);
         if (!damageEl) return;
-        let originalText = damageEl.getAttribute('originalText');
+        let originalText = damageEl.getAttribute(INVENTORY_CONTROL_PHYSICAL_BASE_DAMAGE_TEXT_ATTRIBUTE);
         if (originalText === undefined || originalText === null) {
             originalText = damageEl.textContent || '';
-            damageEl.setAttribute('originalText', originalText);
+            damageEl.setAttribute(INVENTORY_CONTROL_PHYSICAL_BASE_DAMAGE_TEXT_ATTRIBUTE, originalText);
         }
         if (!originalText) return;
-        const baseDamage = parseInt(originalText);
-        const { damage, maxDamage } = this.mekRules.computeMeleeDamage(baseDamage, attackType, loc, ignoreMyomer);
-        damageEl.textContent = (damage !== maxDamage) ? `${damage} [${maxDamage}]` : `${damage}`;
-        damageEl.classList.toggle('damaged', damage < baseDamage);
+        const resolved = this.mekRules.resolveInventoryMeleeDamageDisplay(
+            entry,
+            originalText,
+            attackType,
+            loc,
+            ignoreMyomer,
+        );
+        if (!resolved) return;
+        this.renderRulesAdjustedDamage(entry, damageEl, resolved.weakened, originalText);
     }
 
-    /** Render spike bonus on charge damage text. */
-    private renderChargeSpikeBonus(entry: MountedEquipment, spikeBonus: { total: number; working: number } | null) {
-        if (!spikeBonus) return;
+    private renderKickArcHitModifier(entry: MountedEquipment): void {
+        const display = this.mekRules.resolveKickArcHitDisplay(entry);
+        if (!display || !entry.el) return;
+        const hitModRect = entry.el.querySelector(':scope > .hitMod-rect');
+        const hitModText = entry.el.querySelector(':scope > .hitMod-text');
+        if (!hitModRect || !hitModText) return;
+
+        hitModRect.setAttribute('display', 'block');
+        hitModText.setAttribute('display', 'block');
+        hitModText.textContent = display.text;
+        entry.el.classList.toggle('weakenedHitMod', display.weakened);
+    }
+
+    /** Render rules-specific shield damage without applying physical-weapon or TSM modifiers. */
+    private renderShieldDamage(entry: MountedEquipment) {
         const damageEl = entry.el!.querySelector(`:scope > .damage > text`);
         if (!damageEl) return;
-        let originalText = damageEl.textContent || '';
-        originalText = originalText.replace(/\+\d+$/, ''); // Remove any previous spike bonus
-        if (!originalText) return;
-        damageEl.textContent = `${originalText}+${spikeBonus.working * 2}`;
-        damageEl.classList.toggle('damaged', spikeBonus.total > spikeBonus.working);
+        const shieldDisplay = this.mekRules.resolveShieldDamageDisplay(entry);
+        this.renderRulesAdjustedDamage(entry, damageEl, shieldDisplay.weakened);
+    }
+
+    private renderRulesAdjustedDamage(
+        entry: MountedEquipment,
+        damageEl: Element,
+        weakened: boolean,
+        baseDamage?: string,
+    ): void {
+        const sourceDisplay = readInventoryControlDisplayData(entry);
+        const display = this.unit.applyInventoryControlDisplayEffects(
+            entry,
+            baseDamage === undefined ? sourceDisplay : { ...sourceDisplay, damage: baseDamage },
+            {
+                selectedRange: null,
+                hitModifierBreakdown: this.mekRules.getEquipmentToHitModifiers(entry),
+                selectedAmmo: null,
+            },
+        );
+        this.renderInventoryDamageText(damageEl, display.damage);
+        damageEl.classList.toggle('damaged', weakened);
     }
 
     protected override updateHeatSinkPips() {
@@ -325,21 +460,25 @@ export class UnitSvgMekService extends UnitSvgService {
         // Update heatsink count display
         const hsCountElement = svg.querySelector('#hsCount');
         if (hsCountElement) {
-            if (dissipation.healthyPips !== dissipation.totalDissipation || dissipation.heatsinksOff > 0) {
+            /* BCE FORK-DIFF (TESTER-PLAYTEST-1 #1; REBASE-1 P1 c) — "Heat Sinks: 0" while the pips drew fine.
+               The two reads disagree by source: the PIPS are static SVG content (this service only toggles their
+               classes), while this NUMERIC derives from unit.comp via heatsinkProfile. BCE serves era SLICES
+               whose comp is a WEAPONS-only summary ({t,n,q,at,rs}) — no heat-sink entries, no `p` for the
+               engine-mount test, no engineHS/engineHSType — so the profile derives zero sinks and printed 0 over
+               ten drawn pips. The vendored rules are correct given full data; the gap is BCE's slice. Until the
+               slice generator carries heat sinks, fall back to the sheet's OWN pip count so the number states the
+               same truth the sheet draws. (Inert once the slice carries sinks: totalPips > 0 -> the else-if wins.) */
+            if (dissipation.totalPips === 0) {
+                const sheetPips = svg.querySelectorAll('.hsPips .pip').length;
+                hsCountElement.textContent = sheetPips > 0 ? String(sheetPips) : '—';
+            } else if (dissipation.healthyPips !== dissipation.totalDissipation || dissipation.heatsinksOff > 0) {
                 hsCountElement.textContent = `${dissipation.healthyPips} (${dissipation.totalDissipation})`;
             } else {
                 hsCountElement.textContent = dissipation.totalDissipation.toString();
             }
         }
 
-        // Update heat profile display
-        const heatProfileElement = svg.querySelector('#heatProfile');
-        if (heatProfileElement) {
-            const existingText = heatProfileElement.textContent || '';
-            const match = existingText.match(/:\s*(\d+)/);
-            const heatProfileValue = match ? match[1] : '0';
-            heatProfileElement.textContent = `Total Heat (Dissipation): ${heatProfileValue} (${dissipation.totalDissipationWithWings})`;
-        }
+        this.updateHeatProfileDisplay(dissipation.totalDissipationWithWings ?? dissipation.totalDissipation);
     }
 
     protected override updateArmorDisplay(initial: boolean = false) {
@@ -357,7 +496,12 @@ export class UnitSvgMekService extends UnitSvgService {
                 if (!loc || !linkedLoc) return;
                 if (!shieldInfo[loc]) {
                     const d = locations[loc];
-                    shieldInfo[loc] = { committed: d?.armor ?? 0, total: (d?.armor ?? 0) + (d?.pendingArmor ?? 0), idx: 0 };
+                    shieldInfo[loc] = {
+                        committed: this.mekRules.getShieldTrackHits(loc) ?? d?.armor ?? 0,
+                        total: this.mekRules.getShieldTrackHits(loc, true)
+                            ?? (d?.armor ?? 0) + (d?.pendingArmor ?? 0),
+                        idx: 0,
+                    };
                 }
                 const s = shieldInfo[loc];
                 this.updatePip(pip, ++s.idx, s.committed, s.total, initial);
@@ -367,7 +511,13 @@ export class UnitSvgMekService extends UnitSvgService {
             this.unit.locations?.armor.forEach(entry => {
                 const el = svg.querySelector(`.shield:not(.pip)[loc="${entry.loc}"]`);
                 if (!el) return;
-                const shieldExhausted = this.unit.isArmorLocDestroyed('DC' + entry.loc) || this.unit.isArmorLocDestroyed('DA' + entry.loc);
+                const shieldExhausted = ['DA', 'DC'].some(prefix => {
+                    const trackLoc = `${prefix}${entry.loc}`;
+                    const points = this.unit.getArmorPoints(trackLoc);
+                    const hits = this.mekRules.getShieldTrackHits(trackLoc, true)
+                        ?? this.unit.getArmorHits(trackLoc);
+                    return points > 0 && hits >= points;
+                });
                 if (shieldExhausted || this.unit.isInternalLocDestroyed(entry.loc)) {
                     el.classList.add('damaged');
                 } else {

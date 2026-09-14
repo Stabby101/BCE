@@ -6,12 +6,13 @@
  * armor/internal/crit/ammo edit MIRRORS back to the owning instance and debounce-persists. MekBay
  * components reused unedited (the D-010 pipeline; the round-trip is BCE-side wrappers + an effect).
  */
-import { DestroyRef, Injectable, Injector, effect, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, Injector, effect, inject, signal, untracked } from '@angular/core';
 import { DataService } from '../../services/data.service';
+import { LoggerService } from '../../services/logger.service'; // ORDER-6 P6 — the era-less-boot fallback console line
 import { UnitInitializerService } from '../../services/unit-initializer.service';
 import { CBTForce } from '../../models/cbt-force.model';
 import type { CBTForceUnit } from '../../models/cbt-force-unit.model';
-import type { Unit } from '../../models/units.model';
+import type { UnitSummary as Unit } from '../../models/unit-summary.model';
 import type { CBTSerializedState } from '../../models/force-serialization';
 import { NewCampaignState } from '../new-campaign-state';
 import { resolveMekbayEraId } from '../faction/faction-select';
@@ -22,6 +23,7 @@ import { engagementKeyOf } from '../claims/engagement-key';
 import { deployedSet } from '../force/deployed';
 import type { ProtoInstance } from '../force/force-generator';
 import { extractDamage, applyDamage, applyLiveState, liveState } from './battle-damage';
+import { resolveInstanceUnit } from '../dashboard/roster/resolve-instance-unit'; // GM-1 P3 — the positive-mulId leg (both dirs unscoped — fence-exempt)
 
 export type Side = 'blufor' | 'opfor';
 
@@ -40,6 +42,7 @@ export interface BattleEntry {
 @Injectable()
 export class BattleForceService {
     private readonly dataService = inject(DataService);
+    private readonly logger = inject(LoggerService); // ORDER-6 P6
     private readonly unitInitializer = inject(UnitInitializerService);
     private readonly injector = inject(Injector);
     private readonly state = inject(NewCampaignState);
@@ -65,6 +68,10 @@ export class BattleForceService {
     readonly hasMission = signal(false);
     readonly ready = signal(false);
     readonly dataError = signal<string | null>(null);
+    /** ORDER-3 H17 — READ-ONLY: while true the sheet's local edits are mirrored but NEVER fanned to the host (the player sheet
+     *  sets it while it shows the RETAINED post-resolve view; the GM never sets it). A guard in the markup alone is decoration —
+     *  this is the witness the harness reads on the server. */
+    readonly readOnly = signal(false);
     /** bumped when a sheet finishes loading, so the derivation re-emits the now-loaded entry. */
     private readonly rev = signal(0);
 
@@ -116,11 +123,24 @@ export class BattleForceService {
         this.instById.set(key, inst); // refresh the owning-instance ref each derivation
         this.instIndex.set(id, key);  // instanceId -> key, so an inbound battle delta finds its sheet
         const cached = this.cache.get(key);
-        if (cached && (cached.status === 'ok' || cached.status === 'loading')) return cached;
+        // ORDER-9 Commit 1 — a TERMINAL entry is never resurrected. 'ok'/'loading' were already cached; 'error'/'missing'
+        // are cached the same way now. A re-derivation returns the cached terminal entry, so the sheet effect (which only
+        // ensureSheet's a 'pending' entry) can never re-drive a failed load — the change-detection resurrection loop
+        // (entryFor re-creates 'error'→'pending' → effect → ensureSheet → throw → 'error' → …, which prod's uncapped CD
+        // turned into a permanent hang, H20) cannot form. retrySheet() is the ONLY path back to 'pending'.
+        if (cached && cached.status !== 'pending') return cached;
         const unit = this.resolveUnit(inst);
         const entry: BattleEntry = { side, instanceId: id, name: inst.chassis, model: inst.model, tons: inst.tons, status: unit ? 'pending' : 'missing', unit };
         this.cache.set(key, entry);
         return entry;
+    }
+
+    /** ORDER-9 Commit 1 — the ONLY path back to 'pending' for a terminal (error/missing) entry: an explicit user retry.
+     *  Drops the cached entry so the next derivation re-resolves it fresh, then re-emits the lists (the sheet effect
+     *  re-ensureSheets it). One retry = one attempt; a second failure lands terminal again (no loop). */
+    retrySheet(side: Side, instanceId: string): void {
+        this.cache.delete(`${side}:${instanceId}`);
+        this.rev.update((v) => v + 1);
     }
 
     /** Lazily load one sheet (called on viewport intersection): load -> restore damage -> crew -> mirror. */
@@ -132,7 +152,17 @@ export class BattleForceService {
         this.cache.set(key, { ...e, status: 'loading' });
         this.rev.update((v) => v + 1);
         try {
-            const fu = force.addUnit(e.unit);
+            // BCE FORK-EDIT (REBASE-1 P1 e): construct the unit UNTRACKED. player-sheet drives ensureSheet from
+            // inside effect()s (player-sheet.ts:299/301), so addUnit runs synchronously within a reactive context;
+            // the CBTForceUnit constructor creates a standalone manualCleanup effect (cbt-force-unit.model.ts:252),
+            // and the pin's Angular 22 now THROWS NG0602 ("effect() cannot be called from within a reactive context")
+            // where the fork's Angular 21 tolerated it — which broke every player-sheet load. The unit's effect is
+            // meant to be independent (own injector + manualCleanup), never a child of the caller's context, so
+            // untracked() is the correct escape. (RosterForceService already sidesteps this by deferring ensureSheet
+            // via setTimeout / an IntersectionObserver — the GM roster never hits it.) load()'s own async work is
+            // already untracked in the core (cbt-force-unit.model.ts:485); registerMirror's effect runs post-await.
+            const unit = e.unit; // narrowed non-null by the guard above; hoisted so the closure keeps the narrowing
+            const fu = untracked(() => force.addUnit(unit));
             await fu.load();
             applyDamage(fu, this.instById.get(key)?.damage); // restore persisted battle damage
             const live = this.rt.battleStates()[instanceId]; // a newer LIVE state (mid-battle load / late join) supersedes the persisted
@@ -160,6 +190,7 @@ export class BattleForceService {
         effect(() => {
             fu.getLocations(); fu.getCritSlots(); fu.getInventory(); fu.getHeat(); // track (heat now rides the live fan)
             fu.phaseTrigger(); // D-049: re-fire after MekBay's COMMIT/END-PHASE (endPhase bumps this) so the CONSOLIDATED state fans
+            fu.crewTrigger(); // TABLE-2 T2-3: re-fire on a crew/pilot-hit change so a pilot hit fans on its own (crew hits aren't a tracked getter)
             if (!primed) { primed = true; return; }
             const inst = this.instById.get(key);
             if (!inst) return;
@@ -168,7 +199,7 @@ export class BattleForceService {
             inst.damage = extractDamage(fu);          // the persisted envelope (heat NEUTRALIZED — D-030 live-only)
             if (liveJson !== this.lastSeen.get(key)) { // a GENUINE local edit (not an echo of an applied remote)
                 this.lastSeen.set(key, liveJson);
-                this.rt.publishBattle(instanceId, live); // -> host persists + fans the delta to the room
+                if (!this.readOnly()) this.rt.publishBattle(instanceId, live); // -> host persists + fans the delta to the room (ORDER-3 H17: never while read-only)
             }
             if (this.authoritative) this.schedulePersist(); // GM writes the campaign snapshot (D-030); player never does
         }, { injector: this.injector });
@@ -214,11 +245,10 @@ export class BattleForceService {
     }
 
     private resolveUnit(inst: ProtoInstance): Unit | undefined {
-        const byName = this.dataService.getUnitByName(inst.unitRef);
-        if (byName) return byName;
-        const units = this.dataService.getUnits();
-        if (!units?.length) return undefined;
-        return units.find((u) => u.chassis === inst.chassis && u.model === inst.model) ?? units.find((u) => u.chassis === inst.chassis);
+        // GM-1 P3 — delegate to the PLATFORM-1 chain (roster-force's pattern): this sheet-side chain was
+        // missing the positive-mulId leg (id:-1 sentinel guarded — 1,545 catalog units share -1), which
+        // bites exactly the player-imported units whose unitRef drifted from the receiving catalog's names.
+        return resolveInstanceUnit(inst, this.dataService.getUnitByName(inst.unitRef), this.dataService.getUnits());
     }
 
     /** DEPLOY-006: the battle/MekBay view resolves units from the per-era SLICE (the same one the wizard +
@@ -228,12 +258,36 @@ export class BattleForceService {
         if (this.dataService.isDataReady()) return;
         try {
             if (await this.dataService.ensureSliceIndex()) {
-                const eraId = resolveMekbayEraId(this.state.era(), this.dataService.getEras());
-                if (eraId != null && (await this.dataService.ensureSlice(eraId))) return; // slice resident → ready
+                // ORDER-6 P6 — a cold boot on the player SHEET route runs this BEFORE the campaign snapshot has
+                // hydrated the era over the socket, so `state.era()` is momentarily null. Resolving era-less here
+                // fell straight through to the 24 MB full catalog (units.json requested at ~90 ms) — every player
+                // phone, every mode. The roster→sheet path is unaffected: the era is already resident there, so
+                // whenEra() returns immediately. WAIT for the era before choosing a slice; only a genuinely
+                // era-less boot (nothing bound) falls through to the full catalog, and says so.
+                if (await this.whenEra()) {
+                    const eraId = resolveMekbayEraId(this.state.era(), this.dataService.getEras());
+                    if (eraId != null && (await this.dataService.ensureSlice(eraId))) return; // slice resident → ready
+                } else {
+                    this.logger.warn('[P6] no campaign era bound — the full catalog is the honest fallback for this boot.');
+                }
             }
         } catch { /* fall through to the full catalog */ }
         if (!this.dataService.isDownloading()) this.dataService.initialize().catch(() => { /* surfaced via timeout */ });
         await this.whenDataReady();
+    }
+
+    /** ORDER-6 P6 — resolve once the campaign era is KNOWN (true) or knowably absent (false). The player sheet route
+     *  can boot before the snapshot fan hydrates the era; the roster/GM paths already have it resident, so this
+     *  returns immediately there. Bounded so a stalled snapshot degrades to the full-catalog fallback, never hangs. */
+    private whenEra(): Promise<boolean> {
+        if (this.state.era() != null) return Promise.resolve(true);
+        if (!this.store.campaignId()) return Promise.resolve(false); // nothing bound → no era is ever coming
+        return new Promise<boolean>((resolve) => {
+            const timer = setTimeout(() => { ref.destroy(); resolve(this.state.era() != null); }, 20000);
+            const ref = effect(() => {
+                if (this.state.era() != null) { clearTimeout(timer); ref.destroy(); resolve(true); }
+            }, { injector: this.injector });
+        });
     }
 
     private whenDataReady(): Promise<void> {

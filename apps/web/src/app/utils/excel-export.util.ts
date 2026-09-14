@@ -1,41 +1,10 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-/*
- * Author: Drake
- */
 
-import type { Unit, AlphaStrikeArcStats } from '../models/units.model';
+
+import type { UnitSummary, AlphaStrikeArcStats } from '../models/unit-summary.model';
 import type { ForceUnit } from '../models/force-unit.model';
 import type { CBTForceUnit } from '../models/cbt-force-unit.model';
 import type { ASForceUnit } from '../models/as-force-unit.model';
@@ -53,7 +22,7 @@ async function loadXlsx() {
  */
 function sanitizeFilename(name: string): string {
     return name
-        .replace(/[<>:"/\\|?*]/g, '') // Remove invalid file characters
+        .replace(/[<>:"/\\|?*']/g, '') // Remove invalid file characters
         .replace(/\s+/g, '-')          // Replace spaces with dashes
         .replace(/-+/g, '-')           // Collapse multiple dashes
         .replace(/^-|-$/g, '')         // Remove leading/trailing dashes
@@ -68,6 +37,7 @@ function sanitizeFilename(name: string): string {
 function sanitizeSheetName(name: string): string {
     return name
         .replace(/[\\/?*[\]:]/g, '') // Remove invalid sheet name characters
+    .replace(/^'+|'+$/g, '')        // Excel sheet names cannot start or end with apostrophes
         .slice(0, 31) || 'Force';     // Limit length, fallback if empty
 }
 
@@ -80,21 +50,42 @@ function formatArcDamage(arc: AlphaStrikeArcStats | undefined, type: 'STD' | 'CA
     return `${dmg.dmgS}/${dmg.dmgM}/${dmg.dmgL}/${dmg.dmgE}`;
 }
 
-function getMergedUnitTags(unit: Unit): string {
-    const merged = new Set<string>();
-    for (const tag of unit._chassisTags ?? []) merged.add(tag);
-    for (const tag of unit._nameTags ?? []) merged.add(tag);
-    return Array.from(merged).join(', ');
+function getMergedUnitTags(unit: UnitSummary): string {
+    const merged = new Map<string, { label: string; quantity: number }>();
+
+    const mergeTag = (tag: string, quantity: number) => {
+        const key = tag.toLowerCase();
+        const existing = merged.get(key);
+        if (!existing) {
+            merged.set(key, { label: tag, quantity });
+            return;
+        }
+
+        if (quantity > existing.quantity) {
+            existing.quantity = quantity;
+        }
+    };
+
+    for (const entry of unit._chassisTags ?? []) {
+        mergeTag(entry.tag, entry.quantity);
+    }
+    for (const entry of unit._nameTags ?? []) {
+        mergeTag(entry.tag, entry.quantity);
+    }
+
+    return Array.from(merged.values())
+        .map(entry => entry.quantity > 1 ? `${entry.label} (${entry.quantity})` : entry.label)
+        .join(', ');
 }
 
 /**
  * Converts units to CBT (Classic BattleTech) export format.
  */
-function unitToCBTRow(unit: Unit): Record<string, unknown> {
+function unitToCBTRow(unit: UnitSummary): Record<string, unknown> {
     return {
         chassis: unit.chassis,
         model: unit.model,
-        mul_id: unit.id === -1 ? '' : unit.id,
+        mul_id: unit.id <= 0 ? '' : unit.id,
         year: unit.year,
         BV: unit.bv,
         cost: unit.cost,
@@ -109,6 +100,7 @@ function unitToCBTRow(unit: Unit): Record<string, unknown> {
         engine: unit.engine,
         engineRating: unit.engineRating,
         source: unit.source?.join(', ') ?? '',
+        publishedRS: unit.published?.join(', ') ?? '',
         tags: getMergedUnitTags(unit),
         role: unit.role,
         armorType: unit.armorType,
@@ -123,7 +115,6 @@ function unitToCBTRow(unit: Unit): Record<string, unknown> {
         walk: unit.walk,
         maxWalk: unit.walk2,
         jump: unit.jump,
-        maxJump: unit.jump2,
         umu: unit.umu,
         c3: unit.c3,
         dpt: unit.dpt,
@@ -142,19 +133,19 @@ function unitToCBTRow(unit: Unit): Record<string, unknown> {
     };
 }
 
-function unitsToCBTRows(units: Unit[]): Record<string, unknown>[] {
+function unitsToCBTRows(units: UnitSummary[]): Record<string, unknown>[] {
     return units.map(unitToCBTRow);
 }
 
 /**
  * Converts units to AS (Alpha Strike) export format.
  */
-function unitToASRow(unit: Unit): Record<string, unknown> {
+function unitToASRow(unit: UnitSummary): Record<string, unknown> {
     const as = unit.as;
     return {
         chassis: unit.chassis,
         model: unit.model,
-        mul_id: unit.id === -1 ? '' : unit.id,
+        mul_id: unit.id <= 0 ? '' : unit.id,
         year: unit.year,
         PV: as?.PV ?? '',
         cost: unit.cost,
@@ -162,6 +153,7 @@ function unitToASRow(unit: Unit): Record<string, unknown> {
         techBase: unit.techBase,
         techRating: unit.techRating,
         source: unit.source?.join(', ') ?? '',
+        publishedRS: unit.published?.join(', ') ?? '',
         tags: getMergedUnitTags(unit),
         role: unit.role,
         SZ: as?.SZ ?? '',
@@ -179,35 +171,36 @@ function unitToASRow(unit: Unit): Record<string, unknown> {
         dmgM: as?.dmg?.dmgM ?? '',
         dmgL: as?.dmg?.dmgL ?? '',
         dmgE: as?.dmg?.dmgE ?? '',
+        specials: as?.specials?.join(', ') ?? '',
         usesArcs: as?.usesArcs ?? '',
         // Front Arc columns
         'frontArc STD': formatArcDamage(as?.frontArc, 'STD'),
         'frontArc CAP': formatArcDamage(as?.frontArc, 'CAP'),
         'frontArc MSL': formatArcDamage(as?.frontArc, 'MSL'),
         'frontArc SCAP': formatArcDamage(as?.frontArc, 'SCAP'),
-        'frontArc specials': as?.frontArc?.specials ?? '',
+        'frontArc specials': as?.frontArc?.specials.join(', ') ?? '',
         // Rear Arc columns
         'rearArc STD': formatArcDamage(as?.rearArc, 'STD'),
         'rearArc CAP': formatArcDamage(as?.rearArc, 'CAP'),
         'rearArc MSL': formatArcDamage(as?.rearArc, 'MSL'),
         'rearArc SCAP': formatArcDamage(as?.rearArc, 'SCAP'),
-        'rearArc specials': as?.rearArc?.specials ?? '',
+        'rearArc specials': as?.rearArc?.specials.join(', ') ?? '',
         // Left Arc columns
         'leftArc STD': formatArcDamage(as?.leftArc, 'STD'),
         'leftArc CAP': formatArcDamage(as?.leftArc, 'CAP'),
         'leftArc MSL': formatArcDamage(as?.leftArc, 'MSL'),
         'leftArc SCAP': formatArcDamage(as?.leftArc, 'SCAP'),
-        'leftArc specials': as?.leftArc?.specials ?? '',
+        'leftArc specials': as?.leftArc?.specials.join(', ') ?? '',
         // Right Arc columns
         'rightArc STD': formatArcDamage(as?.rightArc, 'STD'),
         'rightArc CAP': formatArcDamage(as?.rightArc, 'CAP'),
         'rightArc MSL': formatArcDamage(as?.rightArc, 'MSL'),
         'rightArc SCAP': formatArcDamage(as?.rightArc, 'SCAP'),
-        'rightArc specials': as?.rightArc?.specials ?? ''
+        'rightArc specials': as?.rightArc?.specials.join(', ') ?? ''
     };
 }
 
-function unitsToASRows(units: Unit[]): Record<string, unknown>[] {
+function unitsToASRows(units: UnitSummary[]): Record<string, unknown>[] {
     return units.map(unitToASRow);
 }
 
@@ -310,7 +303,7 @@ function forceGroupsToRows(
  * @param filename - Optional custom filename (without extension)
  */
 export async function exportUnitsToExcel(
-    units: Unit[],
+    units: UnitSummary[],
     gameSystem: GameSystem,
     filename?: string
 ): Promise<void> {
@@ -360,7 +353,7 @@ export async function exportUnitsToExcel(
  * @param filename - Optional custom filename (without extension)
  */
 export async function exportUnitsToCSV(
-    units: Unit[],
+    units: UnitSummary[],
     gameSystem: GameSystem,
     filename?: string
 ): Promise<void> {

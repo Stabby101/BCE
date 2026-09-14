@@ -1,35 +1,6 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -38,14 +9,12 @@ import { ADVANCED_FILTERS, AdvFilterType } from '../../services/unit-search-filt
 import { GameSystem } from '../../models/common.model';
 import { UnitSearchFiltersService } from '../../services/unit-search-filters.service';
 
-/*
- * Author: Drake
- */
+
 
 interface FilterInfo {
     key: string;
     label: string;
-    type: 'dropdown' | 'range' | 'semantic';
+    type: 'dropdown' | 'range' | 'boolean' | 'semantic';
     multistate?: boolean;
     countable?: boolean;
 }
@@ -77,7 +46,7 @@ export class SemanticGuideComponent {
     appendToSearch(filterText: string): void {
         const current = this.filtersService.searchText().trim();
         const newText = current ? `${current} ${filterText}` : filterText;
-        this.filtersService.searchText.set(newText);
+        this.filtersService.setSearchText(newText);
     }
 
     /** Get filters for a specific game system */
@@ -85,9 +54,11 @@ export class SemanticGuideComponent {
         return ADVANCED_FILTERS
             .filter(f => !f.game || f.game === gs)
             .map(f => {
-                let type: 'dropdown' | 'range' | 'semantic';
+                let type: FilterInfo['type'];
                 if (f.type === AdvFilterType.RANGE) {
                     type = 'range';
+                } else if (f.type === AdvFilterType.BOOLEAN) {
+                    type = 'boolean';
                 } else if (f.type === AdvFilterType.SEMANTIC) {
                     type = 'semantic';
                 } else {
@@ -106,11 +77,13 @@ export class SemanticGuideComponent {
 
     /** Filters available for Classic BattleTech */
     cbtFilters = computed<FilterInfo[]>(() => this.getFiltersForSystem(GameSystem.CLASSIC));
+    cbtBooleanFilters = computed(() => this.cbtFilters().filter(f => f.type === 'boolean'));
     cbtDropdownFilters = computed(() => this.cbtFilters().filter(f => f.type === 'dropdown'));
     cbtRangeFilters = computed(() => this.cbtFilters().filter(f => f.type === 'range'));
 
     /** Filters available for Alpha Strike */
     asFilters = computed<FilterInfo[]>(() => this.getFiltersForSystem(GameSystem.ALPHA_STRIKE));
+    asBooleanFilters = computed(() => this.asFilters().filter(f => f.type === 'boolean'));
     asDropdownFilters = computed(() => this.asFilters().filter(f => f.type === 'dropdown'));
     asRangeFilters = computed(() => {
         const ranges = this.asFilters().filter(f => f.type === 'range');

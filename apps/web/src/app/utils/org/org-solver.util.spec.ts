@@ -1,6 +1,12 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
 import type { Era } from '../../models/eras.model';
-import type { Faction, FactionAffinity } from '../../models/factions.model';
-import type { ASUnitTypeCode, MoveType, Unit, UnitSubtype, UnitType } from '../../models/units.model';
+import type { Faction } from '../../models/factions.model';
+import type { FactionAffinity } from '../../models/mulfactions.model';
+import type { ASUnitTypeCode, MoveType, UnitSummary, UnitSubtype, UnitType } from '../../models/unit-summary.model';
+import { createEmptyUnit } from '../../testing/unit-test-helpers';
 import {
     CC_AUGMENTED_BATTALION,
     CC_AUGMENTED_COMPANY,
@@ -12,6 +18,7 @@ import {
     CLAN_CV_POINT,
     CLAN_CORE_ORG,
     CLAN_NOVA,
+    CLAN_PM_POINT,
     CLAN_POINT,
     CLAN_STAR,
     CLAN_SUPERNOVA_TRINARY,
@@ -20,6 +27,8 @@ import {
     COMSTAR_CORE_ORG,
     COMSTAR_LEVEL_I_FROM_SQUADS,
     COMSTAR_LEVEL_II,
+    DC_AIR_LANCE,
+    DC_LANCE,
     IS_AIR_LANCE,
     IS_BA_PLATOON,
     IS_BA_SQUAD,
@@ -42,7 +51,7 @@ import {
     WD_LANCE,
     WD_NOVA,
     WD_POINT,
-    WD_SINGLE,
+    WD_UNIT,
 } from './definitions';
 import {
     compileGroupFacts,
@@ -51,8 +60,8 @@ import {
     DEFAULT_ORG_RULE_REGISTRY,
 } from './org-facts.util';
 import {
-    DEFAULT_ORG_SPEC,
-    resolveOrgDefinitionSpec as resolveOrgDefinitionSpecForFixture,
+    DEFAULT_ORG_DEFINITION,
+    resolveOrgDefinition as resolveOrgDefinitionForFixture,
 } from './org-registry.util';
 import {
     evaluateComposedCountRule,
@@ -74,15 +83,15 @@ import {
 import type {
     GroupSizeResult,
     OrgComposedCountRule,
-    OrgDefinitionSpec,
+    OrgDefinition,
     OrgLeafCountRule,
     OrgLeafPatternRule,
     PromotionBasicBucketValue,
 } from './org-types';
 
 type UnitFixture = {
-    type: Unit['type'];
-    subtype: Unit['subtype'];
+    type: UnitSummary['type'];
+    subtype: UnitSummary['subtype'];
     omni?: boolean;
     specials?: string[];
     internal?: number;
@@ -112,14 +121,14 @@ function createEra(from: number, to: number): Era | undefined {
     };
 }
 
-function resolveOrgDefinitionSpec(factionName: string, factionAffinity: FactionAffinity, era?: Era): OrgDefinitionSpec {
-    return resolveOrgDefinitionSpecForFixture(createFaction(factionName, factionAffinity), era);
+function resolveOrgDefinition(factionName: string, factionAffinity: FactionAffinity, era?: Era): OrgDefinition {
+    return resolveOrgDefinitionForFixture(createFaction(factionName, factionAffinity), era);
 }
 
 function evaluateFactionOrgDefinition(
     factionName: string,
     factionAffinity: FactionAffinity,
-    units: readonly Unit[],
+    units: readonly UnitSummary[],
     groups: readonly GroupSizeResult[] = [],
     era?: Era,
 ) {
@@ -127,7 +136,7 @@ function evaluateFactionOrgDefinition(
 }
 
 function resolveFromUnits(
-    units: readonly Unit[],
+    units: readonly UnitSummary[],
     factionName: string,
     factionAffinity: FactionAffinity,
     era?: Era,
@@ -152,7 +161,8 @@ function createUnit(
     specials: string[] = [],
     internal: number = 1,
     moveType: MoveType = 'Tracked',
-): Unit {
+    squads?: number,
+): UnitSummary {
     const alphaStrikeType = (() => {
         if (type === 'Mek') return 'BM';
         if (type === 'ProtoMek') return 'PM';
@@ -162,86 +172,21 @@ function createUnit(
         return 'CV';
     })();
 
-    return {
+    return createEmptyUnit({
         name,
-        id: -1,
         chassis: `Chassis ${name}`,
         model: `Model ${name}`,
-        year: 3151,
-        weightClass: 'Medium',
-        tons: 50,
-        offSpeedFactor: 0,
-        bv: 0,
-        pv: 0,
-        cost: 0,
-        level: 0,
-        techBase: 'Inner Sphere',
-        techRating: 'D',
         type,
         subtype,
         omni: isOmni ? 1 : 0,
-        engine: 'Fusion',
-        engineRating: 0,
-        engineHS: 0,
-        engineHSType: 'Heat Sink',
-        source: [],
-        role: '',
-        armorType: '',
-        structureType: '',
-        armor: 0,
-        armorPer: 0,
         internal,
-        heat: 0,
-        dissipation: 0,
+        squads,
         moveType,
-        walk: 0,
-        walk2: 0,
-        run: 0,
-        run2: 0,
-        jump: 0,
-        jump2: 0,
-        umu: 0,
-        c3: '',
-        dpt: 0,
-        comp: [],
-        su: 0,
-        crewSize: 1,
-        quirks: [],
-        features: [],
-        icon: '',
-        sheets: [],
         as: {
             TP: alphaStrikeType,
-            PV: 0,
-            SZ: 0,
-            TMM: 0,
-            usesOV: false,
-            OV: 0,
-            MV: '0',
-            MVm: {},
-            usesTh: false,
-            Th: 0,
-            Arm: 0,
-            Str: 0,
             specials,
-            dmg: {
-                dmgS: '0',
-                dmgM: '0',
-                dmgL: '0',
-                dmgE: '0',
-            },
-            usesE: false,
-            usesArcs: false,
         },
-        _searchKey: '',
-        _displayType: '',
-        _maxRange: 0,
-        _dissipationEfficiency: 0,
-        _mdSumNoPhysical: 0,
-        _mdSumNoPhysicalNoOneshots: 0,
-        _nameTags: [],
-        _chassisTags: [],
-    };
+    });
 }
 
 function createLance(name: string, unitNames: string[]): GroupSizeResult {
@@ -288,7 +233,7 @@ function createUn(name: string, unitNames: string[]): GroupSizeResult {
     };
 }
 
-function createContubernium(name: string, tag: 'infantry' | 'non-infantry', units: Unit[]): GroupSizeResult {
+function createContubernium(name: string, tag: 'infantry' | 'non-infantry', units: UnitSummary[]): GroupSizeResult {
     return {
         name,
         type: 'Contubernium',
@@ -300,7 +245,7 @@ function createContubernium(name: string, tag: 'infantry' | 'non-infantry', unit
     };
 }
 
-function createAero(name: string, isOmni = false, specials: string[] = []): Unit {
+function createAero(name: string, isOmni = false, specials: string[] = []): UnitSummary {
     return createUnit(name, 'Aero', isOmni ? 'Aerospace Fighter Omni' : 'Aerospace Fighter', isOmni, specials);
 }
 
@@ -309,8 +254,8 @@ function createFlightEligibleUnit(
     _identity: string,
     alphaStrikeType: ASUnitTypeCode,
     unitType: UnitType,
-    moveProfile: NonNullable<Unit['as']>['MVm'] = {},
-): Unit {
+    moveProfile: NonNullable<UnitSummary['as']>['MVm'] = {},
+): UnitSummary {
     const unit = createUnit(name, unitType, alphaStrikeType === 'CF' ? 'Conventional Fighter' : 'Aerospace Fighter');
 
     return {
@@ -440,7 +385,7 @@ const BLUNDER_BRIGADE_UNIT_FIXTURES: Record<string, UnitFixture> = {
     CVThumperArtilleryVehicle: { type: 'Tank', subtype: 'Combat Vehicle', specials: ['ARTT-1', 'EE', 'REAR0*/-/-', 'SRCH'] },
 };
 
-function createFixtureUnit(name: keyof typeof BLUNDER_BRIGADE_UNIT_FIXTURES): Unit {
+function createFixtureUnit(name: keyof typeof BLUNDER_BRIGADE_UNIT_FIXTURES): UnitSummary {
     const fixture = BLUNDER_BRIGADE_UNIT_FIXTURES[name];
     return createUnit(
         name,
@@ -455,17 +400,17 @@ function buildBlunderBrigadeGroupResults(groupOneMultiplier: number = 1, copies:
     const groupResults: GroupSizeResult[] = [];
 
     for (let copy = 0; copy < copies; copy += 1) {
-        const groupOne: Unit[] = Array.from({ length: groupOneMultiplier }, () =>
+        const groupOne: UnitSummary[] = Array.from({ length: groupOneMultiplier }, () =>
             BLUNDER_BRIGADE_GROUP_ONE_NAMES.map(name => createFixtureUnit(name)),
         ).flat();
-        const groupTwo: Unit[] = [
+        const groupTwo: UnitSummary[] = [
             'BMOstsol_OTL5M',
             'BMNightsky_NGS5S',
             'BMPuma_E',
             'BMPuma_S',
             'BMDasher_H',
         ].map(name => createFixtureUnit(name));
-        const groupThree: Unit[] = [
+        const groupThree: UnitSummary[] = [
             'BMHatchetman_HCT5S',
             'BMHussar_HSR400D',
         ].map(name => createFixtureUnit(name));
@@ -548,10 +493,9 @@ describe('org-solver.util', () => {
 
         expect(result.eligibleUnits.length).toBe(4);
         expect(result.emitted).toEqual([
-            { modifierKey: 'Reinforced ', perGroupCount: 3, copies: 1, tier: 1 },
-            { modifierKey: 'Under-Strength ', perGroupCount: 1, copies: 1, tier: 1 },
+            { modifierKey: 'Reinforced ', perGroupCount: 3, copies: 1, tier: 1 }
         ]);
-        expect(result.leftoverCount).toBe(0);
+        expect(result.leftoverCount).toBe(1);
     });
 
     it('accepts SV units in Flight only when they have a flight-capable MVm profile', () => {
@@ -996,7 +940,7 @@ describe('org-solver.util', () => {
         expect(result.leftoverCount).toBe(0);
     });
 
-    it('materializes an Inner Sphere Squad plus leftover trooper from a non-exact unit', () => {
+    it('materializes one Inner Sphere Squad when Unit.squads is not set', () => {
         const units = compileUnitFactsList([
             createUnit('CI Squad', 'Infantry', 'Conventional Infantry', false, [], 8, 'Tracked'),
         ]);
@@ -1004,13 +948,11 @@ describe('org-solver.util', () => {
         const result = materializeCIFormationRule(IS_PLATOON, units);
 
         expect(result.groups).toHaveSize(1);
-        expect(result.groups[0]).toEqual(jasmine.objectContaining({ name: 'Squad', type: 'Squad', count: 1 }));
-        expect(result.leftoverUnitAllocations).toEqual([
-            jasmine.objectContaining({ troopers: 1 }),
-        ]);
+        expect(result.groups[0]).toEqual(jasmine.objectContaining({ name: 'Squad', type: 'Squad', count: 1, isFragment: true }));
+        expect(result.leftoverUnitAllocations).toEqual([]);
     });
 
-    it('evaluates an Inner Sphere Platoon directly from same-motive troopers', () => {
+    it('evaluates an Inner Sphere Platoon directly from same-motive squads', () => {
         const result = evaluateCIFormationRule(IS_PLATOON, compileUnitFactsList([
             createUnit('CI Squad 1', 'Infantry', 'Conventional Infantry', false, [], 7, 'Tracked'),
             createUnit('CI Squad 2', 'Infantry', 'Conventional Infantry', false, [], 7, 'Tracked'),
@@ -1037,7 +979,7 @@ describe('org-solver.util', () => {
         expect(result.groups).toContain(jasmine.objectContaining({ name: 'Squad', type: 'Squad', count: 1 }));
     });
 
-    it('evaluates a Clan Point directly from four jump squads worth of troopers', () => {
+    it('evaluates a Clan Point directly from four jump squads', () => {
         const result = evaluateCIFormationRule(CLAN_CI_POINT, compileUnitFactsList([
             createUnit('Jump Squad 1', 'Infantry', 'Conventional Infantry', false, [], 5, 'Jump'),
             createUnit('Jump Squad 2', 'Infantry', 'Conventional Infantry', false, [], 5, 'Jump'),
@@ -1051,7 +993,7 @@ describe('org-solver.util', () => {
         expect(result.leftoverCount).toBe(0);
     });
 
-    it('evaluates a ComStar Level I directly from five jump squads worth of troopers', () => {
+    it('evaluates a ComStar Level I directly from five jump squads', () => {
         const result = evaluateCIFormationRule(COMSTAR_LEVEL_I_FROM_SQUADS, compileUnitFactsList([
             createUnit('Jump Squad 1', 'Infantry', 'Conventional Infantry', false, [], 6, 'Jump'),
             createUnit('Jump Squad 2', 'Infantry', 'Conventional Infantry', false, [], 6, 'Jump'),
@@ -1128,6 +1070,21 @@ describe('org-solver.util', () => {
         expect(result.leftoverCount).toBe(0);
     });
 
+    it('materializes Draconis Combine Aero Lance internally while displaying as Lance', () => {
+        const result = materializeLeafCountRule(DC_LANCE, compileUnitFactsList([
+            createUnit('Aero 1', 'Aero', 'Aerospace Fighter'),
+            createUnit('Aero 2', 'Aero', 'Aerospace Fighter'),
+        ]));
+
+        expect(result.groups).toEqual([
+            jasmine.objectContaining({
+                name: 'Lance',
+                type: 'Aero Lance',
+                displayName: 'Lance',
+            }),
+        ]);
+    });
+
     it('evaluates Air Lance from one Flight and one Lance', () => {
         const groups = [
             createFlight('Flight A', ['A1', 'A2']),
@@ -1140,6 +1097,49 @@ describe('org-solver.util', () => {
             { modifierKey: '', perGroupCount: 2, copies: 1, tier: 1.5, compositionIndex: 0 },
         ]);
         expect(result.leftoverCount).toBe(0);
+    });
+
+    it('evaluates Draconis Combine Air Lance from one AF Lance and one BM Lance', () => {
+        const aeroLance: GroupSizeResult = {
+            name: 'Lance',
+            type: 'Aero Lance',
+            displayName: 'Lance',
+            modifierKey: '',
+            countsAsType: null,
+            tier: 1,
+            units: ['A1', 'A2'].map((unitName) => createUnit(unitName, 'Aero', 'Aerospace Fighter')),
+        };
+        const groups = [
+            aeroLance,
+            createLance('BattleMek Lance', ['L1', 'L2', 'L3', 'L4']),
+        ].map((group) => compileGroupFacts(group));
+
+        const result = evaluateComposedCountRule(DC_AIR_LANCE, groups);
+
+        expect(result.emitted).toEqual([
+            { modifierKey: '', perGroupCount: 2, copies: 1, tier: 1.5, compositionIndex: 0 },
+        ]);
+        expect(result.leftoverCount).toBe(0);
+    });
+
+    it('does not treat Draconis Combine Aero Lance as a generic IS Company lance child', () => {
+        const aeroLance: GroupSizeResult = {
+            name: 'Lance',
+            type: 'Aero Lance',
+            displayName: 'Lance',
+            modifierKey: '',
+            countsAsType: null,
+            tier: 1,
+            units: ['A1', 'A2'].map((unitName) => createUnit(unitName, 'Aero', 'Aerospace Fighter')),
+        };
+        const groups = [
+            aeroLance,
+            createLance('BattleMek Lance', ['L1', 'L2', 'L3', 'L4']),
+        ].map((group) => compileGroupFacts(group));
+
+        const result = evaluateComposedCountRule(IS_COMPANY, groups);
+
+        expect(result.emitted).toEqual([]);
     });
 
     it('rejects Air Lance when the lance child includes non-BM units', () => {
@@ -1258,10 +1258,10 @@ describe('org-solver.util', () => {
         expect(result.leftoverCount).toBe(12);
     });
 
-    it('evaluates Augmented Lance with MEC penalties against available omni carriers', () => {
+    it('evaluates Augmented Lance when MEC battle armor has enough omni carriers', () => {
         const units = compileUnitFactsList([
-            createUnit('Carrier 1', 'Mek', 'BattleMek', false),
-            createUnit('Carrier 2', 'Mek', 'BattleMek', false),
+            createUnit('Carrier 1', 'Mek', 'BattleMek Omni', true),
+            createUnit('Carrier 2', 'Mek', 'BattleMek Omni', true),
             createUnit('Carrier 3', 'Mek', 'BattleMek', false),
             createUnit('Carrier 4', 'Mek', 'BattleMek', false),
             createUnit('BA 1', 'Infantry', 'Battle Armor', false, ['MEC'], 4),
@@ -1275,15 +1275,104 @@ describe('org-solver.util', () => {
             modifierKey: '',
             perGroupCount: 6,
             copies: 1,
-            score: 2,
         }));
         expect(result.leftoverCount).toBe(0);
     });
 
-    it('penalizes non-qualified battle armor in Augmented Lance matching', () => {
+    it('evaluates Augmented Lance for combat vehicles when MEC battle armor has enough omni carriers', () => {
         const units = compileUnitFactsList([
+            createUnit('Carrier 1', 'Tank', 'Combat Vehicle Omni', true),
+            createUnit('Carrier 2', 'Tank', 'Combat Vehicle Omni', true),
+            createUnit('Carrier 3', 'Tank', 'Combat Vehicle Omni', true),
+            createUnit('Carrier 4', 'Tank', 'Combat Vehicle Omni', true),
+            createUnit('BA 1', 'Infantry', 'Battle Armor', false, ['MEC'], 4),
+            createUnit('BA 2', 'Infantry', 'Battle Armor', false, ['MEC'], 4),
+            createUnit('BA 3', 'Infantry', 'Battle Armor', false, ['MEC'], 4),
+            createUnit('BA 4', 'Infantry', 'Battle Armor', false, ['MEC'], 4),
+        ]);
+
+        const result = evaluateLeafPatternRule(CC_AUGMENTED_LANCE, units);
+
+        expect(result.emitted).toHaveSize(1);
+        expect(result.emitted[0]).toEqual(jasmine.objectContaining({
+            modifierKey: '',
+            perGroupCount: 8,
+            copies: 1,
+        }));
+        expect(result.leftoverCount).toBe(0);
+    });
+
+    it('evaluates Augmented Lance for combat vehicles when XMEC battle armor does not need omni carriers', () => {
+        const units = compileUnitFactsList([
+            createUnit('Carrier 1', 'Tank', 'Combat Vehicle'),
+            createUnit('Carrier 2', 'Tank', 'Combat Vehicle'),
+            createUnit('Carrier 3', 'Tank', 'Combat Vehicle'),
+            createUnit('Carrier 4', 'Tank', 'Combat Vehicle'),
+            createUnit('BA 1', 'Infantry', 'Battle Armor', false, ['XMEC'], 4),
+            createUnit('BA 2', 'Infantry', 'Battle Armor', false, ['XMEC'], 4),
+            createUnit('BA 3', 'Infantry', 'Battle Armor', false, ['XMEC'], 4),
+            createUnit('BA 4', 'Infantry', 'Battle Armor', false, ['XMEC'], 4),
+        ]);
+
+        const result = evaluateLeafPatternRule(CC_AUGMENTED_LANCE, units);
+
+        expect(result.emitted).toHaveSize(1);
+        expect(result.emitted[0]).toEqual(jasmine.objectContaining({
+            modifierKey: '',
+            perGroupCount: 8,
+            copies: 1,
+        }));
+        expect(result.leftoverCount).toBe(0);
+    });
+
+    it('materializes Augmented Lance with ignored BA units for formation matching', () => {
+        const carrierUnits = [
+            createUnit('Carrier 1', 'Mek', 'BattleMek Omni', true),
+            createUnit('Carrier 2', 'Mek', 'BattleMek Omni', true),
+            createUnit('Carrier 3', 'Mek', 'BattleMek', false),
+            createUnit('Carrier 4', 'Mek', 'BattleMek', false),
+        ];
+        const baUnits = [
+            createUnit('BA 1', 'Infantry', 'Battle Armor', false, ['MEC'], 4),
+            createUnit('BA 2', 'Infantry', 'Battle Armor', false, ['MEC'], 4),
+        ];
+
+        const materialized = materializeLeafPatternRule(CC_AUGMENTED_LANCE, compileUnitFactsList([...carrierUnits, ...baUnits]));
+
+        expect(materialized.groups).toHaveSize(1);
+        expect(materialized.groups[0]).toEqual(jasmine.objectContaining({
+            type: 'Augmented Lance',
+            countsAsType: 'Lance',
+            formationMatchingIgnoredUnits: baUnits,
+        }));
+    });
+
+    it('materializes Augmented Lance with ignored support transports for formation matching', () => {
+        const carrierUnits = [
             createUnit('Carrier 1', 'Mek', 'BattleMek'),
             createUnit('Carrier 2', 'Mek', 'BattleMek'),
+            createUnit('Carrier 3', 'Mek', 'BattleMek'),
+            createUnit('Carrier 4', 'Mek', 'BattleMek'),
+        ];
+        const supportUnits = [
+            createUnit('Support 1', 'Tank', 'Combat Vehicle'),
+            createUnit('Support 2', 'Tank', 'Combat Vehicle'),
+        ];
+
+        const materialized = materializeLeafPatternRule(CC_AUGMENTED_LANCE, compileUnitFactsList([...carrierUnits, ...supportUnits]));
+
+        expect(materialized.groups).toHaveSize(1);
+        expect(materialized.groups[0]).toEqual(jasmine.objectContaining({
+            type: 'Augmented Lance',
+            countsAsType: 'Lance',
+            formationMatchingIgnoredUnits: supportUnits,
+        }));
+    });
+
+    it('rejects non-qualified battle armor in Augmented Lance matching', () => {
+        const units = compileUnitFactsList([
+            createUnit('Carrier 1', 'Mek', 'BattleMek Omni', true),
+            createUnit('Carrier 2', 'Mek', 'BattleMek Omni', true),
             createUnit('Carrier 3', 'Mek', 'BattleMek'),
             createUnit('Carrier 4', 'Mek', 'BattleMek'),
             createUnit('BA 1', 'Infantry', 'Battle Armor', false, [], 4),
@@ -1292,9 +1381,8 @@ describe('org-solver.util', () => {
 
         const result = evaluateLeafPatternRule(CC_AUGMENTED_LANCE, units);
 
-        expect(result.emitted).toHaveSize(1);
-        expect(result.emitted[0]?.score).toBe(4);
-        expect(result.leftoverCount).toBe(0);
+        expect(result.emitted).toEqual([]);
+        expect(result.leftoverCount).toBe(6);
     });
 
     it('evaluates the real Clan core definitions module', () => {
@@ -1399,8 +1487,8 @@ describe('org-solver.util', () => {
 
     it('does not mix Marian infantry move classes when building Century fragments', () => {
         const materialized = materializeCIFormationRule(MH_CENTURY_INFANTRY, compileUnitFactsList([
-            createUnit('Foot CI A', 'Infantry', 'Conventional Infantry', false, [], 20, 'Leg'),
-            createUnit('Motorized CI A', 'Infantry', 'Motorized Conventional Infantry', false, [], 80, 'Wheeled'),
+            createUnit('Foot CI A', 'Infantry', 'Conventional Infantry', false, [], 20, 'Leg', 2),
+            createUnit('Motorized CI A', 'Infantry', 'Motorized Conventional Infantry', false, [], 80, 'Wheeled', 8),
         ]));
 
         expect(materialized.groups.every((group) => group.type === 'Contubernium')).toBeTrue();
@@ -1408,11 +1496,13 @@ describe('org-solver.util', () => {
             name: '2x Contubernium',
             type: 'Contubernium',
             count: 2,
+            isFragment: true,
         }));
         expect(materialized.groups).toContain(jasmine.objectContaining({
             name: '8x Contubernium',
             type: 'Contubernium',
             count: 8,
+            isFragment: true,
         }));
         expect(materialized.groups.some((group) => group.type === 'Century')).toBeFalse();
         expect(materialized.leftoverUnitFacts).toEqual([]);
@@ -1421,17 +1511,18 @@ describe('org-solver.util', () => {
 
     it('does not mix Marian mechanized infantry move classes into a Century', () => {
         const materialized = materializeCIFormationRule(MH_CENTURY_INFANTRY, compileUnitFactsList([
-            createUnit('VTOL CI', 'Infantry', 'Mechanized Conventional Infantry', false, [], 10, 'VTOL'),
-            createUnit('Hover CI', 'Infantry', 'Mechanized Conventional Infantry', false, [], 10, 'Hover'),
-            createUnit('Wheeled CI', 'Infantry', 'Mechanized Conventional Infantry', false, [], 10, 'Wheeled'),
-            createUnit('Tracked CI', 'Infantry', 'Mechanized Conventional Infantry', false, [], 10, 'Tracked'),
-            createUnit('Submarine CI', 'Infantry', 'Mechanized Conventional Infantry', false, [], 10, 'Submarine'),
+            createUnit('VTOL CI', 'Infantry', 'Mechanized Conventional Infantry', false, [], 10, 'VTOL', 2),
+            createUnit('Hover CI', 'Infantry', 'Mechanized Conventional Infantry', false, [], 10, 'Hover', 2),
+            createUnit('Wheeled CI', 'Infantry', 'Mechanized Conventional Infantry', false, [], 10, 'Wheeled', 2),
+            createUnit('Tracked CI', 'Infantry', 'Mechanized Conventional Infantry', false, [], 10, 'Tracked', 2),
+            createUnit('Submarine CI', 'Infantry', 'Mechanized Conventional Infantry', false, [], 10, 'Submarine', 2),
         ]));
 
         expect(materialized.groups).toHaveSize(5);
         expect(materialized.groups.every((group) => group.name === '2x Contubernium')).toBeTrue();
         expect(materialized.groups.every((group) => group.type === 'Contubernium')).toBeTrue();
         expect(materialized.groups.every((group) => group.count === 2)).toBeTrue();
+        expect(materialized.groups.every((group) => group.isFragment === true)).toBeTrue();
         expect(materialized.groups.some((group) => group.type === 'Century')).toBeFalse();
         expect(materialized.leftoverUnitFacts).toEqual([]);
         expect(materialized.leftoverUnitAllocations).toEqual([]);
@@ -1638,8 +1729,8 @@ describe('org-solver.util', () => {
 
     it('evaluates the real Capellan core definitions module', () => {
         const units = [
-            createUnit('Mek 1', 'Mek', 'BattleMek'),
-            createUnit('Mek 2', 'Mek', 'BattleMek'),
+            createUnit('Mek 1', 'Mek', 'BattleMek Omni', true),
+            createUnit('Mek 2', 'Mek', 'BattleMek Omni', true),
             createUnit('Mek 3', 'Mek', 'BattleMek'),
             createUnit('Mek 4', 'Mek', 'BattleMek'),
             createUnit('BA 1', 'Infantry', 'Battle Armor', false, ['MEC'], 4),
@@ -1803,7 +1894,7 @@ describe('org-solver.util', () => {
             createAero('WD Aero'),
         ]);
 
-        const result = evaluateLeafCountRule(WD_SINGLE, units);
+        const result = evaluateLeafCountRule(WD_UNIT, units);
 
         expect(result.eligibleUnits.map((facts) => facts.unit.name)).toEqual([
             'WD Mek',
@@ -1861,12 +1952,12 @@ describe('org-solver.util', () => {
         expect(result.leftoverCount).toBe(1);
     });
 
-    it('evaluates the Wolf\'s Dragoons lance from Singles, not Points', () => {
-        const singleGroups = [
-            createBattleMekGroup('Single A', 'Single', 0, 1),
-            createBattleMekGroup('Single B', 'Single', 0, 1),
-            createBattleMekGroup('Single C', 'Single', 0, 1),
-            createBattleMekGroup('Single D', 'Single', 0, 1),
+    it('evaluates the Wolf\'s Dragoons lance from Units, not Points', () => {
+        const unitGroups = [
+            createBattleMekGroup('Unit A', 'Unit', 0, 1),
+            createBattleMekGroup('Unit B', 'Unit', 0, 1),
+            createBattleMekGroup('Unit C', 'Unit', 0, 1),
+            createBattleMekGroup('Unit D', 'Unit', 0, 1),
         ].map((group) => compileGroupFacts(group));
         const pointGroups = [
             createBattleMekGroup('Point A', 'Point', 0, 1),
@@ -1875,13 +1966,13 @@ describe('org-solver.util', () => {
             createBattleMekGroup('Point D', 'Point', 0, 1),
         ].map((group) => compileGroupFacts(group));
 
-        const singleResult = evaluateComposedCountRule(WD_LANCE, singleGroups);
+        const unitResult = evaluateComposedCountRule(WD_LANCE, unitGroups);
         const pointResult = evaluateComposedCountRule(WD_LANCE, pointGroups);
 
-        expect(singleResult.emitted).toEqual([
+        expect(unitResult.emitted).toEqual([
             jasmine.objectContaining({ modifierKey: '', perGroupCount: 4, copies: 1, tier: 1 }),
         ]);
-        expect(singleResult.leftoverCount).toBe(0);
+        expect(unitResult.leftoverCount).toBe(0);
         expect(pointResult.acceptedGroups.length).toBe(0);
         expect(pointResult.emitted).toEqual([]);
     });
@@ -2141,20 +2232,20 @@ describe('org-solver.util', () => {
         expect(result[0].type).toBe('Binary');
         expect(result[0].modifierKey).toBe('');
     });
-    it('resolves new-path org definitions by faction registry', () => {
-        expect(resolveOrgDefinitionSpec('Word of Blake', 'Inner Sphere')).toBe(COMSTAR_CORE_ORG);
-        expect(resolveOrgDefinitionSpec('Capellan Confederation', 'Inner Sphere')).toBe(CC_CORE_ORG);
-        expect(resolveOrgDefinitionSpec('Wolf\'s Dragoons', 'Mercenary')).toBe(WD_CORE_ORG);
-        expect(resolveOrgDefinitionSpec('Unknown Clan', 'HW Clan')).toBe(CLAN_CORE_ORG);
+    it('resolves org definitions by faction registry', () => {
+        expect(resolveOrgDefinition('Word of Blake', 'Inner Sphere')).toBe(COMSTAR_CORE_ORG);
+        expect(resolveOrgDefinition('Capellan Confederation', 'Inner Sphere')).toBe(CC_CORE_ORG);
+        expect(resolveOrgDefinition('Wolf\'s Dragoons', 'Mercenary')).toBe(WD_CORE_ORG);
+        expect(resolveOrgDefinition('Unknown Clan', 'HW Clan')).toBe(CLAN_CORE_ORG);
     });
 
     it('resolves Wolf\'s Dragoons to Inner Sphere orgs before 3051', () => {
-        expect(resolveOrgDefinitionSpec('Wolf\'s Dragoons', 'Mercenary', createEra(3000, 3050))).toBe(IS_CORE_ORG);
-        expect(resolveOrgDefinitionSpec('Wolf\'s Dragoons', 'Mercenary', createEra(3051, 3100))).toBe(WD_CORE_ORG);
+        expect(resolveOrgDefinition('Wolf\'s Dragoons', 'Mercenary', createEra(3000, 3050))).toBe(IS_CORE_ORG);
+        expect(resolveOrgDefinition('Wolf\'s Dragoons', 'Mercenary', createEra(3051, 3100))).toBe(WD_CORE_ORG);
     });
 
-    it('falls back to the new-path default org definition', () => {
-        expect(resolveOrgDefinitionSpec('Federated Suns', 'Inner Sphere')).toBe(DEFAULT_ORG_SPEC);
+    it('falls back to the default org definition', () => {
+        expect(resolveOrgDefinition('Federated Suns', 'Inner Sphere')).toBe(DEFAULT_ORG_DEFINITION);
     });
 
     it('evaluates a faction org definition through the registry helper', () => {
@@ -2222,7 +2313,7 @@ describe('org-solver.util', () => {
             leftoverCount: 2,
         }));
         expect(platoonEvaluation).toEqual(jasmine.objectContaining({
-            leftoverCount: 1,
+            leftoverCount: 0,
         }));
         expect(companyEvaluation).toEqual(jasmine.objectContaining({
             leftoverCount: 0,
@@ -2447,14 +2538,14 @@ describe('org-solver.util', () => {
 
 function createBM(
     name: string,
-    subtype: Unit['subtype'] = 'BattleMek',
+    subtype: UnitSummary['subtype'] = 'BattleMek',
     isOmni: boolean = false,
     specials: string[] = [],
-): Unit {
+): UnitSummary {
     return createUnit(name, 'Mek', subtype, isOmni, specials);
 }
 
-function createCV(name: string, isOmni: boolean = false, specials: string[] = []): Unit {
+function createCV(name: string, isOmni: boolean = false, specials: string[] = []): UnitSummary {
     return createUnit(name, 'Tank', 'Combat Vehicle', isOmni, specials);
 }
 
@@ -2683,7 +2774,7 @@ function getMixedRolePerfRegiments(): readonly GroupSizeResult[] {
 
 describe('org-solver.util resolve parity', () => {
     it('resolves 4 BM in a Lance', () => {
-        const units: Unit[] = [
+        const units: UnitSummary[] = [
             createBM('BM1'),
             createBM('BM2'),
             createBM('BM3'),
@@ -2698,7 +2789,7 @@ describe('org-solver.util resolve parity', () => {
     });
 
     it('resolves 3 BM in a Under-Strength Lance', () => {
-        const units: Unit[] = [
+        const units: UnitSummary[] = [
             createBM('BM1'),
             createBM('BM2'),
             createBM('BM3'),
@@ -2846,9 +2937,9 @@ describe('org-solver.util resolve parity', () => {
         expect(result[1].modifierKey).toBe('');
     });
 
-    it('resolves an 18-trooper ComStar foot CI unit as a Demi-Level I', () => {
+    it('resolves a three-squad ComStar foot CI unit as a Demi-Level I', () => {
         const result = resolveFromUnits([
-            createUnit('CS Demi CI', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg'),
+            createUnit('CS Demi CI', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg', 3),
         ], 'ComStar', 'Inner Sphere');
 
         expect(result.length).toBe(1);
@@ -2857,15 +2948,15 @@ describe('org-solver.util resolve parity', () => {
         expect(result[0].modifierKey).toBe('Demi-');
         expect(result[0].children).toBeUndefined();
         expect(result[0].unitAllocations).toEqual([
-            jasmine.objectContaining({ troopers: 18 }),
+            jasmine.objectContaining({ squads: 3 }),
         ]);
         expect(result[0].leftoverUnits).toBeUndefined();
     });
 
-    it('resolves two 18-trooper ComStar foot CI units as a regular Level I', () => {
+    it('resolves two three-squad ComStar foot CI units as a regular Level I', () => {
         const result = resolveFromUnits([
-            createUnit('CS Demi CI 1', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg'),
-            createUnit('CS Demi CI 2', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg'),
+            createUnit('CS Demi CI 1', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg', 3),
+            createUnit('CS Demi CI 2', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg', 3),
         ], 'ComStar', 'Inner Sphere');
 
         expect(result.length).toBe(1);
@@ -2875,10 +2966,10 @@ describe('org-solver.util resolve parity', () => {
         expect(result[0].leftoverUnits).toBeUndefined();
     });
 
-    it('resolves two same-name 18-trooper ComStar foot CI units as a regular Level I', () => {
+    it('resolves two same-name three-squad ComStar foot CI units as a regular Level I', () => {
         const result = resolveFromUnits([
-            createUnit('CS Demi CI', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg'),
-            createUnit('CS Demi CI', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg'),
+            createUnit('CS Demi CI', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg', 3),
+            createUnit('CS Demi CI', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg', 3),
         ], 'ComStar', 'Inner Sphere');
 
         expect(result.length).toBe(1);
@@ -2890,10 +2981,10 @@ describe('org-solver.util resolve parity', () => {
 
     it('repackages two Demi-Level I groups into one regular Level I before higher-tier promotion', () => {
         const demiOne = resolveFromUnits([
-            createUnit('CS Demi Group A', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg'),
+            createUnit('CS Demi Group A', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg', 3),
         ], 'ComStar', 'Inner Sphere');
         const demiTwo = resolveFromUnits([
-            createUnit('CS Demi Group B', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg'),
+            createUnit('CS Demi Group B', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg', 3),
         ], 'ComStar', 'Inner Sphere');
 
         expect(demiOne.length).toBe(1);
@@ -2911,7 +3002,7 @@ describe('org-solver.util resolve parity', () => {
         expect(result[0].type).toBe('Level I');
         expect(result[0].modifierKey).toBe('');
         expect(result[0].children).toBeUndefined();
-        expect(result[0].unitAllocations?.reduce((sum, allocation) => sum + allocation.troopers, 0)).toBe(36);
+        expect(result[0].unitAllocations?.reduce((sum, allocation) => sum + (allocation.squads ?? 0), 0)).toBe(6);
         expect(result[0].leftoverUnits).toBeUndefined();
     });
 
@@ -2922,7 +3013,7 @@ describe('org-solver.util resolve parity', () => {
             ], 'ComStar', 'Inner Sphere')[0],
         );
         const demiLevelI = resolveFromUnits([
-            createUnit('CS Demi Repair Block', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg'),
+            createUnit('CS Demi Repair Block', 'Infantry', 'Conventional Infantry', false, [], 18, 'Leg', 3),
         ], 'ComStar', 'Inner Sphere')[0];
 
         const result = resolveFromGroups('ComStar', 'Inner Sphere', [
@@ -3053,16 +3144,16 @@ describe('org-solver.util resolve parity', () => {
             createUnit('AF1', 'Aero', 'Aerospace Fighter'),
         ], 'Society', 'HW Clan');
 
-        expect(result.length).toBe(1);
-        expect(result[0].type).toBeNull();
-        expect(result[0].leftoverUnits?.length).toBe(3);
+        expect(result.length).toBe(2);
+        expect(result.every((group) => group.type === 'Unit')).toBeTrue();
     });
 
-    it('resolves 2 BM plus 1 AF as Air Lance', () => {
+    it('resolves 2 BM plus 2 AF as Air Lance', () => {
         const result = resolveFromUnits([
             createBM('BM1'),
             createBM('BM2'),
             createAero('AF1'),
+            createAero('AF2'),
         ], 'Federated Suns', 'Inner Sphere');
 
         expect(result.length).toBe(1);
@@ -3173,11 +3264,45 @@ describe('org-solver.util resolve parity', () => {
         expect(result[0].children?.every((child) => child.type === 'Star')).toBeTrue();
     });
 
+    it('resolves 5 Protomeks into a single Clan Point', () => {
+        const result = resolveFromUnits(
+            Array.from({ length: 5 }, (_, index) => createUnit(`PM${index + 1}`, 'ProtoMek', 'ProtoMek')),
+            'Clan Test',
+            'HW Clan',
+        );
+
+        expect(result).toHaveSize(1);
+        expect(result[0].name).toBe('Point');
+        expect(result[0].type).toBe('Point');
+        expect(result[0].children).toBeUndefined();
+        expect(result[0].units).toHaveSize(5);
+        expect(result[0].leftoverUnits).toBeUndefined();
+    });
+
+    it('resolves fewer than 5 Protomeks into Element fragments', () => {
+        const result = resolveFromUnits(
+            Array.from({ length: 4 }, (_, index) => createUnit(`PM-FRAG${index + 1}`, 'ProtoMek', 'ProtoMek')),
+            'Clan Test',
+            'HW Clan',
+        );
+
+        expect(result).toHaveSize(1);
+        expect(result[0].name).toBe('4 Units');
+        expect(result[0].type).toBe('Unit');
+        expect(result[0].count).toBe(4);
+        expect(result[0].isFragment).toBeTrue();
+        expect(result[0].units).toHaveSize(4);
+        expect(result[0].leftoverUnits).toBeUndefined();
+    });
+
     it('prefers same-type Stars before mixed fallback when enough units exist', () => {
         const nonVehiclePoints = materializeLeafCountRule(CLAN_POINT, compileUnitFactsList([
             ...Array.from({ length: 5 }, (_, index) => createUnit(`PREF-BA${index + 1}`, 'Infantry', 'Battle Armor', false, ['MEC'], 5)),
             ...Array.from({ length: 5 }, (_, index) => createBM(`PREF-BM${index + 1}`)),
-            ...Array.from({ length: 5 }, (_, index) => createUnit(`PREF-PM${index + 1}`, 'ProtoMek', 'ProtoMek')),
+        ]));
+
+        const protoPoints = materializeLeafCountRule(CLAN_PM_POINT, compileUnitFactsList([
+            ...Array.from({ length: 25 }, (_, index) => createUnit(`PREF-PM${index + 1}`, 'ProtoMek', 'ProtoMek')),
         ]));
 
         const vehiclePoints = materializeLeafCountRule(CLAN_CV_POINT, compileUnitFactsList([
@@ -3185,7 +3310,7 @@ describe('org-solver.util resolve parity', () => {
         ]));
 
         const pointMaterialized = {
-            groups: [...nonVehiclePoints.groups, ...vehiclePoints.groups],
+            groups: [...nonVehiclePoints.groups, ...protoPoints.groups, ...vehiclePoints.groups],
         };
 
         const starEvaluation = evaluateComposedCountRule(CLAN_STAR, compileGroupFactsList(pointMaterialized.groups));
@@ -3295,6 +3420,74 @@ describe('org-solver.util resolve parity', () => {
         expect(result[0].children?.every((child) => child.type === 'Point')).toBeTrue();
     });
 
+    it('resolves 5 BM plus 4 CV as a Fortified Star instead of promoting through Star plus Half Star into a Binary', () => {
+        const result = resolveFromUnits([
+            createBM('FORTSTAR-BM1'),
+            createBM('FORTSTAR-BM2'),
+            createCV('FORTSTAR-CV1'),
+            createBM('FORTSTAR-BM3'),
+            createCV('FORTSTAR-CV2'),
+            createBM('FORTSTAR-BM4'),
+            createCV('FORTSTAR-CV3'),
+            createCV('FORTSTAR-CV4'),
+            createBM('FORTSTAR-BM5'),
+        ], 'Clan Test', 'HW Clan');
+
+        expect(result[0].name).toBe('Fortified Star');
+        expect(result[0].type).toBe('Star');
+        expect(result[0].modifierKey).toBe('Fortified ');
+        expect(result[0].children?.length).toBe(7);
+        expect(result[0].leftoverUnits).toBeUndefined();
+        expect(result[0].children?.every((child) => child.type === 'Point')).toBeTrue();
+        expect(result.some((group) => group.type === 'Binary')).toBeFalse();
+    });
+
+    it('resolves 5 BM plus 4 AF as a Fortified Star instead of promoting through Star plus Half Star into a Binary', () => {
+        const result = resolveFromUnits([
+            createBM('FORTSTAR-BM1'),
+            createAero('FORTSTAR-AF1'),
+            createAero('FORTSTAR-AF2'),
+            createBM('FORTSTAR-BM2'),
+            createAero('FORTSTAR-AF3'),
+            createBM('FORTSTAR-BM3'),
+            createAero('FORTSTAR-AF4'),
+            createBM('FORTSTAR-BM4'),
+            createBM('FORTSTAR-BM5'),
+        ], 'Clan Test', 'HW Clan');
+
+        expect(result[0].name).toBe('Fortified Star');
+        expect(result[0].type).toBe('Star');
+        expect(result[0].modifierKey).toBe('Fortified ');
+        expect(result[0].children?.length).toBe(7);
+        expect(result[0].leftoverUnits).toBeUndefined();
+        expect(result[0].children?.every((child) => child.type === 'Point')).toBeTrue();
+        expect(result.some((group) => group.type === 'Binary')).toBeFalse();
+    });
+
+    it('resolves 5 BM plus 6 CV as a Binary', () => {
+        const result = resolveFromUnits([
+            createBM('FORTSTAR-BM1'),
+            createBM('FORTSTAR-BM2'),
+            createCV('FORTSTAR-CV1'),
+            createBM('FORTSTAR-BM3'),
+            createCV('FORTSTAR-CV2'),
+            createBM('FORTSTAR-BM4'),
+            createCV('FORTSTAR-CV3'),
+            createCV('FORTSTAR-CV4'),
+            createCV('FORTSTAR-CV5'),
+            createCV('FORTSTAR-CV6'),
+            createBM('FORTSTAR-BM5'),
+        ], 'Clan Test', 'HW Clan');
+
+        expect(result[0].name).toBe('Binary');
+        expect(result[0].type).toBe('Binary');
+        expect(result[0].modifierKey).toBe('');
+        expect(result[0].children?.length).toBe(2);
+        expect(result[0].leftoverUnits).toBeUndefined();
+        expect(result[0].children?.every((child) => child.type === 'Star')).toBeTrue();
+    });
+
+
     it('resolves 5 BA with MEC and 6 OMNI BM into a Binary instead of a Nova plus leftover', () => {
         const result = resolveFromUnits([
             ...Array.from({ length: 5 }, (_, index) =>
@@ -3321,7 +3514,7 @@ function createForeignGroup(
     type: GroupSizeResult['type'],
     tier: number,
     countsAsType: GroupSizeResult['countsAsType'] = null,
-    units?: Unit[],
+    units?: UnitSummary[],
 ): GroupSizeResult {
     return {
         name,
@@ -3334,9 +3527,9 @@ function createForeignGroup(
 }
 
 describe('org-solver.util aggregation and foreign parity', () => {
-    it('pools partial Inner Sphere CI units into virtual squad fragments before forming platoons', () => {
+    it('resolves four one-squad Inner Sphere CI units into a Platoon regardless of trooper total', () => {
         const result = resolveFromUnits(
-            Array.from({ length: 8 }, (_, index) =>
+            Array.from({ length: 4 }, (_, index) =>
                 createUnit(`IS Foot CI ${index + 1}`, 'Infantry', 'Conventional Infantry', false, [], 4, 'Leg'),
             ),
             'Federated Suns',
@@ -3346,9 +3539,9 @@ describe('org-solver.util aggregation and foreign parity', () => {
         expect(result.length).toBe(1);
         expect(result[0].name).toBe('Platoon');
         expect(result[0].type).toBe('Platoon');
-        expect(result[0].unitAllocations?.reduce((sum, allocation) => sum + allocation.troopers, 0)).toBe(28);
-        expect(result[0].leftoverUnitAllocations?.reduce((sum, allocation) => sum + allocation.troopers, 0)).toBe(4);
-        expect(result[0].leftoverUnits?.length).toBe(1);
+        expect(result[0].unitAllocations?.reduce((sum, allocation) => sum + (allocation.squads ?? 0), 0)).toBe(4);
+        expect(result[0].leftoverUnitAllocations).toBeUndefined();
+        expect(result[0].leftoverUnits).toBeUndefined();
     });
 
     it('resolves four Inner Sphere BA units as a Platoon instead of a Lance', () => {
@@ -3428,7 +3621,7 @@ describe('org-solver.util aggregation and foreign parity', () => {
     });
 
     it('preserves a real resolved foreign group through the public APIs when crossgrading is disabled', () => {
-        const sourceUnits: Unit[] = [
+        const sourceUnits: UnitSummary[] = [
             createBM('BM1'),
             createBM('BM2'),
             createBM('BM3'),
@@ -3610,8 +3803,8 @@ describe('org-solver.util aggregation and foreign parity', () => {
         ]);
 
         expect(result.length).toBe(1);
-        expect(result[0].name).toBe('Single');
-        expect(result[0].type).toBe('Single');
+        expect(result[0].name).toBe('Unit');
+        expect(result[0].type).toBe('Unit');
         expect(result[0].tier).toBe(0);
     });
 

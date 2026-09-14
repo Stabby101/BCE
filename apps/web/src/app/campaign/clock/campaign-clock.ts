@@ -75,6 +75,12 @@ export function daysBetween(from: CampaignDate, to: CampaignDate): number {
     const ms = Date.UTC(to.y, to.m, to.d) - Date.UTC(from.y, from.m, from.d);
     return ms <= 0 ? 0 : Math.round(ms / 86_400_000);
 }
+/** DIRECTIVE-PD3 P3 (S54) — the 1-based campaign WEEK (week 1 = the start date's week): the header's "WK" figure, derived from the
+ *  ONE clock exactly as the autosave's "Day N" is (campaignDay = daysBetween + 1). Before P3 the header carried a literal "1". */
+export function campaignWeek(start: CampaignDate | null | undefined, current: CampaignDate | null | undefined): number {
+    if (!start || !current) return 1;
+    return Math.floor(daysBetween(start, current) / 7) + 1;
+}
 
 /**
  * Month-FIRST boundaries strictly after `from`, up to and including `to`, in chronological order.

@@ -15,7 +15,7 @@ import { DataService } from '../../services/data.service';
 import { ForceGeneratorService } from '../force/force-generator.service';
 import { MulAllowlistService } from '../chaos/mul-allowlist.service'; // D-127 — the OpFor faction MUL gate
 import type { ProtoInstance } from '../force/force-generator';
-import type { Unit } from '../../models/units.model';
+import type { UnitSummary as Unit } from '../../models/unit-summary.model';
 
 interface PickRow { u: Unit; offList: boolean; }
 const VISIBLE_CAP = 120; // mirror chaos-market-tab.ts

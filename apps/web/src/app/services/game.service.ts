@@ -1,44 +1,14 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { Injectable, signal, inject, computed, effect, untracked } from '@angular/core';
 import { OptionsService } from './options.service';
 import { ForceBuilderService } from './force-builder.service';
 import { GameSystem } from '../models/common.model';
-import { UrlStateService } from './url-state.service';
+import { UrlService } from './url.service';
 
 /*
- * Author: Drake
  * This service manages the current game system selection (Alpha Strike or Classic BattleTech).
  * 
  * Priority order for determining the active game system:
@@ -60,7 +30,7 @@ import { UrlStateService } from './url-state.service';
 export class GameService {
     private readonly optionsService = inject(OptionsService);
     private readonly forceBuilderService = inject(ForceBuilderService);
-    private readonly urlStateService = inject(UrlStateService);
+    private readonly urlService = inject(UrlService);
 
     public readonly currentGameSystem = signal<GameSystem>(this.optionsService.options().gameSystem);
 
@@ -72,9 +42,9 @@ export class GameService {
     private readonly gameSystemOverride = signal<GameSystem | null>(null);
 
     constructor() {
-        // Read initial game system from URL state service (captured before routing)
+        // Read initial game system from the URL captured at startup.
         // Only apply override if the URL has meaningful content, not just `gs`
-        const initialOverride = this.urlStateService.getGameSystemOverride();
+        const initialOverride = this.urlService.getGameSystemOverride();
         if (initialOverride) {
             this.gameSystemOverride.set(initialOverride);
         }
@@ -106,22 +76,17 @@ export class GameService {
             this.currentGameSystem.set(gameSystem);
         });
 
-        // Update URL with current game system, but only after initial URL state is consumed
-        // and only when no force is loaded (ForceBuilderService handles URL when a force exists)
+        // Update URL with current game system, but only when no force is loaded
+        // (ForceBuilderService handles URL when a force exists)
         effect(() => {
             const gs = this.currentGameSystem();
-            const canUpdate = this.urlStateService.initialStateConsumed();
-            if (!canUpdate) {
-                return; // Don't update URL until initial state is read by all consumers
-            }
             // Skip URL update if forces are loaded - ForceBuilderService handles all URL params
             // including `gs` when forces exist, avoiding race conditions between the two services
             const hasForces = this.forceBuilderService.hasForces();
             if (hasForces) {
                 return;
             }
-            // Use centralized URL state service
-            this.urlStateService.setParams({ gs });
+            this.urlService.setQueryParams({ gs });
         });
     }
 

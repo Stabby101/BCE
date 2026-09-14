@@ -1,52 +1,19 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
-
-
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DialogRef } from '@angular/cdk/dialog';
-import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../services/toast.service';
-import { copyTextToClipboard } from '../../utils/clipboard.util';
+import { copyTextToClipboard, shareUrlWithClipboardFallback } from '../../utils/clipboard.util';
+import { buildShareUrl } from '../../utils/share-url.util';
 import { UnitSearchFiltersService } from '../../services/unit-search-filters.service';
 import { GameService } from '../../services/game.service';
 import { GameSystem } from '../../models/common.model';
 import { DialogsService } from '../../services/dialogs.service';
 
-/*
- * Author: Drake
- */
+
 
 @Component({
     selector: 'share-search-dialog',
@@ -130,6 +97,10 @@ import { DialogsService } from '../../services/dialogs.service';
             align-items: center;
             justify-content: space-between;
             width: 100%;
+
+            @media (max-width: 380px) {
+                flex-direction: column;
+            }
         }
 
         .export-buttons {
@@ -162,12 +133,10 @@ import { DialogsService } from '../../services/dialogs.service';
 })
 
 export class ShareSearchDialogComponent {
-    public dialogRef: DialogRef<string | number | null, ShareSearchDialogComponent> = inject(DialogRef);
+    public dialogRef = inject<DialogRef<string | number | null, ShareSearchDialogComponent>>(DialogRef);
     unitSearchFilters = inject(UnitSearchFiltersService);
     toastService = inject(ToastService);
     private dialogsService = inject(DialogsService);
-    private router = inject(Router);
-    private route = inject(ActivatedRoute);
     private gameService = inject(GameService);
     
     shareUrl: string = '';
@@ -183,11 +152,7 @@ export class ShareSearchDialogComponent {
         const queryParameters = this.unitSearchFilters.queryParameters();
         queryParameters.gs = this.gameService.currentGameSystem(); // Ensure game system is included in shared URL
 
-        const instanceTree = this.router.createUrlTree([], {
-            relativeTo: this.route,
-            queryParams: queryParameters
-        });
-        this.shareUrl = origin + this.router.serializeUrl(instanceTree);
+        this.shareUrl = buildShareUrl(origin, queryParameters);
     }
 
     private async confirmDataExportLicense(): Promise<boolean> {
@@ -264,17 +229,8 @@ export class ShareSearchDialogComponent {
     async share(url: string) {
         const shareTitle = 'Shared MekBay Search Results';
 
-        if (navigator.share) {
-            navigator.share({
-                title: shareTitle,
-                url: url
-            }).catch(() => {
-                // fallback if user cancels or error
-                copyTextToClipboard(url);
-                this.toastService.showToast('Links copied to clipboard.', 'success');
-            });
-        } else {
-            copyTextToClipboard(url);
+        const result = await shareUrlWithClipboardFallback({ title: shareTitle, url });
+        if (result === 'copied') {
             this.toastService.showToast('Links copied to clipboard.', 'success');
         }
     }

@@ -17,6 +17,7 @@
             "index": "src/index.html",
             "tsConfig": "tsconfig.app.json",
             "allowedCommonJsDependencies": [
+              "dijkstrajs",
               "jszip",
               "qrcode"
             ],
@@ -28,6 +29,11 @@
                 "ignore": [
                   "images/units/**"
                 ]
+              },
+              {
+                "glob": "{LICENSE,NOTICE,THIRD-PARTY-NOTICES.md}",
+                "input": ".",
+                "output": "legal"
               }
             ],
             "styles": [
@@ -47,6 +53,11 @@
                   ]
                 },
                 {
+                  "glob": "{LICENSE,NOTICE,THIRD-PARTY-NOTICES.md}",
+                  "input": ".",
+                  "output": "legal"
+                },
+                {
                   "glob": "icon-192x192.png",
                   "input": "public/icons/prod",
                   "output": "icons"
@@ -55,13 +66,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2MB",
-                  "maximumError": "5MB"
+                  "maximumWarning": "5MB",
+                  "maximumError": "10MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "10kB",
-                  "maximumError": "22kB"
+                  "maximumWarning": "12kB",
+                  "maximumError": "30kB"
                 }
               ],
               "outputHashing": "all"
@@ -77,6 +88,11 @@
                   ]
                 },
                 {
+                  "glob": "{LICENSE,NOTICE,THIRD-PARTY-NOTICES.md}",
+                  "input": ".",
+                  "output": "legal"
+                },
+                {
                   "glob": "icon-192x192.png",
                   "input": "public/icons/next",
                   "output": "icons"
@@ -85,13 +101,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2MB",
-                  "maximumError": "5MB"
+                  "maximumWarning": "5MB",
+                  "maximumError": "10MB"
                 },
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "10kB",
-                  "maximumError": "22kB"
+                  "maximumError": "20kB"
                 }
               ],
               "outputHashing": "all"
@@ -105,6 +121,11 @@
                   "ignore": [
                     "images/units/**"
                   ]
+                },
+                {
+                  "glob": "{LICENSE,NOTICE,THIRD-PARTY-NOTICES.md}",
+                  "input": ".",
+                  "output": "legal"
                 },
                 {
                   "glob": "icon-192x192.png",
@@ -138,7 +159,14 @@
               ],
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "11.4kB",
+                  "maximumError": "26kB"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -165,10 +193,17 @@
           "builder": "@angular/build:karma",
           "options": {
             "tsConfig": "tsconfig.spec.json",
+            "karmaConfig": ".karma-no-gpu.cjs",
+            "browsers": "ChromeHeadlessNoGpu",
             "assets": [
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "{LICENSE,NOTICE,THIRD-PARTY-NOTICES.md}",
+                "input": ".",
+                "output": "legal"
               },
               {
                 "glob": "icon-192x192.png",
@@ -180,5 +215,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

@@ -1,0 +1,106 @@
+:host {
+    display: block;
+}
+
+.advanced-filters-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px 16px;
+}
+
+.boolean-filter-row {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+}
+
+.availability-source-disclaimer {
+    margin: 0 0 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 1px;
+    text-align: center;
+    background-color: orange;
+    color: black;
+}
+
+.complex-query-guide {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    max-height: 100%;
+}
+
+.complex-query-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: 1px dashed var(--semantic-color);
+    color: var(--semantic-color);
+    font-size: 0.9rem;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.range-edit-hint {
+    grid-column: 1 / -1;
+    margin: 4px 0;
+    color: var(--text-color-secondary);
+    font-size: 0.75rem;
+}
+
+.range-label {
+    appearance: none;
+    max-width: 100%;
+    min-height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.range-label:not(:disabled):hover,
+.range-label:focus-visible {
+    color: var(--bt-yellow);
+}
+
+.range-label:focus-visible {
+    outline: 1px solid var(--bt-yellow);
+    outline-offset: 2px;
+}
+
+.range-label:disabled {
+    cursor: default;
+}
+
+.range-edit-icon {
+    margin-left: 4px;
+    vertical-align: -1px;
+    color: var(--text-color-secondary);
+}
+
+.range-values {
+    color: var(--text-color-secondary);
+    font-size: 0.9em;
+}
+
+.range-label:not(:disabled) .range-values,
+.range-label:not(:disabled) .effective-range {
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+}
+
+.range-label:not(:disabled):hover .range-values,
+.range-label:focus-visible .range-values,
+.range-label:not(:disabled):hover .range-edit-icon,
+.range-label:focus-visible .range-edit-icon {
+    color: var(--bt-yellow);
+}

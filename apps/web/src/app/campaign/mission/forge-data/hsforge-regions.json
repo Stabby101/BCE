@@ -21,6 +21,24 @@
       "anchorSystemId": "new-syrtis",
       "radiusLy": 150,
       "blurb": "The Federated Suns' southern march, facing the Capellan Confederation. Proxy raids, noble feuds, and trade lanes that change hands more often than the maps admit."
+    },
+    {
+      "id": "invasion-corridor",
+      "name": "Invasion Corridor",
+      "anchorWorld": "Tukayyid",
+      "anchorSystemId": "tukayyid",
+      "radiusLy": 150,
+      "blurb": "The ground the Clans took and the ground they are still taking. Occupied worlds, broken garrisons, and the houses that lost them hiring anyone who will fight to get them back.",
+      "_note": "ERA-1 (2026-09-02) — the Clan Invasion theater: the Rasalhague/Combine/Lyran front around Tukayyid. At the map's era-6 column (3055) the belt holds 53 Inner Sphere and 62 Clan-held worlds (Wolf, Ghost Bear, Jade Falcon, Steel Viper, Smoke Jaguar), so the Forge can pair a Clan enemy here. Era-agnostic like every region: at other eras it is whatever the map says the front is. DECISION: tools/build-systems.mjs was NOT re-run for this entry (a rebuild rewrites star/systems.json, a SHARED file that feeds Traditional's target adjacency) — the belt is the 115 committed worlds within radius, which already suffice for a Forge-served theater with no authored pack; re-run at the next star-map build."
+    },
+    {
+      "id": "hinterlands",
+      "name": "Hinterlands",
+      "anchorWorld": "Skye",
+      "anchorSystemId": "skye",
+      "radiusLy": 120,
+      "blurb": "The collapsed Jade Falcon Occupation Zone and the Lyran worlds it bled into. Remnant Clans, an independent Isle of Skye, mercantile leagues with Sea Fox money, and a Commonwealth reconstituting itself one regiment at a time.",
+      "_note": "HIN-1 (2026-09-03) — the ilClan Hinterlands theater, built as ordered (anchor Skye, 120 LY). RECON FINDING: the authored pack's ten worlds do not fit the circle — Skye 0 LY, Arc-Royal 208, Sudeten 244, Tamar 266, and Alyina / Twycross / Hesperus II / Coventry / Donegal / Bolan are not on the committed star map at all (tools/build-systems.mjs was not re-run; the HSFORGE-1a rule). Authored records deal by the _meta.region STRING, never by geometry, so the deal is unaffected; the entry feeds only the forge top-up (inert here — 10 authored ≥ the floor of 8) and world-owner pairing. Ruling owed: re-anchor on the old OZ (Sudeten/Twycross) and commit the six missing worlds at the next star-map build."
     }
   ]
 }

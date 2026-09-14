@@ -1,38 +1,10 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import type { GameSystem } from '../models/common.model';
-import type { Unit } from '../models/units.model';
+import type { UnitSearchNormalizationMatch } from '../models/unit-search-result.model';
+import type { UnitSummary } from '../models/unit-summary.model';
 import type { SearchTelemetrySnapshot } from '../services/unit-search-filters.model';
 import type { UnitSearchWorkerResultMessage } from './unit-search-worker-protocol.util';
 
@@ -42,15 +14,47 @@ interface WorkerResultTelemetryContext {
     sortKey: string;
     sortDirection: 'asc' | 'desc';
     resultCount: number;
+    stages?: SearchTelemetrySnapshot['stages'];
+    totalMs?: number;
+}
+
+export interface HydratedWorkerSearchResult {
+    units: UnitSummary[];
+    normalizationMatchesByUnitUuid: ReadonlyMap<string, UnitSearchNormalizationMatch>;
+}
+
+export function hydrateWorkerSearchResult(
+    result: UnitSearchWorkerResultMessage,
+    getUnitByUuid: (unitUuid: string) => UnitSummary | undefined,
+): HydratedWorkerSearchResult {
+    const units: UnitSummary[] = [];
+    const normalizationMatchesByUnitUuid = new Map<string, UnitSearchNormalizationMatch>();
+    const seenUnitUuids = new Set<string>();
+
+    for (const entry of result.entries) {
+        if (seenUnitUuids.has(entry.unitUuid)) {
+            continue;
+        }
+        const unit = getUnitByUuid(entry.unitUuid);
+        if (!unit) {
+            continue;
+        }
+
+        seenUnitUuids.add(entry.unitUuid);
+        units.push(unit);
+        if (entry.match) {
+            normalizationMatchesByUnitUuid.set(entry.unitUuid, entry.match);
+        }
+    }
+
+    return { units, normalizationMatchesByUnitUuid };
 }
 
 export function hydrateWorkerResultUnits(
     result: UnitSearchWorkerResultMessage,
-    getUnitByName: (unitName: string) => Unit | undefined,
-): Unit[] {
-    return result.unitNames
-        .map(unitName => getUnitByName(unitName))
-        .filter((unit): unit is Unit => unit !== undefined);
+    getUnitByUuid: (unitUuid: string) => UnitSummary | undefined,
+): UnitSummary[] {
+    return hydrateWorkerSearchResult(result, getUnitByUuid).units;
 }
 
 export function buildWorkerSearchTelemetrySnapshot(
@@ -66,7 +70,7 @@ export function buildWorkerSearchTelemetrySnapshot(
         sortKey: context.sortKey,
         sortDirection: context.sortDirection,
         isComplex: result.isComplex,
-        stages: result.stages,
-        totalMs: result.totalMs,
+        stages: context.stages ?? result.stages,
+        totalMs: context.totalMs ?? result.totalMs,
     };
 }

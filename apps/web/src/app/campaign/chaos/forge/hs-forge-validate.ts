@@ -7,7 +7,7 @@
  * canon-world names ≠ the chosen world), player-safety on pre-sign fields (C12), profile sanity (C17).
  */
 import { stepValue, CHAOS_CONTRACT_TYPES, type ContractColumn } from '../chaos-contract-steps';
-import { hotspotTypeId, type HotSpot, type HotSpotContractTerms } from '../hotspots-catalog';
+import { hotspotTypeId, factionHiresMercenaries, type HotSpot, type HotSpotContractTerms, type SideOffer } from '../hotspots-catalog'; // ERA-1 — factionHiresMercenaries / SideOffer
 
 export interface ValidateCtx {
     existingIds: ReadonlySet<string>;
@@ -54,22 +54,33 @@ export function validateForged(h: HotSpot, ctx: ValidateCtx): string[] {
     }
 
     // ── two-sided completeness (C3/C8) ──
+    // ERA-1 (ruling 2): a SINGLE-SIDED forged hot spot (the enemy is a Clan that does not hire) carries side A only —
+    // `singleSided:true`, no `sides.b`, and side A's enemy must be exactly that non-hiring Clan. Otherwise both sides.
     if (!h.sides) { err('sides:{a,b} must be fully authored'); return errs; }
-    const { a, b } = h.sides;
-    if (a.synthesized || b.synthesized) err('synthesized flag must be absent on authored sides');
-    if (a.role === b.role) err('side roles must be opposed');
-    if (!ctx.sameFactionAllowed && a.faction === b.faction) err(`side factions identical ('${a.faction}') without a same-faction archetype whitelist`);
-    if (a.contract.enemyFaction !== b.faction || b.contract.enemyFaction !== a.faction) err('per-side enemyFaction must cross-derive from the other side');
-    for (const k of ['scale', 'intensity', 'lengthMonths'] as const) {
-        if (a.contract[k] !== b.contract[k]) err(`Part E shared field '${k}' differs across sides (${a.contract[k]} vs ${b.contract[k]})`);
+    const a = h.sides.a;
+    const b = h.sides.b;
+    if (h.singleSided) {
+        if (b) err('a single-sided hot spot must not carry sides.b');
+        if (factionHiresMercenaries(a.contract.enemyFaction)) err(`single-sided against '${a.contract.enemyFaction}', a faction that hires mercenaries (ERA-1: only a non-hiring Clan enemy is single-sided)`);
+    } else if (!b) { err('sides:{a,b} must be fully authored'); return errs; }
+    if (a.synthesized || b?.synthesized) err('synthesized flag must be absent on authored sides');
+    if (b) {
+        if (a.role === b.role) err('side roles must be opposed');
+        if (!ctx.sameFactionAllowed && a.faction === b.faction) err(`side factions identical ('${a.faction}') without a same-faction archetype whitelist`);
+        if (a.contract.enemyFaction !== b.faction || b.contract.enemyFaction !== a.faction) err('per-side enemyFaction must cross-derive from the other side');
+        for (const k of ['scale', 'intensity', 'lengthMonths'] as const) {
+            if (a.contract[k] !== b.contract[k]) err(`Part E shared field '${k}' differs across sides (${a.contract[k]} vs ${b.contract[k]})`);
+        }
     }
-    for (const [label, side] of [['a', a], ['b', b]] as const) {
+    if (!factionHiresMercenaries(a.faction)) err(`side a faction '${a.faction}' does not hire mercenaries (ERA-1: a Clan is never the employer side)`);
+    const sideList: readonly (readonly ['a' | 'b', SideOffer])[] = b ? [['a', a], ['b', b]] : [['a', a]];
+    for (const [label, side] of sideList) {
         if (!side.employer || !side.faction) err(`side ${label}: employer/faction missing`);
         if (!side.situation || !side.employerDesc) err(`side ${label}: Part E situation/employerDesc missing`);
     }
     // Two opposed sides must never render the SAME employer (a directorate hiring both sides against
     // itself). sameFaction archetypes are exempt: merc-both deliberately shares the rival org.
-    if (!ctx.sameFactionAllowed && a.employer === b.employer) err(`both sides carry the identical employer '${a.employer}'`);
+    if (b && !ctx.sameFactionAllowed && a.employer === b.employer) err(`both sides carry the identical employer '${a.employer}'`);
 
     // ── contract math (C5/C6/C13) — asserted against BOTH sides + the top-level mirror ──
     const checkTerms = (label: string, c: HotSpotContractTerms): void => {
@@ -81,7 +92,7 @@ export function validateForged(h: HotSpot, ctx: ValidateCtx): string[] {
         if ((c.lengthMonths ?? 0) < c.intensity) err(`${label}: lengthMonths ${c.lengthMonths} < intensity ${c.intensity} (C13)`);
     };
     checkTerms('sides.a.contract', a.contract);
-    checkTerms('sides.b.contract', b.contract);
+    if (b) checkTerms('sides.b.contract', b.contract);
     checkTerms('contract (top-level mirror)', h.contract);
     const typeId = hotspotTypeId(h);
     const ct = CHAOS_CONTRACT_TYPES.find((x) => x.id === typeId);
@@ -93,7 +104,7 @@ export function validateForged(h: HotSpot, ctx: ValidateCtx): string[] {
         err(`intensity ${h.contract.intensity} outside '${typeId}' range [${ct.intensityRange}] — a forged hot spot must sign inside its mapped type's range AND at main-path depth ${ctx.expectedDepth} (C6)`);
     }
     if (h.contract.intensity !== ctx.expectedDepth) err(`intensity ${h.contract.intensity} ≠ main-path depth ${ctx.expectedDepth} (C6)`);
-    const bTypeId = b.type ? hotspotTypeId({ ...h, type: b.type }) : typeId;
+    const bTypeId = b?.type ? hotspotTypeId({ ...h, type: b.type }) : typeId;
     if (bTypeId !== typeId) err(`side b type string maps to '${bTypeId}' ≠ '${typeId}' (C3 — the signed type derives from the top level for BOTH sides)`);
 
     // ── per-track objectives + role (C8/C9) ──
@@ -112,7 +123,7 @@ export function validateForged(h: HotSpot, ctx: ValidateCtx): string[] {
     }
 
     // ── faction legality (C4) ──
-    for (const f of [a.faction, b.faction]) {
+    for (const f of [a.faction, b?.faction ?? a.contract.enemyFaction]) { // ERA-1 — single-sided: the enemy is still checked for combat legality
         if (!ctx.factionOk(f)) err(`faction '${f}' not resolvable to a fieldable era pool (C4)`);
         if (!ctx.mulOk(f)) err(`faction '${f}' not MUL-mappable for ilClan (C4)`);
         if (/local\s*\/\s*planetary/i.test(f)) err(`generic employer label emitted as a combat faction: '${f}'`);
@@ -156,7 +167,7 @@ export function validateForged(h: HotSpot, ctx: ValidateCtx): string[] {
     over('blurb', h.blurb, 240);
     over('situation (synopsis)', h.situation, 1700);
     over('employerDesc', h.employerDesc, 260);
-    for (const [sl, sd] of [['a', a], ['b', b]] as const) {
+    for (const [sl, sd] of sideList) {
         over(`sides.${sl}.situation`, sd.situation, 340);
         over(`sides.${sl}.employerDesc`, sd.employerDesc, 260);
         over(`sides.${sl}.blurb`, sd.blurb, 240);
@@ -180,8 +191,8 @@ export function validateForged(h: HotSpot, ctx: ValidateCtx): string[] {
     // Player-safety (C12) on the PRE-SIGN surface: blurb/situation/side identity leak no tactical data.
     const preSign: { path: string; text: string }[] = [
         { path: 'blurb', text: h.blurb ?? '' }, { path: 'situation', text: h.situation },
-        { path: 'sides.a.situation', text: a.situation ?? '' }, { path: 'sides.b.situation', text: b.situation ?? '' },
-        { path: 'sides.a.employerDesc', text: a.employerDesc ?? '' }, { path: 'sides.b.employerDesc', text: b.employerDesc ?? '' },
+        { path: 'sides.a.situation', text: a.situation ?? '' }, { path: 'sides.b.situation', text: b?.situation ?? '' },
+        { path: 'sides.a.employerDesc', text: a.employerDesc ?? '' }, { path: 'sides.b.employerDesc', text: b?.employerDesc ?? '' },
         { path: 'title', text: h.title },
     ];
     const LEAKS: [RegExp, string][] = [

@@ -15,7 +15,6 @@
 import { Component, ChangeDetectionStrategy, computed, signal, inject, effect, untracked, isDevMode, type Signal, ApplicationRef, EnvironmentInjector } from '@angular/core';
 import { BceUnitSpriteComponent } from '../sprite/unit-sprite';
 import { NewCampaignState } from '../new-campaign-state';
-import { shipForSize } from '../size-capital/resources';
 import { CONDITIONS, type Condition } from '../dashboard/roster/sample-force';
 import { RosterForceService, type RosterEntry } from '../dashboard/roster/roster-force.service';
 import { SheetRevService } from '../dashboard/roster/sheet-rev.service';
@@ -35,23 +34,67 @@ import { PilotDetailComponent } from '../barracks/pilot-detail';
 import { PILOT_ABILITIES } from '../barracks/pilot-abilities';
 import { BVCalculatorUtil } from '../../utils/bv-calculator.util';
 import type { CBTForceUnit } from '../../models/cbt-force-unit.model';
-import type { Unit } from '../../models/units.model';
-
-interface Vessel {
-    name: string;
-    cls: string;
-    kind: 'drop' | 'jump' | 'contract' | 'none';
-    pct?: number;
-}
+import type { UnitSummary as Unit } from '../../models/unit-summary.model';
+import { DataService } from '../../services/data.service'; // ODM-15
+// (ODM-18 P1: the ODM-15 trade-stamp import moved into OdmReassignService.reassign — assign+stamp+persist, one fn)
+import { TRADE_CHOICES, TRADE_NOUN, TRADE_ORDER, type OdmTrade } from './odm-trades';
+import { OdmReassignService, crewName, machineLabel } from './odm-reassign.service'; // ODM-18 P1
+import { DecimalPipe } from '@angular/common';
+import { OdmFleetService, doorsUsed, type OdmVessel, type OdmFleetBay } from './odm-fleet.service'; // ODM-17 P2-e — the REAL fleet (the tier fiction died)
+import { fuelPct, fuelState, odmStartingStocks } from './odm-stocks'; // ODM-17 P2-e — the Iron Covenant's tank IS the ODM-11 fuel card
 
 @Component({
     selector: 'bce-odm-roster',
     standalone: true,
-    imports: [BceUnitSpriteComponent, InViewDirective, SheetViewComponent, SheetModalComponent, PilotDetailComponent],
+    imports: [BceUnitSpriteComponent, InViewDirective, SheetViewComponent, SheetModalComponent, PilotDetailComponent, DecimalPipe],
     providers: [RosterForceService],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './odm-roster.html',
     styleUrl: '../dashboard/roster/roster.scss', // SHARED (styles are not forked)
+    // ODM-17 P2-e — fleet-detail additions, FORK-LOCAL (the shared roster.scss stays untouched for these)
+    styles: [`
+        .vspec { display: flex; flex-wrap: wrap; gap: 4px 12px; font-family: var(--mono); font-size: 10px; color: var(--ink-dim, var(--ink)); margin: 4px 0 2px; }
+        .vnote { font-family: var(--mono); font-size: 9.5px; font-style: italic; color: var(--ink-dim, var(--ink)); opacity: .85; margin-top: 4px; line-height: 1.45; }
+        .ftag.vgrounded { border-color: var(--stamp); color: var(--stamp); }
+        /* ── ODM-25 — the crew ACTION ROW. FORK-LOCAL on purpose: these controls exist only in the ODM
+           template, so the SHARED roster.scss stays untouched and Classic cannot be moved by them.
+
+           THE BUG THIS SHAPE FIXES: the stand-down button first shipped INSIDE .pmain, which is
+           \`flex: 1 1 auto; min-width: 0\` — so it shrank below its content instead of wrapping, its
+           children spilled ~50px to the right of the 225px left column, and .thumb (position: relative,
+           therefore painted in the positioned layer ABOVE in-flow content) covered the overflow. The
+           button existed at a real size and nothing on earth could click it: elementFromPoint returned
+           DIV.sheet-host. A sibling with \`flex: 0 0 auto\` would NOT have fixed it — .pmain would still
+           have shrunk and overflowed. \`flex-basis: 100%\` inside the wrapping .pilot ALWAYS takes its own
+           line, so there is no overflow to be covered.
+
+           z-index is the belt to that braces: should anything in this block ever overflow again, it paints
+           ABOVE the sheet column instead of under it — the class of bug, not just this instance. ── */
+        .pilot { position: relative; z-index: 1; }
+        /* ROW 2: chips left, the two icon controls hard right. flex-basis:100% makes it a row by
+           construction, and margin-left:auto on .picons pins the icons to the column's right edge. */
+        .prow2 { flex: 0 0 100%; display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 1px; }
+        .prow2 .pflav { min-width: 0; overflow: hidden; }
+        .picons { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 6px; }
+        /* THE ICONS. Fixed 28px squares, so the row's right edge is fixed too: whatever the name or the
+           chips do, these two cannot push past the column. That is the point — the geometry is no longer
+           something to keep checking, it is something that cannot happen. */
+        .picon { flex: 0 0 auto; width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+            font-family: var(--mono); font-size: 14px; line-height: 1; background: var(--paper); color: var(--ink2);
+            border: 1.4px solid var(--ink2); cursor: pointer; }
+        .picon:hover:not(:disabled), .picon:focus-visible { border-color: var(--stamp); color: var(--stamp); outline: none; }
+        /* the star carries its own state — ☆ hollow / ★ filled, matching the ★ CMD badge on this same card */
+        .picon.prim.on { background: var(--ok, #3a7d44); border-color: var(--ok, #3a7d44); color: var(--paper); }
+        .picon:disabled { opacity: .45; cursor: not-allowed; } /* disabled WITH A REASON (title), never hidden */
+        /* ODM-25b — the name WRAPS to two lines rather than truncating. .pname's shared rule is
+           nowrap+ellipsis; this fork-local override uses the house line-clamp already on .arms and .dmg. */
+        .pilot .pname { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden; line-height: 1.2; }
+        .liftline { font-family: var(--mono); font-size: 10.5px; border: 1.4px solid var(--line, currentColor); padding: 6px 9px; margin-top: 8px; }
+        .liftline b { color: var(--ok, #3a7d44); } .liftline b.short { color: var(--stamp); }
+        .liftline.vops { border-style: dashed; font-style: italic; opacity: .9; }
+        .vdisc { flex-basis: 100%; font-style: italic; color: var(--warn, var(--ink)); }
+    `],
 })
 export class OdmRosterComponent {
     private readonly state = inject(NewCampaignState);
@@ -60,6 +103,8 @@ export class OdmRosterComponent {
     private readonly forceService = inject(RosterForceService);
     private readonly store = inject(CampaignSaveStore);
     private readonly pilotService = inject(PilotService);
+    private readonly crew = inject(OdmReassignService); // ODM-18 P1 — the extracted reassign core
+    private readonly data = inject(DataService); // ODM-15 — the reassign re-derive reads the catalog type
     protected readonly sheetRev = inject(SheetRevService); // D-084 — per-card dirty bits (template reads rev(id))
 
     protected readonly conditions = CONDITIONS;
@@ -105,6 +150,7 @@ export class OdmRosterComponent {
 
     constructor() {
         void this.forceService.build();
+        void this.fleetSvc.ensureLoaded(); // ODM-17 P2-e — the fleet section reads pack truth
         // D-070: a pilot edit (skills/name from the detail overlay, or a grant) must move the LIVE record sheet,
         // not just the cell — re-push crew onto the ForceUnits whenever the pilot roster changes, then re-clone
         // the thumbnails (the proven 40ms paint tick). untracked so the effect depends ONLY on pilots(), not on
@@ -121,9 +167,8 @@ export class OdmRosterComponent {
 
     /** The generated campaign force (D-018 proto-instances). */
     protected readonly force = computed(() => this.state.startingForce() ?? []);
-    /** IMPORT-7 Part B — Fleet & Transport (DropShips/fuel/jump-passage) is a Traditional resource-tier mechanic; hidden under
-     *  Hot Spots (no fuel model in the DR book — transport is the negotiated SP term + the brief's transit line). */
-    protected readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots');
+    // (ODM-17 P2-e: the IMPORT-7 isHotspots gate on the fleet section died with the tier fiction — the fork
+    //  is ODM-only and the section now renders pack truth unconditionally.)
     /** Build-your-own (or no force) → clean empty-roster state once data is ready. */
     protected readonly isEmpty = computed(() => this.ready() && this.force().length === 0);
 
@@ -195,11 +240,20 @@ export class OdmRosterComponent {
             status: entry.status,
             cond: inst.condition as Condition,
             lanceId: inst.lanceId ?? this.reserveKey,
+            // ODM-25b — the lance's full NAME, for the title on a <select> that can only ellipsis it.
+            lanceName: (this.structure()?.lances ?? []).find((l) => l.id === inst.lanceId)?.name ?? 'Reserve',
             commander: !!inst.isCommander,
             // HOTFIX-024 — has any MECH damage? Gates the 'In repair' condition option (an undamaged unit can't be
             // repaired → it would strand in neither the bays nor the deployable pool). Same predicate as the queue.
             hasDamage: hasMechDamage(inst.damage),
             vehicle: inst.unitType === 'vehicle', // D-046 — combined-arms type flag (motor-pool grouping + chip)
+            // ODM-25 — the machine's TRADE, so this card's crew list can be pruned to the right profession
+            // (ruling 3: cross-trade is a different job, not a penalty band). Null = a hull we cannot
+            // classify, which opens the list rather than closing it — see OdmReassignService.tradeAllows.
+            trade: this.crew.tradeOfInstance(inst),
+            // ODM-25 (ruling 4) — is THIS chassis the crew's primary hull? Chassis-keyed, so it survives a
+            // reassignment onto another machine of the same type and does not die with the instance.
+            primary: !!pilot?.primaryHull && pilot.primaryHull === (unit?.chassis ?? inst.chassis),
             // ── VITALS readout (HOTFIX-002): MOVE / BV / ARMS from the catalog; DMG from the live fu ──
             // D-046: vehicles show cruise/flank (no jump); 'Mechs show walk/run/jump.
             move: unit ? (inst.unitType === 'vehicle' ? `${unit.walk} / ${unit.run}` : `${unit.walk} / ${unit.run} / ${unit.jump}`) : '—',
@@ -241,9 +295,11 @@ export class OdmRosterComponent {
         return arr;
     }
 
-    /** Display name with the optional callsign, e.g. `Mara Voss "Ghost"` — used for the sheet crew + the ▾ list. */
+    /** Display name with the optional callsign, e.g. `Mara Voss "Ghost"` — used for the sheet crew + the ▾ list.
+     *  ODM-25: the one spelling now lives beside the crew mutations (crewName), so the pull-down, the overlay
+     *  and every warning address the same person the same way. */
     private pilotName(p: Pilot): string {
-        return p.callsign ? `${p.name} "${p.callsign}"` : p.name;
+        return crewName(p);
     }
 
     // ── Cell vitals (HOTFIX-002) — pure derivation from EXISTING data; no new state, no persistence ──
@@ -292,30 +348,156 @@ export class OdmRosterComponent {
     }
 
     /** Pull-down options — every LIVING pilot, best-skills first, spares flagged. D-036: the dead
-     *  never crew again — KIA pilots are filtered out (the service hard-guards the same line). */
-    protected readonly pilotOptions = computed(() =>
-        [...(this.state.pilots() ?? [])]
+     *  never crew again — KIA pilots are filtered out (the service hard-guards the same line).
+     *
+     *  ODM-25 — the list is now PER MACHINE, not one list for the whole roster:
+     *   · **pruned by TRADE** (ruling 3) — a 'Mech offers MechWarriors, a tank offers vehicle crews. Cross-
+     *     trade is a different profession and is BLOCKED, because the old behaviour did not merely permit it,
+     *     it LAUNDERED it (the A5 re-stamp converted the pilot in the act of mis-posting them).
+     *   · **annotated** — every option states WHAT the person is and WHERE they are, so a company is not
+     *     assigned blind.
+     *   · **the untraded bench is on every list**, flagged as the career decision it is (item 2). This is the
+     *     C-ter composition: identity-means-never-overwrite would brick these pilots against a trade filter
+     *     if the stamp-if-absent path had not survived. It did; they are postable, and the list says why.
+     *
+     *  Built once PER TRADE rather than once per card, so each `<select>` gets a STABLE array reference. */
+    private readonly crewLists = computed<Record<string, { id: string; label: string }[]>>(() => {
+        const living = [...(this.state.pilots() ?? [])]
             .filter((p) => p.status !== 'KIA')
-            .sort((a, b) => a.gunnery - b.gunnery || a.piloting - b.piloting || a.name.localeCompare(b.name))
-            .map((p) => ({ id: p.pilotId, label: `${this.pilotName(p)} · ${p.gunnery}/${p.piloting}${p.assignedInstanceId ? '' : ' — spare'}` })),
-    );
+            .sort((a, b) => a.gunnery - b.gunnery || a.piloting - b.piloting || a.name.localeCompare(b.name));
+        const out: Record<string, { id: string; label: string }[]> = {};
+        for (const key of ['', ...TRADE_ORDER]) {
+            const machineTrade = (key || null) as OdmTrade | null;
+            out[key] = living
+                // ONE guard, in the service (ODM-18 ruling 5) — the pull-down and the pilot overlay's
+                // posting list must never drift into two different ideas of who may crew what.
+                .filter((p) => this.crew.tradeAllows(p.trade, machineTrade))
+                .map((p) => ({ id: p.pilotId, label: this.crewOptionLabel(p, machineTrade) }));
+        }
+        return out;
+    });
+    /** ODM-25b — THE SEATED CREW IS ALWAYS IN THEIR OWN MACHINE'S LIST, trade or no trade. Correcting a
+     *  trade can leave someone in an off-trade hull (permitted and visible — ruling 3 blocks the ACT of
+     *  posting cross-trade, it does not dissolve a seat already held). Pruning them out of their own card
+     *  would make the control read "— no pilot —" over a crewed machine: a display contradicting the state,
+     *  which is the silent-wrong-value class with a dropdown for a face. Cached against the base array's
+     *  own identity, so the normal path keeps its stable reference and the exception keeps one too. */
+    private readonly offTradeOpts = new Map<string, { base: unknown; arr: { id: string; label: string }[] }>();
+    protected pilotOptions(trade: OdmTrade | null | undefined, pilotId?: string): { id: string; label: string }[] {
+        const base = this.crewLists()[trade ?? ''] ?? [];
+        if (!pilotId || base.some((o) => o.id === pilotId)) return base;
+        const key = `${trade ?? ''}|${pilotId}`;
+        const hit = this.offTradeOpts.get(key);
+        if (hit && hit.base === base) return hit.arr;
+        const p = (this.state.pilots() ?? []).find((x) => x.pilotId === pilotId);
+        const arr = p
+            ? [{ id: p.pilotId, label: `${this.crewOptionLabel(p, trade ?? null)} — OFF-TRADE, already seated here` }, ...base]
+            : base;
+        this.offTradeOpts.set(key, { base, arr });
+        return arr;
+    }
+    /** `Mara Voss "Ghost" · 3/4 · MechWarrior · Phoenix Hawk PXH-1` — or, for the bench, the career line. */
+    private crewOptionLabel(p: Pilot, machineTrade: OdmTrade | null): string {
+        const t = p.trade as OdmTrade | undefined;
+        // An off-vocabulary stored value is SHOWN as it stands, never re-labelled or re-bucketed by guess.
+        const known = t ? (TRADE_NOUN[t] ?? t) : null;
+        const trade = known
+            ?? (machineTrade ? `untraded — will be stamped ${TRADE_NOUN[machineTrade]} on posting` : 'untraded');
+        const where = p.assignedInstanceId ? this.machineOf(p.assignedInstanceId) : 'unassigned';
+        return `${this.pilotName(p)} · ${p.gunnery}/${p.piloting} · ${trade} · ${where}`;
+    }
     /** D-036: the pilot detail explode (the roster pilot block's name opens it). */
     protected readonly detailPilot = signal<string | null>(null);
+    // ── ODM-18 P1 (ruling 1) — GM-private pilot notes (gmOnly.pilotNotes; the fan strips them) ──
+    protected gmNoteFor(pilotId: string): string { return this.state.gmPilotNotes()[pilotId] ?? ''; }
+    protected saveGmNote(pilotId: string, text: string): void {
+        const notes = { ...this.state.gmPilotNotes() };
+        if (text) notes[pilotId] = text; else delete notes[pilotId];
+        this.state.setGmPilotNotes(notes);
+        void this.store.persistCurrent();
+    }
+
     /** Pilots exist for this campaign (drives whether the pull-down renders). */
     protected readonly hasPilots = computed(() => (this.state.pilots()?.length ?? 0) > 0);
 
-    /** Reassign a 'Mech's pilot ('' = unassign the current crew) → re-drive sheets + persist in place. */
-    protected reassignPilot(instanceId: string, pilotId: string): void {
-        if (pilotId) {
-            this.pilotService.assign(pilotId, instanceId);
-        } else {
-            const current = (this.state.pilots() ?? []).find((p) => p.assignedInstanceId === instanceId);
-            if (current) this.pilotService.assign(current.pilotId, null);
+    /** Reassign a machine's crew ('' = unassign the current crew) → re-drive sheets + persist in place.
+     *  ODM-18 P1 (ruling 5) — the assign + ODM-15 trade-stamp + persist core is EXTRACTED to OdmReassignService
+     *  (the one fn this UI and the intent adapter both call); the component keeps only the render re-drive. */
+    /** The machine a pilot is currently in, by name — the annotation the pull-down was missing. */
+    private machineOf(instanceId: string | null | undefined): string {
+        if (!instanceId) return '';
+        const i = (this.state.startingForce() ?? []).find((x) => x.instanceId === instanceId);
+        return i ? machineLabel(i) : (instanceId ?? '');
+    }
+    /** ODM-25 — UNASSIGN, as a control you can SEE. The capability already existed (the "— no pilot —" row
+     *  inside an opacity:0 select laid over a chevron), which made it indistinguishable from absent. Third
+     *  invisible control of the session; the fix is always to surface, never to rebuild. */
+    protected standDown(instanceId: string): void {
+        const warn = this.crew.standDownWarning(instanceId);
+        if (!warn) return; // no crew — nothing to stand down (the guard is HERE, not only on the @if)
+        if (!confirm(warn)) return;
+        this.applyCrew(instanceId, '');
+    }
+    protected reassignPilot(instanceId: string, pilotId: string, el?: HTMLSelectElement): void {
+        /* ODM-25 — WARN ON DISPLACEMENT. Choosing an already-posted pilot MOVES them, and the seat they left
+           silently empties. A machine quietly losing its crew is exactly the class of silent decision this
+           whole session has been about, so it is stated before it happens rather than discovered at deploy.
+           (No trade warning: as of ODM-25 there is no re-stamp to warn about, and cross-trade never reaches
+           this list — the options are pruned to the machine's own profession.) */
+        const warn = pilotId ? this.crew.displacementWarning(pilotId, instanceId) : null;
+        if (warn && !confirm(warn)) {
+            // NG-SELECT (the twice-earned gotcha): a refused change must not leave the picked option
+            // standing as if applied — put the control back on the truth.
+            if (el) el.value = (this.state.pilots() ?? []).find((x) => x.assignedInstanceId === instanceId)?.pilotId ?? '';
+            return;
         }
+        this.applyCrew(instanceId, pilotId);
+    }
+    /** The one write + re-render both crew controls share. */
+    private applyCrew(instanceId: string, pilotId: string): void {
+        this.crew.reassign(instanceId, pilotId);
         // D-084: re-drive the live SVGs off the new crew, then flip ONLY the affected card's dirty bit (the
         // returned changed-id; the bump coalesces + awaits the svg paint). No whole-roster re-clone.
         for (const cid of this.forceService.reapplyAllCrew()) this.sheetRev.bump(cid);
-        this.schedulePersist();             // in-place persist (no new autosave), debounced
+    }
+
+    /** ODM-25 (ruling 4) — mark/unmark THIS chassis as the crew's primary hull. One per pilot: setting
+     *  replaces. The real refusal lives in the service (a pilot with no posting has no primary), so a click
+     *  forced past the `disabled` attribute does nothing — a guard that lives only in the markup is not a
+     *  guard. No mechanic reads the field yet; this is the record, ODM-16 is the number. */
+    protected togglePrimary(u: { pilotId: string; name: string; primary: boolean }): void {
+        if (!u.pilotId) return;
+        this.crew.setPrimaryHull(u.pilotId, u.primary ? null : u.name);
+    }
+
+    /** ODM-25 — the PILOT OVERLAY's posting list (the shared `bce-pilot-detail` renders it only when a
+     *  caller supplies it AND the campaign is ODM). Same trade rule, same annotation discipline as the
+     *  roster pull-down; derived in the service so the two lists cannot disagree. */
+    protected readonly postingOptions = computed(() => {
+        const id = this.detailPilot();
+        return id ? this.crew.postingOptions(id) : [];
+    });
+    /** Apply a posting chosen on the pilot overlay ('' = stand down). Same warnings, same one write. */
+    protected changePosting(pilotId: string, instanceId: string): void {
+        if (instanceId) {
+            const warn = this.crew.displacementWarning(pilotId, instanceId);
+            if (warn && !confirm(warn)) return;
+            this.applyCrew(instanceId, pilotId);
+            return;
+        }
+        const from = (this.state.pilots() ?? []).find((p) => p.pilotId === pilotId)?.assignedInstanceId;
+        if (!from) return;
+        const warn = this.crew.standDownWarning(from);
+        if (warn && !confirm(warn)) return;
+        this.applyCrew(from, '');
+    }
+    /** ODM-25b — correct a trade from the overlay. The choices are ODM's vocabulary, supplied to the shared
+     *  component; the warning and the write are the service's, so this and the Barracks cannot drift. */
+    protected readonly tradeOptions = TRADE_CHOICES;
+    protected changeTrade(pilotId: string, trade: string): void {
+        const warn = this.crew.tradeChangeWarning(pilotId, trade);
+        if (warn && !confirm(warn)) return;
+        this.crew.setTrade(pilotId, trade);
     }
 
     /** Lazy: stream a cell's record sheet only when it scrolls into view (T-020). */
@@ -459,26 +641,34 @@ export class OdmRosterComponent {
         }
     }
 
-    // ── Fleet (reflects the resource tier chosen in the wizard) ──
-    protected readonly fleet = computed<Vessel[]>(() => {
-        const res = this.state.resources();
-        const ship = shipForSize(this.state.unitSize()?.id);
-        const drops: Vessel[] = [
-            { name: 'Wolf’s Fang', cls: `${ship}-class DropShip`, kind: 'drop', pct: 78 },
-            { name: 'Talon’s Reach', cls: `${ship}-class DropShip`, kind: 'drop', pct: 46 },
-        ];
-        if (res === 'established') return [...drops, { name: 'Wolf’s Tongue', cls: 'Invader-class JumpShip', kind: 'jump', pct: 64 }];
-        if (res === 'normal') return [...drops, { name: 'Jump passage', cls: 'Contracted lift — no owned JumpShip', kind: 'contract' }];
-        return [{ name: 'Transport', cls: 'Lean tier — lift bought / leased / contracted per drop', kind: 'none' }];
-    });
+    // ── ODM-17 P2-e — THE FLEET, real: packs/odm/fleet.json (one-way from the PM canonical-lift master)
+    //    rendered LIVE (the status overlay wins). The tier-fiction vessels, `shipForSize`, and the static
+    //    pct literals died here — the resource-tier branches never run under ODM. The Iron Covenant's
+    //    fuel bar reads the ODM-11 fuel card (ONE tank, never double-tracked — the stock's 215 t capacity
+    //    IS her bunker, master-confirmed); the Leopards' tanks are capacity DATA, not tracked separately
+    //    in v1. Doors render as data AND truth: a 0-door hold loads nothing afield.
+    private readonly fleetSvc = inject(OdmFleetService);
+    protected readonly fleetVessels = computed<OdmVessel[]>(() => this.fleetSvc.vessels() ?? []);
+    protected readonly fleetOps = this.fleetSvc.opsData;
     protected readonly fleetCount = computed(() => {
-        const f = this.fleet();
-        const drops = f.filter((v) => v.kind === 'drop').length;
-        const jump = f.some((v) => v.kind === 'jump');
-        if (drops === 0) return 'no organic transport';
-        return `${drops} DropShip${drops === 1 ? '' : 's'} · ${jump ? 'owned JumpShip (K-F)' : 'jump passage contracted'}`;
+        const v = this.fleetVessels();
+        if (!v.length) return 'fleet manifest loading…';
+        const ops = v.filter((x) => x.status === 'OPERATIONAL' && x.type === 'DropShip').length;
+        const jump = v.find((x) => x.type === 'JumpShip');
+        return `${ops} operational DropShip${ops === 1 ? '' : 's'} · ${jump ? 'owned JumpShip (K-F)' : 'no JumpShip'}`;
     });
-    protected fuelClass(pct: number): string {
-        return pct > 60 ? 'g' : pct > 40 ? 'a' : 'r';
+    /** The company tank, live (fuelPct/fuelState = the ODM-11 color law). */
+    protected readonly icFuel = computed(() => { const s = this.state.odmStocks() ?? odmStartingStocks(); return { pct: fuelPct(s), state: fuelState(s) }; });
+    protected readonly liftBudget = this.fleetSvc.liftBudget;
+    protected isJumpShip(v: OdmVessel): boolean { return v.type === 'JumpShip'; }
+    /** A bay line in the master's own notation: "type × count (doors)" / cargo as "N t (doors)". */
+    protected bayLine(b: OdmFleetBay): string {
+        if (b.type === 'cargo') return `cargo ${b.tons} t (${b.doors} door${b.doors === 1 ? '' : 's'})${b.doors === 0 ? ' — loads NOTHING afield' : ''}`;
+        return `${b.type === 'mech' ? '’Mech' : 'fighter'} × ${b.count} (${b.doors})`;
+    }
+    protected doorsLine(v: OdmVessel): string {
+        if (!v.doorsMax) return '';
+        const used = doorsUsed(v);
+        return `doors ${used}/${v.doorsMax}${used >= v.doorsMax ? ' — AT the construction cap' : ''}`;
     }
 }

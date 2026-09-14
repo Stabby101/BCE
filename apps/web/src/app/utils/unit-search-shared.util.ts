@@ -1,37 +1,9 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import type { Unit } from '../models/units.model';
+import type { MultiStateOption, MultiStateSelection } from '../components/multi-select-dropdown/multi-select-dropdown.component';
+import type { UnitSummary } from '../models/unit-summary.model';
 import { AS_MOVEMENT_MODE_DISPLAY_NAMES, type SearchTelemetryStage } from '../services/unit-search-filters.model';
 
 export interface UnitComponentData {
@@ -39,23 +11,128 @@ export interface UnitComponentData {
     counts: Map<string, number>;
 }
 
-const unitComponentCache = new WeakMap<Unit, UnitComponentData>();
+const unitComponentCache = new WeakMap<UnitSummary, UnitComponentData>();
 
-export function getMergedTags(unit: Unit): string[] {
+export function getMergedTags(unit: UnitSummary): string[] {
     const merged = new Set<string>();
-    for (const tag of unit._chassisTags ?? []) merged.add(tag);
-    for (const tag of unit._nameTags ?? []) merged.add(tag);
+    for (const entry of unit._chassisTags ?? []) merged.add(entry.tag);
+    for (const entry of unit._nameTags ?? []) merged.add(entry.tag);
     for (const publicTag of unit._publicTags ?? []) merged.add(publicTag.tag);
     return Array.from(merged);
+}
+
+function normalizeSourceValues(value: readonly string[] | null | undefined): string[] {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    const result: string[] = [];
+    const seen = new Set<string>();
+
+    for (const entry of value) {
+        if (typeof entry !== 'string') {
+            continue;
+        }
+
+        const source = entry.trim();
+        const sourceKey = source.toLowerCase();
+        if (!source || sourceKey === 'none' || seen.has(sourceKey)) {
+            continue;
+        }
+
+        seen.add(sourceKey);
+        result.push(source);
+    }
+
+    return result;
+}
+
+export function getUnitSourceFilterValues(unit: Pick<UnitSummary, 'source' | 'published'>): string[] {
+    const sources = normalizeSourceValues(unit.source);
+    const published = normalizeSourceValues(unit.published);
+
+    if (published.length === 0) {
+        return sources;
+    }
+
+    const merged = new Map<string, string>();
+    for (const source of sources) {
+        merged.set(source.toLowerCase(), source);
+    }
+    for (const source of published) {
+        merged.set(source.toLowerCase(), source);
+    }
+
+    return Array.from(merged.values());
+}
+
+function normalizeRulesRefBucket(values: unknown): string[] {
+    if (!Array.isArray(values)) {
+        return [];
+    }
+
+    return Array.from(new Set(
+        values
+            .filter((value): value is string => typeof value === 'string')
+            .map(value => value.trim().toLowerCase())
+            .filter(value => value.length > 0),
+    ));
+}
+
+const BASE_RULE_BOOK_KEYS = new Set(['tw', 'tm', 'bmm', 'core']);
+
+function normalizeUnitRulesRefBuckets(values: unknown): string[][] {
+    if (!Array.isArray(values) || values.length === 0) {
+        return [];
+    }
+
+    // Accept the old flat form during the data-format transition.
+    if (values.every(value => typeof value === 'string')) {
+        const bucket = normalizeRulesRefBucket(values);
+        return bucket.length > 0 ? [bucket] : [];
+    }
+
+    return values
+        .map(normalizeRulesRefBucket)
+        .filter(bucket => bucket.length > 0);
+}
+
+/**
+ * A selection covers a unit when it contains every book from at least one of the
+ * unit's alternative rules-reference buckets. Extra selected books are harmless.
+ * When no base rulebook is selected, base books are ignored so expansion-only
+ * searches do not need to name the compatible base book as well.
+ */
+export function unitMatchesRulesRefsSelection(unitRulesRefs: unknown, selectedRulesRefs: readonly string[]): boolean {
+    const selectedRefs = new Set(normalizeRulesRefBucket(selectedRulesRefs));
+    if (selectedRefs.size === 0) {
+        return true;
+    }
+
+    const buckets = normalizeUnitRulesRefBuckets(unitRulesRefs);
+    if (Array.from(selectedRefs).some(rulesRef => BASE_RULE_BOOK_KEYS.has(rulesRef))) {
+        return buckets.some(bucket => bucket.every(rulesRef => selectedRefs.has(rulesRef)));
+    }
+
+    return buckets.some(bucket => {
+        const nonBaseBooks = bucket.filter(rulesRef => !BASE_RULE_BOOK_KEYS.has(rulesRef));
+        return nonBaseBooks.length > 0 && nonBaseBooks.every(rulesRef => selectedRefs.has(rulesRef));
+    });
 }
 
 export function getProperty(obj: any, key?: string) {
     if (!obj || !key) return undefined;
     if (key === '_tags') {
-        return getMergedTags(obj as Unit);
+        return getMergedTags(obj as UnitSummary);
+    }
+    if (key === 'source') {
+        return getUnitSourceFilterValues(obj as UnitSummary);
+    }
+    if (key === 'weaponType') {
+        return (obj as UnitSummary)._weaponTypes ?? [];
     }
     if (key === 'as._motive') {
-        const mvm = (obj as Unit).as?.MVm;
+        const mvm = (obj as UnitSummary).as?.MVm;
         if (!mvm) return [];
 
         const result: string[] = [];
@@ -72,7 +149,7 @@ export function getProperty(obj: any, key?: string) {
         return result;
     }
     if (key === 'as._mv') {
-        const mvm = (obj as Unit).as?.MVm;
+        const mvm = (obj as UnitSummary).as?.MVm;
         if (!mvm) return 0;
         const values = Object.values(mvm);
         return values.length > 0 ? Math.max(...values) : 0;
@@ -91,6 +168,100 @@ export function getNowMs(): number {
     return globalThis.performance?.now?.() ?? Date.now();
 }
 
+function isMultiState(value: unknown): value is MultiStateOption['state'] {
+    return value === false || value === 'or' || value === 'and' || value === 'not';
+}
+
+export function normalizeMultiStateSelection(value: unknown): MultiStateSelection {
+    if (!value) {
+        return {};
+    }
+
+    if (Array.isArray(value)) {
+        const selection: MultiStateSelection = {};
+        for (const entry of value) {
+            if (typeof entry !== 'string' || entry.length === 0) {
+                continue;
+            }
+
+            selection[entry] = {
+                name: entry,
+                state: 'or',
+                count: 1,
+            };
+        }
+        return selection;
+    }
+
+    if (typeof value !== 'object') {
+        return {};
+    }
+
+    const selection: MultiStateSelection = {};
+    for (const [rawName, rawOption] of Object.entries(value as Record<string, unknown>)) {
+        if (!rawOption || typeof rawOption !== 'object') {
+            continue;
+        }
+
+        const option = rawOption as Partial<MultiStateOption>;
+        const name = typeof option.name === 'string' && option.name.length > 0 ? option.name : rawName;
+        if (!name) {
+            continue;
+        }
+
+        const minimumValues = Array.isArray(option.minimumValues)
+            ? option.minimumValues.map(value => (
+                typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null
+            ))
+            : undefined;
+        const optionWithoutMinimumValues = { ...option };
+        delete optionWithoutMinimumValues.minimumValues;
+
+        selection[name] = {
+            ...optionWithoutMinimumValues,
+            name,
+            state: isMultiState(option.state) ? option.state : false,
+            count: typeof option.count === 'number' && Number.isFinite(option.count) && option.count > 0
+                ? option.count
+                : 1,
+            ...(minimumValues?.some(value => value !== null) ? { minimumValues } : {}),
+        };
+    }
+
+    return selection;
+}
+
+export function getSelectedPositiveDropdownNames(value: unknown): string[] {
+    if (Array.isArray(value)) {
+        return Array.from(new Set(
+            value.filter((entry): entry is string => typeof entry === 'string' && entry.length > 0),
+        ));
+    }
+
+    return Array.from(new Set(
+        Object.values(normalizeMultiStateSelection(value))
+            .filter((option) => option.state === 'or' || option.state === 'and')
+            .map((option) => option.name),
+    ));
+}
+
+function isAlphaNumericChar(char: string | undefined): boolean {
+    if (!char) {
+        return false;
+    }
+
+    const code = char.charCodeAt(0);
+    return (code >= 48 && code <= 57)
+        || (code >= 65 && code <= 90)
+        || (code >= 97 && code <= 122);
+}
+
+export function isEmbeddedApostrophe(text: string, index: number): boolean {
+    return text[index] === '\''
+        && isAlphaNumericChar(text[index - 1])
+        && isAlphaNumericChar(text[index + 1]);
+}
+
 export function hasUnclosedQuote(text: string): boolean {
     let activeQuote: '"' | '\'' | null = null;
 
@@ -102,13 +273,13 @@ export function hasUnclosedQuote(text: string): boolean {
         }
 
         if (activeQuote) {
-            if (char === activeQuote) {
+            if (char === activeQuote && (char !== '\'' || !isEmbeddedApostrophe(text, index))) {
                 activeQuote = null;
             }
             continue;
         }
 
-        if (char === '"' || char === '\'') {
+        if (char === '"' || (char === '\'' && !isEmbeddedApostrophe(text, index))) {
             activeQuote = char;
         }
     }
@@ -130,7 +301,7 @@ export function isCommittedSemanticToken(token: { rawText: string; operator: str
     return !hasUnclosedQuote(rawValueText);
 }
 
-export function getUnitComponentData(unit: Unit): UnitComponentData {
+export function getUnitComponentData(unit: UnitSummary): UnitComponentData {
     let cached = unitComponentCache.get(unit);
     if (!cached) {
         const names = new Set<string>();
@@ -147,6 +318,31 @@ export function getUnitComponentData(unit: Unit): UnitComponentData {
     }
 
     return cached;
+}
+
+export function getUnitCountableFilterData(unit: UnitSummary, filterKey: string): UnitComponentData | null {
+    if (filterKey === 'componentName') {
+        return getUnitComponentData(unit);
+    }
+
+    if (filterKey !== 'weaponType') {
+        return null;
+    }
+
+    const names = new Set<string>();
+    const counts = new Map<string, number>();
+
+    for (const [weaponType, count] of Object.entries(unit._weaponTypeCounts ?? {})) {
+        if (typeof count !== 'number' || count <= 0) {
+            continue;
+        }
+
+        const normalizedWeaponType = weaponType.toLowerCase();
+        names.add(normalizedWeaponType);
+        counts.set(normalizedWeaponType, count);
+    }
+
+    return { names, counts };
 }
 
 export function checkQuantityConstraint(

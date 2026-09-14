@@ -1,41 +1,13 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, type ElementRef, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { firstValueFrom } from 'rxjs';
 import { OptionsService } from '../../services/options.service';
 import { BaseDialogComponent } from '../base-dialog/base-dialog.component';
-import { DialogRef, type DIALOG_DATA } from '@angular/cdk/dialog';
+import { DialogRef } from '@angular/cdk/dialog';
 import { DbService } from '../../services/db.service';
 import { UserStateService } from '../../services/userState.service';
 import { DialogsService } from '../../services/dialogs.service';
@@ -43,23 +15,147 @@ import { isIOS } from '../../utils/platform.util';
 import { LoggerService } from '../../services/logger.service';
 import { GameService } from '../../services/game.service';
 import type { GameSystem } from '../../models/common.model';
+import { normalizeUnitServerUrl } from '../../models/common.model';
+import type { AutomationMode, AvailabilitySource, CBTAutomationKey, CBTOptionalRules, ForceViewerBVPVDisplay, RecordSheetDoubleTapZoomResetMode } from '../../models/options.model';
 import { SpriteStorageService } from '../../services/sprite-storage.service';
 import { DataService } from '../../services/data.service';
 import { PublicTagsService } from '../../services/public-tags.service';
 import { TagsService } from '../../services/tags.service';
 import { TaggingService } from '../../services/tagging.service';
 import { ToastService } from '../../services/toast.service';
+import { AccountAuthService } from '../../services/account-auth.service';
+import { OAuthProviderPickerDialogComponent, type OAuthProviderPickerDialogResult } from '../oauth-provider-picker-dialog/oauth-provider-picker-dialog.component';
+import type { AvailableAuthProvider, LinkedOAuthProvider, OAuthProvider } from '../../models/account-auth.model';
+import { RangeSliderComponent } from '../range-slider/range-slider.component';
+import { naturalCompare } from '../../utils/sort.util';
+import { AppUpdateService } from '../../services/app-update.service';
+import { DisplayNameService } from '../../services/display-name.service';
+import { copyTextToClipboard } from '../../utils/clipboard.util';
 
-/*
- * Author: Drake
- */
+type OptionsSectionId = 'General' | 'Search' | 'Account' | 'Tags' | 'Classic BattleTech' | 'Alpha Strike' | 'Advanced' | 'Logs';
+
+interface OptionsViewDefinition {
+    id: OptionsSectionId;
+    title: string;
+    description?: string;
+    parentId?: OptionsSectionId;
+}
+
+interface CBTAutomationOptionDefinition {
+    key: CBTAutomationKey;
+    label: string;
+    description: string;
+}
+
+const WIDE_LAYOUT_QUERY = '(min-width: 760px) and (min-height: 560px)';
+
+const OPTIONS_VIEW_DEFINITIONS: readonly OptionsViewDefinition[] = [
+    {
+        id: 'General',
+        title: 'General',
+        description: 'Default game system, display preferences, and printing behavior.'
+    },
+    {
+        id: 'Account',
+        title: 'Account',
+        description: 'OAuth providers, sign-in recovery, and account identity details.'
+    },
+    {
+        id: 'Search',
+        title: 'Search',
+        description: 'Availability data, rarity matching, filter behavior, and expanded search layout.'
+    },
+    {
+        id: 'Tags',
+        title: 'Tags',
+        description: 'Share your tags, copy public links, and manage subscriptions.'
+    },
+    {
+        id: 'Classic BattleTech',
+        title: 'Classic BattleTech',
+        description: 'Rules, Record sheet appearance, automation, and navigation.'
+    },
+    {
+        id: 'Alpha Strike',
+        title: 'Alpha Strike',
+        description: 'Card appearance, Alpha Strike rules automation, and printing behavior.'
+    },
+    {
+        id: 'Advanced',
+        title: 'Advanced',
+        description: 'Input behavior, cached data, local storage, and maintenance actions.'
+    },
+    {
+        id: 'Logs',
+        title: 'Logs',
+        description: 'Recent in-app log messages for diagnostics and troubleshooting.'
+    },
+];
+
+const OPTIONS_VIEW_DEFINITIONS_BY_ID = new Map<OptionsSectionId, OptionsViewDefinition>(
+    OPTIONS_VIEW_DEFINITIONS.map(view => [view.id, view])
+);
+
+const TOP_LEVEL_OPTIONS_VIEWS = OPTIONS_VIEW_DEFINITIONS.filter(view => !view.parentId);
+const FORCE_GEN_FAILURE_SEARCH_WINDOW_MIN_MS = 300;
+const FORCE_GEN_FAILURE_SEARCH_WINDOW_MAX_MS = 10_000;
+const FORCE_GEN_FAILURE_SEARCH_WINDOW_STEP_MS = 100;
+const CBT_AUTOMATION_MODES: ReadonlyArray<{ value: AutomationMode; label: string }> = [
+    { value: 'yes', label: 'Auto' },
+    { value: 'ask', label: 'Ask' },
+    { value: 'no', label: 'No' },
+];
+const CBT_AUTOMATION_OPTIONS: readonly CBTAutomationOptionDefinition[] = [
+    {
+        key: 'pilotSkillCheck',
+        label: 'Piloting skill checks',
+        description: 'Resolve end-of-phase Piloting Skill Rolls. "No" keeps the warnings available but skips them when the phase closes.',
+    },
+    {
+        key: 'heatAndDissipationResolution',
+        label: 'Heat and dissipation',
+        description: 'Calculate and apply heat and cooling at end of turn.',
+    },
+    {
+        key: 'heatEffectsCheck',
+        label: 'Heat effects',
+        description: 'Resolve shutdown, ammunition explosion, life support, and aerospace heat checks after end-turn heat is applied. Pilot damage also follows its own setting.',
+    },
+    {
+        key: 'pilotHitsAndConsciousnessCheck',
+        label: 'Pilot hits and consciousness',
+        description: 'Apply pilot injuries from head hits and heat effects, then resolve consciousness and recovery rolls.',
+    },
+    {
+        key: 'internalExplosionsCheck',
+        label: 'Internal explosions',
+        description: 'Resolve effects caused by explosive equipment and ammunition.',
+    },
+    {
+        key: 'criticalHitChanceCheck',
+        label: 'Critical hit chance',
+        description: 'Resolve checks that can cause critical hits.',
+    },
+    {
+        key: 'breachAndFloodCheck',
+        label: 'Breach and flood',
+        description: 'Resolve armor breaches and flooding effects.',
+    },
+    {
+        key: 'fallingCheck',
+        label: 'Falling',
+        description: 'Resolve fall orientation, hit locations, and damage before the seatbelt check.',
+    },
+];
+
+
 @Component({
     selector: 'options-dialog',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CommonModule, BaseDialogComponent],
+    imports: [CommonModule, BaseDialogComponent, RangeSliderComponent],
     templateUrl: './options-dialog.component.html',
-    styleUrls: ['./options-dialog.component.css']
+    styleUrls: ['./options-dialog.component.scss']
 })
 export class OptionsDialogComponent {
     logger = inject(LoggerService)
@@ -75,19 +171,39 @@ export class OptionsDialogComponent {
     tagsService = inject(TagsService);
     taggingService = inject(TaggingService);
     toastService = inject(ToastService);
+    accountAuthService = inject(AccountAuthService);
+    appUpdateService = inject(AppUpdateService);
+    displayNameService = inject(DisplayNameService);
     destroyRef = inject(DestroyRef);
     isIOS = isIOS();
-    
-    tabs = computed(() => {
-        return ['General', 'Tags', 'Sheets', 'Alpha Strike', 'Advanced', 'Logs'];
-    });
-    activeTab = signal(this.tabs()[0]);
+    modalClass = 'wide options-dialog-modal';
+    topLevelViews = TOP_LEVEL_OPTIONS_VIEWS;
+    activeTab = signal<OptionsSectionId>('General');
+    navigationStack = signal<OptionsSectionId[]>([]);
+    isWideLayout = signal(typeof window !== 'undefined' ? window.matchMedia(WIDE_LAYOUT_QUERY).matches : true);
+    canGoBack = computed(() => this.navigationStack().length > 0);
+    isAtRoot = computed(() => !this.canGoBack());
+    currentViewId = computed<OptionsSectionId>(() => this.navigationStack().at(-1) ?? this.activeTab());
+    currentViewDefinition = computed(() => this.getViewDefinition(this.currentViewId()));
+    currentViewDescription = computed(() => this.currentViewDefinition().description);
+    mobileHeaderTitle = computed(() => this.canGoBack() ? this.currentViewDefinition().title : 'Options');
+    forceGenFailureSearchWindowMinMs = FORCE_GEN_FAILURE_SEARCH_WINDOW_MIN_MS;
+    forceGenFailureSearchWindowMaxMs = FORCE_GEN_FAILURE_SEARCH_WINDOW_MAX_MS;
+    forceGenFailureSearchWindowStepMs = FORCE_GEN_FAILURE_SEARCH_WINDOW_STEP_MS;
+    cbtAutomationModes = CBT_AUTOMATION_MODES;
+    cbtAutomationOptions = CBT_AUTOMATION_OPTIONS;
+    forceGenFailureSearchWindowMs = computed(() => this.normalizeForceGenFailureSearchWindowMs(this.optionsService.options().forceGenerator.failureSearchWindowMs));
 
     uuidInput = viewChild<ElementRef<HTMLInputElement>>('uuidInput');
     subscriptionInput = viewChild<ElementRef<HTMLInputElement>>('subscriptionInput');
     userUuid = computed(() => this.userStateService.uuid() || '');
     userPublicId = computed(() => this.userStateService.publicId() || 'Not registered');
+    userDisplayName = computed(() => this.userStateService.displayName() || '');
     showUserUuid = signal(false);
+    displayNameError = signal('');
+    displayNameSaving = signal(false);
+    displayNameGenerating = signal(false);
+    private displayNameSaveVersion = 0;
     subscribedTags = computed(() => {
         this.publicTagsService.version(); // depend on version for reactivity
         return this.publicTagsService.getSubscribedTags();
@@ -97,7 +213,7 @@ export class OptionsDialogComponent {
         const nameTags = this.tagsService.getNameTags();
         const chassisTags = this.tagsService.getChassisTags();
         const allTags = new Set([...Object.keys(nameTags), ...Object.keys(chassisTags)]);
-        return Array.from(allTags).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+        return Array.from(allTags).sort(naturalCompare);
     });
     showSubscriptionInput = signal(false);
     subscriptionError = signal('');
@@ -106,19 +222,126 @@ export class OptionsDialogComponent {
     sheetCacheCount = signal(0);
     canvasMemorySize = signal(0);
     unitIconsCount = signal(0);
+    unitServersDraft = signal<string[]>([...(this.optionsService.options().unitServers ?? [])]);
+    newUnitServerUrl = signal('');
+    unitServerError = signal('');
+    unitServersDirty = computed(() => {
+        const saved = this.optionsService.options().unitServers ?? [];
+        const draft = this.unitServersDraft();
+        if (saved.length !== draft.length) return true;
+        return draft.some((url, i) => url !== saved[i]);
+    });
     unitsCount = computed(() => this.dataService.getUnits().length);
-    equipmentCount = computed(() => Object.keys(this.dataService.getEquipments()).length);
+    equipmentCount = computed(() => this.dataService.getEquipmentRegistry().size);
 
     /** Subscriber counts for own tags: tagId (lowercase) -> count */
     tagSubscriberCounts = signal<Record<string, number>>({});
     /** Whether subscriber counts are loading */
     subscriberCountsLoading = signal(false);
+    availableAuthProviders = computed<AvailableAuthProvider[]>(() => {
+        const providers = this.userStateService.availableAuthProviders();
+        if (providers.length > 0) {
+            return providers;
+        }
+
+        return [
+            { provider: 'google', label: 'Google', enabled: false },
+            { provider: 'apple', label: 'Apple', enabled: false },
+            { provider: 'discord', label: 'Discord', enabled: false },
+        ];
+    });
+    linkedOAuthProviders = this.userStateService.oauthProviders;
+    userHasOAuth = this.userStateService.hasOAuth;
+    oauthActionInFlight = this.accountAuthService.authInFlight;
+    logoutInFlight = signal(false);
+    enabledAuthProviders = computed<AvailableAuthProvider[]>(() => this.availableAuthProviders().filter(provider => provider.enabled));
+    linkableAuthProviders = computed<AvailableAuthProvider[]>(() => this.availableAuthProviders().filter(provider => !this.isProviderLinked(provider.provider)));
+    hasEnabledAuthProviders = computed(() => this.enabledAuthProviders().length > 0);
 
     constructor() {
+        this.setupLayoutModeTracking();
         this.updateSheetCacheSize();
         this.updateCanvasMemorySize();
         this.updateUnitIconsCount();
         this.loadTagSubscriberCounts();
+    }
+
+    private setupLayoutModeTracking(): void {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const mediaQuery = window.matchMedia(WIDE_LAYOUT_QUERY);
+        const updateLayout = (matches: boolean) => this.isWideLayout.set(matches);
+        updateLayout(mediaQuery.matches);
+
+        const onChange = (event: MediaQueryListEvent) => updateLayout(event.matches);
+        mediaQuery.addEventListener('change', onChange);
+        this.destroyRef.onDestroy(() => mediaQuery.removeEventListener('change', onChange));
+    }
+
+    private getViewDefinition(viewId: OptionsSectionId): OptionsViewDefinition {
+        return OPTIONS_VIEW_DEFINITIONS_BY_ID.get(viewId) ?? OPTIONS_VIEW_DEFINITIONS_BY_ID.get('General')!;
+    }
+
+    private buildViewPath(viewId: OptionsSectionId): OptionsSectionId[] {
+        const path: OptionsSectionId[] = [];
+        let currentViewId: OptionsSectionId | undefined = viewId;
+
+        while (currentViewId) {
+            path.unshift(currentViewId);
+            currentViewId = this.getViewDefinition(currentViewId).parentId;
+        }
+
+        return path;
+    }
+
+    private getTopLevelSectionId(viewId: OptionsSectionId): OptionsSectionId {
+        let currentView = this.getViewDefinition(viewId);
+
+        while (currentView.parentId) {
+            currentView = this.getViewDefinition(currentView.parentId);
+        }
+
+        return currentView.id;
+    }
+
+    isSectionActive(sectionId: OptionsSectionId): boolean {
+        return this.getTopLevelSectionId(this.currentViewId()) === sectionId;
+    }
+
+    selectDesktopSection(sectionId: OptionsSectionId): void {
+        this.activeTab.set(sectionId);
+        this.navigationStack.set([]);
+    }
+
+    openMobileSection(sectionId: OptionsSectionId): void {
+        this.openView(sectionId);
+    }
+
+    openView(viewId: OptionsSectionId): void {
+        this.activeTab.set(this.getTopLevelSectionId(viewId));
+        this.navigationStack.set(this.buildViewPath(viewId));
+    }
+
+    pushView(viewId: OptionsSectionId): void {
+        this.openView(viewId);
+    }
+
+    onMobileBack(): void {
+        const stack = this.navigationStack();
+        if (stack.length === 0) {
+            this.onClose();
+            return;
+        }
+
+        const nextStack = stack.slice(0, -1);
+        this.navigationStack.set(nextStack);
+
+        const nextViewId = nextStack.at(-1);
+        if (nextViewId) {
+            this.activeTab.set(this.getTopLevelSectionId(nextViewId));
+        }
     }
 
     /**
@@ -182,19 +405,67 @@ export class OptionsDialogComponent {
         this.dialogRef.close();
     }
 
+    restartToUpdate(): void {
+        void this.appUpdateService.restartForUpdate();
+    }
+
     onGameSystemChange(event: Event) {
         const value = (event.target as HTMLSelectElement).value as GameSystem;
         this.optionsService.setOption('gameSystem', value);
     }
 
-    onSheetsColorChange(event: Event) {
-        const value = (event.target as HTMLSelectElement).value as 'normal' | 'night';
-        this.optionsService.setOption('sheetsColor', value);
+    async onAvailabilitySourceChange(event: Event) {
+        const value = (event.target as HTMLSelectElement).value as AvailabilitySource;
+
+        if (value === 'megamek' && this.dataService.isDataReady()) {
+            const ready = await this.dataService.ensureMegaMekAvailabilityCatalogInitialized();
+            if (!ready) {
+                this.toastService.showToast('MegaMek availability data could not be loaded.', 'error');
+                return;
+            }
+        }
+
+        this.optionsService.setOption('availabilitySource', value);
+    }
+
+    onMegaMekAvailabilityFiltersUseAllScopedOptionsChange(event: Event) {
+        const value = (event.target as HTMLSelectElement).value === 'true';
+        this.optionsService.setOption('megaMekAvailabilityFiltersUseAllScopedOptions', value);
+    }
+
+    onColorSchemeChange(event: Event) {
+        const value = (event.target as HTMLSelectElement).value as 'default' | 'night';
+        this.optionsService.setOption('colorScheme', value);
+    }
+
+    async onCBTRulesChange(event: Event) {
+        const select = event.target as HTMLSelectElement;
+        const value = select.value as 'core2026' | 'tw';
+        const currentValue = this.optionsService.options().CBTRules;
+        const confirmed = await this.dialogsService.requestConfirmation(
+            'Changing the rules system will reload the application. Any uncommitted changes may be lost.',
+            'Change Rules System?',
+            'warning'
+        );
+        if (!confirmed) {
+            select.value = currentValue;
+            return;
+        }
+        await this.optionsService.setOption('CBTRules', value);
+        window.location.reload();
     }
 
     onRecordSheetCenterPanelContentChange(event: Event) {
         const value = (event.target as HTMLSelectElement).value as 'fluffImage' | 'clusterTable';
-        this.optionsService.setOption('recordSheetCenterPanelContent', value);
+        this.optionsService.setOption('printAllOptions', {
+            ...this.optionsService.options().printAllOptions,
+            recordSheetCenterPanelContent: value,
+        });
+    }
+
+    onRecordSheetDoubleTapZoomResetChange(event: Event) {
+        const value = (event.target as HTMLSelectElement).value as RecordSheetDoubleTapZoomResetMode;
+        this.optionsService.setOption('recordSheetDoubleTapZoomReset', value);
     }
 
     onSyncZoomBetweenSheetsChange(event: Event) {
@@ -217,14 +488,14 @@ export class OptionsDialogComponent {
         this.optionsService.setOption('unitDisplayName', value);
     }
 
+    onForceViewerBVPVDisplayChange(event: Event) {
+        const value = (event.target as HTMLSelectElement).value as ForceViewerBVPVDisplay;
+        this.optionsService.setOption('forceViewerBVPVDisplay', value);
+    }
+
     onAutoConvertFiltersChange(event: Event) {
         const value = (event.target as HTMLSelectElement).value === 'true';
         this.optionsService.setOption('automaticallyConvertFiltersToSemantic', value);
-    }
-
-    onQuickActionsChange(event: Event) {
-        const value = (event.target as HTMLSelectElement).value as 'enabled' | 'disabled';
-        this.optionsService.setOption('quickActions', value);
     }
 
     onunitSearchExpandedViewLayoutChange(event: Event) {
@@ -237,34 +508,81 @@ export class OptionsDialogComponent {
         this.optionsService.setOption('canvasInput', value);
     }
 
+    onPerformanceModeChange(event: Event) {
+        const value = (event.target as HTMLSelectElement).value === 'true';
+        this.optionsService.setOption('performanceMode', value);
+    }
+
+    onForceSyncConflictDialogChange(event: Event) {
+        const value = (event.target as HTMLSelectElement).value === 'true';
+        this.optionsService.setOption('enableForceSyncConflictDialog', value);
+    }
+
+    onNewUnitServerUrlInput(event: Event) {
+        this.newUnitServerUrl.set((event.target as HTMLInputElement).value);
+        if (this.unitServerError()) {
+            this.unitServerError.set('');
+        }
+    }
+
+    addUnitServer() {
+        const normalized = normalizeUnitServerUrl(this.newUnitServerUrl());
+        if (!normalized) {
+            this.unitServerError.set('Enter a valid http(s) server URL, e.g. https://db.example.com');
+            return;
+        }
+        const current = this.unitServersDraft();
+        if (current.includes(normalized)) {
+            this.unitServerError.set('That server is already in the list.');
+            return;
+        }
+        this.unitServersDraft.set([...current, normalized]);
+        this.newUnitServerUrl.set('');
+        this.unitServerError.set('');
+    }
+
+    removeUnitServer(index: number) {
+        const current = this.unitServersDraft();
+        this.unitServersDraft.set(current.filter((_, i) => i !== index));
+    }
+
+    async applyUnitServers() {
+        // Fold any pending text in the add field into the list before saving.
+        if (this.newUnitServerUrl().trim()) {
+            this.addUnitServer();
+            if (this.unitServerError()) {
+                return;
+            }
+        }
+        await this.optionsService.setOption('unitServers', [...this.unitServersDraft()]);
+        window.location.reload();
+    }
+
     onSwipeToNextSheetChange(event: Event) {
         const value = (event.target as HTMLSelectElement).value as 'vertical' | 'horizontal' | 'disabled';
         this.optionsService.setOption('swipeToNextSheet', value);
     }
 
-    onUseAutomationsChange(event: Event) {
+    onTrackPhaseAndTurn(event: Event) {
         const value = (event.target as HTMLSelectElement).value === 'true';
-        this.optionsService.setOption('useAutomations', value);
+        this.optionsService.setOption('trackPhaseAndTurn', value);
+    }
+
+    onCbtAutomationModeChange(key: CBTAutomationKey, value: AutomationMode) {
+        this.optionsService.setCbtAutomationMode(key, value);
+    }
+
+    onCBTOptionalRuleChange(key: keyof CBTOptionalRules, event: Event) {
+        const value = (event.target as HTMLSelectElement).value === 'true';
+        this.optionsService.setOption('CBTOptionalRules', {
+            ...this.optionsService.options().CBTOptionalRules,
+            [key]: value,
+        });
     }
 
     onASUseHexChange(event: Event) {
         const value = (event.target as HTMLSelectElement).value === 'true';
         this.optionsService.setOption('ASUseHex', value);
-    }
-
-    onASCardStyleChange(event: Event) {
-        const value = (event.target as HTMLSelectElement).value as 'colored' | 'monochrome';
-        this.optionsService.setOption('ASCardStyle', value);
-    }
-
-    onASPrintPageBreakOnGroupsChange(event: Event) {
-        const value = (event.target as HTMLSelectElement).value === 'true';
-        this.optionsService.setOption('ASPrintPageBreakOnGroups', value);
-    }
-
-    onprintRosterSummaryChange(event: Event) {
-        const value = (event.target as HTMLSelectElement).value === 'true';
-        this.optionsService.setOption('printRosterSummary', value);
     }
 
     onASUnifiedDamagePickerChange(event: Event) {
@@ -282,6 +600,22 @@ export class OptionsDialogComponent {
         this.optionsService.setOption('ASVehiclesCriticalHitTable', value);
     }
 
+    onForceGenFailureSearchWindowMsChange(value: number) {
+        const nextValue = this.normalizeForceGenFailureSearchWindowMs(value);
+        this.optionsService.updateForceGeneratorOptions((options) => ({
+            ...options,
+            failureSearchWindowMs: nextValue,
+        }));
+    }
+
+    private normalizeForceGenFailureSearchWindowMs(value: number): number {
+        const numericValue = Number.isFinite(value) ? value : FORCE_GEN_FAILURE_SEARCH_WINDOW_MIN_MS;
+        const clampedValue = Math.min(FORCE_GEN_FAILURE_SEARCH_WINDOW_MAX_MS, Math.max(FORCE_GEN_FAILURE_SEARCH_WINDOW_MIN_MS, numericValue));
+        const snappedValue = Math.round(clampedValue / FORCE_GEN_FAILURE_SEARCH_WINDOW_STEP_MS) * FORCE_GEN_FAILURE_SEARCH_WINDOW_STEP_MS;
+
+        return Math.min(FORCE_GEN_FAILURE_SEARCH_WINDOW_MAX_MS, Math.max(FORCE_GEN_FAILURE_SEARCH_WINDOW_MIN_MS, snappedValue));
+    }
+
     selectAll(event: FocusEvent) {
         const input = event.target as HTMLInputElement;
         input.select();
@@ -289,6 +623,15 @@ export class OptionsDialogComponent {
 
     toggleUserUuidVisibility() {
         this.showUserUuid.update(value => !value);
+    }
+
+    async copyUserUuid(): Promise<void> {
+        try {
+            await copyTextToClipboard(this.userUuid());
+            this.toastService.showToast('User identifier copied to clipboard.', 'success');
+        } catch {
+            this.toastService.showToast('Failed to copy user identifier.', 'error');
+        }
     }
 
     async onPurgeCache() {
@@ -336,12 +679,66 @@ export class OptionsDialogComponent {
         }
     }
 
+    async onPurgeCatalogs() {
+        const confirmed = await this.dialogsService.requestConfirmation(
+            'Are you sure you want to delete the downloaded catalogs? MekBay will keep your forces, tags, and other local user data, then reload and download fresh catalog data.',
+            'Confirm Purge Catalogs',
+            'info'
+        );
+
+        if (confirmed) {
+            await this.dbService.clearCatalogCaches();
+            window.location.reload();
+        }
+    }
+
     async onUserUuidKeydown(event: KeyboardEvent) {
         if (event.key === 'Escape') {
             event.preventDefault();
             event.stopPropagation();
             this.userUuidError = '';
             this.resetUserUuidInput();
+        }
+    }
+
+    async queueDisplayNameSave(input: HTMLInputElement): Promise<void> {
+        const version = ++this.displayNameSaveVersion;
+        this.displayNameSaving.set(true);
+        this.displayNameError.set('');
+        try {
+            const savedName = await this.displayNameService.save(input.value);
+            if (version === this.displayNameSaveVersion) input.value = savedName;
+        } catch (error) {
+            if (version === this.displayNameSaveVersion) {
+                this.displayNameError.set(error instanceof Error ? error.message : 'Could not save the display name.');
+            }
+        } finally {
+            if (version === this.displayNameSaveVersion) this.displayNameSaving.set(false);
+        }
+    }
+
+    onDisplayNameKeydown(event: KeyboardEvent, input: HTMLInputElement): void {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            input.value = this.userDisplayName();
+            this.displayNameError.set('');
+            void this.queueDisplayNameSave(input);
+        } else if (event.key === 'Enter') {
+            event.preventDefault();
+            input.blur();
+            void this.queueDisplayNameSave(input);
+        }
+    }
+
+    async fillRandomDisplayName(input: HTMLInputElement): Promise<void> {
+        if (this.displayNameGenerating()) return;
+        this.displayNameGenerating.set(true);
+        try {
+            input.value = await this.displayNameService.generate();
+            this.displayNameError.set('');
+            await this.queueDisplayNameSave(input);
+        } finally {
+            this.displayNameGenerating.set(false);
         }
     }
 
@@ -355,6 +752,12 @@ export class OptionsDialogComponent {
     }
 
     async onSetUuid(value: string) {
+        if (this.userHasOAuth()) {
+            this.userUuidError = 'User Identifier changes are disabled for OAuth-connected accounts.';
+            this.resetUserUuidInput();
+            return;
+        }
+
         this.userUuidError = '';
         const trimmed = value.trim();
         if (trimmed === this.userUuid()) {
@@ -387,6 +790,35 @@ export class OptionsDialogComponent {
         } catch (e: any) {
             this.userUuidError = e?.message || 'An unknown error occurred.';
             return;
+        }
+    }
+
+    async onLogout() {
+        if (!this.userHasOAuth() || this.logoutInFlight() || this.oauthActionInFlight()) {
+            return;
+        }
+
+        const confirmed = await this.dialogsService.requestConfirmation(
+            'Are you sure you want to log out on this device? MekBay will remove the local account data stored in this browser, including forces, operations, organizations, tags, subscribed public tags, saved searches and drawings. Your linked OAuth providers will remain attached to your MekBay account. A fresh anonymous User Identifier will then be generated and the app will reload.',
+            'Confirm Logout',
+            'danger'
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        this.logoutInFlight.set(true);
+
+        try {
+            await this.dbService.clearLocalUserStores();
+            await this.userStateService.createFreshSession();
+            window.location.reload();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to log out.';
+            this.logger.error(`Logout failed: ${message}`);
+            this.toastService.showToast(message, 'error');
+            this.logoutInFlight.set(false);
         }
     }
 
@@ -525,5 +957,68 @@ export class OptionsDialogComponent {
 
     async onRenameTag(tagName: string) {
         await this.taggingService.renameTag(tagName);
+    }
+
+    isProviderLinked(provider: OAuthProvider): boolean {
+        return this.linkedOAuthProviders().some(linkedProvider => linkedProvider.provider === provider);
+    }
+
+    getLinkedProvider(provider: OAuthProvider): LinkedOAuthProvider | undefined {
+        return this.linkedOAuthProviders().find(linkedProvider => linkedProvider.provider === provider);
+    }
+
+    getProviderLabel(provider: OAuthProvider): string {
+        return this.accountAuthService.getProviderLabel(provider);
+    }
+
+    isProviderEnabled(provider: OAuthProvider): boolean {
+        return this.availableAuthProviders().some(availableProvider => availableProvider.provider === provider && availableProvider.enabled);
+    }
+
+    getProviderIdentity(provider: LinkedOAuthProvider): string {
+        return provider.displayName || provider.email || `${this.getProviderLabel(provider.provider)} account`;
+    }
+
+    async showProviderSignInDialog(): Promise<void> {
+        if (this.userHasOAuth()) {
+            return;
+        }
+
+        const providers = this.enabledAuthProviders();
+        if (providers.length === 0) {
+            await this.dialogsService.showNotice(
+                'Provider sign-in is not available yet because no OAuth providers are configured on this server.',
+                'Provider Sign-In Unavailable'
+            );
+            return;
+        }
+
+        const ref = this.dialogsService.createDialog<OAuthProviderPickerDialogResult>(OAuthProviderPickerDialogComponent, {
+            disableClose: true,
+            data: {
+                title: 'Sign In',
+                message: 'Choose a provider to recover the MekBay UUID already linked to that account.',
+                providers,
+            }
+        });
+        const choice = (await firstValueFrom(ref.closed)) ?? 'dismiss';
+
+        if (choice === 'dismiss') {
+            return;
+        }
+
+        await this.accountAuthService.loginWithProvider(choice);
+    }
+
+    onLinkProvider(provider: OAuthProvider) {
+        void this.accountAuthService.linkProvider(provider, false);
+    }
+
+    onReplaceProvider(provider: OAuthProvider) {
+        void this.accountAuthService.linkProvider(provider, true);
+    }
+
+    onUnlinkProvider(provider: OAuthProvider) {
+        void this.accountAuthService.unlinkProvider(provider);
     }
 }

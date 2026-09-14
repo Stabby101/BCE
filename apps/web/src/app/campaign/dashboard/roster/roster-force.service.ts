@@ -15,7 +15,7 @@ import { UnitInitializerService } from '../../../services/unit-initializer.servi
 import { CBTForce } from '../../../models/cbt-force.model';
 import type { CBTForceUnit } from '../../../models/cbt-force-unit.model';
 import { DEFAULT_GUNNERY_SKILL, DEFAULT_PILOTING_SKILL } from '../../../models/crew-member.model';
-import type { Unit } from '../../../models/units.model';
+import type { UnitSummary as Unit } from '../../../models/unit-summary.model';
 import { NewCampaignState } from '../../new-campaign-state';
 import { ForceGeneratorService } from '../../force/force-generator.service';
 import { CampaignSaveStore } from '../../campaign-save-store';

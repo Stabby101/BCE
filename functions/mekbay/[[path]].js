@@ -38,7 +38,26 @@ export async function onRequest(context) {
     if (subpath.startsWith('slim/') || subpath.startsWith('mul-ilclan/') || /^[^/]+\.json$/.test(subpath)) {
         if (!env || !env.ASSETS) return context.next();
         const a = await env.ASSETS.fetch(request);
-        if (a.ok && !(a.headers.get('content-type') || '').includes('text/html')) {
+        const isHtml = (r) => (r.headers.get('content-type') || '').includes('text/html');
+        if (a.status === 304) {
+            // DEPLOY-304 — a REVALIDATED asset is a success, not an absence. `_headers` serves this whole tree
+            // `no-cache`, so every returning browser sends If-None-Match and the asset store correctly answers 304;
+            // `a.ok` is FALSE for 304, so this branch used to fall through to the proxy on essentially every repeat
+            // visit: /slim/* → 404 (upstream has no slim/) → ensureSlice false → the 27 MB full catalog the slice
+            // exists to avoid; top-level *.json → 200 straight from db.mekbay.com, silently bypassing the mirror.
+            // A 304 alone cannot distinguish "revalidated" from "absent": the SPA fallback honours conditionals
+            // too (measured on wrangler pages dev — a missing path + the index ETag → a BARE 304, no content-type),
+            // so confirm a real non-HTML asset stands behind it with a body-less HEAD before trusting it.
+            // DECISION: HEAD probe rather than the bare one-liner — the only observable that separates the two cases.
+            const probe = await env.ASSETS.fetch(new Request(url.toString(), { method: 'HEAD' }));
+            if (probe.ok && !isHtml(probe)) {
+                const r = new Response(null, a); // a 304 carries no body
+                if (!r.headers.has('etag') && probe.headers.get('etag')) r.headers.set('ETag', probe.headers.get('etag')); // the store's 304 is bare; a 304 SHOULD echo the validator
+                r.headers.set('x-bce-asset-origin', 'static');
+                return r;
+            }
+            // else: the 304 was the HTML fallback's → the asset is absent → fall through
+        } else if (a.ok && !isHtml(a)) {
             const r = new Response(a.body, a);
             r.headers.set('x-bce-asset-origin', 'static'); // DoD probe: which tier served this (never db-mekbay-proxy once mirrored)
             return r;

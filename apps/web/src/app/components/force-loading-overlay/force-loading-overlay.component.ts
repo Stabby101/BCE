@@ -1,42 +1,13 @@
-/*
- * Copyright (C) 2026 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { ChangeDetectionStrategy, Component, inject, type Signal, type WritableSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DIALOG_DATA } from '@angular/cdk/dialog';
+import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
 
 /*
- * Author: Drake
  *
  * Full-screen overlay shown while force units are being loaded and initialized.
  * Displays per-force progress (faction icon, force name, loaded/total units)
@@ -68,7 +39,7 @@ export interface ForceLoadingOverlayData {
     selector: 'force-loading-overlay',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CommonModule],
+    imports: [CommonModule, LoadingSpinnerComponent],
     host: {
         class: 'fullscreen-dialog-host glass'
     },
@@ -94,11 +65,7 @@ export interface ForceLoadingOverlayData {
             </div>
             <div class="wide-dialog-actions">
                 @if (data.loading()) {
-                    <div class="spinner-container">
-                        <div class="spinner">
-                            <div class="ring"></div>
-                        </div>
-                    </div>
+                    <loading-spinner class="spinner-container"></loading-spinner>
                 } @else if (data.failedCount() > 0) {
                     <div class="error-section">
                         <div class="error-message">
@@ -114,6 +81,12 @@ export interface ForceLoadingOverlayData {
         </div>
     `,
     styles: [`
+
+        .wide-dialog-actions {
+            border: 0;
+            margin-top: 0;
+        }
+
         .force-list {
             display: flex;
             flex-direction: column;
@@ -160,12 +133,6 @@ export interface ForceLoadingOverlayData {
             font-variant-numeric: tabular-nums;
         }
 
-        .spinner-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
         .error-section {
             display: flex;
             flex-direction: column;
@@ -183,34 +150,6 @@ export interface ForceLoadingOverlayData {
             gap: 8px;
         }
 
-        .spinner {
-            width: 44px;
-            height: 44px;
-            position: relative;
-            display: inline-block;
-        }
-
-        .spinner .ring {
-            box-sizing: border-box;
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-top: 5px solid #BFC1C2;
-            border-right: 5px solid #A00000;
-            border-bottom: 5px solid #2357c6;
-            border-left: 5px solid #2357c6;
-            border-radius: 50%;
-            animation: spin 1.1s cubic-bezier(0.77, 0, 0.175, 1) infinite;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
     `]
 })
 export class ForceLoadingOverlayComponent {

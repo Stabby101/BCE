@@ -2,17 +2,20 @@ import { Component, ChangeDetectionStrategy, computed, inject, effect, untracked
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
 import { WarchestService } from './warchest.service';
+import { contractSummaryOf } from './chaos-contract'; // PD3 P2 — the terminal contract record at End Contract
 import { CONTRACT_COLUMNS, repCostUp, sacrificeDropTarget, type ContractColumn } from './chaos-contract-steps';
 import { MissionTreeService } from '../mission/mission-tree.service'; // D-110b — endContract archives the tree; the __d128 seam reads hasGeneratedTrack
 import { HotSpotsCatalogService, resolveSides, type CatalogHotSpot, type SideOffer } from './hotspots-catalog'; // D-124 · D-133 — premade Hot Spots + two-sided offers
 import { HotspotIoComponent, HotspotIoState } from './hotspot-io'; // DIRECTIVE-HARDEN-2 — the custom-hotspot JSON import/export panel (state provided here = the original tab lifetime)
 import { ContractWindowService } from './contract-window.service'; // DIRECTIVE-HARDEN-2 — D-131 month window + D-124 GM difficulty facade
-import { NegotiationService } from './negotiation.service'; // DIRECTIVE-HARDEN-3 — the negotiate/sign/back-out subsystem (state provided here = the original tab lifetime)
+import { NegotiationService } from './negotiation.service';
+import { GM_NEGOTIATION_HOST_PROVIDER } from './negotiation-host-gm'; // GM-2 P2b // DIRECTIVE-HARDEN-3 — the negotiate/sign/back-out subsystem (state provided here = the original tab lifetime)
 import { NegotiateModalComponent } from './negotiate-modal'; // DIRECTIVE-HARDEN-3 — the .cng + .cpv modal markup
 import { TrackPickerComponent } from './track-picker'; // DIRECTIVE-IMPORT-5 (Part A) — "▶ Play a track" picker on the active-contract card
 import { eraTag } from '../mission/forge-select'; // D-124 — campaign era tag for the catalog filter
 import { HsForgeService, HSFORGE_TOPUP_FLOOR } from './forge/hs-forge.service'; // HSFORGE-1 — the Forge; P2 wires the deal-time top-up (ruling D10)
 import { ensureForgeData, type ForgeRegion } from './forge/hs-forge-data'; // HSFORGE-1 P2 — the region table (the theater header line)
+import { TableModeService } from '../gm/table-mode.service'; // GM-1 P1 — table mode blanks the offer board (constant false outside a GM session)
 
 // D-124b — the Hot Spots OFFER BOARD tunables: deal a random hand of this many from the eligible chamber; reroll costs SP.
 const HOTSPOT_OFFER_SIZE = 5;
@@ -32,13 +35,21 @@ function shuffle<T>(arr: readonly T[]): T[] { const a = [...arr]; for (let i = a
     selector: 'bce-chaos-contracts',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [HotspotIoComponent, NegotiateModalComponent, TrackPickerComponent],
-    providers: [HotspotIoState, NegotiationService],
+    providers: [HotspotIoState, NegotiationService, GM_NEGOTIATION_HOST_PROVIDER], // GM-2 P2b — the tree edge lives in the host, not the service
     template: `
+        <!-- GM-3 P3 — this home campaign is bound to a GM's table: month advance is withheld (the table's clock is the GM's).
+             Shown above everything (with or without an active contract); "Leave the table" clears it (the player owns this campaign). -->
+        @if (mw.tableBound(); as tb) {
+            <div class="cc-tablebound" data-testid="cc-tablebound">
+                <span>At <b>{{ tb.sessionName || 'a GM session' }}</b>'s table &mdash; month advance withheld while you're bound to it.</span>
+                <button type="button" class="cc-btn small" (click)="leaveTable()" data-testid="cc-leave-table">Leave the table</button>
+            </div>
+        }
         @if (active(); as c) {
             <!-- ACTIVE CONTRACT -->
             <div class="cc-head">
                 <div>
-                    <span class="l">Active contract</span><span class="v">{{ neg.typeLabel(c.type) }}</span>
+                    <span class="l">{{ c.party === 'session' ? 'Session contract' : 'Active contract' }}</span><span class="v">{{ neg.typeLabel(c.type) }}</span>
                     <!-- DIRECTIVE-133 — the picked side: who you signed with + your role (the OpFor is the "vs" tag). -->
                     @if (c.employer) { <div class="cc-emp-line">{{ c.sideRole }} &middot; for {{ c.employer }}</div> }
                 </div>
@@ -75,10 +86,17 @@ function shuffle<T>(arr: readonly T[]): T[] { const a = [...arr]; for (let i = a
                 @if (canPlayTrack()) {
                     <button type="button" class="cc-btn go" (click)="playOpen.set(!playOpen())" data-testid="cc-play-track" title="Pick and play a track: this hot spot's tracks, your Custom Tracks, or the universal §18 library">&#9654; Play a track</button>
                 }
-                <!-- DIRECTIVE-131 — advance a month inside the contract → the existing monthly tick posts Maintenance + Base Pay. -->
-                <button type="button" class="cc-btn ghost" (click)="mw.advanceMonth()" data-testid="cc-advance-month" title="Advance the campaign one month — pays maintenance, collects base pay">&#9656; Advance a month</button>
-                <button type="button" class="cc-btn ghost" [disabled]="!neg.canBackOut()" (click)="neg.backOut()" data-testid="cc-back-to-contracts" [title]="neg.backOutTitle()">&#9668; Back to contracts</button>
-                <button type="button" class="cc-btn danger" (click)="endContract()">End Contract (Reputation +1)</button>
+                <!-- DIRECTIVE-131 — advance a month inside the contract → the existing monthly tick posts Maintenance + Base Pay.
+                     GM-3 P3 — DISABLED with the reason while this home campaign is bound to a GM's table (the table's clock is the GM's). -->
+                <button type="button" class="cc-btn ghost" [disabled]="!!mw.tableBound()" (click)="mw.advanceMonth()" data-testid="cc-advance-month" [title]="advanceTitle()">&#9656; Advance a month</button>
+                <!-- GM-3 P1 — a SESSION contract (a GM session's party-less primary) has no back-out and no End Contract here: nobody is a
+                     party to refund or credit; the GM tab's Retract un-presents it. A plain contract keeps both buttons verbatim. -->
+                @if (c.party === 'session') {
+                    <span class="cc-tag" data-testid="cc-session-note">Session contract &middot; no party &middot; Retract it on the GM tab</span>
+                } @else {
+                    <button type="button" class="cc-btn ghost" [disabled]="!neg.canBackOut()" (click)="neg.backOut()" data-testid="cc-back-to-contracts" [title]="neg.backOutTitle()">&#9668; Back to contracts</button>
+                    <button type="button" class="cc-btn danger" (click)="endContract()">End Contract (Reputation +1)</button>
+                }
             </div>
             @if (canPlayTrack() && playOpen()) {
                 <div class="cc-play-picker" data-testid="cc-play-picker">
@@ -87,10 +105,17 @@ function shuffle<T>(arr: readonly T[]): T[] { const a = [...arr]; for (let i = a
                 </div>
             }
             <p class="cc-month-hint">Advancing pays maintenance and collects base pay for the month.</p>
+            <!-- GM-3 P0 — TELL THE TABLE: the GM device's own words after a session-clock advance (gmSession only — the root
+                 service never sets it on a plain campaign, so this line never renders there). -->
+            @if (mw.sessionClockNotice(); as n) { <p class="cc-month-hint" role="status" data-testid="cc-clock-notice"><b>{{ n }}</b></p> }
             <!-- DIRECTIVE-131 — soft window-elapsed warning (warn-only v1: the contract still completes on tracks/intensity). -->
             @if (mw.windowElapsed()) {
                 <p class="cc-window-warn" data-testid="cc-window-warn">Contract window elapsed (Month {{ mw.monthsElapsed() + 1 }} of {{ mw.windowMonths(c) }}) — finish the remaining tracks or End Contract.</p>
             }
+        } @else if (table.on()) {
+            <!-- GM-1 P1 — TABLE MODE: the offer board is a GM surface; the projected screen shows a shim instead.
+                 table.on() is constant false outside a GM session — plain HS renders the @else branch unchanged. -->
+            <p class="cc-tablemode" data-testid="cc-table-mode">Table mode &mdash; contracts are on the GM screen.</p>
         } @else {
             <!-- DIRECTIVE-124/128 — PREMADE HOT SPOTS offer board (Brief / Negotiate / Export per card; Negotiate opens the modal) -->
             @if (hotSpots().length) {
@@ -156,6 +181,15 @@ function shuffle<T>(arr: readonly T[]): T[] { const a = [...arr]; for (let i = a
                     </div>
                     <bce-hotspot-io />
                 </div>
+            } @else {
+                <!-- ERA-1 (ruling 3) — the EMPTY CHAMBER says so. Reached only when no authored pack covers the era + theater
+                     AND the Forge could not fill it (an unsupported era, or a theater that resolves no worlds) — the
+                     top-up masks it everywhere else, and without this branch the board was a blank screen. -->
+                <div class="cc-hs cc-hs-empty" data-testid="cc-hs-empty">
+                    <div class="cc-head"><div><span class="l">Hot Spots — no contracts on offer</span></div></div>
+                    <p class="cc-hs-empty-msg">No hot spots cover the <strong>{{ eraDisplayName() }}</strong> era@if (theaterName()) { in the <strong>{{ theaterName() }}</strong> theater}. No authored pack covers it and the Forge could not fill the chamber. Pick a different era or theater at setup, or import a custom hot spot below.</p>
+                    <bce-hotspot-io />
+                </div>
             }
             <!-- DIRECTIVE-124 — GM DIFFICULTY (HS-only; raises OpFor BV + pilot skill). Set before generating. -->
             <div class="cc-diff">
@@ -172,6 +206,8 @@ function shuffle<T>(arr: readonly T[]): T[] { const a = [...arr]; for (let i = a
     `,
     styles: [`
         :host { display:block; }
+        /* GM-1 P1 — the table-mode shim shown in place of the offer board on the projected screen */
+        .cc-tablemode { font-family:var(--label); font-weight:600; letter-spacing:1.2px; font-size:11px; text-transform:uppercase; color:var(--ink2); border:1.5px dashed var(--rule, var(--ink2)); padding:14px 16px; }
         .cc-head { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; border:1.5px solid var(--ink); background:var(--paper2, var(--paper)); padding:10px 14px; margin-bottom:14px; }
         .cc-head .l { font-family:var(--label); font-weight:600; letter-spacing:1.5px; font-size:10.5px; text-transform:uppercase; color:var(--ink2); margin-right:8px; }
         .cc-head .v { font-family:var(--stencil); font-size:20px; }
@@ -191,6 +227,7 @@ function shuffle<T>(arr: readonly T[]): T[] { const a = [...arr]; for (let i = a
         .cc-window-warn { font-family:var(--type); font-size:12.5px; color:var(--warn, #c2622a); border-left:2px solid var(--warn, #c2622a); padding-left:10px; margin:8px 0 0; }
         /* DIRECTIVE-124 — the premade Hot Spots picker + the GM difficulty slider */
         .cc-hs { margin-bottom:14px; }
+        .cc-hs-empty-msg { font-size:13px; line-height:1.45; color:var(--ink2); border:1.5px dashed var(--rule, var(--ink2)); padding:12px 14px; margin:0 0 10px; } /* ERA-1 — the honest empty chamber */
         .cc-hs-list { display:flex; flex-direction:column; gap:6px; }
         .cc-hs-row { text-align:left; border:1.4px solid var(--ink); background:var(--paper2, var(--paper)); color:var(--ink); padding:9px 13px; }
         .cc-hs-hdr { display:flex; flex-wrap:wrap; align-items:baseline; gap:1px 10px; }
@@ -229,6 +266,7 @@ export class ChaosContractsComponent {
     private readonly hsForge = inject(HsForgeService);
     // DIRECTIVE-HARDEN-3 — the negotiate/sign/back-out subsystem (tab-provided = the original field lifetime).
     protected readonly neg = inject(NegotiationService);
+    protected readonly table = inject(TableModeService); // GM-1 P1 — blanks the offer board on the projected screen
 
     // ── D-124 — premade Hot Spots + the GM difficulty slider ──
     /** The campaign's hotspot-era tag. eraTag()'s terminal bucket is 'dark-age' (year>3080) and never returns
@@ -242,6 +280,8 @@ export class ChaosContractsComponent {
      *  theater (default; every pre-P2 save) passes era-only: today's behavior byte-identical. Region-null
      *  packs (general) still list in every theater; customs always list (the IMPORT-2 rule). */
     protected readonly hotSpots = computed(() => this.catalog.hotSpotCatalog(this.campaignEra(), this.state.hsRegion())); // the eligible CHAMBER
+    /** ERA-1 — the era's display name for the empty-chamber state (the wizard card's name; the chamber tag as a fallback). */
+    protected readonly eraDisplayName = computed(() => this.state.era()?.name ?? this.campaignEra());
     /** HSFORGE-1 P2 — the theater's display name for the board header (null theater → no line). */
     protected readonly theaterName = computed(() => {
         const id = this.state.hsRegion();
@@ -526,12 +566,29 @@ export class ChaosContractsComponent {
     /** The I/O panel child — the per-card Export button drives its exportHotspot() through this ref. */
     protected readonly io = viewChild(HotspotIoComponent);
 
+    /** GM-3 P3 — leave the GM's table: clear the bind (the player owns this campaign — no trust boundary) and persist, so
+     *  month advance is its own again. Idempotent; a no-op when not bound. */
+    /** GM-3 P3 — the advance button's tooltip (apostrophes/em-dash live here, not in the template binding). */
+    protected advanceTitle(): string {
+        return this.mw.tableBound()
+            ? "At a GM's table — the table advances the month; leave the table to advance your own."
+            : 'Advance the campaign one month — pays maintenance, collects base pay';
+    }
+    protected leaveTable(): void {
+        if (!this.state.tableBound()) return;
+        this.state.setTableBound(null);
+        void this.store.persistCurrent();
+    }
+
     protected endContract(): void {
         if (!this.active()) return;
         const off = this.state.acceptedContract(); // D-110b — the synthetic offer, to archive its tree
         this.state.setReputation((this.state.reputation() ?? 1) + 1); // D-110 — Reputation +1 on completion
+        const cc = this.state.activeChaosContract();
+        if (cc) this.state.setCompletedChaosContract(contractSummaryOf({ ...cc, status: 'completed' })); // PD3 P2 — the terminal record, BEFORE the null
         this.state.setActiveChaosContract(null);
         this.state.setAcceptedContract(null); // D-110b — parity with the intensity auto-complete
+        this.state.clearParticipantContracts(); // GM-2 P2a — the session's participant contracts end with the primary
         this.missionTree.closeTree(off ?? undefined); // D-110b — retire + archive the tree
         void this.store.persistCurrent();
     }

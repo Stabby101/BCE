@@ -152,6 +152,15 @@ export class AdminController {
         return { removed };
     }
 
+    /** ODM-18 P3 — the same lever for a GM-COMPOSED mission (IP-002): composed prose is GM-typed content,
+     *  so the takedown must reach it, and the checkpoint purge rides along so a restore cannot resurrect it. */
+    @Post('campaigns/:campaignId/gm-missions/:missionId/remove')
+    removeGmMission(@Req() req: AuthedRequest, @Param('campaignId') campaignId: string, @Param('missionId') missionId: string): { removed: boolean } {
+        const removed = this.campaigns.removeGmMission(campaignId, missionId);
+        this.users.recordAudit({ actorUserId: req.user?.id ?? null, action: 'remove', targetUserId: null, detail: `gm-mission ${missionId} @ campaign ${campaignId}`, ip: req.ip ?? null });
+        return { removed };
+    }
+
     // ── audit log (read-only; the store is append-only — no edit/delete route exists) ──
     @Get('audit')
     audit(

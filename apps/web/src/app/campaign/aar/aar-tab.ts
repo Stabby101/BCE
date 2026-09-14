@@ -64,6 +64,11 @@ export class AarTabComponent {
     protected close(): void {
         this.selected.set(null);
     }
+
+    // TABLE-2 T2-1 — the per-mission WALK control is ODM-only (shared template). Classic keeps its single-walk
+    // model: the badge stays a passive label (walkable=false hides the button), so requestWalk is never invoked.
+    protected readonly walkable = false;
+    protected requestWalk(it: AarArchiveItem): void { void it; /* Classic: no per-mission walk route (out of TABLE-2 scope); walkable=false hides the button */ }
     protected print(): void {
         window.print();
     }
@@ -128,6 +133,7 @@ export class AarTabComponent {
             npcNamesByFlag,
             unlocked,
             isHotspots: this.isHotspots(), // DIRECTIVE-121 — render the HS SP settlement in place of the Classic walk sections
+            survival: !!this.state.packId(), // ODM-13 P3 — pack campaigns speak attrition, not payroll (Classic: packId null, byte-identical)
             refined: r.aar?.refined,
         };
     }

@@ -1,38 +1,10 @@
-/*
- * Copyright (C) 2026 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { DestroyRef, Injectable, effect, inject } from '@angular/core';
 import { ForceBuilderService } from './force-builder.service';
+import { LobbyService } from './lobby.service';
 import { LoggerService } from './logger.service';
 
 interface WakeLockSentinelLike {
@@ -45,16 +17,17 @@ interface WakeLockApiLike {
 }
 
 /**
- * Author: Drake
  * 
- * Service to manage a screen wake lock while the force builder has any forces in it.
- * The wake lock is acquired when the first force is added and released when the last force is removed.
+ * Service to manage a screen wake lock while the force builder has any forces in it or the user is in a lobby.
+ * The wake lock is released only when there are no loaded forces and the user is not in a lobby.
  * It is also released when the document becomes hidden and re-acquired when it becomes visible again.
- * This prevents the screen from sleeping while actively building/using a force, but allows normal sleep behavior otherwise.
+ * This prevents the screen from sleeping while actively building/using a force or participating in a lobby,
+ * but allows normal sleep behavior otherwise.
  */
 @Injectable({ providedIn: 'root' })
 export class WakeLockService {
     private forceBuilderService = inject(ForceBuilderService);
+    private lobbyService = inject(LobbyService);
     private logger = inject(LoggerService);
     private destroyRef = inject(DestroyRef);
 
@@ -82,7 +55,7 @@ export class WakeLockService {
         }
 
         effect(() => {
-            this.scheduleSync(this.forceBuilderService.hasForces());
+            this.scheduleSync(this.forceBuilderService.hasForces() || this.lobbyService.hasLobby());
         });
     }
 

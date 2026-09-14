@@ -42,7 +42,7 @@ export function snapImportedSteps(h: HotSpot): HotSpot {
     return {
         ...h,
         ...(h.contract?.steps ? { contract: { ...h.contract, steps: snap(h.contract.steps) } } : {}),
-        ...(h.sides ? { sides: { a: fixSide(h.sides.a) ?? h.sides.a, b: fixSide(h.sides.b) ?? h.sides.b } } : {}),
+        ...(h.sides ? { sides: { a: fixSide(h.sides.a) ?? h.sides.a, ...(h.sides.b ? { b: fixSide(h.sides.b) ?? h.sides.b } : {}) } } : {}), // ERA-1 — side b optional (single-sided forged)
     };
 }
 

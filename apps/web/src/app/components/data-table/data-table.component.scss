@@ -38,10 +38,10 @@
 .mb-data-table-row {
     display: grid;
     align-items: center;
-    gap: 8px;
+    gap: var(--mb-data-table-column-gap);
     box-sizing: border-box;
-    padding-left: 12px;
-    padding-right: 20px;
+    padding-left: var(--mb-data-table-padding-start);
+    padding-right: var(--mb-data-table-padding-end);
 }
 
 .mb-data-table-header {
@@ -81,8 +81,8 @@
 
 .mb-data-table-row {
     min-height: var(--mb-data-table-item-size, 48px);
-    padding-top: 0;
-    padding-bottom: 0;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 
 .mb-data-table-full-row {
@@ -93,8 +93,19 @@
 
 .mb-data-table-cell {
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
+}
+
+.mb-data-table-cell-text {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.mb-data-table-body-cell.tone-focus {
+    color: var(--primary-focus-color);
 }
 
 .mb-data-table-header-cell {

@@ -1,43 +1,11 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
-
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { ChangeDetectionStrategy, Component, type ElementRef, inject, signal, viewChild } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 
-/*
- * Author: Drake
- */
+
 export interface InputDialogData {
     title: string;
     message: string;
@@ -47,6 +15,11 @@ export interface InputDialogData {
     placeholder?: string;
     defaultValue?: string | number;
     hint?: string;
+    inputLabel?: string;
+    minimumLength?: number;
+    maximumLength?: number;
+    pattern?: string;
+    centerInput?: boolean;
     buttons?: { label: string; value: 'ok' | 'cancel'; class?: string }[];
 }
 
@@ -63,13 +36,19 @@ export interface InputDialogData {
         <h2 class="wide-dialog-title">{{ data.title }}</h2>
         <div class="wide-dialog-body">
             <p class="message">{{ data.message }}</p>
-            <div class="form-fields">
+            <div class="form-fields" [class.center-input]="data.centerInput">
                 <input
                     #inputRef
                     class="field-input"
                     [type]="data.inputType || 'text'"
                     [placeholder]="data.placeholder ?? ''"
                     [value]="data.defaultValue ?? ''"
+                    [attr.aria-label]="data.inputLabel ?? data.title"
+                    [attr.minlength]="data.minimumLength ?? null"
+                    [attr.maxlength]="data.maximumLength ?? null"
+                    [attr.pattern]="data.pattern ?? null"
+                    [attr.autocapitalize]="data.centerInput ? 'none' : null"
+                    [attr.spellcheck]="data.centerInput ? 'false' : null"
                     autocomplete="off"
                     [attr.min]="data.inputType === 'number' ? (data.minimumValue ?? 0) : null"
                     [attr.max]="data.inputType === 'number' && data.maximumValue !== undefined ? data.maximumValue : null"
@@ -117,6 +96,21 @@ export interface InputDialogData {
             align-items: center;
         }
 
+        .form-fields.center-input .field-input {
+            width: min(9rem, 100%);
+            flex: 0 0 auto;
+            text-align: center;
+            text-transform: lowercase;
+            font-family: monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+
+        .form-fields.center-input .hint {
+            text-align: center;
+        }
+
         input[type="number"].field-input::-webkit-outer-spin-button,
         input[type="number"].field-input::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -127,7 +121,7 @@ export interface InputDialogData {
 
 export class InputDialogComponent {
     inputRef = viewChild.required<ElementRef<HTMLInputElement>>('inputRef');
-    public dialogRef: DialogRef<string | number | null, InputDialogComponent> = inject(DialogRef);
+    public dialogRef = inject(DialogRef) as DialogRef<string | number | null, InputDialogComponent>;
     readonly data: InputDialogData = inject(DIALOG_DATA);
     buttons: { label: string; value: 'ok' | 'cancel'; class?: string }[];
     
@@ -147,14 +141,19 @@ export class InputDialogComponent {
     }
 
     isInputValid(): boolean {
-        const value = this.inputValue();
+        const value = this.inputValue().trim();
         if (this.data.inputType === 'number') {
-            return value.trim().length > 0 && !isNaN(Number(value));
+            return value.length > 0 && !isNaN(Number(value));
         }
-        return value.trim().length > 0;
+        if (!value) return false;
+        if (this.data.minimumLength !== undefined && value.length < this.data.minimumLength) return false;
+        if (this.data.maximumLength !== undefined && value.length > this.data.maximumLength) return false;
+        if (this.data.pattern && !new RegExp(this.data.pattern).test(value)) return false;
+        return true;
     }
 
     submit() {
+        if (!this.isInputValid()) return;
         const value = this.inputRef().nativeElement.value;
         if (this.data.inputType === 'number') {
             const num = Number(value);

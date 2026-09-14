@@ -6,6 +6,8 @@
  */
 import { Component, ChangeDetectionStrategy, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { TableReturnService } from '../shared/table-return.service'; // GM-3 P3
+import { safeTablePath } from '../shared/return-to'; // GM-3 P3 — the client Back-to-the-table gate
 import { AuthService } from '../auth/auth.service';
 import { OdmCreateService } from '../campaign/odm/odm-create.service';
 import { NewCampaignState } from '../campaign/new-campaign-state';
@@ -24,6 +26,7 @@ import { LegalFooterComponent } from '../shared/legal-footer'; // COMPLIANCE-3 �
 })
 export class CoverComponent {
     private readonly router = inject(Router);
+    private readonly tableReturn = inject(TableReturnService); // GM-3 P3 — the hand-off's Back-to-the-table context
     private readonly state = inject(NewCampaignState);
     private readonly store = inject(CampaignSaveStore);
     private readonly auth = inject(AuthService);
@@ -63,6 +66,31 @@ export class CoverComponent {
         // count()/getLast() probe the host and set the online signal as a side effect.
         this.saveCount.set(await this.store.count());
         this.lastSave.set(await this.store.getLast());
+        await this.openFromTable(); // GM-3 P3 — the hand-off: ?campaign=<homeId>&returnTo=/player/… opens the home campaign
+        // ODM-20 — does an ODM campaign already exist? Drives BOTH the door's resume/create routing hint and
+        // the force-new escape hatch's visibility (shown only when there IS something to duplicate). Entitled
+        // accounts only, so a non-ODM account pays nothing; failures leave it null (the door still works).
+        if (this.odmEntitled()) {
+            try {
+                const mine = await this.odmCampaigns();
+                this.odmHasExisting.set(mine.slice().sort((x, y) => this.touchedAt(y) - this.touchedAt(x))[0] ?? null);
+            } catch { this.odmHasExisting.set(null); }
+        }
+    }
+
+    /** GM-3 P3 — the hand-off landing: the root app opened with `?campaign=<homeId>` (+ returnTo, engine). Load the home
+     *  campaign OWNER-SCOPED (store.get is 404→null for anyone but the owner) and go straight to its dashboard, stashing the
+     *  validated /player/ returnTo for the "◄ Back to the table" control. A foreign / missing campaign, or an unsafe returnTo,
+     *  falls through to the normal cover (no navigation) — never an open redirect, never someone else's campaign. */
+    private async openFromTable(): Promise<void> {
+        let params: URLSearchParams;
+        try { params = new URLSearchParams(location.search); } catch { return; }
+        const id = params.get('campaign'); if (!id) return;
+        const rec = await this.store.get(id); // owner-scoped: not yours (or not found) → null → normal cover
+        if (!rec) return;
+        this.tableReturn.set(safeTablePath(params.get('returnTo'))); // null when absent/unsafe → no Back control (still opens the campaign)
+        await this.store.loadAndSetLast(rec);
+        void this.router.navigate(['/campaign']);
     }
 
     // ── AUTH-1 Part 3 — recover on reconnect (the deploy-race window heals WITHOUT a manual reload) ──
@@ -112,6 +140,7 @@ export class CoverComponent {
      *  own record, and CREATE only writes a NEW record at Begin. Requires the host — no-op when offline. */
     protected createCampaign(): void {
         if (!this.online()) return;
+        this.gmNext = false; // GM-1 — a plain CREATE after an aborted GM-door click must not carry the flag
         if (this.lastSave()) { this.confirmCreate.set(true); return; }
         this.doCreate();
     }
@@ -122,6 +151,7 @@ export class CoverComponent {
         this.confirmCreate.set(false);
         this.saveOpen.set(false);
         this.state.reset();
+        if (this.gmNext) { this.gmNext = false; this.state.setGmSession(true); } // GM-1 — flag AFTER reset (quickMission ordering)
         void this.router.navigate(['/campaign/new/setup']); // D-108 — Setup card is the new first step
     }
     // save-aware CREATE wiring (mirrors the dashboard D-013 exit→save flow) ──────────────────────
@@ -129,7 +159,7 @@ export class CoverComponent {
     protected async createQuickSave(): Promise<void> { await this.store.quickSave(); this.doCreate(); }
     protected onCreateSaved(): void { this.doCreate(); } // named/quick save committed → into the fresh wizard
     protected onCreateSaveCancel(): void { this.saveOpen.set(false); } // back to the confirm (confirmCreate still set)
-    protected cancelCreate(): void { this.confirmCreate.set(false); }
+    protected cancelCreate(): void { this.confirmCreate.set(false); this.gmNext = false; } // GM-1 — cancel drops the pending GM flag
 
     /** Door — Quick Mission (D-067): a one-shot from the cover. Reuses the era → faction → force setup with
      *  the quickMission flag set, then drops into the reduced dashboard (roster + market + Deploy). EPHEMERAL —
@@ -145,12 +175,170 @@ export class CoverComponent {
         if (!this.odmEntitled() || !this.online() || this.odmCard()) return;
         void this.odm.manifest().then((m) => { if (m) this.odmCard.set({ title: m.title, blurb: m.blurb ?? '' }); }).catch(() => undefined);
     });
+    /* ── DIRECTIVE-ODM-20 — THE SINGLETON. Routing only: no schema, no uniqueness constraint, no canonical
+       column, no migration, no cross-account rule. 588 live campaigns share that table and none of them are
+       ODM's problem; D-0b holds because nothing persisted changes shape. The tile resolves to RESUME when an
+       ODM campaign exists and CREATE only when none does — the door stopped minting a fresh company every
+       time it was tapped. ── */
+    /** The account's ODM campaigns, owner-scoped by the server (store.list() is the existing REST read). */
+    private async odmCampaigns(): Promise<SaveRecord[]> {
+        const all = await this.store.list();
+        return (all ?? []).filter((r) => (r?.snapshot as { packId?: string } | null)?.packId === 'odm');
+    }
     protected async startOdm(): Promise<void> {
         if (!this.online() || this.odmBusy()) return;
         this.odmBusy.set(true);
-        try { await this.odm.begin(); }
-        catch (e) { console.error('[ODM-1] create failed', e); }
+        try {
+            const mine = await this.odmCampaigns();
+            if (mine.length === 0) { await this.odm.begin(); return; }          // none → create, as today
+            if (mine.length === 1) { await this.enterOdm(mine[0]); return; }    // the normal path, every time
+            /* 2+ is an ANOMALY under the singleton rule, not a menu. Never pick for him — auto-resuming the
+               NEWEST would be exactly wrong: the newest may be the stray instance minted by accident, and
+               silently entering it would CONFIRM the fork instead of catching it. The picker IS the alarm. */
+            this.odmForked.set(mine.slice().sort((a, b) => this.touchedAt(b) - this.touchedAt(a)));
+        } catch (e) { console.error('[ODM-20] entry failed', e); }
         finally { this.odmBusy.set(false); }
+    }
+    /** Resume an existing ODM campaign — the same load Resume-last uses; nothing ODM-specific about it. */
+    protected async enterOdm(rec: SaveRecord): Promise<void> {
+        this.odmForked.set(null);
+        await this.store.loadAndSetLast(rec);
+        void this.router.navigate(['/campaign']);
+    }
+    /** The anomaly list (null = no anomaly). Rendered as an alarm, not a friendly chooser. */
+    protected readonly odmForked = signal<SaveRecord[] | null>(null);
+    protected dismissForked(): void { this.odmForked.set(null); }
+
+    /* ── HOTFIX — THE ANOMALY PICKER AT REAL N. ODM-20's alarm was designed for N=2; the actual population is
+       ~20, because the pre-ODM-20 tile minted a fresh campaign on EVERY tap for weeks. Twenty near-identical
+       rows in a box with no scroll is not an alarm, it is a LOCKOUT — worse than the duplicate it reports.
+       NOTHING IS DELETED HERE, not even provably-unplayed rows: the unplayed are COLLAPSED behind one line,
+       which retires the noise without touching the data. A real cleanup is a separate, deliberate decision. ── */
+    /** LAST-TOUCHED, with a fallback chain: `updatedAt` is host-owned, `savedAt` comes off the snapshot, and
+     *  a row missing both would otherwise sort as 0 and sink. Sorting on one field is what put a newer-touched
+     *  campaign below an older one. */
+    private touchedAt(r: SaveRecord): number { return r.updatedAt ?? r.savedAt ?? r.createdAt ?? 0; }
+    private dateOf(r: SaveRecord, k: 'currentDate' | 'startDate'): { y: number; m: number; d: number } | null {
+        return (r.snapshot as unknown as Record<string, { y: number; m: number; d: number } | undefined> | null)?.[k] ?? null;
+    }
+    /** PLAYED = the campaign clock has moved off its start date. The only field that separates a real
+     *  campaign from a stillborn one, which is why it is the row's primary text. */
+    protected isPlayed(r: SaveRecord): boolean {
+        const cur = this.dateOf(r, 'currentDate'), start = this.dateOf(r, 'startDate');
+        if (!cur) return false;
+        if (!start) return true; // a clock with no recorded start — treat as real rather than hide it
+        return cur.y !== start.y || cur.m !== start.m || cur.d !== start.d;
+    }
+    protected odmDay(r: SaveRecord): string {
+        const d = this.dateOf(r, 'currentDate');
+        if (!d) return 'clock not started';
+        return `${String(d.d).padStart(2, '0')} ${['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][d.m] ?? '???'} ${d.y}`;
+    }
+    protected odmTouched(r: SaveRecord): string {
+        const t = this.touchedAt(r);
+        return t ? `last opened ${new Date(t).toLocaleString()}` : 'never opened';
+    }
+    protected readonly forkedPlayed = computed(() => (this.odmForked() ?? []).filter((r) => this.isPlayed(r)));
+    protected readonly forkedUnplayed = computed(() => (this.odmForked() ?? []).filter((r) => !this.isPlayed(r)));
+    protected readonly showUnplayed = signal(false);
+    protected toggleUnplayed(): void { this.showUnplayed.update((v) => !v); }
+
+    /* ── DIRECTIVE-ODM-24 — SEE · CHOOSE · REMOVE · START OVER, all in one place. The picker told James which
+       campaigns were junk and then sent him to another surface to act on it — the same shape as a refusal
+       whose recourse lives on a different tab. The cleanup belongs where the diagnosis is.
+
+       THE READ PATH STILL NEVER DELETES. Rendering, sorting and expanding are incapable of removing anything;
+       ONLY an explicit confirmed action deletes, and the harness asserts exactly that rather than the weaker
+       "the picker never prunes". NO "DELETE ALL" EXISTS — the bulk action is confined to the PROVABLE set
+       (clock never left the start date, so there is nothing in them), and the played campaigns must each be
+       deleted deliberately. That friction is the feature.
+
+       NO DELETION LOG IS POSSIBLE: the campaign log lives IN the campaign, so there is nowhere to write "this
+       campaign was deleted" that survives the delete. Stated honestly rather than invented; if that record
+       matters later it wants its own decision. ── */
+    protected readonly confirmDelete = signal<SaveRecord | null>(null);
+    protected readonly confirmBulk = signal(false);
+    protected readonly deleteBusy = signal(false);
+    protected askDelete(r: SaveRecord): void { this.confirmDelete.set(r); }
+    protected cancelDelete(): void { this.confirmDelete.set(null); }
+    protected askBulk(): void { this.confirmBulk.set(true); }
+    protected cancelBulk(): void { this.confirmBulk.set(false); }
+
+    /** The confirm names the CAMPAIGN DAY, not the id — the day is what he recognises, and the ids are 21
+     *  near-identical autosave stamps. It also states the checkpoints go too: this is the only irreversible
+     *  step in the whole flow, and remove() purges the campaign's checkpoint history with it. */
+    protected deleteQuestion(r: SaveRecord): string {
+        return `Delete the campaign at ${this.odmDay(r)}? Its checkpoint history is deleted with it — this cannot be undone.`;
+    }
+    protected async doDelete(r: SaveRecord): Promise<void> {
+        if (this.deleteBusy()) return;
+        this.deleteBusy.set(true);
+        try { await this.store.remove(r.id); await this.reReadForked(); }
+        catch (e) { console.error('[ODM-24] delete failed', e); }
+        finally { this.deleteBusy.set(false); this.confirmDelete.set(null); }
+    }
+    /** The BULK action, confined to the provable set. It re-reads `forkedUnplayed()` at call time rather than
+     *  trusting a captured list, so a row that became played between render and confirm cannot be caught. */
+    protected async doDeleteUnplayed(): Promise<void> {
+        if (this.deleteBusy()) return;
+        this.deleteBusy.set(true);
+        try {
+            for (const r of this.forkedUnplayed()) await this.store.remove(r.id);
+            await this.reReadForked();
+        } catch (e) { console.error('[ODM-24] bulk delete failed', e); }
+        finally { this.deleteBusy.set(false); this.confirmBulk.set(false); }
+    }
+    /** Re-derive from the SERVER after any delete — never splice the local array. The list on screen is then
+     *  the host's truth, so a partially-failed bulk shows what actually remains instead of what we hoped. */
+    private async reReadForked(): Promise<void> {
+        const mine = await this.odmCampaigns();
+        this.odmForked.set(mine.slice().sort((a, b) => this.touchedAt(b) - this.touchedAt(a)));
+        await this.refresh();
+    }
+    /** The heading tells the truth about the CURRENT count — after a cleanup it is no longer an anomaly, and
+     *  an alarm that keeps shouting after the problem is fixed teaches people to ignore alarms. */
+    protected forkedHeading(): string {
+        const n = (this.odmForked() ?? []).length;
+        if (n === 0) return 'No ODM campaigns remain.';
+        if (n === 1) return 'One ODM campaign remains.';
+        return `You have ${n} ODM campaigns. That is not supposed to happen.`;
+    }
+    /** START OVER — routes through the EXISTING ODM-20 force-new path rather than a second door to the same
+     *  room. It was never missing, only stranded on the cover behind this overlay. With nothing left to
+     *  duplicate the force-new confirm would be meaningless, so that case goes straight to a plain create. */
+    protected startNewFromPicker(): void {
+        this.odmForked.set(null);
+        if (this.odmHasExisting()) this.confirmOdmNew.set(true);
+        else void this.doOdmNew();
+    }
+    protected odmWhen(r: SaveRecord): string {
+        const d = (r.snapshot as { currentDate?: { y: number; m: number; d: number } } | null)?.currentDate;
+        const clock = d ? `campaign day ${d.y}-${String(d.m + 1).padStart(2, '0')}-${String(d.d).padStart(2, '0')}` : 'clock not started';
+        return `created ${new Date(r.createdAt ?? 0).toLocaleString()} · last touched ${new Date(r.updatedAt ?? 0).toLocaleString()} · ${clock}`;
+    }
+
+    /* FORCE NEW — the deliberate escape hatch from resume, shown ONLY when a campaign already exists (with
+       none, the normal door already creates and this would be a second way to do the same thing — fewer
+       live paths to the dangerous button). It does NOT delete, archive or hide the existing campaign: it
+       mints a SECOND, which trips the anomaly alarm above on next entry. That is correct — the alarm doing
+       its job. The confirm names the campaign it is about to duplicate, in plain words. */
+    protected readonly odmHasExisting = signal<SaveRecord | null>(null);
+    protected readonly confirmOdmNew = signal(false);
+    protected askOdmNew(): void { if (this.online() && this.odmHasExisting()) this.confirmOdmNew.set(true); }
+    protected cancelOdmNew(): void { this.confirmOdmNew.set(false); }
+    protected async doOdmNew(): Promise<void> {
+        this.confirmOdmNew.set(false);
+        if (!this.online() || this.odmBusy()) return;
+        this.odmBusy.set(true);
+        this.store.armForceNew(); // ODM-21 — the one-shot override for the server-side singleton guard
+        try { await this.odm.begin(); }
+        catch (e) { console.error('[ODM-20] force-new failed', e); }
+        finally { this.odmBusy.set(false); }
+    }
+    protected odmNewQuestion(): string {
+        const r = this.odmHasExisting();
+        const when = r ? new Date(r.updatedAt ?? 0).toLocaleDateString() : '';
+        return `You already have an ODM campaign (last touched ${when}). This creates a SECOND one — it does not replace or delete the first.`;
     }
 
     protected quickMission(): void {
@@ -158,6 +346,19 @@ export class CoverComponent {
         this.state.reset();
         this.state.setQuickMission(true);
         void this.router.navigate(['/campaign/new/setup']); // D-108 — Setup card is the new first step (quick mission)
+    }
+
+    // ── GM-1 P1 — the MASTER GM door (entitled-only: hasPack('gm-mode'); dev/LAN permissive). A GM session is a
+    //    full HS campaign with the additive gmSession flag; the tile rides the SAME save-aware CREATE confirm
+    //    (D-053) via gmNext — the flag is applied in doCreate() AFTER reset() (the quickMission ordering), and
+    //    the Setup card locks the system to Hot Spots when it sees gmSession. ──
+    protected gmEntitled(): boolean { return this.auth.hasPack('gm-mode'); }
+    private gmNext = false;
+    protected startGmSession(): void {
+        if (!this.online()) return;
+        this.gmNext = true;
+        if (this.lastSave()) { this.confirmCreate.set(true); return; }
+        this.doCreate();
     }
 
     /** Door 2 — Load a campaign → the browser of all saves (disabled when empty or offline). */

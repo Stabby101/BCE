@@ -1,40 +1,11 @@
-/*
- * Copyright (C) 2026 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import { computed, signal } from '@angular/core';
+import { computed } from '@angular/core';
 import type { CBTForceUnit } from '../cbt-force-unit.model';
-import type { PSRCheck } from '../turn-state.model';
-import type { UnitTypeRules } from './unit-type-rules';
+import type { MotiveModes } from '../motiveModes.model';
+import { unitConditionControls, UnitTypeRulesBase, type UnitRuleModifier } from './unit-type-rules';
 import {
     type HeatScaleEntry,
     type HeatDissipationState,
@@ -43,15 +14,34 @@ import {
 } from './heat-management';
 
 /**
- * Author: Drake
  * 
  * Aerospace Fighter game rules
  */
-export class AeroRules implements UnitTypeRules {
+export class AeroRules extends UnitTypeRulesBase {
+
+    protected override readonly baseConditionControls = unitConditionControls(['shutdown', 'out-of-control', 'random-movement']);
+    protected override readonly immobile = computed<boolean>(() =>
+        this.unit.isLoaded()
+        && !this.hasDroneOperatingSystem()
+        && !this.hasFunctionalCrew());
+
+    protected override supportsDroneOperatingSystem(): boolean {
+        return true;
+    }
+
+    override hasComputedCondition(condition: string): boolean {
+        if (condition === 'out-of-control' && this.unit.getCondition('shutdown')) return true;
+        return super.hasComputedCondition(condition);
+    }
+
+    override computedConditions(): readonly string[] {
+        return [...super.computedConditions(), 'out-of-control'];
+    }
 
     private readonly heatMgmt: HeatManagement;
 
-    constructor(private unit: CBTForceUnit) {
+    constructor(unit: CBTForceUnit) {
+        super(unit);
         this.heatMgmt = new HeatManagement(unit);
     }
 
@@ -85,9 +75,29 @@ export class AeroRules implements UnitTypeRules {
 
     // ── PSR / Control Rolls ──────────────────────────────────────────────────
 
-    /** Placeholder for now. */
-    readonly PSRModifiers = signal<{ modifier: number; modifiers: PSRCheck[] }>({ modifier: 0, modifiers: [] });
-    readonly PSRTargetRoll = signal<number>(0);
+    override getStandardControlRollTarget(): number {
+        const pilotCrewId = this.getActivePilotCrewId();
+        return this.getBasePilotingSkill()
+            + (pilotCrewId === null ? 0 : this.unit.getCrewMember(pilotCrewId)?.getHits() ?? 0)
+            + this.destroyedCriticalBoxes('avionics_hit')
+            + this.destroyedCriticalBoxes('life_support_hit');
+    }
+
+    override isMotiveModeAvailable(moveMode: MotiveModes): boolean {
+        if (moveMode === 'stationary') return true;
+        return !this.unit.getCondition('out-of-control')
+            && !this.unit.getCondition('random-movement');
+    }
+
+    private destroyedCriticalBoxes(idPrefix: string): number {
+        return this.unit.getCritSlots().filter(slot => {
+            const type = slot.el?.getAttribute('type') ?? '';
+            const matchesSystem = slot.id.startsWith(idPrefix)
+                || slot.name?.startsWith(idPrefix) === true
+                || type.startsWith(idPrefix);
+            return matchesSystem && (slot.destroyed !== undefined || slot.destroying !== undefined);
+        }).length;
+    }
 
     // ── Heat Scale ───────────────────────────────────────────────────────────
 
@@ -115,10 +125,32 @@ export class AeroRules implements UnitTypeRules {
         { heat: 28, ammoExp: 8 },
         { heat: 30, shutdown: 100 },
     ];
+    override readonly heatScale = AeroRules.HEAT_SCALE;
 
     /** Compute heat-based fire modifiers from current heat level */
     static getHeatEffects(heat: number): { moveModifier: number; fireModifier: number } {
         return getHeatEffects(AeroRules.HEAT_SCALE, heat);
+    }
+
+    protected override buildRuleModifiers(): UnitRuleModifier[] {
+        const modifiers: UnitRuleModifier[] = [];
+        const heatFireModifier = AeroRules.getHeatEffects(this.unit.getHeat().current).fireModifier;
+        if (heatFireModifier !== 0) {
+            modifiers.push({
+                label: 'Heat - Fire Modifier',
+                values: { ranged: heatFireModifier },
+                weakened: true,
+                kind: 'heat',
+            });
+        }
+        if (this.unit.getCondition('out-of-control')) {
+            modifiers.push({
+                label: 'Out of Control',
+                values: { ranged: 2 },
+                weakened: true,
+            });
+        }
+        return modifiers;
     }
 
     // ── Heat Dissipation ─────────────────────────────────────────────────────
@@ -126,7 +158,13 @@ export class AeroRules implements UnitTypeRules {
     /**
      * Aero heat dissipation: engine HS - turned-off.
      */
-    readonly heatDissipation = computed<HeatDissipationState | null>(() => {
-        return this.heatMgmt.baseDissipation();
+    override readonly heatDissipation = computed<HeatDissipationState | null>(() => {
+        const base = this.heatMgmt.baseDissipation();
+        if (!base) return null;
+        return {
+            ...base,
+            totalDissipation: base.totalDissipation
+                + (this.unit.getEquipmentHeatDissipationBonus?.(base) ?? 0),
+        };
     });
 }

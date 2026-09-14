@@ -1,35 +1,6 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { Directive, ElementRef, output, input, inject, Renderer2, signal, DestroyRef } from '@angular/core';
 
@@ -86,7 +57,6 @@ export class SwipeDirective {
     // state
     readonly swiping = signal<boolean>(false);
 
-
     // Internal state
     private activePointerId: number | null = null;
     private startX = 0;
@@ -102,6 +72,10 @@ export class SwipeDirective {
     private unlistenMove?: () => void;
     private unlistenUp?: () => void;
     private unlistenCancel?: () => void;
+
+    private readonly onWindowPointerMove = (event: PointerEvent): void => this.onPointerMove(event);
+    private readonly onWindowPointerUp = (event: PointerEvent): void => this.onPointerUp(event);
+    private readonly onWindowPointerCancel = (event: PointerEvent): void => this.onPointerCancel(event);
 
     constructor() {
         // Set up pointer down listener
@@ -126,7 +100,7 @@ export class SwipeDirective {
             } catch {
                 // Ignore release errors
             }
-            this.pointerCaptured = false; 
+            this.pointerCaptured = false;
         }
 
         this.unlistenMove?.();
@@ -181,18 +155,17 @@ export class SwipeDirective {
         this.pointerCaptured = false;
         this.swipeAxis = null;
 
-        // Set up global listeners for move/up/cancel
-        this.unlistenMove = this.renderer.listen('window', 'pointermove', (e: PointerEvent) =>
-            this.onPointerMove(e)
-        );
-        this.unlistenUp = this.renderer.listen('window', 'pointerup', (e: PointerEvent) =>
-            this.onPointerUp(e)
-        );
-        this.unlistenCancel = this.renderer.listen('window', 'pointercancel', (e: PointerEvent) =>
-            this.onPointerCancel(e)
-        );
+        // Capture-phase listeners still run when child controls stop propagation.
+        this.unlistenMove = this.listenWindowPointer('pointermove', this.onWindowPointerMove);
+        this.unlistenUp = this.listenWindowPointer('pointerup', this.onWindowPointerUp);
+        this.unlistenCancel = this.listenWindowPointer('pointercancel', this.onWindowPointerCancel);
 
         return true;
+    }
+
+    private listenWindowPointer(type: 'pointermove' | 'pointerup' | 'pointercancel', listener: (event: PointerEvent) => void): () => void {
+        window.addEventListener(type, listener as EventListener, true);
+        return () => window.removeEventListener(type, listener as EventListener, true);
     }
 
     private onPointerDown(event: PointerEvent): void {

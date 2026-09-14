@@ -1,8 +1,12 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
+
 import { DEFAULT_ORG_RULE_REGISTRY } from '../org-facts.util';
 import type {
     OrgCIFormationRule,
     OrgComposedCountRule,
-    OrgDefinitionSpec,
+    OrgDefinition,
     OrgLeafCountRule,
     OrgLeafPatternRule,
 } from '../org-types';
@@ -36,15 +40,15 @@ export const COMSTAR_LEVEL_I_FROM_SQUADS: OrgCIFormationRule = {
     tier: 0,
     requireRegularForPromotion: true,
     entries: [
-        { moveClass: 'foot', troopers: 6, counts: { 'Demi-': 3, '': 6 } },
-        { moveClass: 'motorized', troopers: 6, counts: { 'Demi-': 3, '': 6 } },
-        { moveClass: 'scuba', troopers: 6, counts: { 'Demi-': 3, '': 6 } },
-        { moveClass: 'jump', troopers: 6, counts: { '': 5 } },
-        { moveClass: 'mechanized-vtol', troopers: 5, counts: { '': 4 } },
-        { moveClass: 'mechanized-hover', troopers: 5, counts: { '': 4 } },
-        { moveClass: 'mechanized-wheeled', troopers: 6, counts: { '': 4 } },
-        { moveClass: 'mechanized-tracked', troopers: 6, counts: { '': 4 } },
-        { moveClass: 'mechanized-submarine', troopers: 6, counts: { '': 4 } },
+        { moveClass: 'foot', counts: { 'Demi-': 3, '': 6 } },
+        { moveClass: 'motorized', counts: { 'Demi-': 3, '': 6 } },
+        { moveClass: 'scuba', counts: { 'Demi-': 3, '': 6 } },
+        { moveClass: 'jump', counts: { '': 5 } },
+        { moveClass: 'mechanized-vtol', counts: { '': 4 } },
+        { moveClass: 'mechanized-hover', counts: { '': 4 } },
+        { moveClass: 'mechanized-wheeled', counts: { '': 4 } },
+        { moveClass: 'mechanized-tracked', counts: { '': 4 } },
+        { moveClass: 'mechanized-submarine', counts: { '': 4 } },
     ],
 };
 
@@ -144,7 +148,7 @@ export const COMSTAR_LEVEL_VI: OrgComposedCountRule = {
     childBucketBy: 'promotionBasic',
 };
 
-export const COMSTAR_CORE_ORG: OrgDefinitionSpec = {
+export const COMSTAR_CORE_ORG: OrgDefinition = {
     rules: [
         COMSTAR_LEVEL_I,
         COMSTAR_LEVEL_I_FROM_SQUADS,

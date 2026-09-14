@@ -1,43 +1,61 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import { ToggleHandler } from './base/toggle.handler';
+import { EquipmentFlag } from '../models/equipment-flags.type';
+import type { MountedEquipment } from '../models/mounted-equipment.model';
+import type { TurnState } from '../models/turn-state.model';
+import type { HandlerQueryContext } from '../services/equipment-interaction-registry.service';
+import { EscalatingFailureHandler } from './escalatingfailure.handler';
 
-export class MASCHandler extends ToggleHandler {
-    readonly id = 'masc-handler';
-    readonly flags = ['F_MASC'];
+export const MASC_SEQUENCE_STATE_KEY = 'masc';
+export const MASC_ACTIVE_STATE_KEY = 'mascActive';
+export const MASC_HANDLER_ID = 'masc-handler';
+
+function isJetBoosterMasc(equipment: MountedEquipment): boolean {
+    const flags = equipment.equipment?.flags;
+    return !!flags?.has('F_MASC') && !!flags?.has('F_JET_BOOSTER');
+}
+
+function canUseMascMovementBonus(equipment: MountedEquipment, turnState: TurnState): boolean {
+    return !isJetBoosterMasc(equipment) || turnState.airborne() === true;
+}
+
+export class MascHandler extends EscalatingFailureHandler {
+    override readonly id = MASC_HANDLER_ID;
+    override readonly flags: EquipmentFlag[] = ['F_MASC'];
     override readonly priority = 10;
-    
-    protected override readonly enabledLabel = 'Enabled';
-    protected override readonly disabledLabel = 'Disabled';
-};
+
+    static isActive(equipment: MountedEquipment): boolean {
+        return equipment.states.get(MASC_ACTIVE_STATE_KEY) === 'true';
+    }
+
+    protected static override readonly sequenceStateKey = MASC_SEQUENCE_STATE_KEY;
+
+    static canUseHandler(equipment: MountedEquipment): boolean {
+        return !isJetBoosterMasc(equipment) || equipment.owner?.turnState?.().airborne() === true;
+    }
+
+    protected override readonly sequenceStateKey = MASC_SEQUENCE_STATE_KEY;
+    protected override readonly activeStateKey = MASC_ACTIVE_STATE_KEY;
+
+    protected override canUseHandler(equipment: MountedEquipment): boolean {
+        return MascHandler.canUseHandler(equipment);
+    }
+
+    override isActive(equipment: MountedEquipment): boolean {
+        return MascHandler.isActive(equipment);
+    }
+
+    override getRunMovementMultiplierBonus(
+        equipment: MountedEquipment,
+        turnState: TurnState,
+        context: HandlerQueryContext
+    ): number {
+        return this.isActive(equipment)
+            && context.canProvidePassiveEffect(equipment)
+            && canUseMascMovementBonus(equipment, turnState)
+            ? 0.5
+            : 0;
+    }
+}

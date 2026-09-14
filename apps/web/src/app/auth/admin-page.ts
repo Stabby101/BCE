@@ -46,6 +46,16 @@ type Tab = 'dashboard' | 'approvals' | 'users' | 'audit';
                         <div class="ap-card"><div class="apc-n">{{ s.new7d }}</div><div class="apc-l">New this week</div><div class="apc-s">{{ s.newToday }} in 24h</div></div>
                     </div>
                     <p class="ap-cardnote">Presence is in-memory (an authed socket = online; 2 tabs of one user = 1); “active” counts use the durable last-seen. Everything here is admin-only (server-gated).</p>
+                    <!-- ODM-26 — the off-box DB export existed as a route with no way to reach it, which is
+                         the same as not existing for anyone who does not read source. VACUUM INTO, so it is a
+                         CONSISTENT single file, not a copy of a live WAL database. -->
+                    <div class="ap-export">
+                        <button type="button" class="ap-btn" [disabled]="exporting()" (click)="exportDb()" data-testid="admin-export">
+                            {{ exporting() ? 'Preparing…' : '⬇ Download a full database export' }}
+                        </button>
+                        <span class="ap-dim">Every campaign, every account — one consistent file. The durability the volume backups cannot give, because those die with the volume.</span>
+                        @if (exportNote(); as n) { <div class="ap-exportnote">{{ n }}</div> }
+                    </div>
                 } @else {
                     <div class="ap-empty">Loading metrics…</div>
                 }
@@ -98,6 +108,8 @@ type Tab = 'dashboard' | 'approvals' | 'users' | 'audit';
                                              primary self-grant flow (the cover door keys off the explicit grant; admins get no implicit
                                              entitlement in /me). Guests can't hold entitlements (server refuses; no button). -->
                                         @if (u.role !== 'guest' && u.status === 'approved') { <button type="button" class="ap-mini" [class.ok]="hasGrant(u, 'odm')" (click)="toggleGrant(u, 'odm')" data-testid="odm-grant">{{ hasGrant(u, 'odm') ? 'ODM ✓' : 'ODM' }}</button> }
+                                        <!-- GM-1 P1 — the gm-mode flag rides the same generic grant chain (same guard: non-guest + approved). -->
+                                        @if (u.role !== 'guest' && u.status === 'approved') { <button type="button" class="ap-mini" [class.ok]="hasGrant(u, 'gm-mode')" (click)="toggleGrant(u, 'gm-mode')" data-testid="gm-mode-grant">{{ hasGrant(u, 'gm-mode') ? 'GM ✓' : 'GM' }}</button> }
                                         @if (u.id === selfId()) { <span class="ap-youtag">you</span> }
                                         @else {
                                             @if (u.status === 'pending') { <button type="button" class="ap-mini ok" (click)="approve(u)">Approve</button> }
@@ -228,6 +240,11 @@ type Tab = 'dashboard' | 'approvals' | 'users' | 'audit';
         .apc-l { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#9fb2c4; margin-top:7px; font-weight:600; }
         .apc-s { font-size:11px; color:#6b7682; margin-top:3px; }
         .ap-cardnote { font-size:11px; color:#6b7682; font-style:italic; margin:2px 2px 18px; }
+        /* ODM-26 — the export row: a real button plus the sentence that says what the file is for */
+        .ap-export { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:0 2px 18px; }
+        .ap-export .ap-btn { background:#2b3a4a; color:#e8eef4; }
+        .ap-export .ap-btn:disabled { opacity:.55; cursor:progress; }
+        .ap-exportnote { flex-basis:100%; font-size:12px; color:#e0b070; }
     `],
 })
 export class AdminPageComponent implements OnDestroy {
@@ -286,6 +303,36 @@ export class AdminPageComponent implements OnDestroy {
     ngOnDestroy(): void { clearInterval(this.poll); }
 
     private async refreshStats(): Promise<void> { this.stats.set(await this.auth.adminStats()); }
+
+    // ── ODM-26 — the whole-DB export, given a button. Blunt (every campaign, not one) but it is a real file
+    //    the admin holds, and it is the only durability that survives the volume the database sits on. ──
+    protected readonly exporting = signal(false);
+    protected readonly exportNote = signal<string | null>(null);
+    protected async exportDb(): Promise<void> {
+        if (this.exporting()) return;
+        this.exporting.set(true);
+        this.exportNote.set(null);
+        const blob = await this.auth.adminExport();
+        this.exporting.set(false);
+        if (!blob || !blob.size) {
+            // Say so. A download button that silently does nothing is indistinguishable from a broken one.
+            this.exportNote.set('Export failed — the host refused it or returned nothing. (Admin only; check you are still signed in.)');
+            return;
+        }
+        const name = `bce-export-${new Date().toISOString().replace(/[:.]/g, '-')}.db`;
+        const url = URL.createObjectURL(blob);
+        try {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            a.click();
+            this.exportNote.set(`${name} — ${(blob.size / 1e6).toFixed(1)} MB. Keep it off this machine.`);
+        } catch {
+            this.exportNote.set('Could not write the file — the browser refused the download.');
+        } finally {
+            URL.revokeObjectURL(url);
+        }
+    }
 
     protected fmt(ts?: number | null): string {
         if (!ts) return '—';

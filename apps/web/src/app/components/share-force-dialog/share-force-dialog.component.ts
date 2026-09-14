@@ -1,53 +1,22 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
-
-
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { ForceBuilderService } from '../../services/force-builder.service';
-import { ActivatedRoute, Router } from '@angular/router';
 import { ToastService } from '../../services/toast.service';
 import { copyTextToClipboard } from '../../utils/clipboard.util';
+import { buildShareUrl } from '../../utils/share-url.util';
 import type { Force } from '../../models/force.model';
 import { buildForceQueryParams } from '../../utils/force-url.util';
 import { firstValueFrom } from 'rxjs';
 import { DialogsService } from '../../services/dialogs.service';
 import { ForcePreviewComponent } from '../force-preview/force-preview.component';
+import { GameSystem } from '../../models/common.model';
+import type { CBTForce } from '../../models/cbt-force.model';
 
-/*
- * Author: Drake
- */
+
 
 export interface ShareForceDialogData {
     force: Force;
@@ -115,6 +84,15 @@ export interface ShareForceDialogData {
                             EXCEL
                         }
                     </button>
+                    @if (force.gameSystem === GameSystem.CLASSIC) {
+                        <button class="bt-button export-btn" (click)="exportToMUL()" [disabled]="isExporting()">
+                            @if (isExporting()) {
+                                EXPORTING...
+                            } @else {
+                                MUL
+                            }
+                        </button>
+                    }
                 </div>
             </div>
         </div>
@@ -159,6 +137,10 @@ export interface ShareForceDialogData {
             align-items: center;
             justify-content: space-between;
             width: 100%;
+
+            @media (max-width: 600px) {
+                flex-direction: column;
+            }
         }
 
         .export-buttons {
@@ -192,18 +174,17 @@ export interface ShareForceDialogData {
 })
 
 export class ShareForceDialogComponent {
-    public dialogRef: DialogRef<string | number | null, ShareForceDialogComponent> = inject(DialogRef);
+    public dialogRef = inject<DialogRef<string | number | null, ShareForceDialogComponent>>(DialogRef);
     private data: ShareForceDialogData = inject(DIALOG_DATA);
     forceBuilderService = inject(ForceBuilderService);
     toastService = inject(ToastService);
     private dialogsService = inject(DialogsService);
-    private router = inject(Router);
-    private route = inject(ActivatedRoute);
     instanceId = signal<string | null>(null);
     shareLiveUrl = signal<string | null>(null);
     cleanUrl = signal<string | null>(null);
     force: Force;
     isExporting = signal(false);
+    readonly GameSystem = GameSystem;
 
     constructor() {
         this.force = this.data.force;
@@ -269,34 +250,50 @@ export class ShareForceDialogComponent {
         }
     }
 
+    async exportToMUL() {
+        const forceUnits = this.force.units();
+        if (this.force.gameSystem !== GameSystem.CLASSIC) {
+            return;
+        }
+        if (!forceUnits || forceUnits.length === 0) {
+            this.toastService.showToast('No units to export.', 'error');
+            return;
+        }
+
+        this.isExporting.set(true);
+        try {
+            const { exportForceToMul } = await import('../../utils/mul-file.util');
+            await exportForceToMul(this.force as CBTForce);
+            this.toastService.showToast(`Exported ${forceUnits.length} units to MUL.`, 'success');
+        } catch (err) {
+            console.error('Failed to export to MUL:', err);
+            this.toastService.showToast('Failed to export to MUL.', 'error');
+        } finally {
+            this.isExporting.set(false);
+        }
+    }
+
     private buildUrls() {
         const origin = window.location.origin || '';
         // Single-force clean URL (units-based, for sharing without instance IDs)
         const singleForceParams = buildForceQueryParams(this.force);
 
         // Instance ID of the current force
-        this.instanceId.set(this.force.instanceId() || null);
+        const instanceId = this.force.instanceId() || null;
+        this.instanceId.set(instanceId);
 
-        const instanceTree = this.router.createUrlTree([], {
-            relativeTo: this.route,
-            queryParams: {
-                instance: this.force.instanceId() || null
-            }
-        });
-        const shareLiveUrl = this.router.serializeUrl(instanceTree);
-        this.shareLiveUrl.set(shareLiveUrl.length > 1 ? origin + shareLiveUrl : null);
+        this.shareLiveUrl.set(instanceId
+            ? buildShareUrl(origin, { instance: instanceId })
+            : null);
 
-        const cleanTree = this.router.createUrlTree([], {
-            relativeTo: this.route,
-            queryParams: {
-                gs: singleForceParams.gs || null,
+        this.cleanUrl.set(singleForceParams.units
+            ? buildShareUrl(origin, {
+                gs: singleForceParams.gs,
                 units: singleForceParams.units,
-                name: singleForceParams.name || null,
-                factionId: singleForceParams.factionId || null
-            }
-        });
-        const cleanUrl = this.router.serializeUrl(cleanTree);
-        this.cleanUrl.set(cleanUrl.length > 1 ? origin + cleanUrl : null);
+                name: singleForceParams.name,
+                factionId: singleForceParams.factionId,
+            })
+            : null);
     }
 
     async share(url: string) {

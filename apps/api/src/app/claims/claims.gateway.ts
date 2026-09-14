@@ -41,9 +41,16 @@ import { AuthService } from '../auth/auth.service';
 import { PresenceService } from '../auth/presence.service';
 import { CampaignsService } from '../campaigns/campaigns.service';
 import { buildCommit } from '../version';
-import { vJoin, vClaim, vRelease, vLobbyJoin, vLobbyMut, vBattle, vFavorite } from './ws-validate';
-import { redactLobby, redactClaims } from './roster-redact';
-import { isGmDecision, accessDecision, actionDecision } from './ws-authz';
+import { vJoin, vClaim, vRelease, vLobbyJoin, vLobbyMut, vBattle, vFavorite, vSidePref, vPhasePending, vImportForce, vOdmIntent, vSignContract, vEngagementClose } from './ws-validate';
+import { ownCompanyKeysOf } from './snapshot-shape'; // GM-2 P2b — a phone signs only ITS OWN company's contract
+import { remintImport, countOwnedImports, importCapOf, type ImportUnit, type ImportPilot } from './import-force'; // GM-1 P3
+import { redactLobby, redactClaims, anonId } from './roster-redact';
+import { shapeSnapshot } from './snapshot-shape'; // GM-1 P2 — the per-recipient gmOnly strip · GM-2 P2a — + the per-recipient contract attach
+
+/** GM-2 P2a — the recipient's identity for the contract attach: the anonId of the device token it joined the lobby with
+ *  (the same handle the mint wrote into provenance.owner). An unbound socket has none → nothing attaches. */
+const recipientAnonOf = (s: Socket): string | null => { const t = s.data?.lobbyToken as string | undefined; return t ? anonId(t) : null; };
+import { isGmDecision, accessDecision, actionDecision, sideDecision, instanceSideOf, engagementWriteDecision, sidePrefDecision, sidePrefFactsOf } from './ws-authz';
 import type { LobbyPlayer } from './lobby.service';
 import type { Claim } from './claims.service';
 
@@ -60,8 +67,18 @@ interface LobbyMutMsg { campaignId: string; token: string; side?: string; }
 // D-048 phase B — per-instance battle state (the live-damage channel; engagementKey-scoped like claims).
 interface BattleMsg { campaignId: string; engagementKey: string; instanceId: string; state: unknown; at?: number; }
 interface BattleSyncMsg { campaignId: string; engagementKey: string; }
+// ORDER-4 H18 — the GM's resolve ends the fight explicitly; the server marks the key CLOSED and refuses battle writes after it.
+interface EngagementCloseMsg { campaignId: string; engagementKey: string; }
 // D-048 phase C — per-player favorite (campaign-persistent; per-player, no fan).
 interface FavoriteMsg { campaignId: string; token: string; instanceId?: string | null; pilotId?: string | null; }
+// GM-1 P2 — the advisory side preference for the presented hotspot (token-scoped; fanned like reassign).
+interface SidePrefMsg { campaignId: string; token: string; pref: 'a' | 'b' | null; }
+// REBASE-1 P3 item 1 — this device's UN-ENDED-pick count this phase (token-scoped; fanned on the lobby roster like side-pref).
+interface PhasePendingMsg { campaignId: string; token: string; count: number; }
+// GM-1 P3 — JOIN-WITH-FORCE: the one-shot serialized-company payload (dedicated message, 128 KB gate).
+interface ImportForceMsg { campaignId: string; token: string; engagementKey?: string; name?: string; units: ImportUnit[]; pilots?: ImportPilot[]; sourceCampaignId?: string; reputation?: number; } // GM-2 P1: sourceCampaignId = the player's HOME campaign
+// ODM-18 P1 — the company-console INTENT (allowlist-gated verbs; the GM device applies, never the server).
+interface OdmIntentMsg { campaignId: string; token: string; verb: string; payload: Record<string, unknown>; nonce?: string; }
 
 @WebSocketGateway({ cors: CORS })
 export class ClaimsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
@@ -86,8 +103,22 @@ export class ClaimsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
      *  one-shot 'campaign-sync' reply, so the client's existing on('campaign') handler covers both. */
     afterInit(): void {
         this.campaigns.changes$.subscribe((id) => {
-            if (id) this.server.to(id).emit('campaign', this.campaigns.rawSnapshot(id));
+            if (id) this.fanCampaign(id);
         });
+    }
+
+    /** GM-1 P2 — the campaign fan, per-recipient shaped (the HARDEN-5b fanLobby pattern): the snapshot is
+     *  parsed ONCE, then each room socket gets it with the gmOnly key STRIPPED unless that recipient is the
+     *  verified GM. Dev/LAN short-circuits to the full room emit (the 5b posture — a LAN GM owns the box).
+     *  The strip is recipient-conditional, not gmSession-conditional: a snapshot without gmOnly passes
+     *  through by reference and this fan is byte-equivalent to the old room emit. */
+    private fanCampaign(campaignId: string): void {
+        const snap = this.campaigns.rawSnapshot(campaignId);
+        if (!AuthService.authRequired()) { this.server.to(campaignId).emit('campaign', snap); return; } // dev/LAN — full to all
+        for (const sock of this.server.sockets.sockets.values()) {
+            if (!sock.rooms.has(campaignId)) continue;
+            sock.emit('campaign', shapeSnapshot(snap, this.isGm(sock, campaignId), recipientAnonOf(sock))); // GM-2 P2a — + the recipient's own contract
+        }
     }
 
     handleConnection(client: Socket): void {
@@ -146,9 +177,9 @@ export class ClaimsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     }
     // ── DIRECTIVE-HARDEN-5 — the ACTION-authorization layer (beneath the deniedAccess ACCESS gate). ──
     /** The error ack for a rejected message: additive (current clients ignore it), observable by tooling. */
-    private deny(client: Socket, event: string, reason: string): void {
+    private deny(client: Socket, event: string, reason: string, nonce?: string): void {
         this.log.warn(`denied '${event}' from ${client.id}: ${reason}`);
-        client.emit('denied', { event, reason });
+        client.emit('denied', nonce ? { event, reason, nonce } : { event, reason }); // nonce (ODM-18 P1): per-send ack correlation, additive
     }
     /** A live-verified GM of this campaign — mirrors deniedAccess's GM branch EXACTLY (re-resolved from the
      *  stored token per call, so a ban bites immediately; approved admin passes; else owner match). */
@@ -166,13 +197,14 @@ export class ClaimsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
      *  and every later message must match it. */
     /** HARDEN-5+5b action gate (post-lazy-bind-removal): identity is bound ONLY at join-lobby; a token-scoped
      *  action requires an already-bound matching token. HARDEN-6 — a thin adapter over the pure actionDecision. */
-    private allowed(client: Socket, campaignId: string, kind: 'gm' | 'token' | 'participant', msgToken?: unknown): boolean {
+    private allowed(client: Socket, campaignId: string, kind: 'gm' | 'token' | 'participant' | 'unit', msgToken?: unknown, instanceHolderToken?: string | null): boolean {
         return actionDecision({
             authRequired: AuthService.authRequired(),
             isGm: this.isGm(client, campaignId),
             kind,
             boundToken: client.data?.lobbyToken as string | undefined,
             msgToken,
+            instanceHolderToken, // GM-1 P3 — 'unit' kind only (the claim-row holder the adapter gathered)
         });
     }
 
@@ -247,9 +279,13 @@ export class ClaimsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
      *  has already P3-confined this campaignId to the socket's bound campaign, so this never crosses
      *  tenants and needs no @Public REST hole. The GM never emits this (it hydrates via REST). */
     @SubscribeMessage('campaign-sync')
-    onCampaignSync(@MessageBody() msg: { campaignId: string }): { event: string; data: unknown } {
+    onCampaignSync(@ConnectedSocket() client: Socket, @MessageBody() msg: { campaignId: string }): { event: string; data: unknown } {
         const campaignId = msg?.campaignId;
-        return { event: 'campaign', data: campaignId ? this.campaigns.rawSnapshot(campaignId) : null };
+        if (!campaignId) return { event: 'campaign', data: null };
+        // GM-1 P2 — the direct reply is the second fan site: same per-recipient gmOnly strip as fanCampaign
+        // (dev/LAN full — the 5b posture). Still a read-only handler; the reply-style shape is unchanged.
+        const full = !AuthService.authRequired() || this.isGm(client, campaignId);
+        return { event: 'campaign', data: shapeSnapshot(this.campaigns.rawSnapshot(campaignId), full, recipientAnonOf(client)) }; // GM-2 P2a — the second fan site attaches too
     }
 
     @SubscribeMessage('claim')
@@ -259,6 +295,21 @@ export class ClaimsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
         const { campaignId, engagementKey, instanceId, holderName, holderToken } = msg;
         // HARDEN-5 B — token-scoped: a player claims only AS ITSELF (its bound token); a verified GM as anyone.
         if (!this.allowed(client, campaignId, 'token', holderToken)) { this.deny(client, 'claim', 'not your token'); return; }
+        // GM-1 P3 (panel finding — the claim-steal close): a non-GM may not claim OVER another holder's row.
+        // The per-unit battle rule is only as strong as the claim row it keys on — without this guard, "your
+        // opponent cannot edit your record" is two messages away (steal the claim, then write the sheet).
+        // Mirrors onRelease's holder-match; re-claiming your OWN row stays allowed; the GM reassigns freely.
+        if (AuthService.authRequired() && !this.isGm(client, campaignId)) {
+            const held = this.claims.list(campaignId, engagementKey).find((c) => c.instanceId === instanceId);
+            if (held && held.holderToken && held.holderToken !== holderToken) { this.deny(client, 'claim', 'already claimed'); return; }
+            // ORDER-2 H15 (SMOKE-ODM-4P S43) — the SIDE is a SERVER rule at claim, not a client-roster signal: the caller's
+            // lobby row side vs the instance's side in the snapshot (company → BLUFOR · mission OpFor → OPFOR). The GM is
+            // exempt (this branch is non-GM only — reassign is the GM's tool); dev/LAN stays permissive by the SAME
+            // authRequired() gate that fences the lookups above (the decider short-circuits too). Denied → no write.
+            const bound = client.data?.lobbyToken as string | undefined;
+            const row = bound ? this.lobby.list(campaignId).find((p) => p.token === bound) : undefined;
+            if (!sideDecision({ authRequired: true, isGm: false, rowSide: row?.side ?? null, instanceSide: instanceSideOf(this.campaigns.rawSnapshot(campaignId), instanceId) })) { this.deny(client, 'claim', 'not your side'); return; }
+        }
         const set = this.claims.claim(campaignId, engagementKey, instanceId, holderName || '', holderToken || '', msg.at || Date.now());
         this.fanClaims(campaignId, engagementKey, set); // HARDEN-5b — per-recipient (others' holderToken redacted for players)
     }
@@ -320,6 +371,138 @@ export class ClaimsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
         if (!this.allowed(client, campaignId, 'gm')) { this.deny(client, 'reassign', 'GM only'); return; }
         this.fanLobby(campaignId, this.lobby.reassign(campaignId, token, side as string)); // HARDEN-5b
     }
+    /** GM-1 P2 — a player's ADVISORY side preference for the presented hotspot. Token-scoped (a player sets
+     *  only ITS OWN pref; a verified GM anyone's) and FANNED like reassign — the GM panel watches live; the
+     *  per-recipient redaction strips others' prefs from player recipients (roster-redact). */
+    @SubscribeMessage('side-pref')
+    onSidePref(@ConnectedSocket() client: Socket, @MessageBody() msg: SidePrefMsg): void {
+        const v = vSidePref(msg); // HARDEN-5 A
+        if (!v.ok) { this.deny(client, 'side-pref', v.reason ?? 'invalid payload'); return; }
+        const { campaignId, token, pref } = msg;
+        if (!this.allowed(client, campaignId, 'token', token)) { this.deny(client, 'side-pref', 'not your token'); return; }
+        // PD3 P2 (PD3-9) — a late pick is a SERVER-SIDE no-op: once a track is generated / the contract is complete, refuse (ws-authz)
+        if (!sidePrefDecision(sidePrefFactsOf(this.campaigns.rawSnapshot(campaignId)))) { this.deny(client, 'side-pref', 'sides are assigned — the contract is being played'); return; }
+        this.fanLobby(campaignId, this.lobby.setSidePref(campaignId, token, pref)); // HARDEN-5b — per-recipient shaped
+    }
+    /** REBASE-1 P3 item 1 — the player device reports its UN-ENDED-pick count (the pin fans damage only at END PHASE,
+     *  so the GM needs a signal for "who still has unshared picks before Resolve"). Token-scoped (own device only),
+     *  validated + fanned on the lobby roster like side-pref; the count is EPHEMERAL server-side (LobbyService.pending). */
+    @SubscribeMessage('phase-pending')
+    onPhasePending(@ConnectedSocket() client: Socket, @MessageBody() msg: PhasePendingMsg): void {
+        const v = vPhasePending(msg); // HARDEN-5 A
+        if (!v.ok) { this.deny(client, 'phase-pending', v.reason ?? 'invalid payload'); return; }
+        const { campaignId, token, count } = msg;
+        if (!this.allowed(client, campaignId, 'token', token)) { this.deny(client, 'phase-pending', 'not your token'); return; }
+        this.fanLobby(campaignId, this.lobby.setPending(campaignId, token, count)); // HARDEN-5b — per-recipient shaped
+    }
+    /** GM-1 P3 — JOIN-WITH-FORCE (the one-shot company import). The SERVER is the id + cap authority:
+     *  it re-mints instance/pilot ids (cross-campaign collision-proof), enforces the GM-set playerUnitCap
+     *  (default 4) against the owner's EXISTING imports, PRE-CLAIMS the new ids for their owner (the claim
+     *  board shows them already theirs — and the P3 per-unit battle rule keys off exactly these rows), then
+     *  fans the minted payload to GM SOCKETS ONLY ('import-request', raw token included — the GM is trusted
+     *  with tokens, HOTFIX-030). The GM CLIENT stays the snapshot author: it merges + persists (the D-130
+     *  shape) → the normal campaign fan is the player's authoritative confirmation. Token-scoped: a player
+     *  imports only AS ITSELF (join-lobby must precede — D-048 ordering). */
+    @SubscribeMessage('import-force')
+    onImportForce(@ConnectedSocket() client: Socket, @MessageBody() msg: ImportForceMsg): { event: string; data: unknown } {
+        const nothing = { event: 'force-imported', data: null };
+        const v = vImportForce(msg); // HARDEN-5 A — shape + the explicit 128 KB gate (never the silent frame drop)
+        if (!v.ok) { this.deny(client, 'import-force', v.reason ?? 'invalid payload'); return nothing; }
+        const { campaignId, token } = msg;
+        if (!this.allowed(client, campaignId, 'token', token)) { this.deny(client, 'import-force', 'not your token'); return nothing; }
+        const owner = anonId(token);
+        const snap = this.campaigns.rawSnapshot(campaignId);
+        // GM-1 P3 (panel finding) — imports exist ONLY in GM sessions: a plain hosted campaign has no merge
+        // consumer, so accepting would mint phantom claims + a lying success (the black-hole class). A
+        // top-level duck-read, not a gmOnly parse.
+        if (!snap || (snap as { gmSession?: unknown }).gmSession !== true) { this.deny(client, 'import-force', 'not a GM session'); return nothing; }
+        // GM-1 P3 (panel finding) — DELIVERY BEFORE PERSISTENCE: the merge lives on a GM device; with no GM
+        // socket in the room the minted company would vanish after an ok ack. Checked FIRST — on a no-GM
+        // deny, nothing is minted and nothing is claimed. (A GM socket dying between this check and the fan
+        // is a retry, not a loss — the player is told to try again.)
+        const gmSocks = [...this.server.sockets.sockets.values()].filter((s) => s.rooms.has(campaignId) && (!AuthService.authRequired() || this.isGm(s, campaignId)));
+        if (!gmSocks.length) { this.deny(client, 'import-force', 'the GM is not connected — try again when the table is up'); return nothing; }
+        const cap = importCapOf(snap);
+        // GM-1 P3 (panel finding) — the snapshot LAGS the merge (fan → GM merge → debounced PUT), so a burst
+        // of imports would each see the stale count. The in-memory recent ledger closes the window (handlers
+        // are sync-atomic — no race); TTL'd, the snapshot catches up and becomes the floor.
+        const rkey = `${campaignId}|${owner}`;
+        const prior = this.recentImports.get(rkey);
+        const recent = prior && Date.now() - prior.at < 600_000 ? prior.n : 0;
+        const have = Math.max(countOwnedImports(snap, owner), recent);
+        if (have + msg.units.length > cap) { this.deny(client, 'import-force', `unit cap: ${have}/${cap} imported — ${msg.units.length} more won't fit`); return nothing; }
+        const minted = remintImport(msg.units, msg.pilots ?? [], owner, Date.now(), msg.sourceCampaignId, msg.reputation); // GM-2 P1 — the identity rides the mint · P2b — + the home reputation
+        this.recentImports.set(rkey, { n: have + minted.units.length, at: Date.now() });
+        const engagementKey = msg.engagementKey || 'none';
+        let set: Claim[] = [];
+        for (const id of minted.instanceIds) set = this.claims.claim(campaignId, engagementKey, id, msg.name || 'Player', token, Date.now());
+        if (set.length) this.fanClaims(campaignId, engagementKey, set); // HARDEN-5b — per-recipient shaped
+        // the GM-only fan (the pre-checked recipient list — the raw token rides it, GM-trusted)
+        for (const sock of gmSocks) {
+            sock.emit('import-request', { campaignId, token, name: msg.name || 'Player', units: minted.units, pilots: minted.pilots });
+        }
+        return { event: 'force-imported', data: { instanceIds: minted.instanceIds, count: minted.units.length, cap, owner } };
+    }
+    // GM-1 P3 (panel) — the per-(campaign, owner) recent-import ledger backing the cap against the
+    // snapshot lag. In-memory by design: an api restart forgets it and the persisted snapshot count
+    // takes over as the floor.
+    private readonly recentImports = new Map<string, { n: number; at: number }>();
+
+    /** ODM-18 P1 — the COMPANY-CONSOLE INTENT (the GM-1 P3 seam, verbatim pattern): validate (allowlist +
+     *  per-verb shape) → token-scoped authz → ODM-campaign check → DELIVERY BEFORE EFFECT (no GM socket in
+     *  the room → denied, nothing forwarded) → fan to GM sockets with the actor's lobby name → receipt.
+     *  The SERVER changes no state — the GM device applies through the same services its own UI calls. */
+    /** GM-2 P2b — SIGN-CONTRACT (the odm-intent pattern, un-fenced from ODM): a PLAYER device signs its own company's
+     *  contract on the phone. Shape-validated (never the D-128 math), bound token, a GM session, the key must be a home
+     *  campaign THIS device brought (provenance.owner ↔ anonId(token)) → fanned to GM sockets with the actor's lobby name
+     *  → receipt. The SERVER changes no state — the GM device re-checks its belts and applies through its own setters. */
+    @SubscribeMessage('sign-contract')
+    onSignContract(@ConnectedSocket() client: Socket, @MessageBody() msg: { campaignId: string; token: string; key: string; contract: Record<string, unknown>; nonce?: string }): { event: string; data: unknown } {
+        const nothing = { event: 'sign-contract-ack', data: null };
+        const nonce = typeof (msg as { nonce?: unknown })?.nonce === 'string' ? (msg as { nonce: string }).nonce.slice(0, 40) : undefined;
+        const v = vSignContract(msg);
+        if (!v.ok) { this.deny(client, 'sign-contract', v.reason ?? 'invalid payload', nonce); return nothing; }
+        const { campaignId, token, key, contract } = msg;
+        if (!this.allowed(client, campaignId, 'token', token)) { this.deny(client, 'sign-contract', 'not your token', nonce); return nothing; }
+        const snap = this.campaigns.rawSnapshot(campaignId);
+        if (!snap || (snap as { gmSession?: unknown }).gmSession !== true) { this.deny(client, 'sign-contract', 'not a GM session', nonce); return nothing; }
+        if (!ownCompanyKeysOf(snap as Record<string, unknown>, anonId(token)).includes(key)) { this.deny(client, 'sign-contract', 'not your company', nonce); return nothing; }
+        const gmSocks = [...this.server.sockets.sockets.values()].filter((s) => s.rooms.has(campaignId) && (!AuthService.authRequired() || this.isGm(s, campaignId)));
+        if (!gmSocks.length) { this.deny(client, 'sign-contract', 'the GM is not connected — try again when the table is up', nonce); return nothing; }
+        const name = this.lobby.list(campaignId).find((p) => p.token === token)?.name || 'Player';
+        for (const sock of gmSocks) sock.emit('sign-contract', { campaignId, token, name, key, contract: { ...contract, signedBy: 'player' } });
+        return { event: 'sign-contract-ack', data: { nonce, delivered: true } };
+    }
+
+    @SubscribeMessage('odm-intent')
+    onOdmIntent(@ConnectedSocket() client: Socket, @MessageBody() msg: OdmIntentMsg): { event: string; data: unknown } {
+        const nothing = { event: 'odm-intent-ack', data: null };
+        // nonce (panel fix): echoed in ack AND deny so a client with two same-verb intents in flight can
+        // tell whose answer arrived. Pre-validation extraction is safe (string-guarded, bounded).
+        const nonce = typeof (msg as { nonce?: unknown })?.nonce === 'string' ? (msg as { nonce: string }).nonce.slice(0, 40) : undefined;
+        const v = vOdmIntent(msg); // HARDEN-5 A — the allowlist IS the gate (burnDays etc. never validate)
+        if (!v.ok) { this.deny(client, 'odm-intent', v.reason ?? 'invalid payload', nonce); return nothing; }
+        const { campaignId, token, verb, payload } = msg;
+        if (!this.allowed(client, campaignId, 'token', token)) { this.deny(client, 'odm-intent', 'not your token', nonce); return nothing; }
+        const snap = this.campaigns.rawSnapshot(campaignId);
+        if (!snap || (snap as { packId?: unknown }).packId !== 'odm') { this.deny(client, 'odm-intent', 'not an ODM campaign', nonce); return nothing; }
+        const gmSocks = [...this.server.sockets.sockets.values()].filter((s) => s.rooms.has(campaignId) && (!AuthService.authRequired() || this.isGm(s, campaignId)));
+        if (!gmSocks.length) { this.deny(client, 'odm-intent', 'the GM is not connected — try again when the table is up', nonce); return nothing; }
+        const name = this.lobby.list(campaignId).find((p) => p.token === token)?.name || 'Player';
+        for (const sock of gmSocks) sock.emit('odm-intent', { campaignId, token, name, verb, payload });
+        return { event: 'odm-intent-ack', data: { verb, nonce, delivered: true } };
+    }
+    /** ODM-18 P1 (panel fix — the stale-room black hole): rooms otherwise never shrink, so a GM who
+     *  switched campaigns in the same session still counted toward gmSocks for the OLD room while their
+     *  client discarded the fan (campaignId filter) — intents acked 'delivered' and vanished, the exact
+     *  state the GM-absent deny exists to prevent. The client leaves the prior room on ensure-change;
+     *  leaving needs no authz (it only REDUCES what the socket receives). */
+    @SubscribeMessage('leave-campaign')
+    onLeaveCampaign(@ConnectedSocket() client: Socket, @MessageBody() msg: { campaignId?: unknown }): void {
+        const id = msg?.campaignId;
+        if (typeof id !== 'string' || !id.length || id.length > 500) return;
+        void client.leave(id);
+    }
     @SubscribeMessage('kick')
     onKick(@ConnectedSocket() client: Socket, @MessageBody() msg: LobbyMutMsg): void {
         const v = vLobbyMut(msg, false); // HARDEN-5 A
@@ -346,9 +529,27 @@ export class ClaimsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
         const v = vBattle(msg); // HARDEN-5 A — shape + non-null JSON object + the 256 KB size bound
         if (!v.ok) { this.deny(client, 'battle', v.reason ?? 'invalid payload'); return; }
         const { campaignId, engagementKey, instanceId, state } = msg;
-        // HARDEN-5 B — a verified GM or a BOUND session participant (has a lobby identity). Per-unit pilot
-        // ownership (only your claimed sheet) is the flagged follow-up — not enforced this pass.
-        if (!this.allowed(client, campaignId, 'participant')) { this.deny(client, 'battle', 'not a session participant'); return; }
+        // GM-1 P3 — PER-UNIT OWNERSHIP (the HARDEN-7 ledgered close, R5-ruled): a battle write lands only from
+        // the instance's CLAIM-ROW holder or a verified GM. Deny-unclaimed; a release racing a write resolves
+        // last-write-wins (handlers are atomic on the sync sqlite loop — the claim row at message arrival
+        // decides). The claims lookup is gated behind authRequired (cost only — the decider's auth-off
+        // short-circuit ignores the field and stays byte-permissive, the SACRED dev/LAN posture).
+        const held = AuthService.authRequired()
+            ? this.claims.list(campaignId, engagementKey).find((c) => c.instanceId === instanceId)
+            : undefined;
+        // ORDER-4 H18 — a CLOSED engagement refuses every write first (a game rule: the dev/LAN short-circuit and the GM do
+        // not bypass it); an open one takes the HARDEN-7 per-unit rule exactly as before. Denied → no partial write.
+        const closed = this.battle.isClosed(campaignId, engagementKey);
+        const ok = engagementWriteDecision({
+            authRequired: AuthService.authRequired(),
+            isGm: this.isGm(client, campaignId),
+            kind: 'unit',
+            boundToken: client.data?.lobbyToken as string | undefined,
+            msgToken: undefined,
+            instanceHolderToken: held ? held.holderToken : null,
+            closed,
+        });
+        if (!ok) { this.deny(client, 'battle', closed ? 'engagement closed' : 'not your unit'); return; }
         const at = msg.at || Date.now();
         this.battle.set(campaignId, engagementKey, instanceId, state, at);
         this.server.to(campaignId).emit('battle', { engagementKey, instanceId, state, at });
@@ -359,7 +560,23 @@ export class ClaimsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
         const { campaignId, engagementKey } = msg || ({} as BattleSyncMsg);
         if (campaignId) client.join(campaignId);
         const states = campaignId && engagementKey ? this.battle.list(campaignId, engagementKey) : [];
-        return { event: 'battle-state', data: { engagementKey, states } };
+        const closed = !!campaignId && !!engagementKey && this.battle.isClosed(campaignId, engagementKey); // ORDER-4 H18 — the server's word on the fight
+        return { event: 'battle-state', data: { engagementKey, states, closed } };
+    }
+    /** ORDER-4 H18 — ENGAGEMENT-CLOSE: the GM's resolve tells the server the fight is over. GM-only under auth (the HARDEN-5
+     *  'gm' kind — owner/admin via isGmDecision; dev/LAN permissive like every GM board action), validated, idempotent. The
+     *  mark lives beside the battle state (in memory + persisted); every later `battle` write to this key is refused, claims
+     *  untouched. The room is told ('engagement-closed') and every later battle-sync reply carries `closed: true`. */
+    @SubscribeMessage('engagement-close')
+    onEngagementClose(@ConnectedSocket() client: Socket, @MessageBody() msg: EngagementCloseMsg): { event: string; data: unknown } {
+        const v = vEngagementClose(msg);
+        if (!v.ok) { this.deny(client, 'engagement-close', v.reason ?? 'invalid payload'); return { event: 'engagement-closed', data: null }; }
+        const { campaignId, engagementKey } = msg;
+        if (!this.allowed(client, campaignId, 'gm')) { this.deny(client, 'engagement-close', 'GM only'); return { event: 'engagement-closed', data: null }; }
+        const closedAt = Date.now();
+        this.battle.close(campaignId, engagementKey, closedAt);
+        this.server.to(campaignId).emit('engagement-closed', { engagementKey, closedAt });
+        return { event: 'engagement-closed', data: { engagementKey, closedAt } };
     }
 
     // ── D-048 PHASE C — per-player favorite (campaign-persistent; returned to the caller, no room fan) ──

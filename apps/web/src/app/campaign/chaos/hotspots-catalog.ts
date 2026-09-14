@@ -88,8 +88,8 @@ export interface HotSpot {
     era?: string; region?: string | null; // D-124 — optional per-hotspot override of the pack _meta
     custom?: boolean; // D-124 — a user-authored hotspot (persisted per-campaign), else a premade pack hotspot
     capstone?: boolean; // D-124c — an endgame-only "end boss" hotspot: excluded from normal deals + the negotiate draw
-    sides?: { a: SideOffer; b: SideOffer }; // D-133 — authored opposing pair (optional; absent → synthesized from the legacy fields)
-    singleSided?: boolean; // IMPORT-5 Part C — the GM built this as a SINGLE offer: resolveSides returns ONLY side A (no synthesized B)
+    sides?: { a: SideOffer; b?: SideOffer }; // D-133 — authored opposing pair (optional; absent → synthesized from the legacy fields). ERA-1: `b` optional — a single-sided forged hot spot carries its authored side A only
+    singleSided?: boolean; // IMPORT-5 Part C — the GM built this as a SINGLE offer: resolveSides returns ONLY side A (no synthesized B). ERA-1: also inferred/forged when the enemy is a Clan that does not hire mercenaries
     hireable?: HotSpotHireable[]; // IMPORT-3 P2 — unique named mercs this hot spot offers for hire (Support Points)
     forged?: boolean; // HSFORGE-1 — INTERNAL provenance flag (debugging/support): minted by the Hot Spots Forge. No consumer branches on it (the zero-special-case rule).
     systemId?: string; // HSFORGE-1 (C16) — the star-map systemId the world was drawn from (id-join, never name-join; the future travel seam #169)
@@ -129,6 +129,12 @@ export interface HotSpotBrief {
  *  here (mirror-synced by tools/copy-forge-content.mjs). Hinterlands, general-per-era packs, etc. drop in the same way. */
 const PACK_LOADERS: readonly (() => Promise<unknown>)[] = [
     () => import('../mission/forge-data/hotspots-draconis-march.json'),
+    // DIRECTIVE-CLI-1 — the Clan Invasion pack (era 'clan-invasion', region 'invasion-corridor'): ten side-A-only
+    // contracts against the invading Clans. Clears the HSFORGE-1 top-up floor (8) so a 3050 corridor board deals authored.
+    () => import('../mission/forge-data/hotspots-clan-invasion.json'),
+    // DIRECTIVE-HIN-1 — the Hinterlands pack (era 'ilclan', region 'hinterlands'): nine side-A-only contracts against the remnant
+    // Clans of the collapsed Falcon OZ + one two-sided Lyran-vs-League pair (Bolan). Region-strict: never co-deals with the March.
+    () => import('../mission/forge-data/hotspots-hinterlands.json'),
     // DIRECTIVE-135 — the endgame CAPSTONE pool (capstone:true). Loaded into the chamber but held OUT of normal deals
     // by the offer-pool filter; surfaced only behind the "Begin the Reckoning" finale gate (chaos-contracts-tab).
     () => import('../mission/forge-data/hotspots-draconis-march-capstones.json'),
@@ -164,6 +170,24 @@ export const GENERIC_EMPLOYER_FACTION = 'Local / planetary forces';
  *  "provisional" tag on the synthesized side is the honest best-effort. Real authored sides land in Phase 3. */
 const employerFaction = (h: HotSpot): string => hsFactionToMulFaction(h.employer) ?? GENERIC_EMPLOYER_FACTION;
 
+/** ERA-1 (ruling 2, 2026-09-02) — does this faction HIRE mercenaries? Clans do not; the exception is the Hot Spots-
+ *  modeled trading Clans (Sea Fox, Raven Alliance — exactly the Clans with a MUL allowlist, D-127), which have authored
+ *  precedent as employers (hs-drm-02). A faction that does not hire never gets a mercenary offer authored FOR it: a
+ *  non-hiring Clan enemy makes the hot spot side-A-only. The Clan test mirrors D-102's `isClan` (`/clan/i`). */
+export function factionHiresMercenaries(name: string | null | undefined): boolean {
+    const n = (name ?? '').trim();
+    if (!n) return true;
+    return !/clan/i.test(n) || hsFactionToMulFaction(n) != null;
+}
+
+/** ERA-1 (ruling 4) — the chamber predicate `hotSpotCatalog` filters on, extracted pure so a spec can pin it:
+ *  a CUSTOM hot spot always lists (IMPORT-2 Part A); else the era must match EXACTLY (a null query era passes all —
+ *  the id-resolution pool) and the region must match unless the hot spot (region-null = general) or the query
+ *  (null = era-wide) has none. STRICT by design: a 3050 campaign is never silently dealt another era's content. */
+export function inChamber(h: { custom?: boolean; era: string; region: string | null }, era?: string | null, region?: string | null): boolean {
+    return !!h.custom || ((!era || h.era === era) && (!region || !h.region || h.region === region));
+}
+
 /** DIRECTIVE-133 — the two opposing SideOffers for a hot spot. Authored `h.sides` are honored verbatim; else side A
  *  is the authored/legacy side and side B is a PROVISIONAL opposing contract (terms mirrored — only the enemy flips;
  *  real per-side terms are Phase 3). */
@@ -174,7 +198,9 @@ export function resolveSides(h: CatalogHotSpot): { a: SideOffer; b?: SideOffer }
     const a: SideOffer = { key: 'a', role: aRole, employer: h.employer, faction: aFaction, contract: h.contract, blurb: h.blurb };
     // IMPORT-5 Part C — the GM built this as a SINGLE offer: exactly ONE side, no synthesized opponent. Only fires on the
     // explicit flag; a flag-less legacy/authored hotspot still synthesizes a provisional B below (byte-unchanged).
-    if (h.singleSided) return { a };
+    // ERA-1 (ruling 2) — ALSO single-sided when the enemy is a Clan that does not hire mercenaries: the mirror would
+    // otherwise author "fight for Clan X", which no mercenary is ever offered. Authored `sides` (above) stay verbatim.
+    if (h.singleSided || !factionHiresMercenaries(h.contract.enemyFaction)) return { a };
     const b: SideOffer = {
         key: 'b', role: opposite(aRole), employer: h.contract.enemyFaction, faction: h.contract.enemyFaction,
         contract: { ...h.contract, enemyFaction: aFaction }, // mirror: same steps/scale/intensity/lengthMonths, only the enemy flips
@@ -325,7 +351,7 @@ export class HotSpotsCatalogService {
      *  builder stamps no era (defaults to 'general'), so an era filter would silently hide the GM's own creation. */
     hotSpotCatalog(era?: string | null, region?: string | null): CatalogHotSpot[] {
         void this.ensureLoaded();
-        return this.all().filter((h) => h.custom || ((!era || h.era === era) && (!region || !h.region || h.region === region)));
+        return this.all().filter((h) => inChamber(h, era, region)); // ERA-1 — the predicate is pure + spec-pinned (hotspots-catalog.spec)
     }
     hotSpotById(id: string): CatalogHotSpot | undefined { return this.all().find((h) => h.id === id); }
 

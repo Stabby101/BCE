@@ -234,6 +234,9 @@ export interface MissionSpec {
     opforForce: ProtoInstance[];
     opforBv: number;
     playerBv: number;
+    /** GM-2 P3-fold — set by D-130's Build/Edit OpFor save (and the P4 side-B seed): the GM chose this OpFor by hand, so
+     *  the empty-field witness (a spec sized against the 1-BV floor) no longer applies. Absent on every generated spec. */
+    opforManual?: boolean;
     terrain: { biome: string; note: string };
     deployment: { player: string; opfor: string };
     victoryConditions: string[];

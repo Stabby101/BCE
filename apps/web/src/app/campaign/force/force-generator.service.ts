@@ -15,7 +15,7 @@ import { generateForce, generateForceToBV, formationSeedCap, ratResolveProbe, ve
 import type { ProtoInstance } from './force-generator';
 import { assignStructure, hasStructure } from './force-structure';
 import type { Faction } from '../../models/factions.model';
-import type { Unit } from '../../models/units.model';
+import type { UnitSummary as Unit } from '../../models/unit-summary.model';
 import type { MarketContext } from './market';
 import { CUSTOM_UNIT } from '../faction/faction-data';
 

@@ -154,4 +154,22 @@
 .pr-step.st-blocked { color: var(--ink2); opacity: .5; cursor: not-allowed; }
 .pr-step:not(.st-blocked):hover { background: var(--paper); border-color: var(--line); }
 .pr-sep { color: var(--ink2); font-size: 12px; opacity: .55; padding: 0 1px; }
-@media (max-width: 760px) { .pr-step .pr-name { display: none; } .pr-step { padding: 6px 8px; } .pr-sep { display: none; } }
+/* PD3 P1 — the Repair stop's damaged-unit count: survives the narrow-width label drop (a glyph with a number still reads) */
+.pr-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 16px; padding: 0 5px; border-radius: 9px;
+            background: var(--stamp); color: var(--paper); font-size: 10px; font-weight: 700; letter-spacing: 0; line-height: 1; }
+/* DIRECTIVE-PD3 P3 (PD3-10) — under 760 px the rail is a HORIZONTALLY SCROLLING STRIP, never a row of bare glyphs: every stop keeps
+   its word (the old rule dropped .pr-name here and Pendragon read "✓ ▶ ▢ ✓ ✓ ✓ ✓ ◉"), the strip owns its own x-scroll (the dashboard
+   host stays overflow-x:hidden — the PAGE never scrolls sideways; the rail REGION does), snap per stop, an edge fade that says
+   "there is more", the scrollbar hidden (a thumb strip). Desktop (> 760) is byte-identical: the fitted, wrapping rail. */
+@media (max-width: 760px) {
+    .prail { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+             scrollbar-width: none; padding: 7px 14px;
+             -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+             mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%); }
+    .prail::-webkit-scrollbar { display: none; }
+    .pr-step { flex: 0 0 auto; scroll-snap-align: center; padding: 6px 8px; white-space: nowrap; }
+    .pr-sep { display: none; }
+}
+/* PD3 P3 — the one-line "PHASE: <name> — <next>" under the rail: the current state reads without a swipe */
+.pr-phase { font-family: var(--mono); font-size: 11px; letter-spacing: .4px; color: var(--ink2); padding: 0 12px 6px; }
+.pr-phase b { color: var(--stamp); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }

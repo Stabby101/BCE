@@ -68,8 +68,17 @@ export interface ProtoInstance {
 
 /** How a unit entered the force (D-029). Sell/delete events live in the campaign log, not here. */
 export interface Provenance {
-    origin: 'generated' | 'purchased' | 'gm-added' | 'captured' | 'hired-merc'; // IMPORT-3 P2 — a hired named merc's unit
+    origin: 'generated' | 'purchased' | 'gm-added' | 'captured' | 'hired-merc' | 'player-import'; // IMPORT-3 P2 hired merc · GM-1 P3 join-with-force
     acquiredDate?: { y: number; m: number; d: number };
+    /** GM-1 P3 — the importing player's anonId ('anon-…', NEVER a raw token: the snapshot fans to the room).
+     *  The durable ownership marker behind the pre-claimed board rows + the per-unit battle rule. */
+    owner?: string;
+    /** GM-2 P1 — the identity a brought company carries: the HOME campaign it came from and WHICH home instance this
+     *  minted copy is. Written by the server mint (import-force.ts) from the join handshake; echoed onto the results
+     *  slip so "Apply to my campaign" can point a row back at the home unit. Absent on pre-P1 imports. */
+    sourceCampaignId?: string;
+    originInstanceId?: string;
+    homeReputation?: number; // GM-2 P2b — the company's home reputation at join (the phone + the GM broker negotiate against it)
 }
 
 export interface GeneratedForce {

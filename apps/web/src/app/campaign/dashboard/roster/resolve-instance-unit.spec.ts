@@ -5,7 +5,7 @@
  * (Nighthawk PA(L) — Infantry, 1 t, BV 11): wrong sheet, wrong sprite, wrong BV. These specs fail on the
  * un-guarded chain and pass on the guarded one — they prove the failure mode, not just a null check.
  */
-import type { Unit } from '../../../models/units.model';
+import type { UnitSummary as Unit } from '../../../models/unit-summary.model';
 import { resolveInstanceUnit } from './resolve-instance-unit';
 
 const u = (partial: Partial<Unit>): Unit => partial as Unit;

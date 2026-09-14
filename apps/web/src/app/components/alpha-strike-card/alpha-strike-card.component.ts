@@ -1,39 +1,11 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { Component, ChangeDetectionStrategy, input, computed, inject, signal, effect, output, ElementRef, DestroyRef, afterNextRender, type ComponentRef, Injector } from '@angular/core';
-import type { ASUnitTypeCode, Unit } from '../../models/units.model';
+import type { ASUnitTypeCode, UnitSummary } from '../../models/unit-summary.model';
 import type { ASForceUnit, AbilitySelection } from '../../models/as-force-unit.model';
+import { COMMAND_ABILITIES } from '../../models/command-abilities.model';
 import { PILOT_ABILITIES, type ASCustomPilotAbility } from '../../models/pilot-abilities.model';
 import { AsAbilityLookupService, type ParsedAbility } from '../../services/as-ability-lookup.service';
 import { DialogsService } from '../../services/dialogs.service';
@@ -41,20 +13,20 @@ import { AbilityInfoDialogComponent, type AbilityInfoDialogData } from '../abili
 import { InputDialogComponent, type InputDialogData } from '../input-dialog/input-dialog.component';
 import { PilotAbilityInfoDialogComponent, type PilotAbilityInfoDialogData } from '../pilot-ability-info-dialog/pilot-ability-info-dialog.component';
 import { type CardConfig, type CardLayoutDesign, type CriticalHitsVariant, getLayoutForUnitType } from './card-layout.config';
-import type { SpecialAbilityState, SpecialAbilityClickEvent } from './layouts/layout-base.component';
+import type { SpecialAbilityState } from '../../models/as-special-ability-state.model';
+import type { CardAbility, SpecialAbilityClickEvent } from './layouts/layout-base.component';
 import { CriticalHitRollDialogComponent, type CriticalHitRollDialogData } from './critical-hit-roll-dialog/critical-hit-roll-dialog.component';
 import { MotiveDamageRollDialogComponent, type MotiveDamageRollDialogData } from './motive-damage-roll-dialog/motive-damage-roll-dialog.component';
 import { AsLayoutStandardComponent, AsLayoutLargeVessel1Component, AsLayoutLargeVessel2Component } from './layouts';
-import { GameSystem, REMOTE_HOST } from '../../models/common.model';
+import { GameSystem, getUnitServerHost } from '../../models/common.model';
 import type { ChoicePickerInstance, NumericPickerInstance, NumericPickerResult, PickerChoice, PickerPosition } from '../picker/picker.interface';
 import { vibrate } from '../../utils/vibrate.util';
 import { firstValueFrom } from 'rxjs';
 import { OptionsService } from '../../services/options.service';
 import { PickerFactoryService } from '../../services/picker-factory.service';
+import type { ColorScheme } from '../../models/options.model';
 
-/*
- * Author: Drake
- */
+
 
 @Component({
     selector: 'alpha-strike-card',
@@ -67,7 +39,7 @@ import { PickerFactoryService } from '../../services/picker-factory.service';
     templateUrl: './alpha-strike-card.component.html',
     styleUrl: './alpha-strike-card.component.scss',
     host: {
-        '[class.monochrome]': 'cardStyle() === "monochrome"',
+        '[class.monochrome]': 'cardStyle() === "default"',
         '[class.selected]': 'isSelected()',
         '[class.interactive]': 'interactive()',
         '(click)': 'onCardClick()'
@@ -89,10 +61,12 @@ export class AlphaStrikeCardComponent {
     /** Optional: provide the stateful AS unit wrapper (preferred when available). */
     forceUnit = input<ASForceUnit | undefined>(undefined);
     /** Optional: provide a plain Unit (used when no forceUnit is available). */
-    unit = input<Unit | undefined>(undefined);
+    unit = input<UnitSummary | undefined>(undefined);
     useHex = input<boolean>(false);
-    cardStyle = input<'colored' | 'monochrome'>('colored');
+    cardStyle = input<ColorScheme>('default');
     isSelected = input<boolean>(false);
+    /** Optional skill used when rendering a plain unit outside a force. */
+    skillOverride = input<number | undefined>(undefined);
     /** Which card index to render (0 for first/only card, 1 for second card) */
     cardIndex = input<number>(0);
     /** Enable interactive mode (damage/crit pickers) */
@@ -119,7 +93,7 @@ export class AlphaStrikeCardComponent {
     }
     
     /** Effective Unit for rendering: forceUnit.getUnit() wins, otherwise the plain unit input. */
-    resolvedUnit = computed<Unit | undefined>(() => this.forceUnit()?.getUnit() ?? this.unit());
+    resolvedUnit = computed<UnitSummary | undefined>(() => this.forceUnit()?.getUnit() ?? this.unit());
     
     /** Get the Alpha Strike unit type (BM, IM, CV, CI, WS, etc.) */
     unitType = computed<ASUnitTypeCode>(() => this.resolvedUnit()?.as.TP || 'BM');
@@ -161,7 +135,7 @@ export class AlphaStrikeCardComponent {
             const unit = this.resolvedUnit();
             const imagePath = unit?.fluff?.img;
             if (imagePath) {
-                this.loadFluffImage(imagePath);
+                this.loadFluffImage(imagePath, unit?.serverHost);
             } else {
                 this.imageUrl.set('');
             }
@@ -223,13 +197,13 @@ export class AlphaStrikeCardComponent {
         });
     }
     
-    private async loadFluffImage(imagePath: string): Promise<void> {
+    private async loadFluffImage(imagePath: string, serverHost?: string): Promise<void> {
         try {    
             if (imagePath.endsWith('hud.png')) {
                 this.imageUrl.set('');
                 return;
             }
-            const fluffImageUrl = `${REMOTE_HOST}/images/fluff/${imagePath}`;
+            const fluffImageUrl = `${getUnitServerHost({ serverHost })}/images/fluff/${imagePath}`;
             this.imageUrl.set(fluffImageUrl);
         } catch {
             // Ignore errors, image will just not display
@@ -369,18 +343,45 @@ export class AlphaStrikeCardComponent {
         }
     }
 
-    onPilotAbilityClick(selection: AbilitySelection): void {
-        const isCustom = typeof selection !== 'string';
+    onAbilityClick(selection: CardAbility): void {
+        if (selection.kind === 'formation-wide') {
+            this.dialogs.createDialog<void>(PilotAbilityInfoDialogComponent, {
+                data: {
+                    gameSystem: GameSystem.ALPHA_STRIKE,
+                    ability: selection.descriptor.ability,
+                    isCustom: false,
+                    isFormationWide: true,
+                } as PilotAbilityInfoDialogData
+            });
+            return;
+        }
+
+        const pilotSelection = selection.selection;
+        let isCustom = typeof pilotSelection !== 'string';
+        let isCommand = false;
         let ability: PilotAbilityInfoDialogData['ability'];
         
-        if (typeof selection === 'string') {
-            ability = PILOT_ABILITIES.find(a => a.id === selection) ?? { name: selection, cost: 0, summary: '' } as ASCustomPilotAbility;
+        if (typeof pilotSelection === 'string') {
+            const pilotAbility = PILOT_ABILITIES.find((entry) => entry.id === pilotSelection);
+            if (pilotAbility) {
+                ability = pilotAbility;
+            } else {
+                const commandAbility = COMMAND_ABILITIES.find((entry) => entry.id === pilotSelection);
+                if (commandAbility) {
+                    ability = commandAbility;
+                    isCommand = true;
+                    isCustom = false;
+                } else {
+                    ability = { name: pilotSelection, cost: 0, summary: '' } as ASCustomPilotAbility;
+                    isCustom = true;
+                }
+            }
         } else {
-            ability = selection;
+            ability = pilotSelection;
         }
         
         this.dialogs.createDialog<void>(PilotAbilityInfoDialogComponent, {
-            data: { gameSystem: GameSystem.ALPHA_STRIKE, ability, isCustom } as PilotAbilityInfoDialogData
+            data: { gameSystem: GameSystem.ALPHA_STRIKE, ability, isCustom, isCommand } as PilotAbilityInfoDialogData
         });
     }
 
@@ -549,26 +550,31 @@ export class AlphaStrikeCardComponent {
     private setupHeatInteraction(cardElement: HTMLElement, signal: AbortSignal): void {
         const heatTrack = cardElement.querySelector('.heat-track');
         if (!heatTrack) return;
-        
-        const heatLevels = heatTrack.querySelectorAll('.heat-level');
-        heatLevels.forEach((level, index) => {
-            this.addTapHandler(level as HTMLElement, () => {
-                const unit = this.forceUnit();
-                if (!unit) return;
-                const committedHeat = unit.getState().heat();
-                const pendingHeat = unit.getState().pendingHeat();
-                const effectiveHeat = committedHeat + pendingHeat;
-                
-                if (effectiveHeat === index) {
-                    // Toggle off - reset pending to 0
-                    unit.setPendingHeat(0);
-                } else {
-                    // Set pending delta to reach this level
-                    unit.setPendingHeat(index - committedHeat);
-                }
-                vibrate(10);
-            }, signal);
-        });
+
+        this.addTapHandler(heatTrack as HTMLElement, (event) => {
+            const target = event.target instanceof HTMLElement
+                ? event.target.closest<HTMLElement>('.heat-level')
+                : null;
+            if (!target || !heatTrack.contains(target)) return;
+
+            const unit = this.forceUnit();
+            if (!unit) return;
+            const targetHeat = Number(target.dataset['heat']);
+            if (!Number.isFinite(targetHeat)) return;
+
+            const committedHeat = unit.getState().heat();
+            const pendingHeat = unit.getState().pendingHeat();
+            const effectiveHeat = committedHeat + pendingHeat;
+
+            if (effectiveHeat === targetHeat) {
+                // Toggle off - reset pending to 0
+                unit.setPendingHeat(0);
+            } else {
+                // Set pending delta to reach this level
+                unit.setPendingHeat(targetHeat - committedHeat);
+            }
+            vibrate(10);
+        }, signal);
     }
     
     private showDamagePicker(event: PointerEvent): void {
@@ -701,7 +707,8 @@ export class AlphaStrikeCardComponent {
                 inputType: 'number',
                 minimumValue: - (isArmor ? state.armor() + state.pendingArmor() : state.internal() + state.pendingInternal()),
                 maximumValue: isArmor ? unit.getUnit().as.Arm : unit.getUnit().as.Str,
-                defaultValue: 0
+                defaultValue: 0,
+                centerInput: true,
             } as InputDialogData
         });
         
@@ -920,7 +927,7 @@ export class AlphaStrikeCardComponent {
         
         // Store anchor element for position updates on scroll
         this.pickerAnchorElement = config.anchorElement;
-        const lightTheme = this.cardStyle() === 'colored';
+        const lightTheme = this.cardStyle() === 'night';
         
         // Check user's picker style preference
         const pickerStyle = this.optionsService.options().pickerStyle;
@@ -990,7 +997,7 @@ export class AlphaStrikeCardComponent {
             values: config.values,
             position,
             title: config.title,
-            lightTheme: this.cardStyle() === 'colored',
+            lightTheme: this.cardStyle() === 'night',
             align: 'top',
             horizontal: true,
             onPick: config.onPick,

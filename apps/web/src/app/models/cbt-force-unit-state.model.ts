@@ -1,47 +1,18 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { signal, computed } from '@angular/core';
-import { type LocationData, type HeatProfile, type SerializedInventory, type CriticalSlot, type MountedEquipment, type SerializedState, type CBTSerializedState, C3_POSITION_SCHEMA } from './force-serialization';
+import { MountedEquipment } from './mounted-equipment.model';
+import { type LocationData, type HeatProfile, type SerializedInventory, type CriticalSlot, type SerializedState, type CBTSerializedState, C3_POSITION_SCHEMA, type SerializedCondition, type SerializedRuleChecks, committedConditionData, conditionsForSerialization, conditionsMapFromSerialization } from './force-serialization';
 import { CrewMember } from './crew-member.model';
 import { ForceUnitState } from './force-unit-state.model';
 import { TurnState } from './turn-state.model';
 import type { CBTForceUnit } from './cbt-force-unit.model';
 import { Sanitizer } from '../utils/sanitizer.util';
+import { closePilotDamageTurn, isPilotDamageGroup } from '../utils/pilot-damage-group.util';
 
-/*
- * Author: Drake
- */
+
 export class CBTForceUnitState extends ForceUnitState {
     declare unit: CBTForceUnit;
     /** Crew members assigned to this unit */
@@ -54,6 +25,8 @@ export class CBTForceUnitState extends ForceUnitState {
     public heat = signal<HeatProfile>({ current: 0, previous: 0 });
     /** Inventory of the unit */
     public inventory = signal<MountedEquipment[]>([]);
+    /** Persistent user-resolved rule checks keyed by stable rule identifier. */
+    public ruleChecks = signal<SerializedRuleChecks>({});
     public readonly turnState = signal<TurnState>(null!);
 
     constructor(unit: CBTForceUnit) {
@@ -61,17 +34,38 @@ export class CBTForceUnitState extends ForceUnitState {
         this.turnState.set(new TurnState(this));
     }
 
-    resetTurnState() {
-        this.turnState.set(new TurnState(this));
+    resetTurnState(turnCounter = 0, preservePendingWork = false) {
+        const pendingEvents = preservePendingWork
+            ? this.turnState().getPendingEvents().map(event => {
+                const pilotDamageGroup = 'pilotDamageGroup' in event
+                    ? event.pilotDamageGroup
+                    : undefined;
+                return structuredClone(isPilotDamageGroup(pilotDamageGroup)
+                    ? { ...event, pilotDamageGroup: closePilotDamageTurn(pilotDamageGroup!) }
+                    : event);
+            })
+            : [];
+        const turnState = new TurnState(this, turnCounter);
+        this.turnState.set(turnState);
+        if (pendingEvents.length > 0) turnState.update({ pendingEvents });
+        turnState.capturePassiveHeatSourceBaseline();
     }
 
     hasUnconsolidatedCrits = computed(() => {
-        return this.crits().some(crit => !!crit.destroying !== !!crit.destroyed);
+        return this.crits().some(crit => !!crit.destroying !== !!crit.destroyed
+            || (crit.pendingHits ?? 0) !== 0
+            || (crit.pendingHitTimestamps?.length ?? 0) > 0);
     });
 
     hasUnconsolidatedLocations = computed(() => {
         const locations = this.locations();
-        return Object.values(locations).some(loc => (loc.pendingArmor ?? 0) !== 0 || (loc.pendingInternal ?? 0) !== 0);
+        return Object.values(locations).some(loc => (loc.pendingArmor ?? 0) !== 0
+            || (loc.pendingInternal ?? 0) !== 0
+            || this.hasPendingLocationConditions(loc.conditions));
+    });
+
+    hasUnconsolidatedInventory = computed(() => {
+        return this.inventory().some(item => item.hasPendingDestroyedChange());
     });
 
     consolidateLocations() {
@@ -82,9 +76,12 @@ export class CBTForceUnitState extends ForceUnitState {
             updated[key] = {
                 armor: (loc.armor ?? 0) + (loc.pendingArmor ?? 0),
                 internal: (loc.internal ?? 0) + (loc.pendingInternal ?? 0),
+                conditions: this.consolidateLocationConditions(loc.conditions),
             };
         }
         this.locations.set(updated);
+        this.unit.applyUnderwaterBreachAndFlooding(true);
+        this.unit.clearNarcFromCommittedPhysicallyDestroyedLocations();
         this.unit.evaluateDestroyed();
         this.unit.setModified();
     }
@@ -97,23 +94,58 @@ export class CBTForceUnitState extends ForceUnitState {
             updated[key] = {
                 armor: loc.armor,
                 internal: loc.internal,
+                conditions: this.discardPendingLocationConditions(loc.conditions),
             };
         }
         this.locations.set(updated);
+        this.unit.evaluateDestroyed();
+        this.unit.setModified();
     }
 
     consolidateCrits() {
         if (!this.hasUnconsolidatedCrits()) return;
         const crits = this.crits();
+        const commitsDestruction = crits.some(crit =>
+            crit.destroying !== undefined && crit.destroyed === undefined);
+        const destructionTurn = commitsDestruction
+            ? this.turnState().getTurnCounter()
+            : undefined;
         let updated = false;
         crits.forEach(crit => {
-            if (!!crit.destroying !== !!crit.destroyed) {
+            if ((crit.pendingHits ?? 0) !== 0) {
+                this.consolidateCritHitTimestamps(crit);
+                crit.hits = Math.max(0, (crit.hits ?? 0) + (crit.pendingHits ?? 0));
+                crit.pendingHits = undefined;
+                crit.pendingHitTimestamps = undefined;
+                updated = true;
+            }
+            if ((crit.destroying !== undefined) !== (crit.destroyed !== undefined)) {
                 crit.destroyed = crit.destroying;
+                crit.destroyedTurn = crit.destroying !== undefined ? destructionTurn : undefined;
                 updated = true;
             }
         });
         if (updated) {
             this.crits.set([...crits]);
+            this.unit.evaluateDestroyed();
+            this.unit.setModified();
+        }
+    }
+
+    consolidateInventory() {
+        if (!this.hasUnconsolidatedInventory()) return;
+        const inventory = this.inventory();
+        let updated = false;
+        inventory.forEach(item => {
+            if (item.isRepairing()
+                && this.unit.getEquipmentInstallationLocationStatus(item) === 'destroyed') {
+                updated = item.setPendingDestroyed(undefined) || updated;
+                return;
+            }
+            updated = item.commitPendingDestroyed() || updated;
+        });
+        if (updated) {
+            this.inventory.set([...inventory]);
             this.unit.evaluateDestroyed();
             this.unit.setModified();
         }
@@ -131,21 +163,49 @@ export class CBTForceUnitState extends ForceUnitState {
     }
 
     endPhase() {
+        const turnState = this.turnState();
+        if (this.unit.automationMode('pilotSkillCheck') !== 'no') {
+            if (turnState.PSRRollsCount() > 0 && turnState.automaticPSRFailure()) {
+                turnState.failPendingPSRChecks();
+            } else {
+                turnState.resolveAutomaticFall();
+            }
+        }
         this.consolidateLocations();
         this.consolidateCrits();
-        const turnState = this.turnState();
+        this.consolidateInventory();
+        turnState.preparePendingCriticalWorkAfterPhaseCommit();
         turnState.resetPSRChecks();
+        turnState.commitEquipmentStateChanges();
+        turnState.completePilotDamagePhase();
     }
 
-    endTurn() {
+    private cleanupEndTurnConditions() {
+        let cleanupDone = false;
+        if (this.hasCondition('tagged')) {
+            this.setCondition('tagged', false);
+            cleanupDone = true;
+        }
+        if (this.hasCondition('skidding')) {
+            this.setCondition('skidding', false);
+            cleanupDone = true;
+        }
+        if (cleanupDone) {
+            this.unit.setModified();
+        }
+    }
+
+    endTurn(phaseAlreadyEnded = false) {
         this.consolidateHeat();
-        this.endPhase();
+        this.cleanupEndTurnConditions();
+        if (!phaseAlreadyEnded) this.endPhase();
     }
 
     override update(data: CBTSerializedState) {
         this.modified.set(data.modified);
         this.destroyed.set(data.destroyed);
-        this.shutdown.set(data.shutdown);
+        this.setConditions(data.conditions ?? []);
+        this.ruleChecks.set({ ...(data.ruleChecks ?? {}) });
         this.heat.set(data.heat);
         if (data.c3Position) {
             this.c3Position.set(Sanitizer.sanitize(data.c3Position, C3_POSITION_SCHEMA));
@@ -167,7 +227,8 @@ export class CBTForceUnitState extends ForceUnitState {
                     || currentLoc.armor !== incomingLoc.armor
                     || currentLoc.internal !== incomingLoc.internal
                     || currentLoc.pendingArmor !== incomingLoc.pendingArmor
-                    || currentLoc.pendingInternal !== incomingLoc.pendingInternal) {
+                    || currentLoc.pendingInternal !== incomingLoc.pendingInternal
+                    || !this.locationConditionsEqual(currentLoc.conditions, incomingLoc.conditions)) {
                     locationsChanged = true;
                     break;
                 }
@@ -179,7 +240,8 @@ export class CBTForceUnitState extends ForceUnitState {
                     if (!incomingKeys.has(key)) {
                         const loc = currentLocations[key];
                         if ((loc.armor ?? 0) !== 0 || (loc.internal ?? 0) !== 0 ||
-                            (loc.pendingArmor ?? 0) !== 0 || (loc.pendingInternal ?? 0) !== 0) {
+                            (loc.pendingArmor ?? 0) !== 0 || (loc.pendingInternal ?? 0) !== 0 ||
+                            (loc.conditions?.length ?? 0) > 0) {
                             locationsChanged = true;
                             break;
                         }
@@ -193,38 +255,55 @@ export class CBTForceUnitState extends ForceUnitState {
         }
 
         // In-place update for critical slots to preserve references.
-        // Incoming crits are sparse: only slots with state (hits, consumed, destroying, destroyed, name override).
+        // Incoming crits are sparse: only slots with state (hits, pendingHits, consumed, destroying, destroyed, name override).
         // Slots not in the incoming data are reset to pristine.
         if (data.crits) {
             const currentCrits = this.crits();
-            const incomingCritMap = new Map(data.crits.map(c => [`${c.loc}-${c.slot}`, c]));
+            const incomingCritMap = new Map(data.crits.map(c => [this.critStateKey(c), c]));
             let critsChanged = false;
 
             for (const existingCrit of currentCrits) {
-                const key = `${existingCrit.loc}-${existingCrit.slot}`;
+                const key = this.critStateKey(existingCrit);
                 const incomingCrit = incomingCritMap.get(key);
 
                 if (incomingCrit) {
                     // Update from incoming state
                     if (existingCrit.hits !== incomingCrit.hits ||
+                        existingCrit.pendingHits !== incomingCrit.pendingHits ||
+                        !this.numberArraysEqual(existingCrit.hitTimestamps, incomingCrit.hitTimestamps) ||
+                        !this.numberArraysEqual(existingCrit.pendingHitTimestamps, incomingCrit.pendingHitTimestamps) ||
+                        existingCrit.destroying !== incomingCrit.destroying ||
                         existingCrit.destroyed !== incomingCrit.destroyed ||
+                        existingCrit.destroyedTurn !== incomingCrit.destroyedTurn ||
                         existingCrit.consumed !== incomingCrit.consumed) {
                         existingCrit.hits = incomingCrit.hits;
+                        existingCrit.pendingHits = incomingCrit.pendingHits;
+                        existingCrit.hitTimestamps = incomingCrit.hitTimestamps;
+                        existingCrit.pendingHitTimestamps = incomingCrit.pendingHitTimestamps;
                         existingCrit.destroying = incomingCrit.destroying;
                         existingCrit.name = incomingCrit.name;
                         existingCrit.originalName = incomingCrit.originalName;
                         existingCrit.destroyed = incomingCrit.destroyed;
+                        existingCrit.destroyedTurn = incomingCrit.destroyedTurn;
                         existingCrit.consumed = incomingCrit.consumed;
                         critsChanged = true;
                     }
                 } else {
                     // Not in incoming data: reset to pristine if it had any state
-                    if ((existingCrit.hits ?? 0) > 0 || existingCrit.destroying !== undefined ||
-                        existingCrit.destroyed !== undefined || (existingCrit.consumed ?? 0) > 0 ||
+                    if ((existingCrit.hits ?? 0) > 0 || (existingCrit.pendingHits ?? 0) !== 0 ||
+                        (existingCrit.hitTimestamps?.length ?? 0) > 0 || (existingCrit.pendingHitTimestamps?.length ?? 0) > 0 ||
+                        existingCrit.destroying !== undefined ||
+                        existingCrit.destroyed !== undefined ||
+                        existingCrit.destroyedTurn !== undefined ||
+                        (existingCrit.consumed ?? 0) > 0 ||
                         existingCrit.originalName !== undefined) {
                         existingCrit.hits = 0;
+                        existingCrit.pendingHits = undefined;
+                        existingCrit.hitTimestamps = undefined;
+                        existingCrit.pendingHitTimestamps = undefined;
                         existingCrit.destroying = undefined;
                         existingCrit.destroyed = undefined;
+                        existingCrit.destroyedTurn = undefined;
                         existingCrit.consumed = undefined;
                         if (existingCrit.originalName) {
                             existingCrit.name = existingCrit.originalName;
@@ -251,27 +330,34 @@ export class CBTForceUnitState extends ForceUnitState {
                 const incoming = incomingMap.get(item.id);
                 if (incoming) {
                     // Apply incoming state
-                    if (item.destroyed !== incoming.destroyed) {
-                        item.destroyed = incoming.destroyed;
+                    if (item.setCommittedDestroyed(incoming.destroyed)) {
                         inventoryChanged = true;
                     }
-                    if (item.consumed !== incoming.consumed) {
-                        item.consumed = incoming.consumed;
+                    if (item.setPendingDestroyed(incoming.destroying)) {
+                        inventoryChanged = true;
+                    }
+                    if (item.consumed !== incoming.consumed || item.ammo !== incoming.ammo
+                        || item.totalAmmo !== incoming.totalAmmo) {
+                        item.setAmmoState({
+                            consumed: incoming.consumed,
+                            ammo: incoming.ammo,
+                            totalAmmo: incoming.totalAmmo,
+                        });
                         inventoryChanged = true;
                     }
                     if (incoming.states !== undefined) {
-                        item.states = new Map(incoming.states.map(s => [s.name, s.value]));
+                        item.replaceStates(new Map(incoming.states.map(s => [s.name, s.value])));
                         inventoryChanged = true;
                     }
                 } else {
                     // Not in incoming: reset to pristine if it had state
-                    if (item.destroyed || (item.consumed ?? 0) > 0 ||
+                    if (item.committedDestroyed() || item.hasPendingDestroyedChange() || (item.consumed ?? 0) > 0 ||
+                        (item.ammo !== undefined && item.ammo !== item.name) ||
                         (item.states && item.states.size > 0 && Array.from(item.states.values()).some(v => v !== ''))) {
-                        item.destroyed = undefined;
-                        item.consumed = undefined;
-                        if (item.states) {
-                            item.states.forEach((_v, k) => item.states!.set(k, ''));
-                        }
+                        item.setCommittedDestroyed(undefined);
+                        item.setPendingDestroyed(undefined);
+                        item.setAmmoState({ consumed: undefined, ammo: undefined, totalAmmo: undefined });
+                        item.clearStateValues();
                         inventoryChanged = true;
                     }
                 }
@@ -282,25 +368,35 @@ export class CBTForceUnitState extends ForceUnitState {
             }
         }
 
-        const crewMap = new Map(this.crew().map(c => [c.getId(), c]));
-        const incomingCrewIds = new Set(data.crew.map(c => c.id));
+        // BCE-EDIT (REBASE-1 P1, ruling #7 / ORDER-9 H20): `data.crew.map` is UNGUARDED upstream — a malformed
+        // live state (e.g. a crewless `{}` from a buggy/hostile client; ws-validate gates it as a JSON object,
+        // not its shape) throws here, inside the loader. BCE's BattleForceService.entryFor already confines the
+        // blast to one broken sheet (never a CD-loop hang), but this guards the loader itself: a state with no
+        // crew array leaves the crew untouched instead of throwing. Transparent when `data.crew` is present.
+        // The witness is battle-force.service.spec.ts + the E2E broken-sheet proofs (h20-demo / claimrecovery C13).
+        if (Array.isArray(data.crew)) {
+            const crewMap = new Map(this.crew().map(c => [c.getId(), c]));
+            const incomingCrewIds = new Set(data.crew.map(c => c.id));
 
-        // Remove crew members that are no longer present
-        const crewToRemove = this.crew().filter(c => !incomingCrewIds.has(c.getId()));
-        if (crewToRemove.length > 0) {
-            this.crew.update(crew => crew.filter(c => incomingCrewIds.has(c.getId())));
-        }
-
-        // Update existing crew and add new ones
-        const updatedCrew = data.crew.map(crewData => {
-            const crewMember = crewMap.get(crewData.id);
-            if (crewMember) {
-                crewMember.update(crewData);
-                return crewMember;
+            // Remove crew members that are no longer present
+            const crewToRemove = this.crew().filter(c => !incomingCrewIds.has(c.getId()));
+            if (crewToRemove.length > 0) {
+                this.crew.update(crew => crew.filter(c => incomingCrewIds.has(c.getId())));
             }
-            return CrewMember.deserialize(crewData, this.unit);
-        });
-        this.crew.set(updatedCrew);
+
+            // Update existing crew and add new ones
+            const updatedCrew = data.crew.map(crewData => {
+                const crewMember = crewMap.get(crewData.id);
+                if (crewMember) {
+                    crewMember.update(crewData);
+                    return crewMember;
+                }
+                return CrewMember.deserialize(crewData, this.unit);
+            });
+            this.crew.set(updatedCrew);
+        }
+        this.turnState().capturePassiveHeatSourceBaseline();
+        this.turnState().update(data.turnState);
     }
 
     /**
@@ -318,7 +414,8 @@ export class CBTForceUnitState extends ForceUnitState {
         const result: Record<string, LocationData> = {};
         for (const [key, loc] of Object.entries(locations)) {
             if ((loc.armor ?? 0) !== 0 || (loc.internal ?? 0) !== 0 ||
-                (loc.pendingArmor ?? 0) !== 0 || (loc.pendingInternal ?? 0) !== 0) {
+                (loc.pendingArmor ?? 0) !== 0 || (loc.pendingInternal ?? 0) !== 0 ||
+                (loc.conditions?.length ?? 0) > 0) {
                 result[key] = loc;
             }
         }
@@ -329,12 +426,86 @@ export class CBTForceUnitState extends ForceUnitState {
         return this.crits()
             .filter(crit =>
                 (crit.hits ?? 0) > 0 ||
+                (crit.pendingHits ?? 0) !== 0 ||
+                (crit.hitTimestamps?.length ?? 0) > 0 ||
+                (crit.pendingHitTimestamps?.length ?? 0) > 0 ||
                 (crit.consumed ?? 0) > 0 ||
                 (crit.originalName !== undefined && crit.originalName !== crit.name) ||
                 crit.destroying ||
                 crit.destroyed
             )
             .map(({ el, eq, ...rest }) => rest);
+    }
+
+    private critStateKey(crit: CriticalSlot): string {
+        return crit.loc !== undefined && crit.slot !== undefined
+            ? `slot:${crit.loc}-${crit.slot}`
+            : `loc:${crit.id || crit.name || ''}`;
+    }
+
+    private consolidateCritHitTimestamps(crit: CriticalSlot): void {
+        if (!crit.hitTimestamps && !crit.pendingHitTimestamps) return;
+
+        const committedCount = Math.max(0, crit.hits ?? 0);
+        const committed = this.normalizedTimestamps(crit.hitTimestamps, committedCount, crit.destroyed);
+        const pendingHits = crit.pendingHits ?? 0;
+        if (pendingHits > 0) {
+            const pending = this.normalizedTimestamps(crit.pendingHitTimestamps, pendingHits, Date.now());
+            crit.hitTimestamps = [...committed, ...pending].sort((a, b) => a - b);
+        } else if (pendingHits < 0) {
+            crit.hitTimestamps = committed.slice(0, Math.max(0, committed.length + pendingHits));
+        }
+    }
+
+    private normalizedTimestamps(timestamps: number[] | undefined, count: number, fallback: number | undefined): number[] {
+        const normalized = (timestamps ?? [])
+            .filter(timestamp => Number.isFinite(timestamp))
+            .sort((a, b) => a - b)
+            .slice(0, Math.max(0, count));
+        const missing = Math.max(0, count - normalized.length);
+        const start = normalized[normalized.length - 1] ?? fallback ?? 0;
+        return missing === 0
+            ? normalized
+            : [...normalized, ...Array.from({ length: missing }, (_value, index) => start + index + 1)];
+    }
+
+    private numberArraysEqual(left: number[] | undefined, right: number[] | undefined): boolean {
+        const leftValues = left ?? [];
+        const rightValues = right ?? [];
+        return leftValues.length === rightValues.length && leftValues.every((value, index) => value === rightValues[index]);
+    }
+
+    private locationConditionsEqual(left: SerializedCondition[] | undefined, right: SerializedCondition[] | undefined): boolean {
+        const leftValues = left ?? [];
+        const rightValues = right ?? [];
+        return leftValues.length === rightValues.length
+            && leftValues.every((value, index) => JSON.stringify(value) === JSON.stringify(rightValues[index]));
+    }
+
+    private hasPendingLocationConditions(conditions: SerializedCondition[] | undefined): boolean {
+        return Array.from(conditionsMapFromSerialization(conditions).values()).some(data => data?.pending === true);
+    }
+
+    private consolidateLocationConditions(conditions: SerializedCondition[] | undefined): SerializedCondition[] | undefined {
+        return this.normalizePendingLocationConditions(conditions, true);
+    }
+
+    private discardPendingLocationConditions(conditions: SerializedCondition[] | undefined): SerializedCondition[] | undefined {
+        return this.normalizePendingLocationConditions(conditions, false);
+    }
+
+    private normalizePendingLocationConditions(conditions: SerializedCondition[] | undefined, commit: boolean): SerializedCondition[] | undefined {
+        const result = conditionsMapFromSerialization(conditions);
+        for (const [key, data] of result) {
+            if (data?.pending !== true) continue;
+            if (commit) {
+                result.set(key, committedConditionData(data));
+            } else {
+                result.delete(key);
+            }
+        }
+        const serialized = conditionsForSerialization(result);
+        return serialized.length > 0 ? serialized : undefined;
     }
 
     /**
@@ -346,13 +517,20 @@ export class CBTForceUnitState extends ForceUnitState {
         const inventory = this.inventory();
         const serializedData: SerializedInventory[] = [];
         for (const item of inventory) {
+            if (item.intrinsicOneShotAmmo) continue;
             const hasStates = item.states !== undefined && item.states.size > 0 
                 && Array.from(item.states.values()).some(v => v !== '');
-            if (item.destroyed || (item.consumed ?? 0) > 0 || hasStates) {
+            const hasCustomAmmo = item.ammo !== undefined && item.ammo !== item.name;
+            const committedDestroyed = item.committedDestroyedState();
+            const pendingDestroyed = item.pendingDestroyed();
+            if (committedDestroyed || pendingDestroyed !== undefined || (item.consumed ?? 0) > 0 || hasCustomAmmo || hasStates) {
                 serializedData.push({
                     id: item.id,
-                    ...(item.destroyed && { destroyed: item.destroyed }),
+                    ...(committedDestroyed && { destroyed: committedDestroyed }),
+                    ...(pendingDestroyed !== undefined && { destroying: pendingDestroyed }),
                     ...((item.consumed ?? 0) > 0 && { consumed: item.consumed }),
+                    ...(hasCustomAmmo && { ammo: item.ammo }),
+                    ...(((item.consumed ?? 0) > 0 || hasCustomAmmo) && item.totalAmmo !== undefined && { totalAmmo: item.totalAmmo }),
                     ...(hasStates && { 
                         states: Array.from(item.states!.entries()).map(([name, value]) => ({ name, value })) 
                     })
@@ -363,46 +541,33 @@ export class CBTForceUnitState extends ForceUnitState {
     }
 
     deserializeInventory(serializedInventory: SerializedInventory[]) {
-        const allEquipment = this.unit.getAvailableEquipment();
         const inventory: MountedEquipment[] = [];
         const existingInventory = this.inventory();
         serializedInventory.forEach(entry => {
             const existingItem = existingInventory.find(item => item.id === entry.id);
-            // Ensure newItem is always initialized to avoid "used before assigned" errors.
-            // If we have an existing item, clone it; otherwise create a minimal placeholder and cast to MountedEquipment.
             let newItem: MountedEquipment;
             if (existingItem) {
-                newItem = { ...existingItem } as MountedEquipment;
+                newItem = existingItem.clone();
             } else {
                 // id comes in the format of name@loc#slot, we grab the name
                 const name = entry.id.split('@')[0];
-                newItem = {
+                newItem = new MountedEquipment({
                     owner: this.unit,
                     id: entry.id,
                     name: name,
                     states: new Map<string, string>(),
-                }
+                });
             }
-            if (entry.destroyed !== undefined) {
-                newItem.destroyed = entry.destroyed;
-            }
+            newItem.setCommittedDestroyed(entry.destroyed);
             if (entry.states !== undefined) {
-                newItem.states = new Map(entry.states.map(s => [s.name, s.value]));
+                newItem.replaceStates(new Map(entry.states.map(s => [s.name, s.value])));
             }
-            if (entry.ammo !== undefined) {
-                newItem.ammo = entry.ammo;
-            }
-            if (entry.totalAmmo !== undefined) {
-                newItem.totalAmmo = entry.totalAmmo;
-            }
-            if (entry.consumed !== undefined) {
-                newItem.consumed = entry.consumed;
-            }
-            if (allEquipment && newItem.name && !newItem.equipment) {
-                if (allEquipment) {
-                    const equipment = allEquipment[newItem.name];
-                    newItem.equipment = equipment;
-                }
+            newItem.setAmmoState({ ammo: entry.ammo, totalAmmo: entry.totalAmmo, consumed: entry.consumed });
+            newItem.setPendingDestroyed(entry.destroying);
+            if (newItem.name && !newItem.equipment) {
+                newItem = newItem.clone({
+                    equipment: this.unit.getEquipmentRegistry().findEquipment(newItem.name) ?? undefined,
+                });
             }
             inventory.push(newItem);
         });

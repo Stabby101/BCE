@@ -1,47 +1,18 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { Injectable, inject, signal } from '@angular/core';
 import { WsService } from './ws.service';
 import { UserStateService } from './userState.service';
 import { DbService, type PublicTagData, type TagEntry, type TagOp } from './db.service';
 import { LoggerService } from './logger.service';
-import type { Unit, PublicTagInfo } from '../models/units.model';
+import type { UnitSummary, PublicTagInfo } from '../models/unit-summary.model';
 import { TagsService } from './tags.service';
 import { DialogsService } from './dialogs.service';
+import { naturalCompare } from '../utils/sort.util';
 
 /*
- * Author: Drake
  *
  * Service for managing public tags from other users.
  * Handles temporary imports and permanent subscriptions.
@@ -147,6 +118,10 @@ function applyOpsToPublicTag(data: PublicTagData, ops: TagOp[], tagName: string)
             }
         }
     }
+}
+
+function comparePublicTags(left: PublicTagData, right: PublicTagData): number {
+    return naturalCompare(left.tagName, right.tagName) || naturalCompare(left.publicId, right.publicId);
 }
 
 @Injectable({
@@ -596,20 +571,20 @@ export class PublicTagsService {
         return [
             ...Array.from(this.temporaryTags.values()),
             ...Array.from(this.subscribedTags.values())
-        ];
+        ].sort(comparePublicTags);
     }
 
     /**
      * Get all subscribed tags
      */
     public getSubscribedTags(): PublicTagData[] {
-        return Array.from(this.subscribedTags.values());
+        return Array.from(this.subscribedTags.values()).sort(comparePublicTags);
     }
 
     /**
      * Get public tag info for a specific unit
      */
-    public getPublicTagsForUnit(unit: Unit): PublicTagInfo[] {
+    public getPublicTagsForUnit(unit: UnitSummary): PublicTagInfo[] {
         const result: PublicTagInfo[] = [];
         const chassisKey = TagsService.getChassisTagKey(unit);
 
@@ -674,7 +649,7 @@ export class PublicTagsService {
         for (const tagData of this.getAllPublicTags()) {
             names.add(tagData.tagName);
         }
-        return Array.from(names);
+        return Array.from(names).sort(naturalCompare);
     }
 
     /**

@@ -14,7 +14,7 @@ import { NewCampaignState } from '../../new-campaign-state';
 import { CampaignSaveStore } from '../../campaign-save-store';
 import { StarSystemsService } from '../../star/star-systems.service';
 import { ForgePackService } from '../../mission/forge-pack.service';
-import { HotSpotsCatalogService, type CatalogHotSpot, type HotSpot, type HotSpotNamedCharacter } from '../hotspots-catalog';
+import { HotSpotsCatalogService, factionHiresMercenaries, type CatalogHotSpot, type HotSpot, type HotSpotNamedCharacter } from '../hotspots-catalog'; // ERA-1 — factionHiresMercenaries
 import { MulAllowlistService, hsFactionToMulFaction } from '../mul-allowlist.service';
 import { DataService } from '../../../services/data.service';
 import { resolveMekbayEraId } from '../../faction/faction-select';
@@ -181,7 +181,7 @@ export class HsForgeService {
         // 2. CONFLICT PAIR (D-102 oracle + archetype whitelist; world-local preference — soft, wave)
         const localFactions = new Set(this.star.systemsInRange(world.system.id, LOCAL_PAIR_RADIUS_LY)
             .map((s) => this.star.ownerAt(s, era.wizardEraId)).filter((o): o is string => !!o));
-        const pairCtx: PairCtx = { era, adjacency: this.star.factionAdjacency(era.wizardEraId), factionOk, mulOk, isClanFaction: (n) => /clan/i.test(n), localFactions, rng };
+        const pairCtx: PairCtx = { era, adjacency: this.star.factionAdjacency(era.wizardEraId), factionOk, mulOk, isClanFaction: (n) => /clan/i.test(n), localFactions, hiresMercs: factionHiresMercenaries, rng }; // ERA-1 — Clans don't hire
         const pair = pickConflictPair(world.owner, corpus.employers.archetypes, pairCtx);
         if (!pair) return { hotspot: {} as HotSpot, errors: [`no legal conflict pair for owner '${world.owner}'`] };
 
@@ -241,7 +241,11 @@ export class HsForgeService {
         const synopsis = buildSynopsis(corpus.synopsis, world.system.localeAttrs.settlement, world.system.localeAttrs.regionRole, fills, rng);
         const antagonists = this.castAntagonists(pair.b.employerFaction, mercBoth ? (sharedOrg as string) : dressB.org, pair.a.employerFaction, employerName, region?.id ?? null, era, rng);
         const brief = buildMissionBrief(corpus.dressing, donor.complications ?? [], terms.intensity, terms.scale, fills, antagonists, rng);
-        const sides = buildSides(pair, rootRole, title, typeString, terms, dressA, dressB);
+        const bothSides = buildSides(pair, rootRole, title, typeString, terms, dressA, dressB);
+        // ERA-1 (ruling 2) — a Clan that does not hire mercenaries is never offered as a side to fight FOR: the hot
+        // spot ships side A only (`singleSided`), the Clan stays the enemy. An IS/hiring enemy keeps both sides.
+        const singleSided = !factionHiresMercenaries(pair.b.faction);
+        const sides = singleSided ? { a: bothSides.a } : bothSides;
 
         // 7. ASSEMBLE + SLOT-FILL BAKE (C11 — one deep fill; downstream renders literal content)
         const npcNames: Record<string, string> = {};
@@ -268,6 +272,7 @@ export class HsForgeService {
             systemProfile: profileFor(corpus.worldFacts.facts[world.system.id], era, ERA_YEARS),
             situation: synopsis,
             contract: terms.a, missionBrief: brief, tracks, sides,
+            ...(singleSided ? { singleSided: true } : {}), // ERA-1 — the flag every consumer already honors (resolveSides / resolve mode)
             era: era.chamberTag, region: region?.id ?? null,
             forged: true, systemId: world.system.id, // C14 internal provenance + C16 id-join (both additive)
         };
@@ -414,10 +419,11 @@ export class HsForgeService {
             forge: (seedKey: string, regionId?: string | null): Promise<CatalogHotSpot> => this.forgeIntoCampaign(seedKey, regionId),
             topUp: (floor?: number): Promise<number> => this.topUpChamber(floor),
             prune: (): number => this.pruneForged(),
-            list: (): { id: string; title: string; era?: string; region?: string | null; oppFaction?: string; commanderNpcId?: string }[] =>
+            list: (): { id: string; title: string; era?: string; region?: string | null; oppFaction?: string; employerFaction?: string; singleSided?: boolean; commanderNpcId?: string }[] =>
                 (this.state.forgedHotSpots() ?? []).map((h) => ({
                     id: h.id, title: h.title, era: h.era, region: h.region,
-                    oppFaction: h.sides?.b.faction,
+                    oppFaction: h.sides?.b?.faction ?? h.sides?.a.contract.enemyFaction, // ERA-1 — single-sided: the enemy is side A's authored enemyFaction
+                    employerFaction: h.sides?.a.faction, singleSided: !!h.singleSided,
                     commanderNpcId: (h.missionBrief?.namedCharacters ?? []).find((c) => c.role.startsWith('Opposing commander'))?.npcId,
                 })),
             count: (): number => (this.state.forgedHotSpots() ?? []).length,

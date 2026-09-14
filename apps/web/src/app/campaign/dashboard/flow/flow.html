@@ -1,17 +1,20 @@
 @if (variant() === 'rail') {
     <!-- DIRECTIVE-119 P2 — the Hot Spots top-of-sheet PROCESS RAIL: the mission lifecycle as a spine, locked-until-earned
          (blocked = ahead of the earned frontier = non-navigating; done/pending = at/behind = clickable, back-free). -->
-    <nav class="prail" aria-label="Campaign process rail">
+    <nav class="prail" aria-label="Campaign process rail" #prail>
         @for (s of hsRail(); track s.key) {
             <button type="button" class="pr-step st-{{ s.status }}" [class.is-next]="s.key === hsRailNext()"
                     [disabled]="s.status === 'blocked'" [attr.data-step]="s.key" [attr.data-status]="s.status"
                     (click)="railStep(s)" [attr.aria-label]="s.name + ' — ' + s.status + (s.key === hsRailNext() ? ', do this next' : '')">
                 <span class="pr-ico" aria-hidden="true">@switch (s.status) { @case ('done') { ✓ } @case ('blocked') { ▢ } @default { @if (s.key === hsRailNext()) { ▶ } @else { ◉ } } }</span>
                 <span class="pr-name">{{ s.name }}</span>
+                @if (s.badge) { <span class="pr-badge" data-testid="pr-badge" [attr.aria-label]="s.badge + ' damaged'">{{ s.badge }}</span> }
             </button>
             @if (!$last) { <span class="pr-sep" aria-hidden="true">›</span> }
         }
     </nav>
+    <!-- PD3 P3 (PD3-10) — the current phase in words, always on screen (the strip may be scrolled off it) -->
+    @if (railPhase(); as ph) { <div class="pr-phase" data-testid="pr-phase" [attr.data-step]="ph.key">PHASE: <b>{{ ph.name }}</b> — {{ ph.next }}</div> }
 } @else {
 @if (isEmpty()) {
     <div class="fl-head"><div class="ph">Campaign flow</div></div>

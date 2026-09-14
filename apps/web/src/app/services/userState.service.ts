@@ -1,80 +1,80 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import { computed, inject, Injectable, signal, type viewChild } from '@angular/core';
-import { generateUUID } from './ws.service';
-import type { Options } from '../models/options.model';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { DbService, type UserData } from './db.service';
 import { LoggerService } from './logger.service';
+import type { AvailableAuthProvider, LinkedOAuthProvider, UserStateSnapshot } from '../models/account-auth.model';
+import { uuidv4 } from '../utils/uuid.util';
+import { normalizeDisplayName } from '../utils/display-name.util';
 
-/*
- * Author: Drake
- */
+
 @Injectable({ providedIn: 'root' })
 export class UserStateService {
     public isRegistered = signal<boolean>(false);
     private dbService = inject(DbService);
     private logger = inject(LoggerService);
     private userData = signal<UserData>({ uuid: '' });
+    private availableAuthProvidersState = signal<AvailableAuthProvider[]>([]);
+    private readonly initPromise: Promise<void>;
     public uuid = computed<string>(() => this.userData().uuid);
     public publicId = computed<string | undefined>(() => this.userData().publicId);
+    public displayName = computed<string | undefined>(() => this.userData().displayName);
+    public hasOAuth = computed<boolean>(() => this.userData().hasOAuth ?? ((this.userData().oauthProviders?.length ?? 0) > 0));
+    public oauthProviderCount = computed<number>(() => this.userData().oauthProviderCount ?? (this.userData().oauthProviders?.length ?? 0));
+    public oauthProviders = computed<LinkedOAuthProvider[]>(() => this.userData().oauthProviders || []);
+    public accountProtectionPromptDismissed = computed<boolean>(() => this.userData().accountProtectionPromptDismissed === true);
+    public availableAuthProviders = computed<AvailableAuthProvider[]>(() => this.availableAuthProvidersState());
 
     constructor() {
-        this.initUserData();
+        this.initPromise = this.initUserData();
+    }
+
+    private createResetUserData(uuid: string): UserData {
+        const current = this.userData();
+        const nextData: UserData = { uuid };
+        if (current.tabSubs) {
+            nextData.tabSubs = [...current.tabSubs];
+        }
+        if (current.displayName) {
+            nextData.displayName = current.displayName;
+        }
+        return nextData;
+    }
+
+    private async persistUserData(nextData: UserData): Promise<void> {
+        this.userData.set({ ...nextData });
+        this.isRegistered.set(Boolean(nextData.publicId));
+        await this.dbService.saveUserData(nextData);
     }
     
     async initUserData() {
         const userData = await this.dbService.getUserData();
         if (userData) {
             this.userData.set(userData);
+            this.isRegistered.set(Boolean(userData.publicId));
             this.logger.info(`User publicId: ${userData.publicId ?? 'not set'}`);
-            return;
-        }
-        // Fallback for older versions that didn't have a user table
-        const options = await this.dbService.getOptions();
-        if (options && options.uuid) {
-            const newUserData = <UserData>{ uuid: options.uuid };
-            this.userData.set(newUserData);
-            await this.dbService.saveUserData(newUserData);
             return;
         }
         // No user data? We generate it anew
         await this.createNewUUID();
     }
 
+    public whenReady(): Promise<void> {
+        return this.initPromise;
+    }
+
     public async createNewUUID(): Promise<UserData> {
-        const uuid = generateUUID();
-        this.setUuid(uuid);
+        const uuid = uuidv4();
+        await this.setUuid(uuid);
+        return this.userData();
+    }
+
+    public async createFreshSession(): Promise<UserData> {
+        const nextUserData: UserData = { uuid: uuidv4() };
+        this.availableAuthProvidersState.set([]);
+        await this.persistUserData(nextUserData);
         return this.userData();
     }
 
@@ -83,15 +83,11 @@ export class UserStateService {
         if (trimmed.length < 10 || trimmed.length > 40) {
             throw new Error('User Identifier must be between 10 and 40 characters long.');
         }
-        let userData = this.userData();
-        if (!userData) {
-            // Create new user data with the given UUID
-            userData = <UserData>{ uuid: trimmed };
-        } else {
-            userData.uuid = trimmed;
-        }
-        this.userData.set({ ...userData });
-        await this.dbService.saveUserData(userData);
+        const currentUuid = this.userData().uuid;
+        const nextUserData = currentUuid === trimmed
+            ? { ...this.userData(), uuid: trimmed }
+            : this.createResetUserData(trimmed);
+        await this.persistUserData(nextUserData);
     }
 
     /**
@@ -104,9 +100,69 @@ export class UserStateService {
             return;
         }
         userData.publicId = publicId;
-        this.userData.set({ ...userData });
-        await this.dbService.saveUserData(userData);
+        await this.persistUserData(userData);
         this.logger.info(`User publicId updated: ${publicId}`);
+    }
+
+    public async setDisplayName(value: string): Promise<void> {
+        const displayName = normalizeDisplayName(value);
+        if (!displayName) {
+            throw new Error('Display name must be 1 to 16 characters.');
+        }
+        if (this.userData().displayName === displayName) return;
+        await this.persistUserData({ ...this.userData(), displayName });
+    }
+
+    public async dismissAccountProtectionPrompt(): Promise<void> {
+        if (this.accountProtectionPromptDismissed()) {
+            return;
+        }
+
+        await this.persistUserData({
+            ...this.userData(),
+            accountProtectionPromptDismissed: true,
+        });
+    }
+
+    public async applyServerState(snapshot: UserStateSnapshot): Promise<void> {
+        const nextUserData = { ...this.userData() };
+
+        if ('publicId' in snapshot) {
+            if (snapshot.publicId) {
+                nextUserData.publicId = snapshot.publicId;
+            } else {
+                delete nextUserData.publicId;
+            }
+        }
+
+        const displayName = normalizeDisplayName(snapshot.displayName);
+        if (displayName) {
+            nextUserData.displayName = displayName;
+        }
+
+        if ('hasOAuth' in snapshot) {
+            nextUserData.hasOAuth = snapshot.hasOAuth;
+        }
+
+        if ('oauthProviderCount' in snapshot) {
+            nextUserData.oauthProviderCount = snapshot.oauthProviderCount;
+        }
+
+        if (nextUserData.hasOAuth === true) {
+            nextUserData.accountProtectionPromptDismissed = true;
+        } else if ('accountProtectionPromptDismissed' in snapshot) {
+            nextUserData.accountProtectionPromptDismissed = snapshot.accountProtectionPromptDismissed === true;
+        }
+
+        if (Array.isArray(snapshot.oauthProviders)) {
+            nextUserData.oauthProviders = snapshot.oauthProviders;
+        }
+
+        if (Array.isArray(snapshot.availableAuthProviders)) {
+            this.availableAuthProvidersState.set(snapshot.availableAuthProviders);
+        }
+
+        await this.persistUserData(nextUserData);
     }
 
 }

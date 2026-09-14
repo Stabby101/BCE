@@ -11,10 +11,12 @@
  * authoritative, DATA-001). Side gates which units appear (ROLE-002). Campaign-layer only; the live
  * sync wires AROUND MekBay's sheet (MERGE-002 one-way).
  */
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
+import { sessionPhase } from '../campaign/chaos/chaos-contract'; // PD3 P2 — the session phase
 import { NewCampaignState } from '../campaign/new-campaign-state';
 import { CampaignSaveStore } from '../campaign/campaign-save-store';
+import { PlayerSessionService } from './player-session.service'; // ORDER-3 H17 — the retained-view flag
 import { ClaimRealtimeService } from '../campaign/claims/claim-realtime.service';
 import { engagementKeyOf } from '../campaign/claims/engagement-key';
 import { BattleForceService, type Side, type BattleEntry } from '../campaign/battle/battle-force.service';
@@ -26,14 +28,18 @@ import { PlayerBriefingComponent } from './player-briefing';
 import { BceUnitSpriteComponent } from '../campaign/sprite/unit-sprite';
 import { SwipeDirective, type SwipeEndEvent } from '../directives/swipe.directive';
 import { ZoomPanDirective } from '../directives/zoom-pan.directive';
+import { CBTPhaseResolutionService } from '../services/cbt-phase-resolution.service'; // REBASE-1 P3 item 1 — the pin's per-unit END PHASE (fans the consolidated damage)
+import { SessionNoticeComponent } from './session-notice'; // GM-3 P0 — the session-clock notice (every joined device, this screen too)
+import { OptionsService } from '../services/options.service'; // REBASE-1 P3 item 4 — MekBay's viewer options, exposed player-scoped (no pin dialog on the player, DIRECTIVE-048)
+import type { Options } from '../models/options.model';
 
-type OverlayKind = 'teammates' | 'doctrine' | 'briefing';
+type OverlayKind = 'teammates' | 'doctrine' | 'briefing' | 'settings';
 
 @Component({
     selector: 'bce-player-sheet',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [BattleForceService],
-    imports: [BattleSheetComponent, SheetViewComponent, PlayerOverlayComponent, PlayerBriefingComponent, BceUnitSpriteComponent, SwipeDirective, ZoomPanDirective],
+    imports: [BattleSheetComponent, SheetViewComponent, PlayerOverlayComponent, PlayerBriefingComponent, BceUnitSpriteComponent, SwipeDirective, ZoomPanDirective, SessionNoticeComponent], // GM-3 P0
     template: `
         <div class="ps" [class.blu]="side() === 'BLUFOR'" [class.opf]="side() === 'OPFOR'">
             <header class="pshead">
@@ -45,6 +51,8 @@ type OverlayKind = 'teammates' | 'doctrine' | 'briefing';
                 <div class="pswho"><span class="psside">{{ side() }}</span> · {{ name() || 'Player' }}</div>
                 <div class="psconn" [class.on]="connected()">{{ connected() ? '● live' : '○ offline' }}</div>
             </header>
+            <!-- GM-3 P0 — the session-clock notice (self-gated; flex:0 0 auto by its host block — the sheet body keeps its flex:1) -->
+            <bce-session-notice />
 
             @if (mine().length === 0) {
                 <div class="psempty">
@@ -52,7 +60,10 @@ type OverlayKind = 'teammates' | 'doctrine' | 'briefing';
                     <button type="button" class="psbtn" (click)="toRoster()">Go to the roster →</button>
                 </div>
             } @else {
-                <div class="ps-main">
+                <!-- ORDER-3 H17 — the GM resolved; this is the RETAINED last view. The sheet stays visible, read-only: the
+                     sheet body takes no pointer input until the next deploy replaces the view. -->
+                @if (session.resolvedView()) { <div class="psresolved" data-testid="ps-resolved" [attr.data-server-closed]="session.serverClosed()">{{ session.serverClosed() ? 'Resolved — the GM closed this engagement' : 'Resolved — awaiting the next deploy' }} · this sheet is read-only</div> }
+                <div class="ps-main" [class.resolved]="session.resolvedView()">
                     <!-- D-052/054: the unit-cycle band. On-sheet swipe is architecturally blocked — MekBay's
                          svg-interaction.service captures pointerdown (preventDefault/stopPropagation/setPointerCapture)
                          for the radial picker, so a sheet-body swipe never reaches us, and we do NOT edit its core
@@ -71,19 +82,40 @@ type OverlayKind = 'teammates' | 'doctrine' | 'briefing';
                         <div class="ps-zoom" bceZoomPan #zp="zoomPan">
                             @switch (e.status) {
                                 @case ('ok') { <bce-battle-sheet [fu]="e.fu ?? null" [phaseOverlay]="true" /> }
-                                @case ('missing') { <div class="psnote">Unit not in the catalog — sheet unavailable.</div> }
-                                @case ('error') { <div class="psnote">Sheet failed to load: {{ e.error }}</div> }
+                                @case ('missing') { <div class="psnote" data-testid="ps-broken">Unit not in the catalog — sheet unavailable. <button type="button" class="psretry" data-testid="ps-retry" (click)="retry(e)">Retry</button></div> }
+                                @case ('error') { <div class="psnote" data-testid="ps-broken">Sheet failed to load: {{ e.error }} <button type="button" class="psretry" data-testid="ps-retry" (click)="retry(e)">Retry</button></div> }
                                 @default { <div class="psnote">Loading sheet…</div> }
                             }
                         </div>
                         <!-- HOTFIX-035: explicit zoom controls (reliable, like MekBay's). Pinch + two-finger drag
                              also work; single-finger taps still commit damage. -->
+                        <!-- S58 (2026-09-12): ⊙ is DOM-FIRST. The cluster is a bottom-anchored column, so a button appended at the END pushed + and −
+                             UP by 50 px the moment the sheet zoomed — a double-tap on + landed on − and un-zoomed (the P5 harness measured it).
+                             Appended at the TOP, ⊙ grows the cluster upward and + / − never move; the P5 harness asserts the + centre. -->
                         <div class="ps-zoomctl">
+                            @if (zp.zoomed()) { <button type="button" class="fit" (click)="zp.reset()" aria-label="Fit to screen">⊙</button> }
                             <button type="button" (click)="zp.zoomIn()" aria-label="Zoom in">+</button>
                             <button type="button" (click)="zp.zoomOut()" aria-label="Zoom out">−</button>
-                            @if (zp.zoomed()) { <button type="button" class="fit" (click)="zp.reset()" aria-label="Fit to screen">⊙</button> }
                         </div>
                         @if (!connected()) { <div class="psoffline">Host offline — edits are local until the connection returns.</div> }
+                        <!-- REBASE-1 P3 item 1: the pin fans damage ONLY at END PHASE, but the sheet's own END PHASE button
+                             rides the zoom/pan transform and slides off-screen after a pick. This viewport-PINNED banner (like
+                             .ps-zoomctl, outside the transform) makes ending the phase reachable at 375×812 and names the stake. -->
+                        @if (pendingPhaseCount() > 0) {
+                            <div class="ps-endphase" data-testid="ps-endphase">
+                                <span class="pe-hint">{{ pendingPhaseCount() }} unit{{ pendingPhaseCount() === 1 ? '' : 's' }} with unshared damage — not sent to the table until you end the phase.</span>
+                                <button type="button" class="pe-btn" data-testid="ps-endphase-btn" (click)="endPlayerPhase()">END PHASE</button>
+                            </div>
+                        }
+                        <!-- REBASE-1 P3 item 2: the to-hit (weapon Targets) button lives inside the overlay, which rides the
+                             .ps-zoom transform and slides off-screen after a pick. This viewport-PINNED trigger (left-centre,
+                             clear of the heat column at right, the zoom cluster and the END PHASE banner at the bottom) reaches
+                             the pin's openTargets; the TN calculator opens as a document-root CDK overlay, viewport-fixed. -->
+                        @if (battleSheet()?.toHitReady()) {
+                            <button type="button" class="ps-tohit" data-testid="ps-tohit" aria-label="Targets — to-hit calculator" title="Targets — to-hit" (click)="openToHit($event)">
+                                <svg aria-hidden="true" stroke="currentColor" stroke-width="1.5" fill="none" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 1v5M12 18v5M1 12h5M18 12h5"></path></svg>
+                            </button>
+                        }
                     }
 
                     <!-- D-049: zero-gap minimal-touch bar (flush to the sheet footer). Depth explodes from here (T-030). -->
@@ -91,6 +123,7 @@ type OverlayKind = 'teammates' | 'doctrine' | 'briefing';
                         <button type="button" (click)="open('teammates')">Teammates</button>
                         @if (side() === 'OPFOR') { <button type="button" (click)="open('doctrine')">Doctrine</button> }
                         <button type="button" (click)="open('briefing')">Briefing</button>
+                        <button type="button" data-testid="ps-settings-btn" (click)="open('settings')">Settings</button>
                         @if (active(); as e) {
                             <button type="button" class="psfav" [class.on]="isFav()" (click)="toggleFav(e.instanceId)"
                                     [attr.aria-label]="isFav() ? 'Unfavorite' : 'Favorite'">{{ isFav() ? '★' : '☆' }}</button>
@@ -124,6 +157,10 @@ type OverlayKind = 'teammates' | 'doctrine' | 'briefing';
                                 <button type="button" class="ov-back" (click)="teammateId.set(null)">‹ All teammates</button>
                                 <div class="ov-stitle">{{ teammateLabel() }} <span class="ro">read-only</span></div>
                                 @if (teammate()?.fu) { <bce-sheet-view [fu]="teammate()!.fu ?? null" [rev]="teammateRev()" /> }
+                                @else if (teammate() && (teammate()!.status === 'error' || teammate()!.status === 'missing')) {
+                                    <!-- ORDER-9 Commit 1 — a teammate whose load terminated (error/missing) renders the broken-sheet state with the reason (not a perpetual "Loading…"), + Retry (the only path back to pending) -->
+                                    <p class="ov-empty" data-testid="tm-broken">{{ teammate()!.status === 'missing' ? 'Unit not in the catalog — sheet unavailable.' : 'Sheet failed to load: ' + teammate()!.error }} <button type="button" class="psretry" data-testid="tm-retry" (click)="retry(teammate()!)">Retry</button></p>
+                                }
                                 @else { <p class="ov-empty">Loading the teammate sheet…</p> }
                             } @else if (teammates().length === 0) {
                                 <p class="ov-empty">No teammate sheets on your side yet.</p>
@@ -146,7 +183,45 @@ type OverlayKind = 'teammates' | 'doctrine' | 'briefing';
                                 </div>
                             } @else { <p class="ov-empty">No doctrine sketch recorded for this mission.</p> }
                         }
-                        @case ('briefing') { <bce-player-briefing [spec]="missionSpec()" /> }
+                        @case ('briefing') { <bce-player-briefing [spec]="missionSpec()" [phase]="phase()" [result]="lastOutcome()" /> }
+                        @case ('settings') {
+                            <!-- REBASE-1 P3 item 4 (RULED B) — player-scoped viewer options bound to MekBay's OptionsService (option
+                                 NAMES/values identical to the pin's Options dialog, so a phone-set value reads back in the GM's dialog).
+                                 No pin dialog on the player (DIRECTIVE-048). OptionsService self-initialises + persists to IndexedDB, and
+                                 the player's damage picker already reads pickerStyle (svg-interaction) — so "Always Dial" makes the entry the dial. -->
+                            <div class="ov-settings" data-testid="ps-settings">
+                                <div class="ovs-row">
+                                    <label for="ps-opt-picker">Damage entry — picker style</label>
+                                    <select id="ps-opt-picker" data-testid="ps-opt-pickerStyle" class="ovs-select"
+                                        [value]="options.options().pickerStyle" (change)="setOpt('pickerStyle', $event)">
+                                        <option value="default">Automatic (default)</option>
+                                        <option value="radial">Always Dial</option>
+                                        <option value="linear">Always Linear</option>
+                                    </select>
+                                </div>
+                                <div class="ovs-row">
+                                    <label for="ps-opt-colour">Colour scheme</label>
+                                    <select id="ps-opt-colour" data-testid="ps-opt-colorScheme" class="ovs-select"
+                                        [value]="options.options().colorScheme" (change)="setOpt('colorScheme', $event)">
+                                        <option value="default">Default</option>
+                                        <option value="night">Night</option>
+                                    </select>
+                                </div>
+                                <div class="ovs-row">
+                                    <label for="ps-opt-zoomreset">Double-tap zoom reset</label>
+                                    <select id="ps-opt-zoomreset" data-testid="ps-opt-zoomReset" class="ovs-select"
+                                        [value]="options.options().recordSheetDoubleTapZoomReset" (change)="setOpt('recordSheetDoubleTapZoomReset', $event)">
+                                        <option value="contextual">Contextual</option>
+                                        <option value="fit-to-screen">Fit to screen</option>
+                                        <option value="full-width">Full width</option>
+                                        <option value="disabled">Disabled</option>
+                                    </select>
+                                </div>
+                                <label class="ovs-check"><input type="checkbox" data-testid="ps-opt-syncZoom"
+                                    [checked]="options.options().syncZoomBetweenSheets" (change)="setSync($event)"> Sync zoom between sheets</label>
+                                <p class="ovs-note">Your device's MekBay viewer options — saved on this device (shared with the GM's Options dialog).</p>
+                            </div>
+                        }
                     }
                 </bce-player-overlay>
             }
@@ -167,6 +242,9 @@ type OverlayKind = 'teammates' | 'doctrine' | 'briefing';
         .psside { font-weight:800; letter-spacing:.08em; }
         .psconn { font-size:12px; color:#7f8a96; } .psconn.on { color:#7fe3a0; }
         .psempty { text-align:center; color:#8b96a2; padding:48px 16px; }
+        /* ORDER-3 H17 — the resolved banner + the read-only sheet body (no pointer input reaches the record sheet) */
+        .psresolved { flex:0 0 auto; background:#3a2a14; color:#f2d6a6; border-bottom:1px solid #6b4a2f; padding:8px 12px; font-size:13px; text-align:center; }
+        /* the pointer-events rule lives in styles.scss (scoped-global — a component star selector never reaches the record sheet's SVG children) */
         .psbtn { margin-top:10px; background:#2f5a6b; color:#fff; border:none; border-radius:9px; padding:12px 18px; font-size:15px; font-weight:700; cursor:pointer; }
         /* D-051: the unit-column burger (header) + the swipe surface — the top chip row is gone. */
         .psunits { background:#0c0f13; border:1px solid #2a3340; color:#cdd8e3; border-radius:8px; padding:6px 10px; font-size:13px; font-weight:600; cursor:pointer; }
@@ -183,6 +261,30 @@ type OverlayKind = 'teammates' | 'doctrine' | 'briefing';
         .ps-zoomctl button { width:44px; height:44px; border:none; border-radius:22px; font-size:22px; font-weight:700;
                              background:rgba(47,90,107,.92); color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.45); cursor:pointer; }
         .ps-zoomctl button.fit { font-size:18px; background:rgba(35,44,55,.92); }
+        /* REBASE-1 P3 item 1 — the viewport-pinned END PHASE banner (sits beside the zoom controls, clear of them at right:60px). */
+        .ps-endphase { position:absolute; left:8px; right:60px; bottom:8px; z-index:45; display:flex; align-items:center; gap:8px;
+                       background:rgba(20,26,33,.96); border:1px solid #a5843d; border-radius:10px; padding:8px 10px; box-shadow:0 4px 14px rgba(0,0,0,.4); }
+        .ps-endphase .pe-hint { flex:1; min-width:0; font-size:12px; line-height:1.3; color:#e8c98a; }
+        .ps-endphase .pe-btn { flex:0 0 auto; min-height:44px; padding:0 16px; background:#2f6b46; color:#fff; border:none;
+                               border-radius:8px; font-size:15px; font-weight:700; letter-spacing:.04em; cursor:pointer; }
+        .ps-endphase .pe-btn:hover { background:#377d52; }
+        /* REBASE-1 P3 item 2 — the viewport-pinned to-hit (Targets) trigger. Left edge, vertically centred: clear of
+           the top swipe bar, the bottom zoom cluster + END PHASE banner, and the right-strip heat column. */
+        .ps-tohit { position:absolute; left:8px; top:50%; transform:translateY(-50%); z-index:44; width:44px; height:44px;
+                    display:flex; align-items:center; justify-content:center; border:none; border-radius:22px;
+                    background:rgba(35,44,55,.92); color:#dce8f5; box-shadow:0 4px 14px rgba(0,0,0,.45); cursor:pointer; }
+        .ps-tohit svg { width:24px; height:24px; }
+        .ps-tohit:hover, .ps-tohit:focus-visible { background:rgba(52,66,82,.96); outline:none; }
+        /* DIRECTIVE-PD3 P5 (PD3-6) — at PHONE widths the cluster sits bottom-LEFT. R0 measured why: at ×2 the [bceZoomPan] clamp
+           (zoom-pan.directive.ts) never lets the content's right edge come left of the viewport's, so a right-margin element like the
+           record sheet's HEAT column is pinned into the far-right strip (x 322..355 on 375 px) — exactly under a bottom-right cluster,
+           12 of 31 pips covered and un-pannable. The left corner is 270 px clear of that band. Tablets/desktop keep bottom-right. */
+        @media (max-width: 600px) { .ps-zoomctl { right:auto; left:8px; }
+            /* REBASE-1 P4 (S64): PD3-6 moved the zoom cluster bottom-LEFT on phones, where it sat over the ps-bar's
+               leftmost button (Teammates), making it untappable (odm-4p D4; pre-existing on a911b91). Pad the bar's
+               left edge past the cluster (left:8 + 44px + gap) so its buttons start clear of it; the cluster keeps its
+               position (pd3-zoom's cluster/heat-column pins unchanged). */
+            .psbar { padding-left: 56px; } }
         /* D-052/054: the unit-cycle band. The ‹ › arrows are the PROMINENT primary control (bordered, accent,
            big tap target); the band also accepts a bonus swipe (a no-picker zone). */
         .psswipe { flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:8px; touch-action:pan-y; user-select:none;
@@ -194,11 +296,12 @@ type OverlayKind = 'teammates' | 'doctrine' | 'briefing';
         .psswipe-arr:hover, .psswipe-arr:focus-visible { background:#26405c; border-color:#5b8fc7; outline:none; }
         .psswipe-arr:active { background:#3d6ea5; }
         .psnote { color:#8b96a2; font-style:italic; padding:32px 8px; text-align:center; }
+        .psretry { margin-left:10px; padding:6px 14px; border:1px solid #3d6ea5; border-radius:8px; background:#13243a; color:#bcd6f2; font-style:normal; font-weight:700; cursor:pointer; }
         /* D-051/052/054: MekBay-style collapsible left drawer of claimed units (collapsed by default). MORE
            transparent now (~.45 — the sheet clearly shows through) + blurred for legibility; the backdrop
            doesn't dim (just catches tap-out-to-close). D-054: it PERSISTS OPEN on select (cycle in place). */
         .psnav-backdrop { position:fixed; inset:0; background:transparent; z-index:40; }
-        .psnav { position:fixed; top:0; left:0; bottom:0; width:248px; max-width:82vw; background:rgba(11,15,19,.45); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); border-right:1px solid #2a3340; box-shadow:2px 0 16px rgba(0,0,0,.4); z-index:41; display:flex; flex-direction:column; padding:10px; overflow:auto; }
+        .psnav { position:fixed; top:0; left:0; bottom:0; width:248px; max-width:82vw; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; /* GM-1d-c — a long unit list scrolls inside the drawer (it is a fixed box; the document is locked) */ background:rgba(11,15,19,.45); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); border-right:1px solid #2a3340; box-shadow:2px 0 16px rgba(0,0,0,.4); z-index:41; display:flex; flex-direction:column; padding:10px; overflow:auto; }
         .psnav-head { display:flex; align-items:center; justify-content:space-between; font-weight:700; letter-spacing:.06em; color:#cdd8e3; padding:4px 4px 10px; border-bottom:1px solid #232c37; margin-bottom:8px; }
         .psnav-hint { font-size:10px; letter-spacing:.04em; color:#7f8a96; padding:0 4px 8px; } /* D-054: persist-open discoverability */
         .psnav-x { background:none; border:1px solid #2a3340; color:#9fb2c4; border-radius:8px; min-width:40px; min-height:40px; cursor:pointer; }
@@ -221,6 +324,14 @@ type OverlayKind = 'teammates' | 'doctrine' | 'briefing';
         .ov-list .dim { color:#7f8a96; } .ov-list .held { color:#e7a86b; font-style:italic; }
         .ov-doc h4 { font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#7f8a96; margin:12px 0 4px; }
         .ov-doc p { margin:0; color:#cdd8e3; }
+        /* REBASE-1 P3 item 4 — the player-scoped viewer options (inside the bce-player-overlay drawer). */
+        .ov-settings { display:flex; flex-direction:column; gap:14px; }
+        .ovs-row { display:flex; flex-direction:column; gap:6px; }
+        .ovs-row label { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:#9fb2c4; }
+        .ovs-select { min-height:44px; background:#0c0f13; border:1px solid #2a3340; color:#e7edf3; border-radius:10px; padding:0 12px; font-size:15px; }
+        .ovs-check { display:flex; align-items:center; gap:10px; min-height:44px; color:#e7edf3; font-size:14px; cursor:pointer; }
+        .ovs-check input { width:22px; height:22px; }
+        .ovs-note { margin:4px 0 0; color:#7f8a96; font-size:11px; line-height:1.4; }
     `],
 })
 export class PlayerSheetComponent {
@@ -228,6 +339,7 @@ export class PlayerSheetComponent {
     private readonly store = inject(CampaignSaveStore);
     private readonly rt = inject(ClaimRealtimeService);
     private readonly svc = inject(BattleForceService);
+    protected readonly session = inject(PlayerSessionService); // ORDER-3 H17
     private readonly pack = inject(ForgePackService);
     private readonly router = inject(Router);
 
@@ -235,6 +347,9 @@ export class PlayerSheetComponent {
     protected readonly name = this.rt.playerName;
     protected readonly connected = this.rt.connected;
     protected readonly missionSpec = this.state.missionSpec;
+    // PD3 P2 (PD3-11) — the session phase over the fanned fields (the ONE decider); the Briefing overlay shows the terminal line at 'complete'
+    protected readonly phase = computed(() => sessionPhase({ presented: this.state.presentedHotspot(), contract: this.state.contractSummary() ?? this.state.activeChaosContract(), completed: this.state.completedChaosContract(), tree: this.state.missionTree(), spec: this.state.missionSpec() }));
+    protected readonly lastOutcome = computed(() => (this.state.resultsSlip()?.outcome ?? 'resolved').replace(/_/g, ' '));
     protected readonly activeId = signal<string | null>(null);
     protected readonly overlay = signal<OverlayKind | null>(null);
     protected readonly teammateId = signal<string | null>(null);
@@ -242,6 +357,26 @@ export class PlayerSheetComponent {
     private readonly engagementKey = computed(() => engagementKeyOf(this.state.missionTree()));
     private readonly sideKey = computed<Side>(() => (this.rt.side() === 'OPFOR' ? 'opfor' : 'blufor'));
     private readonly sideEntries = computed<BattleEntry[]>(() => (this.sideKey() === 'opfor' ? this.svc.opforEntries() : this.svc.bluforEntries()));
+
+    // REBASE-1 P3 item 1 — the player's LOADED units with UN-ENDED picks this phase. The pin fans the CONSOLIDATED
+    // damage only at END PHASE (battle-force registerMirror re-fires on phaseTrigger, which endPhase() bumps); until
+    // then the picks are LOCAL. phaseTrigger() bumps on every pick + on endPhase, so this recomputes reactively.
+    private readonly phaseResolution = inject(CBTPhaseResolutionService);
+    private readonly dirtyLoadedUnits = computed(() => this.sideEntries().filter((e) => { const fu = e.fu; if (e.status !== 'ok' || !fu) return false; fu.phaseTrigger(); return fu.turnState().dirtyPhase(); }).map((e) => e.fu!));
+    protected readonly pendingPhaseCount = computed(() => this.dirtyLoadedUnits().length);
+    /** End the phase for every LOADED unit with un-ended picks — the pin's resolve + per-unit endPhase(), which bumps
+     *  phaseTrigger so the mirror fans the consolidated state to the GM + the table. The SAME service the on-sheet button calls. */
+    protected async endPlayerPhase(): Promise<void> {
+        const units = this.dirtyLoadedUnits();
+        if (units.length) await this.phaseResolution.endPhase(units);
+    }
+
+    // REBASE-1 P3 item 2 — the active sheet (one at a time; `active()` is the shown entry). The pinned to-hit trigger
+    // delegates to it: the overlay's own Targets button rides the .ps-zoom transform, this one does not.
+    protected readonly battleSheet = viewChild(BattleSheetComponent);
+    protected openToHit(ev: Event): void {
+        this.battleSheet()?.openTargetsAt(ev.currentTarget as HTMLElement);
+    }
 
     // MY claimed units (side-gated, ROLE-002) — editable on the main screen.
     protected readonly mine = computed<BattleEntry[]>(() => this.sideEntries().filter((e) => this.rt.heldByMe(e.instanceId)));
@@ -271,6 +406,7 @@ export class PlayerSheetComponent {
 
     constructor() {
         this.svc.configurePlayer(); // fan edits, but never persist the campaign snapshot (GM authoritative)
+        effect(() => this.svc.readOnly.set(this.session.resolvedView())); // ORDER-3 H17 — the retained post-resolve view fans nothing · ORDER-5 E-4 — or the server said closed
         void this.svc.build();
         // Keep the room joined (a reload may land straight here) + re-announce to the lobby.
         effect(() => {
@@ -282,6 +418,9 @@ export class PlayerSheetComponent {
         effect(() => { const e = this.active(); if (e && e.status === 'pending') void this.svc.ensureSheet(this.sideKey(), e.instanceId); });
         // Lazily load a teammate sheet when one is opened (read-only).
         effect(() => { const id = this.teammateId(); const e = this.teammate(); if (id && e && e.status === 'pending') void this.svc.ensureSheet(this.sideKey(), id); });
+        // REBASE-1 P3 item 1b — report this device's un-ended-pick count to the host so the GM's lobby/claims shows who
+        // still has unshared damage before Resolve (the pin fans damage only at END PHASE). rt dedups the emit.
+        effect(() => this.rt.setPhasePending(this.pendingPhaseCount()));
     }
 
     // ── D-051/052: the collapsible unit column (claimed units, side-gated) + swipe/tap to cycle ──
@@ -304,6 +443,8 @@ export class PlayerSheetComponent {
         else if (e.direction === 'right') this.cycle(-1); // swipe right → previous
     }
     protected toRoster(): void { this.router.navigate(['/roster']); }
+    /** ORDER-9 Commit 1 — the explicit path back to 'pending' for a broken (error/missing) sheet. */
+    protected retry(e: BattleEntry): void { this.svc.retrySheet(this.sideKey(), e.instanceId); }
     protected toggleFav(instanceId: string): void { this.rt.setFavorite(this.isFav() ? null : instanceId, null); }
 
     protected open(kind: OverlayKind): void {
@@ -318,8 +459,17 @@ export class PlayerSheetComponent {
             case 'teammates': return this.teammateId() ? 'Teammate · read-only' : 'Teammates';
             case 'doctrine': return 'OpFor doctrine';
             case 'briefing': return 'Mission briefing';
+            case 'settings': return 'Settings';
             default: return '';
         }
+    }
+    // REBASE-1 P3 item 4 — write a single viewer option through MekBay's OptionsService (self-inits + persists to IndexedDB).
+    protected readonly options = inject(OptionsService);
+    protected setOpt<K extends 'pickerStyle' | 'colorScheme' | 'recordSheetDoubleTapZoomReset'>(key: K, ev: Event): void {
+        void this.options.setOption(key, (ev.target as HTMLSelectElement).value as Options[K]);
+    }
+    protected setSync(ev: Event): void {
+        void this.options.setOption('syncZoomBetweenSheets', (ev.target as HTMLInputElement).checked);
     }
     protected heldName(instanceId: string): string | null { return this.rt.claims()[instanceId]?.holderName || null; }
 }

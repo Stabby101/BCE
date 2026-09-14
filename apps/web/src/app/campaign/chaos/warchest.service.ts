@@ -6,7 +6,7 @@ import { CHAOS_START, CHAOS_MONTHLY, combatPayFor, salvageFractionFor } from './
 /** DIRECTIVE-139 — a player-facing SP transaction announcement (drives the transaction toast). `paid` > 0 is a
  *  spend (−SP), `paid` < 0 is income (+SP); `settlement` marks the coalesced month roll-up. The `id` increments
  *  per announcement so two identical transactions still fire distinct toasts. Transient; never persisted. */
-export interface SpTx { id: number; event: string; paid: number; balance: number; settlement?: boolean; }
+export interface SpTx { id: number; event: string; paid: number; balance: number; settlement?: boolean; note?: boolean; action?: 'ledger' | 'repair'; }
 
 /**
  * DIRECTIVE-109 — the Chaos Campaign Warchest (SP economy) service. The Hot Spots fork's accounting core:
@@ -57,6 +57,12 @@ export class WarchestService {
      *  toast instead of a Maintenance + Base Pay pair per boundary. Called by monthlyWarchestTick after its silent posts. */
     announceSettlement(event: string, net: number, balance: number): void {
         this._tx.set({ id: (this.txSeq += 1), event, paid: net, balance, settlement: true });
+    }
+    /** DIRECTIVE-PD3 P1 (PD3-12) — a plain NOTE on the same toast channel: no SP moved, the message renders verbatim, and the
+     *  toast's action is `action` ('repair' jumps to Repair & Refit, 'ledger' to the Contract Record Sheet). The resolve's
+     *  battle-state reconcile speaks through this — "N units damaged — record or repair" / the LOUD sync failure. */
+    announceNote(event: string, action: 'ledger' | 'repair' = 'ledger'): void {
+        this._tx.set({ id: (this.txSeq += 1), event, paid: 0, balance: this.state.warchestSP() ?? 0, note: true, action });
     }
 
     /**

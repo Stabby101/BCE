@@ -1,52 +1,30 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import type { Injector } from '@angular/core';
+import { signal, type Injector } from '@angular/core';
 import type { DataService } from '../services/data.service';
-import type { Unit } from "./units.model";
+import type { UnitSummary } from "./unit-summary.model";
 import type { UnitInitializerService } from '../services/unit-initializer.service';
 import { type CBTSerializedUnit, type CBTSerializedForce, CBT_SERIALIZED_FORCE_SCHEMA, type SerializedForce } from './force-serialization';
 import { GameSystem } from './common.model';
 import { Force } from './force.model';
 import { CBTForceUnit } from './cbt-force-unit.model';
 import { Sanitizer } from '../utils/sanitizer.util';
+import {
+    InventoryControlRuntimeState,
+    splitInventoryControlCalculatorState,
+    type InventoryControlRuntimeTarget,
+    type InventoryControlRuntimeTargetId
+} from './inventory-control-runtime-state.model';
+import { getEffectivePilotingSkill } from '../utils/cbt-common.util';
 
-/*
- * Author: Drake
- */
+
 
 export class CBTForce extends Force<CBTForceUnit> {
     override gameSystem: GameSystem = GameSystem.CLASSIC;
+    readonly inventoryControlTargets = new InventoryControlRuntimeState(() => []);
+    readonly inventoryControlOpforEnabled = signal(false);
 
     constructor(name: string,
         dataService: DataService,
@@ -55,8 +33,125 @@ export class CBTForce extends Force<CBTForceUnit> {
         super(name, dataService, unitInitializer, injector);
     }
 
-    protected override createForceUnit(unit: Unit): CBTForceUnit {
+    protected override createForceUnit(unit: UnitSummary): CBTForceUnit {
         return new CBTForceUnit(unit, this, this.dataService, this.unitInitializer, this.injector);
+    }
+
+    getInventoryControlTargets(): InventoryControlRuntimeTarget[] {
+        return this.inventoryControlTargets.getTargets();
+    }
+
+    getInventoryControlTarget(targetId: InventoryControlRuntimeTargetId): InventoryControlRuntimeTarget | undefined {
+        return this.inventoryControlTargets.getTarget(targetId);
+    }
+
+    hasInventoryControlTarget(targetId: InventoryControlRuntimeTargetId): boolean {
+        return this.inventoryControlTargets.targetsMap().has(targetId);
+    }
+
+    createInventoryControlTarget(sourceUnit?: CBTForceUnit): InventoryControlRuntimeTarget | null {
+        const existingTargets = this.getInventoryControlTargets();
+        const target = this.inventoryControlTargets.createTarget();
+        if (target && existingTargets.length === 0) this.assignFirstTargetToExistingSelections(target.id, sourceUnit);
+        this.markInventoryControlChanged(false, sourceUnit);
+        return target;
+    }
+
+    updateInventoryControlTarget(
+        targetId: InventoryControlRuntimeTargetId,
+        patch: Partial<Omit<InventoryControlRuntimeTarget, 'id' | 'letter'>>,
+        sourceUnit?: CBTForceUnit
+    ): InventoryControlRuntimeTarget | null {
+        const sharedCalculator = splitInventoryControlCalculatorState(patch.tnCalculator).shared;
+        const existingTarget = this.inventoryControlTargets.getTarget(targetId);
+        const sharedPatch: Partial<Omit<InventoryControlRuntimeTarget, 'id' | 'letter'>> = {
+            ...(patch.name !== undefined && { name: patch.name }),
+            ...(patch.color !== undefined && { color: patch.color }),
+            ...(patch.unitType !== undefined && { unitType: patch.unitType }),
+            ...(sharedCalculator && { tnCalculator: { ...existingTarget?.tnCalculator, ...sharedCalculator } })
+        };
+        const hasSharedPatch = Object.keys(sharedPatch).length > 0;
+        const target = hasSharedPatch
+            ? this.inventoryControlTargets.updateTarget(targetId, sharedPatch)
+            : this.inventoryControlTargets.getTarget(targetId) ?? null;
+        if (hasSharedPatch) {
+            this.markInventoryControlChanged(false, sourceUnit, patch.unitType !== undefined || sharedCalculator !== undefined);
+        }
+        return target;
+    }
+
+    deleteInventoryControlTarget(targetId: InventoryControlRuntimeTargetId, sourceUnit?: CBTForceUnit): void {
+        this.inventoryControlTargets.deleteTarget(targetId);
+        this.markInventoryControlChanged(true, sourceUnit);
+    }
+
+    resetInventoryControlTargets(sourceUnit?: CBTForceUnit): void {
+        this.inventoryControlOpforEnabled.set(false);
+        this.inventoryControlTargets.resetTargets();
+        this.markInventoryControlChanged(true, sourceUnit);
+    }
+
+    replaceInventoryControlTargets(targets: readonly InventoryControlRuntimeTarget[]): void {
+        this.inventoryControlTargets.replaceTargets(targets.map(target => this.toSharedInventoryControlTarget(target)));
+        this.markInventoryControlChanged(true, undefined, true);
+    }
+
+    clearExpiredManualTargetTags(sourceUnit?: CBTForceUnit): void {
+        let changed = false;
+        const targets = this.getInventoryControlTargets().map(target => {
+            if (target.source === 'opfor' || target.tnCalculator?.tagged !== true) return target;
+            changed = true;
+            return {
+                ...target,
+                tnCalculator: { ...target.tnCalculator, tagged: false },
+            };
+        });
+        if (!changed) return;
+
+        this.inventoryControlTargets.replaceTargets(targets);
+        this.markInventoryControlChanged(false, sourceUnit);
+    }
+
+    private toSharedInventoryControlTarget(target: InventoryControlRuntimeTarget): InventoryControlRuntimeTarget {
+        const sharedCalculator = splitInventoryControlCalculatorState(target.tnCalculator).shared;
+        return {
+            id: target.id,
+            letter: target.letter,
+            name: target.name,
+            color: target.color,
+            ...(target.source !== undefined && { source: target.source }),
+            ...(target.readOnly !== undefined && { readOnly: target.readOnly }),
+            ...(target.unitType !== undefined && { unitType: target.unitType }),
+            distance: 1,
+            tnModifier: 0,
+            ...(sharedCalculator && { tnCalculator: sharedCalculator })
+        };
+    }
+
+    private markInventoryControlChanged(reconcile = false, sourceUnit?: CBTForceUnit, recalculate = false): void {
+        const validTargetIds = new Set(this.inventoryControlTargets.targetsMap().keys());
+        for (const unit of this.inventoryControlUnits(sourceUnit)) {
+            if (reconcile) {
+                unit.inventoryControl.reconcile(validTargetIds);
+                unit.inventoryControl.reconcileUnitTargetStates(validTargetIds);
+            }
+            if (recalculate) unit.inventoryControl.recalculateTargetModifiers(this.getInventoryControlTargets());
+            unit.inventoryControl.markInventoryViewChanged();
+        }
+    }
+
+    private assignFirstTargetToExistingSelections(targetId: InventoryControlRuntimeTargetId, sourceUnit?: CBTForceUnit): void {
+        for (const unit of this.inventoryControlUnits(sourceUnit)) {
+            const entryStates = unit.inventoryControl.entryStates();
+            for (const entry of unit.getInventory()) {
+                const state = entryStates.get(entry.id);
+                if (state?.selected && !state.targetId) unit.inventoryControl.setEntryTarget(entry, targetId);
+            }
+        }
+    }
+
+    private inventoryControlUnits(sourceUnit?: CBTForceUnit): CBTForceUnit[] {
+        return Array.from(new Set([...this.units(), ...(sourceUnit ? [sourceUnit] : [])]));
     }
 
     /**
@@ -65,6 +160,8 @@ export class CBTForce extends Force<CBTForceUnit> {
     protected override transferPilotData(fromUnit: CBTForceUnit, toUnit: CBTForceUnit): void {
         const fromCrew = fromUnit.getCrewMembers();
         const toCrew = toUnit.getCrewMembers();
+        const fromIsLandAirMek = fromUnit.getUnit().subtype === 'Land-Air BattleMek';
+        const toIsLandAirMek = toUnit.getUnit().subtype === 'Land-Air BattleMek';
 
         // Transfer data for each crew member that exists in both units
         const crewCount = Math.min(fromCrew.length, toCrew.length);
@@ -76,10 +173,26 @@ export class CBTForce extends Force<CBTForceUnit> {
                 if (name) {
                     toMember.setName(name);
                 }
-                toMember.setSkill('gunnery', fromMember.getSkill('gunnery'));
-                toMember.setSkill('piloting', fromMember.getSkill('piloting'));
+                const gunnery = fromMember.getSkill('gunnery');
+                const piloting = getEffectivePilotingSkill(toUnit.getUnit(), fromMember.getSkill('piloting'));
+                toMember.setSkill('gunnery', gunnery);
+                toMember.setSkill('piloting', piloting);
+                if (toIsLandAirMek) {
+                    toMember.setSkill(
+                        'gunnery',
+                        fromIsLandAirMek ? fromMember.getSkill('gunnery', true) : gunnery,
+                        true,
+                    );
+                    toMember.setSkill(
+                        'piloting',
+                        fromIsLandAirMek ? fromMember.getSkill('piloting', true) : piloting,
+                        true,
+                    );
+                }
             }
         }
+
+        toUnit.setFormationCommander(fromUnit.commander());
     }
 
     protected override deserializeForceUnit(data: CBTSerializedUnit): CBTForceUnit {

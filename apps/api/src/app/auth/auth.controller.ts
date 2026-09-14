@@ -1,8 +1,9 @@
 /*
  * BCE multi-tenant (DEPLOY-002 P1) — the auth surface (all @Public: the login flow + status checks must
  * be reachable by anonymous/pending users; the OAuth routes are protected by passport's own guard).
- *   GET  /api/auth/google | /github            → start OAuth (redirect to the provider)
- *   GET  /api/auth/google/callback | /github/… → provider returns → upsert user → set session → redirect
+ *   GET  /api/auth/google | /github            → start OAuth (redirect to the provider); GM-1c: `?returnTo=` rides as `state`
+ *   GET  /api/auth/google/callback | /github/… → provider returns → upsert user → set session → redirect (GM-1c: to the
+ *                                                validated returnTo — the join page with its query string — else the root)
  *   GET  /api/auth/me                          → the current user + status (or null)
  *   POST /api/auth/logout                      → clear the session cookie
  *   POST /api/auth/dev-login                   → TEST SEAM, flag-gated (BCE_ALLOW_DEV_LOGIN=1), prod-off
@@ -18,6 +19,8 @@ import { Public, type AuthedRequest, type OAuthProfile, type User } from './auth
 import { extractToken } from './auth.guards';
 import { RecoverThrottleService } from './recover-throttle.service';
 import { setSessionCookie, clearSessionCookie } from './session-cookie';
+import { GitHubReturnGuard, GoogleReturnGuard } from './oauth-return.guard'; // GM-1c: the start guards carry returnTo as state
+import { frontendOrigins, oauthLanding } from './return-to'; // GM-1c: the open-redirect-gated landing
 
 @Public()
 @Controller('auth')
@@ -34,12 +37,9 @@ export class AuthController {
     private setSession(res: Response, token: string): void {
         setSessionCookie(res, token); // HARDEN-7 B5 — shared cookie definition (same as the refresh path)
     }
-    private frontend(): string {
-        return (process.env.BCE_WEB_ORIGIN ?? '').split(',').map((s) => s.trim()).filter(Boolean)[0] || '/';
-    }
 
     @Get('google')
-    @UseGuards(AuthGuard('google'))
+    @UseGuards(GoogleReturnGuard)
     google(): void {
         /* passport redirects to Google */
     }
@@ -50,7 +50,7 @@ export class AuthController {
     }
 
     @Get('github')
-    @UseGuards(AuthGuard('github'))
+    @UseGuards(GitHubReturnGuard)
     github(): void {
         /* passport redirects to GitHub */
     }
@@ -68,8 +68,11 @@ export class AuthController {
         // query param — a fragment isn't sent to the server, logs, or Referer). The SPA adopts + strips it before
         // the first /auth/me, so Google works even when the browser blocks the cross-site (3rd-party) cookie. The
         // cookie stays as the secondary path for browsers that allow it.
-        const base = this.frontend().replace(/\/+$/, '');
-        res.redirect(`${base}/#bce_auth=${encodeURIComponent(token)}`);
+        // GM-1c — land where the sign-in began: the `state` the provider echoed is the start route's `returnTo` (the
+        // join page with its campaign + engine query string). It is re-validated HERE (state is attacker-writable —
+        // same-site path or an allow-listed origin only); anything else lands on the root exactly as before.
+        const state = (req.query as Record<string, unknown> | undefined)?.state;
+        res.redirect(oauthLanding(frontendOrigins(process.env.BCE_WEB_ORIGIN), state, token));
     }
 
     /** LINK-1 — the shared post-resolve step. If a GUEST session is present on THIS request (its same-origin

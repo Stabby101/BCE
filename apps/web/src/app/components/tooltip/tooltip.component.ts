@@ -1,10 +1,24 @@
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 export interface TooltipLine {
     label?: string;
-    value: string;
+    value?: string;
+    iconSrc?: string;
+    iconAlt?: string;
+    isHeader?: boolean;
+    isBreak?: boolean;
+    priority?: number;
+    weakened?: boolean;
+    kind?: 'heat';
+    nested?: boolean;
+    ignored?: boolean;
 }
+
+export type TooltipType = 'info' | 'success' | 'error';
 
 export type TooltipContent = string | TooltipLine[];
 
@@ -15,51 +29,140 @@ export type TooltipContent = string | TooltipLine[];
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'tooltip' },
     template: `
-        <div class="tooltip-content framed-borders has-shadow">
+        <div class="tooltip-content framed-borders has-shadow" [class.error]="type === 'error'">
             @if (isString) {
-                {{ content }}
+                <div class="tooltip-html" [innerHTML]="htmlContent"></div>
             } @else {
                 @for (line of lines; track $index) {
-                    @if (line.label) {
-                        <div class="tooltip-row">
-                            <span class="label">{{ line.label }}</span>
-                            <span class="value">{{ line.value }}</span>
-                        </div>
+                    @if (line.isBreak) {
+                        <hr class="divisor" />
                     } @else {
-                        <div class="tooltip-row plain">{{ line.value }}</div>
+                        <div class="tooltip-row" [class.plain]="!line.label" [class.header]="!!line.isHeader" [class.weakened]="!!line.weakened" [class.nested]="!!line.nested" [class.ignored]="!!line.ignored">
+                            @if (line.iconSrc) {
+                                <img class="tooltip-icon" [src]="line.iconSrc" [alt]="line.iconAlt ?? ''" />
+                            }
+                            @if (line.label) {
+                                <span class="label">{{ line.label }}</span>
+                                <span class="value">{{ line.value }}</span>
+                            } @else {
+                                <span class="value">{{ line.value }}</span>
+                            }
+                        </div>
                     }
                 }
             }
         </div>
+        @if (lockProgressDuration > 0) {
+            <div class="tooltip-lock-progress" [style.animation-duration.ms]="lockProgressDuration" aria-hidden="true"></div>
+        }
     `,
     styles: [`
         :host {
             display: block;
-            pointer-events: none;
+            position: relative;
+            pointer-events: auto;
+            background-color: var(--background-color-menu);
+            max-width: min(500px, calc(100vw - 24px));
+            max-height: calc(100dvh - 24px);
         }
         .tooltip-content {
             color: #fff;
-            background-color: var(--background-color-menu);
+            box-sizing: border-box;
             padding: 6px 8px;
             font-size: 0.9em;
-            max-width: 400px;
+            width: 100%;
+            max-width: inherit;
+            max-height: inherit;
+            line-height: 1.4;
+            overflow: auto;
+            overscroll-behavior: contain;
+        }
+        .tooltip-html {
+            white-space: normal;
+            overflow-wrap: anywhere;
         }
         .tooltip-row {
             display: flex;
+            align-items: flex-start;
             justify-content: space-between;
             gap: 16px;
-            white-space: nowrap;
+            white-space: normal;
         }
         .tooltip-row.plain {
-            display: block;
+            justify-content: flex-start;
+            gap: 8px;
+        }
+        .tooltip-row.plain .tooltip-icon {
+            align-self: center;
+        }
+        .tooltip-row .label,
+        .tooltip-row .value {
+            min-width: 0;
+        }
+        .tooltip-row .label {
+            flex: 0 0 auto;
+        }
+        .tooltip-row.header .value {
+            font-weight: 600;
+        }
+        .tooltip-row.weakened {
+            color: #f00;
+        }
+        .tooltip-row.nested {
+            color: var(--text-color-secondary);
+            padding-inline-start: 12px;
+            font-size: 0.85em;
+        }
+        .tooltip-row.nested .label::before {
+            content: '– ';
+        }
+        .tooltip-row.ignored .label,
+        .tooltip-row.ignored .value {
+            text-decoration-line: line-through;
+            text-decoration-color: red;
+            font-style: italic;
         }
         .tooltip-row .value {
+            flex: 1 1 auto;
             font-weight: 500;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        .tooltip-row:not(.plain) .value {
+            text-align: right;
+        }
+        .tooltip-icon {
+            width: 1.1em;
+            height: 1.1em;
+            object-fit: contain;
+            flex: 0 0 auto;
+        }
+        .tooltip-lock-progress {
+            position: absolute;
+            inset-inline: 2px;
+            bottom: 2px;
+            height: 2px;
+            background-color: var(--accent-color);
+            pointer-events: none;
+            transform: scaleX(0);
+            transform-origin: left;
+            animation-name: tooltip-lock-progress;
+            animation-timing-function: linear;
+            animation-fill-mode: forwards;
+        }
+        @keyframes tooltip-lock-progress {
+            to { transform: scaleX(1); }
         }
     `]
 })
 export class TooltipComponent {
     content: TooltipContent = '';
+    type: TooltipType = 'info';
+    lockProgressDuration = 0;
+
+    get htmlContent(): string {
+        return typeof this.content === 'string' ? this.content : '';
+    }
     
     get isString(): boolean {
         return typeof this.content === 'string';

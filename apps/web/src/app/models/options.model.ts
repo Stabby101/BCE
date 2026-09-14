@@ -1,70 +1,133 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import type { GameSystem } from "./common.model";
+import { GameSystem } from "./common.model";
+import type { PrintAllOptions } from "./print-options.model";
 
-/*
- * Author: Drake
- */
+
+export const OPTION_VALUES = {
+    colorScheme: ['default', 'night'],
+    pickerStyle: ['default', 'radial', 'linear'],
+    canvasInput: ['all', 'touch', 'pen'],
+    swipeToNextSheet: ['vertical', 'horizontal', 'disabled'],
+    unitDisplayName: ['chassisModel', 'alias', 'both'],
+    gameSystem: [GameSystem.CLASSIC, GameSystem.ALPHA_STRIKE],
+    availabilitySource: ['mul', 'megamek'],
+    forceViewerBVPVDisplay: ['adjusted', 'base', 'both'],
+    recordSheetDoubleTapZoomReset: ['disabled', 'fit-to-screen', 'full-width', 'contextual'],
+    CBTRules: ['tw', 'core2026'],
+    unitSearchExpandedViewLayout: ['panel-list-filters', 'filters-list-panel'],
+    unitSearchViewMode: ['list', 'card', 'chassis', 'table'],
+    forceOverviewViewMode: ['expanded', 'compact', 'table'],
+    ASVehiclesCriticalHitTable: ['default', 'scouringSands'],
+    automationMode: ['yes', 'ask', 'no'],
+} as const;
+
+export type AvailabilitySource = typeof OPTION_VALUES.availabilitySource[number];
+export type RecordSheetDoubleTapZoomResetMode = typeof OPTION_VALUES.recordSheetDoubleTapZoomReset[number];
+export type ColorScheme = typeof OPTION_VALUES.colorScheme[number];
+export type UnitSearchViewMode = typeof OPTION_VALUES.unitSearchViewMode[number];
+export type AutomationMode = typeof OPTION_VALUES.automationMode[number];
+
+export const CBT_AUTOMATION_KEYS = [
+    'pilotSkillCheck',
+    'heatAndDissipationResolution',
+    'heatEffectsCheck',
+    'pilotHitsAndConsciousnessCheck',
+    'internalExplosionsCheck',
+    'criticalHitChanceCheck',
+    'breachAndFloodCheck',
+    'fallingCheck',
+] as const;
+
+export type CBTAutomationKey = typeof CBT_AUTOMATION_KEYS[number];
+export type CBTAutomationOptions = Record<CBTAutomationKey, AutomationMode>;
+
+export interface SkillRangeOption {
+    min: number;
+    max: number;
+}
+
+export interface ForceBudgetOptimizerLastSkills {
+    gunnery: SkillRangeOption;
+    piloting: SkillRangeOption;
+    skill: SkillRangeOption;
+    maxDelta: number;
+}
+
+export interface ForceGeneratorOptions {
+    lastBudget: {
+        classic: SkillRangeOption;
+        alphaStrike: SkillRangeOption;
+    };
+    lastUnitCount: SkillRangeOption;
+    lastSkills: {
+        gunnery: SkillRangeOption;
+        piloting: SkillRangeOption;
+        maxDelta: number;
+    };
+    failureSearchWindowMs: number;
+    ignoreRarityWeight: boolean;
+    preventDuplicateChassis: boolean;
+    useTaggedQuantities: boolean;
+    useUnitTagsAsChassisTags: boolean;
+}
+
+export type ForceViewerBVPVDisplay = typeof OPTION_VALUES.forceViewerBVPVDisplay[number];
+
+export interface CBTOptionalRules {
+    floatingCriticals: boolean;
+    forcedWithdrawal: boolean;
+    extremeRange: boolean;
+    sprinting: boolean;
+    allowMixedTechBaseAmmo: boolean;
+}
+
 export interface Options {
-    uuid?: string; // deprecated, use UserStateService instead
-    sheetsColor: 'normal' | 'night';
-    pickerStyle: 'default' | 'radial' | 'linear';
-    quickActions: 'enabled' | 'disabled';
-    canvasInput: 'all' | 'touch' | 'pen';
-    swipeToNextSheet: 'vertical' | 'horizontal' | 'disabled';
+    colorScheme: ColorScheme;
+    pickerStyle: typeof OPTION_VALUES.pickerStyle[number];
+    canvasInput: typeof OPTION_VALUES.canvasInput[number];
+    swipeToNextSheet: typeof OPTION_VALUES.swipeToNextSheet[number];
     syncZoomBetweenSheets: boolean;
-    unitDisplayName: 'chassisModel' | 'alias' | 'both';
+    unitDisplayName: typeof OPTION_VALUES.unitDisplayName[number];
     gameSystem: GameSystem;
-    recordSheetCenterPanelContent: 'fluffImage' | 'clusterTable';
+    availabilitySource: AvailabilitySource;
+    megaMekAvailabilityFiltersUseAllScopedOptions: boolean;
+    forceViewerBVPVDisplay: ForceViewerBVPVDisplay;
+    printAllOptions: PrintAllOptions;
+    recordSheetDoubleTapZoomReset: RecordSheetDoubleTapZoomResetMode;
     lastCanvasState?: {
         brushSize: number;
         eraserSize: number;
     },
     sidebarLipPosition?: string;
-    useAutomations: boolean;
+    trackPhaseAndTurn: boolean;
+    cbtAutomationOptions: CBTAutomationOptions;
+    CBTOptionalRules: CBTOptionalRules;
+    CBTRules: typeof OPTION_VALUES.CBTRules[number];
     ASUseHex: boolean;
-    ASCardStyle: 'colored' | 'monochrome';
-    ASPrintPageBreakOnGroups: boolean;
     c3NetworkConnectionsAboveNodes: boolean;
     automaticallyConvertFiltersToSemantic: boolean;
     allowMultipleActiveSheets: boolean;
-    unitSearchExpandedViewLayout: 'panel-list-filters' | 'filters-list-panel';
-    unitSearchViewMode: 'list' | 'card' | 'chassis' | 'table';
-    forceOverviewViewMode: 'expanded' | 'compact' | 'table';
+    unitSearchExpandedViewLayout: typeof OPTION_VALUES.unitSearchExpandedViewLayout[number];
+    showFilteredComponents: boolean;
+    unitSearchViewMode: UnitSearchViewMode;
+    forceOverviewViewMode: typeof OPTION_VALUES.forceOverviewViewMode[number];
     ASUseAutomations: boolean;
-    ASVehiclesCriticalHitTable: 'default' | 'scouringSands';
+    ASVehiclesCriticalHitTable: typeof OPTION_VALUES.ASVehiclesCriticalHitTable[number];
     ASUnifiedDamagePicker: boolean;
-    printRosterSummary: boolean;
-    printMargin: 'none' | 'browserDefined';
+    performanceMode: boolean;
+    enableForceSyncConflictDialog: boolean;
+
+    // Additional user-supplied unit database servers (base URLs). db.mekbay.com is always
+    // the primary source; these servers may only contribute additional (new-named) units,
+    // their record-sheet SVGs, and their unit fluff art.
+    unitServers: string[];
+
+    // Force Generator
+    forceGenerator: ForceGeneratorOptions;
+
+    // Force Budget Optimizer
+    forceBudgetOptimizerLastSkills: ForceBudgetOptimizerLastSkills;
 }

@@ -50,6 +50,8 @@ const STEP_DEST: Record<string, { traditional: FlowDest; hotspots: FlowDest }> =
     templateUrl: './odm-flow.html',
     styleUrl: '../dashboard/flow/flow.scss', // SHARED with the Classic flow (styles are not forked)
     styles: [`
+        /* SPAWN-1 B5b — the board pans on a mouse drag (fork-owned; flow.scss untouched): a grab cursor at rest, grabbing while panning */
+        .flow-pan { cursor: grab; } .flow-pan.panning { cursor: grabbing; user-select: none; }
         /* ODM-5 — the time-axis chrome (fork-owned; the shared flow.scss is untouched) */
         .now-bar { position: absolute; left: 0; right: 0; height: 34px; background: color-mix(in srgb, var(--warn) 14%, transparent);
                    border-top: 2px solid var(--warn); border-bottom: 1px dashed color-mix(in srgb, var(--warn) 45%, transparent);
@@ -137,6 +139,10 @@ export class OdmFlowComponent {
     protected readonly odmNow = computed<OdmDate | null>(() => this.state.currentDate() ?? this.state.startDate() ?? null);
     protected readonly nowText = computed(() => { const n = this.odmNow(); return n ? formatDate(n) : ''; });
     private nodeDef(id: string): OdmTreeNode | undefined { return this.odmTree()?.nodes.find((x) => x.id === id); }
+    /** ODM-18 P3 — a GM-COMPOSED operation (the merged node set's explicit kind). The drawer's authored
+     *  copy asserts a packet exists; for a composed op that is a lie, and BEGIN gated on packetOf() would
+     *  leave it unplayable (composed nodes carry packet:null BY DESIGN). */
+    protected isComposed(id: string): boolean { return this.nodeDef(id)?.kind === 'gm-mission'; }
     /** ODM-6 (James ruling — the axis FLIP): NOW is the CEILING, the future flows DOWN. Bands top→bottom:
      *  [expired history — the ONLY thing above NOW] · [the NOW bar, carrying the date] · [AVAILABLE, hanging
      *  just below, most urgent leftmost/highest] · [gate-locked futures by tree depth] · [time-keyed arrivals
@@ -263,6 +269,32 @@ export class OdmFlowComponent {
     // ── Drawer: one focused node at a time ──
     protected readonly focusedId = signal<string | null>(null);
     protected readonly focused = computed(() => this.selectedTree().find((b) => b.branchId === this.focusedId()) ?? null);
+    // ── SPAWN-1 B5b — DRAG-TO-PAN on the board's background (James, 2026-09-11: 16 nodes and growing every week). The `.flow-pan` host
+    //    already scrolls (overflow:auto · touch-action pan-x pan-y — wheel + thumb); a mouse drag now moves it too. Press on the canvas
+    //    background (a press on a node is a click, never a pan), drag → the host's own scrollLeft/scrollTop follow; release ends it.
+    //    Mouse pointers only — a touch pointer keeps the native scroll it already has. No re-layout, no transform: the scroll IS the pan.
+    protected readonly panning = signal(false);
+    private pan: { x: number; y: number; sl: number; st: number; id: number } | null = null;
+    protected panStart(e: PointerEvent): void {
+        if (e.pointerType !== 'mouse' || e.button !== 0) return;
+        if ((e.target as HTMLElement | null)?.closest('.fnode, button, a, select, input')) return; // a node press is a click
+        const host = e.currentTarget as HTMLElement;
+        this.pan = { x: e.clientX, y: e.clientY, sl: host.scrollLeft, st: host.scrollTop, id: e.pointerId };
+        host.setPointerCapture?.(e.pointerId);
+        this.panning.set(true);
+    }
+    protected panMove(e: PointerEvent): void {
+        if (!this.pan || e.pointerId !== this.pan.id) return;
+        const host = e.currentTarget as HTMLElement;
+        host.scrollLeft = this.pan.sl - (e.clientX - this.pan.x);
+        host.scrollTop = this.pan.st - (e.clientY - this.pan.y);
+        e.preventDefault();
+    }
+    protected panEnd(e: PointerEvent): void {
+        if (!this.pan || e.pointerId !== this.pan.id) return;
+        (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+        this.pan = null; this.panning.set(false);
+    }
     protected focus(b: MissionBranch): void {
         this.focusedId.set(b.branchId);
     }

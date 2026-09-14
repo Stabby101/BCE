@@ -7,6 +7,7 @@
  * cleanly to the server-authoritative store later. Single slot; Begin overwrites.
  * No per-unit / damage / pilot state here (that is T-017 / the engine).
  */
+import { contractSummaryOf } from './chaos/chaos-contract'; // GM-2 P2a — the player-safe projection of the primary
 import { Injectable, inject } from '@angular/core';
 import {
     NewCampaignState,
@@ -19,7 +20,7 @@ import {
     type PayrollShortfall,
     type WarchestEntry,
 } from './new-campaign-state';
-import type { ChaosContract } from './chaos/chaos-contract'; // D-110
+import type { ChaosContract, VoidedContract } from './chaos/chaos-contract'; // D-110 · GM-3 P1
 import type { PresetTrack } from './chaos/chaos-track-preset'; // D-116
 import type { GameSystem } from '../models/common.model';
 import type { ContractMarket, ContractOffer } from './contract/contract-market';
@@ -116,6 +117,11 @@ export interface CampaignSnapshot {
     odmOutcomes?: Record<string, { tier: 'FULL_SUCCESS' | 'SUCCESS' | 'MISSION_FAILURE' | 'CRITICAL_FAILURE'; flags: string[] }> | null; // ODM-3
     odmActiveNodeId?: string | null; // ODM-3
     odmSeeds?: Record<string, string> | null; // ODM-7
+    odmStocks?: import('./new-campaign-state').OdmStocks | null; // ODM-11 — additive survival-economy stocks
+    odmFleetStatus?: Record<string, string> | null; // ODM-17 P2 — the live vessel-status overlay (empty = the pack's own statuses); STATE, never pack data
+    odmBench?: import('./new-campaign-state').OdmBenchJob[] | null; // ODM-17 P3 — the MAC-7 bench queue (IN-SHOP items)
+    odmMaintenance?: Record<string, import('./new-campaign-state').OdmMaintenanceRecord> | null; // ODM-17 P4 — 30-day cycle records
+    odmSupport?: Record<string, import('./new-campaign-state').OdmSupportCounts> | null; // ODM-17 P4 — live register overlay
     hotSpotCampaign?: string | null;
     // Warchest (D-109) — the Chaos Campaign SP economy (Hot Spots only): balance, Reputation, Contract Scale, and
     // the Contract Record Sheet ledger. Optional, migration-safe. Old/Traditional saves lack them → null/1/[]
@@ -127,6 +133,10 @@ export interface CampaignSnapshot {
     warchestLedger?: WarchestEntry[] | null;
     // Chaos contract (D-110) — the active clean-room contract (Hot Spots); optional, migration-safe. Old saves → null.
     activeChaosContract?: ChaosContract | null;
+    participantContract?: ChaosContract | null; // GM-2 P2a — THIS device's own contract (server-attached per recipient; never client-written)
+    participantVoid?: VoidedContract | null; // GM-3 P1 — THIS device's own voided contract (server-attached per recipient; never client-written)
+    contractSummary?: import('./chaos/chaos-contract').ContractSummary | null; // GM-2 P2a — the player-safe projection of the primary (GM session, top-level)
+    completedChaosContract?: import('./chaos/chaos-contract').ContractSummary | null; // PD3 P2 — the TERMINAL contract record (top-level; the phone's phase gate)
     // D-116 — user-authored Hot Spots track presets; optional, migration-safe. Old saves → [].
     chaosTrackPresets?: PresetTrack[] | null;
     customHotSpots?: import('./chaos/hotspots-catalog').HotSpot[] | null; // D-124
@@ -141,6 +151,31 @@ export interface CampaignSnapshot {
     hotSpotOffer?: string[] | null; // D-124b
     hotSpotShowAll?: boolean | null; // D-129
     reckoningBegun?: boolean | null; // D-135
+    gmSession?: boolean | null; // GM-1 P1 — Master GM session (absent on every legacy save → false)
+    // GM-1 P2 — the ONE well-known GM-only key: in a GM session the offer/chamber state rides here and the
+    // server fan strips it for non-GM recipients (snapshot-shape.ts). Absent everywhere else.
+    gmOnly?: {
+        customHotSpots?: import('./chaos/hotspots-catalog').HotSpot[] | null;
+        forgedHotSpots?: import('./chaos/hotspots-catalog').HotSpot[] | null;
+        hsRegion?: string | null;
+        hotSpotOffer?: string[] | null;
+        hotSpotShowAll?: boolean | null;
+        reckoningBegun?: boolean | null;
+        // GM-2 P2a — in a GM session the PRIMARY contract, its synthetic offer and the participant map ride here (H14)
+        activeChaosContract?: ChaosContract | null;
+        acceptedContract?: ContractOffer | null;
+        participantContracts?: Record<string, ChaosContract> | null;
+        voidedContracts?: Record<string, VoidedContract> | null; // GM-3 P1 — participant contracts voided by un-present (GM truth)
+        pilotNotes?: Record<string, string> | null; // ODM-18 P1 — GM-private pilot notes (stripped for players)
+        gmMissionDrafts?: import('./odm/odm-gm-mission').OdmGmDraft[] | null; // ODM-18 P3 — composer drafts (GM truth)
+    } | null;
+    presentedHotspot?: import('./gm/presented-hotspot').PresentedHotspot | null; // GM-1 P2 — the published player-safe brief
+    playerUnitCap?: number | null; // GM-1 P3 — the GM-set import cap (top-level: players must see it)
+    resultsSlip?: import('./gm/results-slip').ResultsSlip | null; // GM-1 P3 — the take-home resolve record
+    appliedSlips?: string[] | null; // GM-2 P1 — slipIds already applied to THIS (home) campaign
+    tableBound?: import('./new-campaign-state').TableBound | null; // GM-3 P3 — this home campaign is bound to a GM's table (month advance withheld)
+    odmProjection?: import('./odm/odm-projection').OdmProjection | null; // ODM-18 P1 — the company-state projection
+    odmGmMissions?: import('./odm/odm-gm-mission').OdmGmMission[] | null; // ODM-18 P3 — published composed missions
 }
 
 @Injectable({ providedIn: 'root' })
@@ -166,21 +201,36 @@ export class CampaignPersistenceService {
             packId: s.packId(), // ODM-1
             odmOutcomes: s.odmOutcomes(), odmActiveNodeId: s.odmActiveNodeId(), // ODM-3 — additive
             odmSeeds: s.odmSeeds(), // ODM-7 — the seed is the only OpFor artifact in the fanned snapshot
+            odmStocks: s.odmStocks(), // ODM-11 — the survival-economy stocks (GM-adjusted; display-only v1)
+            odmFleetStatus: s.odmFleetStatus(), // ODM-17 P2 — the live vessel-status overlay
+            odmBench: s.odmBench(), // ODM-17 P3 — the MAC-7 bench queue
+            odmMaintenance: s.odmMaintenance(), // ODM-17 P4
+            odmSupport: s.odmSupport(), // ODM-17 P4
             hotSpotCampaign: s.hotSpotCampaign(),
             warchestSP: s.warchestSP(), // D-109 (runtime economy; the authoritative round-trip is the host store)
             reputation: s.reputation(),
             contractScale: s.contractScale(),
             gmDifficulty: s.gmDifficulty(), // D-124
             warchestLedger: s.warchestLedger(),
-            activeChaosContract: s.activeChaosContract(), // D-110
+            ...(s.gmSession() ? { contractSummary: contractSummaryOf(s.activeChaosContract()) } : { activeChaosContract: s.activeChaosContract() }), // D-110 · GM-2 P2a — mirrors writer A: GM session → terms under gmOnly (H14), summary top-level
             chaosTrackPresets: s.chaosTrackPresets(), // D-116
-            customHotSpots: s.customHotSpots(), // D-124
-            forgedHotSpots: s.forgedHotSpots(), // HSFORGE-1
-            hsRegion: s.hsRegion(), // HSFORGE-1 P2
+            // GM-1 P2 — writer B mirrors writer A's gmOnly split EXACTLY (the two writers move in lockstep;
+            // hydrate accepts both layouts). Plain HS byte-identical. ODM-18 P1 — gmOnly ALSO carries
+            // pilotNotes when present (ODM, no gmSession): the gmOnly emit condition is gmSession OR notes.
+            ...(s.gmSession() ? {} : { customHotSpots: s.customHotSpots(), forgedHotSpots: s.forgedHotSpots(), hsRegion: s.hsRegion() }), // D-124 · HSFORGE-1 · P2
             hiredMercs: s.hiredMercs(), contractHiredKeys: s.contractHiredKeys(), // IMPORT-3 P2
-            hotSpotOffer: s.hotSpotOffer(), // D-124b
-            hotSpotShowAll: s.hotSpotShowAll(), // D-129
-            reckoningBegun: s.reckoningBegun(), // D-135
+            ...(s.gmSession()
+                ? { gmOnly: { activeChaosContract: s.activeChaosContract(), acceptedContract: s.acceptedContract(), participantContracts: s.participantContracts(), voidedContracts: s.voidedContracts(), customHotSpots: s.customHotSpots(), forgedHotSpots: s.forgedHotSpots(), hsRegion: s.hsRegion(), hotSpotOffer: s.hotSpotOffer(), hotSpotShowAll: s.hotSpotShowAll(), reckoningBegun: s.reckoningBegun(), ...(Object.keys(s.gmPilotNotes()).length ? { pilotNotes: s.gmPilotNotes() } : {}), ...(s.gmMissionDrafts().length ? { gmMissionDrafts: s.gmMissionDrafts() } : {}) } }
+                : { hotSpotOffer: s.hotSpotOffer(), hotSpotShowAll: s.hotSpotShowAll(), reckoningBegun: s.reckoningBegun(), ...((Object.keys(s.gmPilotNotes()).length || s.gmMissionDrafts().length) ? { gmOnly: { ...(Object.keys(s.gmPilotNotes()).length ? { pilotNotes: s.gmPilotNotes() } : {}), ...(s.gmMissionDrafts().length ? { gmMissionDrafts: s.gmMissionDrafts() } : {}) } } : {}) }), // D-124b · D-129 · D-135 · ODM-18
+            gmSession: s.gmSession(), // GM-1 P1
+            presentedHotspot: s.presentedHotspot(), // GM-1 P2
+            completedChaosContract: s.completedChaosContract(), // PD3 P2 — writer B mirrors writer A: top-level, the terminal contract record
+            playerUnitCap: s.playerUnitCap(), // GM-1 P3
+            resultsSlip: s.resultsSlip(), // GM-1 P3
+            appliedSlips: s.appliedSlips(), // GM-2 P1
+            tableBound: s.tableBound(), // GM-3 P3
+            odmProjection: s.odmProjection(), // ODM-18 P1
+            odmGmMissions: s.odmGmMissions(), // ODM-18 P3 — top-level: PUBLISHED composed missions must reach players
         };
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(snap));

@@ -137,11 +137,23 @@
         </div>
     </div>
 
+    <!-- GM-3 P2 — HOST A TABLE: a GM session may begin with no company of its own. The difficulty slider is the table's
+         (era + theater are the wizard's earlier steps). Shown only for a gmSession; a plain campaign never sees it. -->
+    @if (gmSess()) {
+        <section class="host-table" data-testid="mc-host-table">
+            <div class="ht-h">Host a table</div>
+            <p class="ht-note">{{ hostingTable() ? 'Begin with NO company of your own — you host and referee, present hot spots, and field OpFor. Bring your own company later at the table, like any player. Add units above only if you want a company on the field from the start.' : 'You have a company above — it fields alongside the players. Remove all units to host without one.' }}</p>
+            <label class="ht-diff">OpFor difficulty
+                <input type="range" min="0.8" max="1.6" step="0.1" [value]="gmDifficulty()" (input)="setDifficulty(+$any($event.target).value)" data-testid="mc-difficulty">
+                <span class="ht-diff-v" data-testid="mc-difficulty-label">{{ difficultyLabel(gmDifficulty()) }} &middot; &times;{{ gmDifficulty().toFixed(1) }}</span>
+            </label>
+        </section>
+    }
     <footer>
         <div class="nav">
             <button type="button" class="btn" (click)="back()">&lsaquo; Back</button>
-            <button type="button" class="btn go" [disabled]="!canBegin()" (click)="begin()">Begin campaign &rsaquo;</button>
+            <button type="button" class="btn go" [disabled]="!canBegin()" (click)="begin()" data-testid="mc-begin">{{ hostingTable() ? 'Host the table ›' : 'Begin campaign ›' }}</button>
         </div>
-        <div class="meta">BCE v0.1 &middot; Hot Spots mercenary command<br>{{ chosen().length }} units &middot; {{ money(chosenBV()) }} BV &middot; {{ money(profile().warchestSP) }} SP warchest</div>
+        <div class="meta">BCE v0.1 &middot; Hot Spots {{ hostingTable() ? 'GM table' : 'mercenary command' }}<br>{{ chosen().length }} units &middot; {{ money(chosenBV()) }} BV &middot; {{ hostingTable() ? 'no warchest (a table has none)' : money(profile().warchestSP) + ' SP warchest' }}</div>
     </footer>
 </main>

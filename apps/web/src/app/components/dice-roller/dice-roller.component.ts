@@ -1,52 +1,28 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import { Component, effect, input, output, signal, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
+import { AutoFitTextDirective } from '../../directives/auto-fit-text.directive';
 
-/*
- * Author: Drake
- */
+
 @Component({
     selector: 'dice-roller',
+    imports: [AutoFitTextDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './dice-roller.component.html',
     styleUrls: ['./dice-roller.component.scss']
 })
 export class DiceRollerComponent {
-    private _endTimer: any = null;
+    private endTimer: ReturnType<typeof setTimeout> | null = null;
+    private activeDiceCount = 0;
+    private finalResults: number[] | null = null;
     diceCount = input<number>(2);
     diceSides = input<number>(6);
+    /** Completed faces to display when a parent workflow is resumed. */
+    initialResults = input<readonly number[] | null>(null);
     modifier = input<number>(0);
+    showSum = input<boolean>(true);
     /** Use small dice instead of large (default) */
     small = input<boolean>(false);
     rollOnDieClick = input<boolean>(false);
@@ -54,89 +30,86 @@ export class DiceRollerComponent {
     animationIntervalMs = input<number>(50);
     freezeOnRollEnd = input<number>(0);
     rolled = signal<boolean>(false);
-    diceSum = signal<number>(0);
     showOverlay = input<boolean>(false);
+    showInline = input<boolean>(true);
+    overlayResult = input<string | null>(null);
+    reserveOverlayResultSpace = input<boolean>(false);
+    compactOverlayResult = input<boolean>(false);
+    overlayResultTone = input<'default' | 'success' | 'failed'>('default');
+    overlayRollingHint = input<string>('Tap or click to reveal the result');
+    overlayCloseHint = input<string>('');
 
     // outputs
     finished = output<{ results: number[]; sum: number }>();
+    overlayClosed = output<void>();
 
     // runtime state
     diceResults = signal<(number | null)[]>([]);
+    diceSum = computed(() => this.diceResults().reduce<number>(
+        (sum, value) => sum + (value ?? 0),
+        this.modifier(),
+    ));
     isRolling = signal(false);
     overlayVisible = signal(false);
+    canCloseOverlay = signal(false);
+    rollFinished = computed(() => !this.isRolling() && this.rolled());
 
-    private _animationTimer: any = null;
-    private _postEndTimer: any = null;
-    private _canCloseOverlay = false;
+    private animationTimer: ReturnType<typeof setInterval> | null = null;
+    private postEndTimer: ReturnType<typeof setTimeout> | null = null;
 
     constructor() {
-        let lastDiceCount = 0;
         effect((cleanup) => {
-            if (this.diceCount() === lastDiceCount) {
-                return;
-            }
-            lastDiceCount = this.diceCount();
-            this._resetArrays();
-            this._clearTimers();
+            const diceCount = Math.max(0, Math.floor(this.diceCount()));
+            const diceSides = Math.max(1, Math.floor(this.diceSides()));
+            const restored = this.validInitialResults(this.initialResults(), diceCount, diceSides);
+            this.clearTimers();
+            this.finalResults = null;
+            this.activeDiceCount = diceCount;
+            this.diceResults.set(restored ?? Array(diceCount).fill(null));
+            this.rolled.set(restored !== null);
+            this.isRolling.set(false);
+            this.overlayVisible.set(false);
+            this.canCloseOverlay.set(false);
             cleanup(() => {
-                this._clearTimers();
+                this.clearTimers();
             });
         });
         inject(DestroyRef).onDestroy(() => {
-            this._clearTimers();
+            this.clearTimers();
         });
     }
 
-    public roll() {
+    public roll(finalResults?: readonly number[]) {
         if (this.isRolling()) {
             return;
         }
 
+        const diceCount = Math.max(0, Math.floor(this.diceCount()));
+        this.finalResults = finalResults ? this.validateFinalResults(finalResults, diceCount) : null;
         this.rolled.set(false);
         this.isRolling.set(true);
         this.overlayVisible.set(this.showOverlay());
-        this._canCloseOverlay = false;
-        this._clearTimers();
+        this.canCloseOverlay.set(false);
+        this.clearTimers();
 
-
-        const diceCount = this.diceCount();
+        const animationIntervalMs = Math.max(1, this.animationIntervalMs());
+        this.activeDiceCount = diceCount;
 
         // start fast-changing overlay values
-        this._animationTimer = setInterval(() => {
-            for (let i = 0; i < diceCount; i++) {
-                const faces = this.diceResults();
-                faces[i] = this._randomFace();
-                this.diceResults.set([...faces]);
-            }
-        }, this.animationIntervalMs());
+        this.animationTimer = setInterval(() => {
+            this.diceResults.set(this.rollFaces(diceCount));
+        }, animationIntervalMs);
 
         // stop after configured duration
-        this._endTimer = setTimeout(() => {
-            if (this._animationTimer) {
-                clearInterval(this._animationTimer);
-                this._animationTimer = null;
-            }
-
-            this.isRolling.set(false);
-
-            const freezeOnRollEnd = this.freezeOnRollEnd();
-            this._canCloseOverlay = freezeOnRollEnd <= 0;
-            if (freezeOnRollEnd > 0) {
-                this._postEndTimer = setTimeout(() => {
-                    this._canCloseOverlay = true;
-                }, freezeOnRollEnd);
-            }
-
-            // emit finished event
-            const results = this.diceResults();
-            this.sumDie();
-            this.rolled.set(true);
-            this.finished.emit({ results: results.map(v => v ?? 0), sum: this.diceSum() });
-        }, this.rollDurationMs());
+        this.endTimer = setTimeout(() => this.finishRoll(), Math.max(0, this.rollDurationMs()));
     }
 
     onDieClick() {
         if (!this.rollOnDieClick()) {
+            return;
+        }
+        if (this.isRolling()) {
+            this.finishRoll();
             return;
         }
         this.roll();
@@ -144,50 +117,85 @@ export class DiceRollerComponent {
 
     onOverlayBackgroundClick() {
         if (this.isRolling()) {
+            this.finishRoll();
             return;
         }
-        if (!this._canCloseOverlay) {
+        if (!this.canCloseOverlay()) {
             return;
         }
         this.overlayVisible.set(false);
+        this.overlayClosed.emit();
     }
 
-    rollFinished() {
-        return !this.isRolling() && this.rolled();
-    }
-
-    sumDie() {
-        const results = this.diceResults();
-        let sum = 0;
-        for (const v of results) {
-            if (v !== null) {
-                sum += v;
-            }
+    private finishRoll() {
+        if (!this.isRolling()) {
+            return;
         }
-        sum += this.modifier();
-        this.diceSum.set(sum);
-    }
 
-    private _resetArrays() {
-        this.diceResults.set(Array(this.diceCount()).fill(null));
-    }
+        this.clearRollTimers();
+        this.isRolling.set(false);
 
-    private _randomFace() {
-        return Math.floor(Math.random() * this.diceSides()) + 1;
-    }
+        const results = this.finalResults ?? this.rollFaces(this.activeDiceCount);
+        this.finalResults = null;
+        this.diceResults.set(results);
 
-    private _clearTimers() {
-        if (this._animationTimer) {
-            clearInterval(this._animationTimer);
-            this._animationTimer = null;
+        const freezeOnRollEnd = Math.max(0, this.freezeOnRollEnd());
+        this.canCloseOverlay.set(freezeOnRollEnd === 0);
+        if (freezeOnRollEnd > 0) {
+            this.postEndTimer = setTimeout(() => {
+                this.canCloseOverlay.set(true);
+            }, freezeOnRollEnd);
         }
-        if (this._postEndTimer) {
-            clearTimeout(this._postEndTimer);
-            this._postEndTimer = null;
+
+        this.rolled.set(true);
+        this.finished.emit({ results, sum: this.diceSum() });
+    }
+
+    private validInitialResults(
+        results: readonly number[] | null,
+        diceCount: number,
+        diceSides: number,
+    ): number[] | null {
+        return results !== null
+            && results.length === diceCount
+            && results.every(value => Number.isInteger(value) && value >= 1 && value <= diceSides)
+            ? [...results]
+            : null;
+    }
+
+    private randomFace() {
+        return Math.floor(Math.random() * Math.max(1, Math.floor(this.diceSides()))) + 1;
+    }
+
+    private rollFaces(diceCount: number): number[] {
+        return Array.from({ length: diceCount }, () => this.randomFace());
+    }
+
+    private validateFinalResults(results: readonly number[], diceCount: number): number[] {
+        const sides = Math.max(1, Math.floor(this.diceSides()));
+        if (results.length !== diceCount
+            || results.some(value => !Number.isInteger(value) || value < 1 || value > sides)) {
+            throw new RangeError(`Final dice results must contain ${diceCount} values between 1 and ${sides}.`);
         }
-        if (this._endTimer) {
-            clearTimeout(this._endTimer);
-            this._endTimer = null;
+        return [...results];
+    }
+
+    private clearRollTimers() {
+        if (this.animationTimer) {
+            clearInterval(this.animationTimer);
+            this.animationTimer = null;
+        }
+        if (this.endTimer) {
+            clearTimeout(this.endTimer);
+            this.endTimer = null;
+        }
+    }
+
+    private clearTimers() {
+        this.clearRollTimers();
+        if (this.postEndTimer) {
+            clearTimeout(this.postEndTimer);
+            this.postEndTimer = null;
         }
     }
 }

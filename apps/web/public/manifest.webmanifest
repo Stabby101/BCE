@@ -1,0 +1,37 @@
+{
+  "lang": "en-US",
+  "name": "MekBay: BattleTech Force Builder",
+  "short_name": "MekBay",
+  "description": "Build and manage BattleTech forces for Classic and Alpha Strike with interactive or printable record sheets.",
+  "theme_color": "#292929",
+  "background_color": "#292929",
+  "display": "standalone",
+  "id": "/",
+  "scope": "/",
+  "start_url": "/",
+  "handle_links": "preferred",
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "url_handlers": [
+    {
+      "origin": "https://mekbay.com"
+    },
+    {
+      "origin": "https://next.mekbay.com"
+    }
+  ],
+    "protocol_handlers": [
+      {
+        "protocol": "web+mekbay",
+        "url": "/?protocolLink=%s"
+      }
+    ],
+    "launch_handler": {
+      "client_mode": "auto"
+    }
+}

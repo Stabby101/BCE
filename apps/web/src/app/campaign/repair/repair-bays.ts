@@ -24,6 +24,13 @@ export interface Bay {
     notes?: string[];             // estimate gap-notes carried (no invented numbers)
     assignedDate?: CampaignStartDate;
     isPrize?: boolean;            // captured cold-storage refit (display badge; RESERVE is driven by !lanceId)
+    // ── ODM-13 Phase 2 — ADDITIVE fields the ODM fork writes; Classic never sets them (D-0b). ──
+    heldFor?: string[];           // R3 HOLD: the missing replace-components the job awaits (fork-only)
+    lastNote?: string;            // the freed bay's last-completion note (e.g. a REARMED SHORT line; fork-only)
+    // ── ODM-17 P4 — ADDITIVE fork-only (D-0b): the per-JOB priority (the doctrine's P1-P4 ladder; GM-set,
+    //    defaulted from triage at assignment). Classic's per-BAY `priority` weighting is untouched — the
+    //    fork's ladder burn ignores it entirely ("bay weights die; the ladder allocates"). ──
+    jobPriority?: 1 | 2 | 3 | 4;
 }
 
 /** A dated bay-history record (completion or write-off). D-037: the itemized bill + gap-notes now
@@ -40,6 +47,9 @@ export interface BayHistoryEntry {
     outcome: 'completed' | 'written-off';
     bill?: RepairLine[];
     notes?: string[];
+    // ── ODM-13 Phase 2 — ADDITIVE fork-only record fields (Classic never writes them; D-0b). ──
+    partsUsed?: string[];         // the inventory component lines DEBITED at completion
+    rearmShort?: string[];        // per-bin rearm shortfalls ("LRM 0.4 t short, rack dry")
 }
 
 // ── D-037 — the TECH POOL identity: who actually turns the wrenches. Tier-keyed character,

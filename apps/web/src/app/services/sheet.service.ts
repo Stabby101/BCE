@@ -1,49 +1,21 @@
-/*
- * Copyright (C) 2026 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { DbService } from './db.service';
 import { LoggerService } from './logger.service';
-import { generateUUID } from './ws.service';
 import { RsPolyfillUtil } from '../utils/rs-polyfill.util';
 import { REMOTE_HOST } from '../models/common.model';
+import { uuidv7 } from '../utils/uuid.util';
 
 const SHEET_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+// Increment to revalidate every stored sheet before its normal cache age expires.
+const SHEET_CACHE_FINGERPRINT_VERSION = 1;
 
 /**
- * Author: Drake
  * 
  * Manages fetching, caching, and serving record-sheet SVGs.
  */
@@ -63,35 +35,47 @@ export class SheetService {
      * Multiple parallel calls for the same sheet are deduplicated — only one
      * network request is made and the resulting SVG is cloned for each caller.
      */
-    public async getSheet(sheetFileName: string): Promise<SVGSVGElement> {
+    public async getSheet(sheetFileName: string, serverHost: string = REMOTE_HOST): Promise<SVGSVGElement> {
+        const cacheKey = this.sheetCacheKey(sheetFileName, serverHost);
         // Fast path: fresh cache hit — no network, no deduplication needed.
-        const meta = await this.dbService.getSheetMeta(sheetFileName);
+        const meta = await this.dbService.getSheetMeta(cacheKey);
         const now = Date.now();
-        const isFresh = meta && (now - meta.timestamp) < SHEET_CACHE_MAX_AGE_MS;
+        const isFresh = meta
+            && meta.fingerprintVersion === SHEET_CACHE_FINGERPRINT_VERSION
+            && (now - meta.timestamp) < SHEET_CACHE_MAX_AGE_MS;
 
         if (isFresh) {
-            const sheet = await this.dbService.getSheet(sheetFileName);
+            const sheet = await this.dbService.getSheet(cacheKey);
             if (sheet) {
-                this.logger.info(`Sheet ${sheetFileName} loaded from cache (fresh).`);
+                this.logger.info(`Sheet ${cacheKey} loaded from cache (fresh).`);
                 return sheet;
             }
         }
 
         // Slow path: needs network check. Deduplicate parallel calls for the same sheet.
-        const existing = this.inFlight.get(sheetFileName);
+        const existing = this.inFlight.get(cacheKey);
         if (existing) {
-            this.logger.info(`Sheet ${sheetFileName} already in-flight, waiting for existing request.`);
+            this.logger.info(`Sheet ${cacheKey} already in-flight, waiting for existing request.`);
             const original = await existing;
             return original.cloneNode(true) as SVGSVGElement;
         }
 
-        const promise = this.getSheetFromNetwork(sheetFileName, meta);
-        this.inFlight.set(sheetFileName, promise);
+        const promise = this.getSheetFromNetwork(sheetFileName, serverHost, cacheKey, meta);
+        this.inFlight.set(cacheKey, promise);
         try {
             return await promise;
         } finally {
-            this.inFlight.delete(sheetFileName);
+            this.inFlight.delete(cacheKey);
         }
+    }
+
+    /**
+     * Builds the cache key for a sheet. Sheets from the primary host keep their bare file
+     * name (preserving existing caches); sheets from additional unit servers are namespaced
+     * by host so identically-named files from different servers never collide.
+     */
+    private sheetCacheKey(sheetFileName: string, serverHost: string): string {
+        return serverHost === REMOTE_HOST ? sheetFileName : `${serverHost}::${sheetFileName}`;
     }
 
     /**
@@ -100,26 +84,28 @@ export class SheetService {
      */
     private async getSheetFromNetwork(
         sheetFileName: string,
-        meta: { etag: string; timestamp: number } | null,
+        serverHost: string,
+        cacheKey: string,
+        meta: { etag: string; timestamp: number; fingerprintVersion?: number } | null,
     ): Promise<SVGSVGElement> {
         // Cache is stale or missing - check remote ETag
-        const remoteEtag = await this.getRemoteETag(`${REMOTE_HOST}/sheets/${sheetFileName}`);
+        const remoteEtag = await this.getRemoteETag(`${serverHost}/sheets/${sheetFileName}`);
 
         // If offline or same ETag, use cached version and refresh timestamp
         if (meta && (!remoteEtag || meta.etag === remoteEtag)) {
-            const sheet = await this.dbService.getSheet(sheetFileName);
+            const sheet = await this.dbService.getSheet(cacheKey);
             if (sheet) {
                 if (remoteEtag) {
                     // ETag matched, refresh timestamp so we don't check again for SHEET_CACHE_MAX_AGE_MS
-                    this.dbService.touchSheet(sheetFileName);
+                    await this.dbService.touchSheet(cacheKey, SHEET_CACHE_FINGERPRINT_VERSION);
                 }
-                this.logger.info(`Sheet ${sheetFileName} loaded from cache (validated).`);
+                this.logger.info(`Sheet ${cacheKey} loaded from cache (validated).`);
                 return sheet;
             }
         }
 
         // Fetch fresh copy from remote
-        return this.fetchAndCacheSheet(sheetFileName);
+        return this.fetchAndCacheSheet(sheetFileName, serverHost, cacheKey);
     }
 
     private async getRemoteETag(url: string): Promise<string> {
@@ -138,9 +124,9 @@ export class SheetService {
         }
     }
 
-    private async fetchAndCacheSheet(sheetFileName: string): Promise<SVGSVGElement> {
-        this.logger.info(`Fetching sheet: ${sheetFileName}`);
-        const src = `${REMOTE_HOST}/sheets/${sheetFileName}`;
+    private async fetchAndCacheSheet(sheetFileName: string, serverHost: string, cacheKey: string): Promise<SVGSVGElement> {
+        this.logger.info(`Fetching sheet: ${cacheKey}`);
+        const src = `${serverHost}/sheets/${sheetFileName}`;
 
         try {
             const response = await firstValueFrom(
@@ -150,7 +136,7 @@ export class SheetService {
                     responseType: 'text' as const,
                 })
             );
-            const etag = response.headers.get('ETag') || generateUUID(); // Fallback to random UUID if no ETag
+            const etag = response.headers.get('ETag') || uuidv7(); // Fallback to random UUID if no ETag
             const svgText = response.body;
             if (!svgText) {
                 throw new Error(`No body received for sheet ${sheetFileName}`);
@@ -169,11 +155,11 @@ export class SheetService {
             }
 
             RsPolyfillUtil.fixSvg(svgElement);
-            await this.dbService.saveSheet(sheetFileName, svgElement, etag);
-            this.logger.info(`Sheet ${sheetFileName} fetched and cached.`);
+            await this.dbService.saveSheet(cacheKey, svgElement, etag, SHEET_CACHE_FINGERPRINT_VERSION);
+            this.logger.info(`Sheet ${cacheKey} fetched and cached.`);
             return svgElement;
         } catch (err) {
-            this.logger.error(`Failed to download sheet ${sheetFileName}: ` + err);
+            this.logger.error(`Failed to download sheet ${cacheKey}: ` + err);
             throw err;
         }
     }

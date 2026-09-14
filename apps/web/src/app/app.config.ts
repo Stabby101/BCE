@@ -1,40 +1,19 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
+// BCE FORK-EDIT (DEPLOY-002 P4 + HOTFIX-009/028; REBASE-1 P1 c) — merged onto the pin's app.config:
+//   · `provideServiceWorker` + `isDevMode` REMOVED — BCE ships no service worker (actively unregistered at
+//     boot in index.html + app-reset.ts; a stale SW was the session-freshness wedge). Re-adding it on a
+//     re-baseline reintroduces the wedge HOTFIX-028 closed. angular.json also holds serviceWorker:false.
+//   · `withInterceptors([authInterceptor])` added — the GM bundle attaches the cookie + Bearer JWT.
+//   · two BCE app-initializers added (session resolve; campaign-save-store rehydrate), both TIMEOUT-BOUND
+//     (HOTFIX-028) so a blackhole engine URL cannot black-screen first paint.
+// The pin's equipment-handlers + wake-lock initializers and OVERLAY_DEFAULT_CONFIG are preserved as-is.
 import { type ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, ErrorHandler, provideAppInitializer, inject } from '@angular/core';
 import { OVERLAY_DEFAULT_CONFIG } from '@angular/cdk/overlay';
-import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { LoggerService } from './services/logger.service';
 import { EquipmentInteractionRegistryService } from './services/equipment-interaction-registry.service';
@@ -44,9 +23,6 @@ import { CampaignSaveStore } from './campaign/campaign-save-store';
 import { AuthService } from './auth/auth.service';
 import { authInterceptor } from './auth/auth.interceptor';
 
-/*
- * Author: Drake
- */
 export const appConfig: ApplicationConfig = {
     providers: [
         provideZonelessChangeDetection(),
@@ -93,10 +69,9 @@ export const appConfig: ApplicationConfig = {
             })();
             await Promise.race([boot, new Promise<void>((resolve) => setTimeout(resolve, 4000))]);
         }),
-        // HOTFIX-009: the vendored MekBay PWA service worker is DISABLED — it triggered an "install MekBay"
-        // prompt and served stale cached bundles (the faction-"unavailable"-until-hard-refresh class). The
-        // index.html kill-script evicts it from testers who already registered it; a branded BCE PWA is a
-        // deliberate later task. (provideServiceWorker('ngsw-worker.js', …) removed; angular.json serviceWorker:false.)
+        // HOTFIX-009/028: the vendored MekBay PWA service worker is DISABLED (provideServiceWorker removed;
+        // angular.json serviceWorker:false; index.html + app-reset.ts evict any already-registered SW). A
+        // branded BCE PWA is a deliberate later task.
         { provide: OVERLAY_DEFAULT_CONFIG, useValue: { usePopover: false } },
     ]
 };

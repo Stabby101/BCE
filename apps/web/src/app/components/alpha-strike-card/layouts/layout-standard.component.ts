@@ -1,35 +1,6 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import {
     Component,
@@ -55,7 +26,6 @@ import { AsLayoutBaseComponent } from './layout-base.component';
 import { formatMovement, isAerospace } from '../../../utils/as-common.util';
 
 /*
- * Author: Drake
  *
  * Standard layout component for Alpha Strike cards.
  */
@@ -75,7 +45,7 @@ import { formatMovement, isAerospace } from '../../../utils/as-common.util';
     styleUrls: ['./layout-standard.component.scss'],
     host: {
         '[class.interactive]': 'interactive()',
-        '[class.monochrome]': 'cardStyle() === "monochrome"',
+        '[class.monochrome]': 'cardStyle() === "default"',
     }
 })
 export class AsLayoutStandardComponent extends AsLayoutBaseComponent {
@@ -116,7 +86,7 @@ export class AsLayoutStandardComponent extends AsLayoutBaseComponent {
         if (groundMoveInches <= 0) return formatMovement(0, '', this.useHex());
 
         const sprintInches = Math.ceil(groundMoveInches * 1.5);
-        return formatMovement(sprintInches, '', this.useHex());
+        return this.formatSprintMovementDisplay('', sprintInches);
     });
 
     tmmDisplay = computed<string>(() => {
@@ -147,6 +117,18 @@ export class AsLayoutStandardComponent extends AsLayoutBaseComponent {
     // Pending heat change (delta: 0 = no change)
     pendingHeat = computed<number>(() => {
         return this.forceUnit()?.getState().pendingHeat() ?? 0;
+    });
+
+    heatTrackLevels = computed<number[]>(() => {
+        return this.forceUnit()?.heatTrackLevels('committed') ?? [0, 1, 2, 3];
+    });
+
+    shutdownHeatThreshold = computed<number>(() => {
+        return this.forceUnit()?.shutdownHeatThreshold('committed') ?? 4;
+    });
+
+    hasExtendedHeatTrack = computed<boolean>(() => {
+        return this.heatTrackLevels().length > 4;
     });
 
     // Damage values affected by weapon critical hits: -1 per hit

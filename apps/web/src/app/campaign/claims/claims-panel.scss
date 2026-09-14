@@ -42,6 +42,9 @@
 .cl-free { font-family: var(--mono); font-size: 10.5px; letter-spacing: 1px; color: var(--ink2); }
 .cl-held { font-family: var(--mono); font-size: 10.5px; letter-spacing: 1px; color: var(--stamp); }
 .cl-held.mine { color: var(--ok); }
+/* REBASE-1 P3 item 1b — the per-participant "un-ended picks" badge (damage picked, phase not ended → not shared). */
+.cl-pending { flex: 0 0 auto; font-family: var(--label); font-weight: 700; font-size: 10.5px; letter-spacing: .04em; color: #7a5b12; background: #f2d488; border: 1px solid #b8901e; border-radius: 999px; padding: 2px 7px; white-space: nowrap; }
+.cl-pending-sum { color: #b8901e; font-weight: 700; }
 
 /* HOTFIX-030 — the board header counts + per-row presence dot + Kick/reassign; the spectator list. */
 .cl-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }

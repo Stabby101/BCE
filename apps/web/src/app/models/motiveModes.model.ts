@@ -1,52 +1,28 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
-import type { Unit } from "./units.model";
+import type { UnitSummary } from "./unit-summary.model";
 
 export type MotiveState = ''
 
-export type MotiveModes = 'stationary' | 'walk' | 'run' | 'jump' | 'UMU' | 'VTOL';
+export type MotiveModes = 'stationary' | 'walk' | 'run' | 'sprint' | 'jump' | 'UMU' | 'VTOL';
 
 export interface MotiveModeOption {
     mode: MotiveModes;
     label: string;
+    psr?: boolean;
 }
 
-export function canChangeAirborneGround(unit: Unit): boolean {
+export function canChangeAirborneGround(unit: UnitSummary): boolean {
     return unit.moveType === 'VTOL' || unit.moveType === 'WiGE' || unit.subtype === 'Land-Air BattleMek';
 }
 
-export function getMotiveModeLabel(mode: MotiveModes, unit: Unit, airborne: boolean = false): string {
+export function getMotiveModeLabel(mode: MotiveModes, unit: UnitSummary, airborne: boolean = false): string {
+    if (unit.type === 'Aero') {
+        if (mode === 'walk') return 'Safe Thrust';
+        if (mode === 'run') return 'Maximum Thrust';
+    }
     let isVehicle = unit.type === 'VTOL' || unit.type === 'Naval' || unit.type === 'Tank' || unit.type === 'Aero';
     switch (mode) {
         case 'stationary':
@@ -55,6 +31,8 @@ export function getMotiveModeLabel(mode: MotiveModes, unit: Unit, airborne: bool
             return (isVehicle || airborne) ? 'Cruise' : 'Walk';
         case 'run':
             return (isVehicle || airborne) ? 'Flank' : 'Run';
+        case 'sprint':
+            return 'Sprint';
         case 'jump':
             return 'Jump';
         case 'UMU':
@@ -64,7 +42,7 @@ export function getMotiveModeLabel(mode: MotiveModes, unit: Unit, airborne: bool
     }
 }
 
-export function getMotiveModeMaxDistance(mode: MotiveModes, unit: Unit, airborne: boolean = false): number {
+export function getMotiveModeMaxDistance(mode: MotiveModes, unit: UnitSummary, airborne: boolean = false): number {
     switch (mode) {
         case 'stationary':
             return 0;
@@ -72,8 +50,10 @@ export function getMotiveModeMaxDistance(mode: MotiveModes, unit: Unit, airborne
             return Math.max(unit.walk, unit.walk2);
         case 'run':
             return Math.max(unit.run, unit.run2);
+        case 'sprint':
+            return Math.max(unit.walk, unit.walk2) * 2;
         case 'jump':
-            return Math.max(unit.jump, unit.jump2);
+            return unit.jump;
         case 'UMU':
             return unit.umu;
         case 'VTOL':
@@ -83,39 +63,45 @@ export function getMotiveModeMaxDistance(mode: MotiveModes, unit: Unit, airborne
     }
 }
 
-function canStationary(unit: Unit, airborne: boolean = false): boolean {
+function canStationary(unit: UnitSummary, airborne: boolean = false): boolean {
+    if (airborne && unit.subtype === 'Land-Air BattleMek') return false;
     return true;
 }
 
-function canWalk(unit: Unit, airborne: boolean = false): boolean {
+function canWalk(unit: UnitSummary, airborne: boolean = false): boolean {
     if (!airborne) {
         if (unit.type === 'Aero' || unit.type === 'VTOL') return false;
     }
     return true;
 }
 
-function canRun(unit: Unit, airborne: boolean = false): boolean {
+function canRun(unit: UnitSummary, airborne: boolean = false): boolean {
     if (unit.type === 'Infantry') return false;
     if (!canWalk(unit, airborne)) return false;
     return true;
 }
 
-function canJump(unit: Unit, airborne: boolean = false): boolean {
+function canJump(unit: UnitSummary, airborne: boolean = false): boolean {
     return (unit.jump > 0 && !airborne);
 }
 
-function canUMU(unit: Unit, airborne: boolean = false): boolean {
+function canSprint(unit: UnitSummary, airborne: boolean = false): boolean {
+    return unit.type === 'Mek' && !airborne;
+}
+
+function canUMU(unit: UnitSummary, airborne: boolean = false): boolean {
     return (unit.umu > 0);
 }
 
-function canVTOL(unit: Unit, airborne: boolean = false): boolean {
+function canVTOL(unit: UnitSummary, airborne: boolean = false): boolean {
     // We exclude VTOL units since their walk/run are VTOL modes
     if (unit.type === 'VTOL') return false;
     return (airborne && unit.moveType === 'VTOL');
 }
 
-export function getMotiveModesByUnit(unit: Unit, airborne: boolean = false): MotiveModes[] {
+export function getMotiveModesByUnit(unit: UnitSummary, airborne: boolean = false): MotiveModes[] {
     if ((unit.type === 'Handheld Weapon')) return [];
+    if (unit.type === 'Aero') return ['stationary', 'walk', 'run'];
     const modes: MotiveModes[] = [];
     if (canStationary(unit, airborne)) {
         modes.push('stationary');
@@ -125,6 +111,9 @@ export function getMotiveModesByUnit(unit: Unit, airborne: boolean = false): Mot
     }
     if (canRun(unit, airborne)) {
         modes.push('run');
+    }
+    if (canSprint(unit, airborne)) {
+        modes.push('sprint');
     }
     if (canJump(unit, airborne)) {
         modes.push('jump');
@@ -138,7 +127,7 @@ export function getMotiveModesByUnit(unit: Unit, airborne: boolean = false): Mot
     return modes;
 }
 
-export function getMotiveModesOptionsByUnit(unit: Unit, airborne: boolean = false): MotiveModeOption[] {
+export function getMotiveModesOptionsByUnit(unit: UnitSummary, airborne: boolean = false): MotiveModeOption[] {
     const modes = getMotiveModesByUnit(unit, airborne ?? false);
     return modes.map(mode => ({
         mode,

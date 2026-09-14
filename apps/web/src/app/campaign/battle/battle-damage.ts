@@ -37,7 +37,10 @@ export function applyDamage(fu: CBTForceUnit, damage: BattleDamage | undefined |
  *  untouched (update() doesn't read state.crew and the alias is unchanged). */
 export function resetDamage(fu: CBTForceUnit): void {
     const cur = fu.serialize().state; // keep crew + any non-damage state; override only the damage envelope to pristine
-    fu.update({ id: fu.id, state: { ...cur, locations: {}, crits: [], inventory: [], heat: { ...NEUTRAL_HEAT }, modified: false, destroyed: false, shutdown: false }, alias: fu.alias(), unit: fu.getUnit().name });
+    // REBASE-1 P1 c: upstream removed the top-level `shutdown` from CBTSerializedState (it lives in the PSR
+    // checks now); a pristine reset drives heat to NEUTRAL, which is what cleared the heat-shutdown anyway.
+    // Watched at the P2 battle harness (resetDamage's witness) that a repaired unit is not left shut down.
+    fu.update({ id: fu.id, state: { ...cur, locations: {}, crits: [], inventory: [], heat: { ...NEUTRAL_HEAT }, modified: false, destroyed: false }, alias: fu.alias(), unit: fu.getUnit().name });
 }
 
 /* ── D-048 phase B — the LIVE fan (heat intact) ────────────────────────────────────────────────

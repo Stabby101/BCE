@@ -20,9 +20,16 @@ export function anonId(token: string): string {
     return 'anon-' + createHash('sha256').update(token).digest('hex').slice(0, 16);
 }
 
-/** Redact a lobby roster for one non-GM recipient: others' `token` → anonId; the recipient's own entry unchanged. */
+/** Redact a lobby roster for one non-GM recipient: others' `token` → anonId; the recipient's own entry unchanged.
+ *  GM-1 P2 — others' `sidePref` is GM-only advisory truth: stripped to null on rows that carry it (the recipient's
+ *  own row keeps its own preference). Rows WITHOUT the field stay byte-identical (the pre-GM-1 pins hold). */
 export function redactLobby<T extends { token: string }>(full: readonly T[], ownToken: string | undefined): T[] {
-    return full.map((p) => (p.token === ownToken ? p : { ...p, token: anonId(p.token) }));
+    return full.map((p) => {
+        if (p.token === ownToken) return p;
+        const anon = { ...p, token: anonId(p.token) } as T & { sidePref?: string | null };
+        if ('sidePref' in p) anon.sidePref = null; // advisory prefs fan to the GM panel, never to other players
+        return anon;
+    });
 }
 
 /** Redact a claims set for one non-GM recipient: others' `holderToken` → anonId; the recipient's own claim

@@ -1,52 +1,29 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { ChangeDetectionStrategy, Component, inject, computed } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { type PilotAbility, type ASCustomPilotAbility, getAbilityDetails } from '../../models/pilot-abilities.model';
-import type { GameSystem, RulesReference } from '../../models/common.model';
+import type { CommandAbility } from '../../models/command-abilities.model';
+import { type PilotAbility, type ASCustomPilotAbility, formatSummaryMovement, getAbilityDetails } from '../../models/pilot-abilities.model';
+import { formatRulesReference, type GameSystem, type RulesReference } from '../../models/common.model';
 import type { GameService } from '../../services/game.service';
+import { OptionsService } from '../../services/options.service';
+import type { FormationWideAbility } from '../../utils/formation-type.model';
 
 export interface PilotAbilityInfoDialogData {
     gameSystem: GameSystem;
     /** The pilot ability (either standard or custom) */
-    ability: PilotAbility | ASCustomPilotAbility;
+    ability: PilotAbility | ASCustomPilotAbility | CommandAbility | FormationWideAbility;
     /** Whether this is a custom ability */
     isCustom: boolean;
+    /** Whether this is a formation-granted command ability */
+    isCommand?: boolean;
+    /** Whether this is a formation-wide ability that is not assigned to a unit. */
+    isFormationWide?: boolean;
 }
 
 /**
- * Author: Drake
  *
  * Dialog component to show detailed information about a pilot ability.
  */
@@ -59,11 +36,21 @@ export interface PilotAbilityInfoDialogData {
 export class PilotAbilityInfoDialogComponent {
     private readonly dialogRef = inject(DialogRef);
     private readonly data = inject<PilotAbilityInfoDialogData>(DIALOG_DATA);
+    private readonly optionsService = inject(OptionsService);
 
     readonly ability = computed(() => this.data.ability);
     readonly isCustom = computed(() => this.data.isCustom);
+    readonly isCommand = computed(() => this.data.isCommand ?? false);
+    readonly isFormationWide = computed(() => this.data.isFormationWide ?? false);
+    readonly summaryIsHtml = computed(() => !this.isCustom());
     readonly abilityName = computed(() => this.ability().name);
-    readonly abilityCost = computed(() => this.ability().cost);
+    readonly abilityCost = computed<number | null>(() => {
+        if (this.isCommand() || this.isFormationWide()) {
+            return null;
+        }
+        return (this.ability() as PilotAbility | ASCustomPilotAbility).cost;
+    });
+    readonly formatRuleReference = formatRulesReference;
     
     readonly summary = computed<string[]>(() => {
         const ability = this.ability();
@@ -71,11 +58,31 @@ export class PilotAbilityInfoDialogComponent {
             // Custom abilities have a single summary string
             return [(ability as ASCustomPilotAbility).summary];
         }
-        return getAbilityDetails(ability as PilotAbility, this.data.gameSystem).summary;
+        if (this.isCommand()) {
+            return [...(ability as CommandAbility).summary];
+        }
+        if (this.isFormationWide()) {
+            return formatSummaryMovement(
+                (ability as FormationWideAbility).summary,
+                this.optionsService.options().ASUseHex,
+            );
+        }
+        return formatSummaryMovement(
+            getAbilityDetails(ability as PilotAbility, this.data.gameSystem).summary,
+            this.optionsService.options().ASUseHex,
+        );
     });
     
     readonly rulesReference = computed<RulesReference[] | null>(() => {
         if (this.isCustom()) return null;
+        if (this.isCommand()) {
+            const ability = this.ability() as CommandAbility;
+            return ability.rulesRef?.length ? ability.rulesRef : null;
+        }
+        if (this.isFormationWide()) {
+            const ability = this.ability() as FormationWideAbility;
+            return ability.rulesRef?.length ? ability.rulesRef : null;
+        }
         const ability = this.ability() as PilotAbility;
         const details = getAbilityDetails(ability, this.data.gameSystem);
         if (!details.rulesRef?.length) return null;

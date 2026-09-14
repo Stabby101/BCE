@@ -1,44 +1,14 @@
-/*
- * Copyright (C) 2025 The MegaMek Team. All Rights Reserved.
- *
- * This file is part of MekBay.
- *
- * MekBay is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL),
- * version 3 or (at your option) any later version,
- * as published by the Free Software Foundation.
- *
- * MekBay is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * A copy of the GPL should have been included with this project;
- * if not, see <https://www.gnu.org/licenses/>.
- *
- * NOTICE: The MegaMek organization is a non-profit group of volunteers
- * creating free software for the BattleTech community.
- *
- * MechWarrior, BattleMech, `Mech and AeroTech are registered trademarks
- * of The Topps Company, Inc. All Rights Reserved.
- *
- * Catalyst Game Labs and the Catalyst Game Labs logo are trademarks of
- * InMediaRes Productions, LLC.
- *
- * MechWarrior Copyright Microsoft Corporation. MegaMek was created under
- * Microsoft's "Game Content Usage Rules"
- * <https://www.xbox.com/en-US/developers/rules> and it is not endorsed by or
- * affiliated with Microsoft.
- */
+// Copyright (C) 2026 The MegaMek Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Author: Drake
 
 import { ChangeDetectionStrategy, Component, inject, signal, viewChild, type AfterViewInit, computed } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { DiceRollerComponent } from '../../dice-roller/dice-roller.component';
 import type { ASForceUnit } from '../../../models/as-force-unit.model';
-import type { MoveType } from '../../../models/units.model';
+import type { MoveType } from '../../../models/unit-summary.model';
 
 /*
- * Author: Drake
  *
  * Dialog for rolling motive system damage for vehicles.
  * Vehicles (CV, SV) must roll on this table whenever they take structure damage.
@@ -140,6 +110,17 @@ const MOTIVE_DAMAGE_TABLE: Record<number, MotiveTableEntry> = {
                 <span class="motive-value">{{ this.moveType }}</span>
                 <span class="modifier-label">({{ rollModifier() >= 0 ? '+' : '' }}{{ rollModifier() }} modifier)</span>
             </div>
+
+            @if (rollModifierComments().length > 0) {
+                <div class="roll-modifier-comments">
+                    @for (comment of rollModifierComments(); track $index) {
+                        <div class="roll-modifier-comment">
+                            <span class="roll-modifier-value">{{ formatRollModifier(comment.modifier) }}</span>
+                            <span>{{ comment.comment }}</span>
+                        </div>
+                    }
+                </div>
+            }
             
             <div class="dice-roller-container">
             <!-- 2D6 roll -->
@@ -224,6 +205,33 @@ const MOTIVE_DAMAGE_TABLE: Record<number, MotiveTableEntry> = {
             font-size: 0.9em;
         }
 
+        .roll-modifier-comments {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 280px;
+            max-width: 520px;
+            text-align: left;
+        }
+
+        .roll-modifier-comment {
+            display: flex;
+            gap: 8px;
+            align-items: baseline;
+            padding: 8px 10px;
+            background: rgba(255, 204, 0, 0.12);
+            border: 1px solid rgba(255, 204, 0, 0.35);
+            color: #ddd;
+            font-size: 0.9em;
+        }
+
+        .roll-modifier-value {
+            min-width: 2.5em;
+            text-align: right;
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
         .result-container {
             padding: 16px;
             background: rgba(0, 0, 0, 0.3);
@@ -285,8 +293,14 @@ export class MotiveDamageRollDialogComponent implements AfterViewInit {
 
     readonly result = signal<MotiveDamageResult | null>(null);
 
-    /** Modifier to the roll based on motive type */
-    readonly rollModifier = computed(() => getMotiveRollModifier(this.moveType));
+    /** Modifier to the roll based on motive type and active unit abilities. */
+    readonly rollModifier = computed(() => {
+        return this.forceUnit.criticalHitRollModifier('motiveDamage', getMotiveRollModifier(this.moveType));
+    });
+
+    readonly rollModifierComments = computed(() => {
+        return this.forceUnit.criticalHitRollModifierComments('motiveDamage', getMotiveRollModifier(this.moveType));
+    });
 
     /** Display name combining chassis, model, and optional alias */
     readonly unitDisplayName = computed(() => {
@@ -328,6 +342,10 @@ export class MotiveDamageRollDialogComponent implements AfterViewInit {
             case 'motive3': return 1;
             default: return 1;
         }
+    }
+
+    formatRollModifier(modifier: number): string {
+        return `${modifier >= 0 ? '+' : ''}${modifier}`;
     }
 
     ngAfterViewInit(): void {

@@ -8,7 +8,7 @@
  * Condition state is local; the Fleet section reflects the resource tier. MekBay
  * components are reused unedited.
  */
-import { Component, ChangeDetectionStrategy, computed, signal, inject, effect, untracked, isDevMode, type Signal, ApplicationRef, EnvironmentInjector } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, signal, inject, effect, untracked, isDevMode, output, type Signal, ApplicationRef, EnvironmentInjector } from '@angular/core';
 import { BceUnitSpriteComponent } from '../../sprite/unit-sprite';
 import { NewCampaignState } from '../../new-campaign-state';
 import { shipForSize } from '../../size-capital/resources';
@@ -20,8 +20,11 @@ import { PilotService } from '../../barracks/pilot.service';
 import type { Pilot } from '../../barracks/pilot-generator';
 import type { ProtoInstance } from '../../force/force-generator';
 import { buildNextLance, pruneLance, STRUCTURE_TUNABLES } from '../../force/force-structure';
+import { WarchestService } from '../../chaos/warchest.service'; // PD3 P4 — the RELEASE ledger line (HS only)
+import { releaseFromForce } from '../../chaos/hs-release'; // PD3 P4 — the pure release transform
 import { categoryCounts, forceReadiness } from '../../force/deployed';
 import { hasMechDamage } from '../../repair/repair-bays'; // HOTFIX-024 — gate 'In repair' on the SAME predicate the bays queue filters on
+import { hsDamagedCount } from '../../battle/hs-damage'; // PD3 P1 — the HS REPAIR badge counts DAMAGED units (HS never sets 'In repair')
 import { InViewDirective } from './in-view.directive';
 import { SheetViewComponent } from './sheet-view';
 import { SheetModalComponent } from './sheet-modal';
@@ -31,7 +34,7 @@ import { PilotDetailComponent } from '../../barracks/pilot-detail';
 import { PILOT_ABILITIES } from '../../barracks/pilot-abilities';
 import { BVCalculatorUtil } from '../../../utils/bv-calculator.util';
 import type { CBTForceUnit } from '../../../models/cbt-force-unit.model';
-import type { Unit } from '../../../models/units.model';
+import type { UnitSummary as Unit } from '../../../models/unit-summary.model';
 
 interface Vessel {
     name: string;
@@ -91,6 +94,47 @@ export class RosterComponent {
     protected readonly reserveKey = '__reserve__';
     /** D-029 — the unit-acquisition (market) overlay, opened from the roster header / empty state. */
     protected readonly marketOpen = signal(false);
+    /** DIRECTIVE-PD3 P4 — the roster asks the dashboard to land on a tab by id (HS: "Sell ▸" → the Market's sell; the Acquire
+     *  button → the HS market instead of the Traditional C-bill overlay, which wrote a treasury D-110b keeps null). */
+    readonly navigate = output<string>();
+    private readonly warchest = inject(WarchestService);
+    /** PD3 P4 (PD3-1) — RELEASE, two taps (arm → confirm within 5 s): 0 SP, any condition, ledgered, pilot to spares, commander
+     *  re-designated, lance pruned (hs-release.ts, the Traditional remove() shape). HS only; Traditional keeps the overlay's Sell/Strike. */
+    protected readonly releaseArm = signal<string | null>(null);
+    private releaseTimer: ReturnType<typeof setTimeout> | null = null;
+    protected release(instanceId: string): void {
+        if (!this.isHotspots()) return;
+        if (this.releaseArm() !== instanceId) {
+            this.releaseArm.set(instanceId);
+            if (this.releaseTimer) clearTimeout(this.releaseTimer);
+            this.releaseTimer = setTimeout(() => this.releaseArm.set(null), 5000);
+            return;
+        }
+        this.releaseArm.set(null);
+        const r = releaseFromForce({ force: this.state.startingForce() ?? [], pilots: this.state.pilots(), structure: this.state.forceStructure(), instanceId });
+        if (!r.ok) return;
+        this.warchest.post(`Released — ${r.released.chassis} ${r.released.model}`.trim(), 0, 0); // 0 SP: the record of the release, toasted like any player action
+        this.state.setStartingForce(r.force);
+        if (r.pilots) this.state.setPilots(r.pilots);
+        if (r.structure !== (this.state.forceStructure() ?? null)) this.state.setForceStructure(r.structure);
+        void this.store.persistCurrent();
+    }
+    /** PD3 P4 (PD3-5) — RENAME on the roster row: ✎ → an inline input → save (pilot.service.rename, the D-070 path) → persist. */
+    protected readonly renamingId = signal<string | null>(null);
+    protected readonly renameDraft = signal('');
+    protected startRename(pilotId: string): void {
+        const p = (this.state.pilots() ?? []).find((x) => x.pilotId === pilotId);
+        if (!p || p.status === 'KIA') return;
+        this.renameDraft.set(p.name); this.renamingId.set(pilotId);
+    }
+    protected saveRename(): void {
+        const id = this.renamingId(); if (!id) return;
+        this.pilotService.rename(id, this.renameDraft());
+        this.renamingId.set(null);
+        for (const cid of this.forceService.reapplyAllCrew()) this.sheetRev.bump(cid); // the live sheet's crew name follows
+        void this.store.persistCurrent();
+    }
+    protected cancelRename(): void { this.renamingId.set(null); }
     /** Tap-the-'MECHS-count filter: when on, the roster collapses to deployed cells only. */
     protected readonly deployFilter = signal(false);
 
@@ -382,6 +426,10 @@ export class RosterComponent {
     // ── ACTIVE MISSION cell (a DATA-003 view of the stored MissionSpec + clock; both variants) ──
     protected readonly counts = computed(() => categoryCounts(this.force()));
     protected readonly readiness = computed(() => forceReadiness(this.force()));
+    /** DIRECTIVE-PD3 P1 (PD3-12) — the header's REPAIR figure. Traditional = forceReadiness().repair (condition 'In repair',
+     *  set by the field walk). Hot Spots never sets that condition (D-121 settles at resolve without one), so it read 0 over a
+     *  damaged force; HS counts the ONE damage truth instead (hs-damage.ts) — the same number the rail's Repair stop shows. */
+    protected readonly repairBadge = computed(() => this.isHotspots() ? hsDamagedCount(this.force()) : this.readiness().repair);
 
     private daysBetween(a: { y: number; m: number; d: number }, b: { y: number; m: number; d: number }): number {
         return Math.round((Date.UTC(b.y, b.m, b.d) - Date.UTC(a.y, a.m, a.d)) / 86400000);

@@ -1,0 +1,426 @@
+:host {
+    display: block;
+}
+
+.panel {
+    width: min(460px, calc(100vw - 24px));
+    cursor: auto;
+}
+
+.body {
+    padding: 0 8px;
+}
+
+.critical-dialog-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 8px 0;
+    text-align: center;
+}
+
+.critical-random-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+
+    &:not(.roll-disabled):hover .random-button,
+    &:not(.roll-disabled):focus-within .random-button {
+        opacity: 1;
+    }
+
+    &.roll-disabled {
+        cursor: not-allowed;
+    }
+}
+
+.critical-dice-trigger {
+    cursor: inherit;
+
+    &:focus-visible {
+        outline: 2px solid var(--bt-yellow);
+        outline-offset: 4px;
+    }
+}
+
+.critical-table-hint {
+    color: var(--text-color-secondary);
+    font-size: 0.85em;
+}
+
+.critical-result-slot {
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    place-items: center;
+}
+
+.critical-result-slot > * {
+    grid-area: 1 / 1;
+    min-width: 0;
+}
+
+.critical-roll-details {
+    align-self: stretch;
+    margin: 0;
+    text-align: left;
+}
+
+.critical-modifier {
+    min-height: 36px;
+}
+
+.critical-modifier.inactive .modifier-reason,
+.critical-modifier.inactive .modifier-value {
+    opacity: 0.5;
+}
+
+.critical-modifier-checkbox,
+.critical-modifier.optional .modifier-reason,
+.other-modifier .modifier-reason {
+    cursor: pointer;
+}
+
+.critical-modifier-checkbox .bt-checkbox {
+    display: block;
+}
+
+.other-modifier {
+    grid-template-columns: var(--modifier-location-width) minmax(0, 1fr) auto;
+}
+
+.critical-modifier-controls {
+    align-self: center;
+    display: grid;
+    grid-template-columns: 28px 42px 28px;
+    align-items: center;
+    gap: 4px;
+}
+
+.critical-modifier-step {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    background: var(--background-highlight);
+    color: var(--text-color);
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.critical-modifier-step:not(:disabled):hover,
+.critical-modifier-step:not(:disabled):focus-visible {
+    border-color: var(--text-color-secondary);
+    background: var(--background-highlight-bright);
+}
+
+.critical-modifier-step:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+.situational-modifier-value {
+    min-width: 42px;
+    min-height: 28px;
+    box-sizing: border-box;
+}
+
+.situational-modifier-value.neutral {
+    border-color: var(--border-color);
+    background: var(--background-input);
+    color: var(--text-color);
+}
+
+.guided-progress,
+.critical-result {
+    font-weight: 700;
+}
+
+.guided-progress {
+    color: var(--text-color);
+}
+
+.explosion-protection,
+.case-ii-check {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0.65rem 0.75rem;
+    text-align: left;
+}
+
+.explosion-protection {
+    align-items: flex-start;
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--background-highlight-bright) 12%, transparent);
+}
+
+.protection-badge {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    display: block;
+    font-size: 0.9em;
+    color: #e8a64a;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+}
+
+.protection-note {
+    color: var(--text-color-secondary);
+    font-size: 0.82em;
+    line-height: 1.35;
+}
+
+.case-ii-check {
+    border: 1px solid #e8a64a;
+    background: rgba(120, 80, 0, 0.2);
+    color: var(--text-color-secondary);
+    font-size: 0.88em;
+    line-height: 1.35;
+}
+
+.case-ii-check strong {
+    color: #e8a64a;
+}
+
+.case-ii-manual-options {
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.case-ii-manual-options .bt-button,
+.critical-non-explosive-action {
+    min-width: 0;
+    white-space: normal;
+}
+
+.critical-non-explosive-action {
+    align-self: stretch;
+    min-height: 38px;
+}
+
+.critical-result {
+    font-size: 1.05em;
+    color: var(--danger);
+
+    &.no-critical {
+        color: var(--success);
+    }
+
+    &.reroll {
+        color: var(--text-color);
+    }
+}
+
+.explosion-result {
+    align-self: stretch;
+    padding: 0.75rem;
+    border: 1px solid var(--danger);
+    background: rgba(120, 0, 0, 0.25);
+    color: var(--text-color);
+
+    &.pending-explosion {
+        border-color: #e8a64a;
+        background: rgba(120, 80, 0, 0.25);
+    }
+}
+
+.actions {
+    gap: 4px;
+    flex-wrap: wrap;
+
+    .bt-button {
+        flex: 1 1 0;
+        width: auto;
+        min-width: 0;
+    }
+}
+
+.critical-manual-results {
+    flex: 1 0 100%;
+    display: grid;
+    gap: 6px;
+}
+
+.critical-manual-results-label {
+    color: var(--text-color-secondary);
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.critical-chance-options {
+    width: 100%;
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 4px;
+}
+
+.critical-chance-options .bt-button {
+    min-width: 0;
+    height: 40px;
+    white-space: nowrap;
+}
+
+.critical-chance-options.rolled-result-action {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.critical-result-action,
+.critical-dismiss-actions .bt-button {
+    width: 100%;
+}
+
+.critical-slot-options {
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+}
+
+.critical-slot-block {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 2px;
+    min-width: 0;
+}
+
+.critical-slot-single-block {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.critical-slot-first-die {
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    border: 1px solid var(--border-color);
+    background: var(--border-color);
+    color: var(--text-color);
+    font-size: 0.75em;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+}
+
+.critical-slot-block-rows {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
+    min-width: 0;
+}
+
+.critical-slot-option {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) 64px;
+    min-height: 32px;
+    min-width: 0;
+    border: 1px solid var(--border-color);
+    background: var(--background-input);
+    transition: opacity 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.critical-slot-number {
+    display: grid;
+    place-items: center;
+    background-color: var(--border-color);
+    color: var(--text-color);
+    font-size: 0.8em;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.critical-slot-name {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    padding: 4px 8px;
+    border-right: 1px solid var(--border-color);
+    color: var(--text-color-secondary);
+}
+
+.critical-slot-explosion-icon {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    fill: #f60;
+}
+
+.critical-slot-hit-button {
+    width: 100%;
+    min-width: 0;
+    min-height: 100%;
+}
+
+.critical-slot-option.critical-slot-hit {
+    border-color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 18%, var(--background-highlight));
+    opacity: 1;
+}
+
+.critical-slot-option.critical-slot-dimmed {
+    opacity: 0.3;
+}
+
+.critical-slot-option.critical-slot-collapsed {
+    grid-template-columns: 24px minmax(0, 1fr);
+    height: 18px;
+    min-height: 18px;
+    overflow: hidden;
+}
+
+.critical-slot-option.critical-slot-collapsed .critical-slot-number {
+    font-size: 0.6em;
+}
+
+.critical-slot-option.critical-slot-collapsed .critical-slot-name {
+    padding: 0 6px;
+    border-right: 0;
+    font-size: 0.7em;
+    line-height: 1;
+}
+
+.critical-slot-option.critical-slot-collapsed .critical-slot-explosion-icon {
+    width: 9px;
+    height: 9px;
+}
+
+.critical-slot-option.critical-slot-hit .critical-slot-number {
+    background-color: var(--danger);
+    font-size: 1.2em;
+}
+
+.critical-slot-option.critical-slot-hit .critical-slot-name {
+    color: #fff;
+}
+
+.critical-slot-unavailable {
+    width: 100%;
+    height: 4px;
+    background: var(--border-color);
+    transition: opacity 0.15s ease-in-out;
+}
+
+.critical-slot-unavailable.critical-slot-destroyed {
+    background: color-mix(in srgb, var(--danger) 32%, var(--background-input));
+}
+
+.critical-slot-unavailable.critical-slot-hit {
+    background: var(--danger);
+    opacity: 1;
+}
+
+.critical-slot-unavailable.critical-slot-dimmed {
+    opacity: 0.3;
+}

@@ -160,3 +160,88 @@ footer { display: flex; justify-content: space-between; align-items: flex-end; g
     footer { flex-direction: column; align-items: stretch; gap: 12px; }
     .meta { text-align: left; }
 }
+
+/* ── DIRECTIVE-ODM-20 — the singleton's two surfaces ─────────────────────────────────────────────────
+   .odm-new    the deliberate escape hatch under the ODM door (only where a campaign exists) — small and
+               quiet on purpose: it is not a second front door.
+   .odm-forked THE ANOMALY ALARM. More than one ODM campaign is not supposed to happen, so this reads as
+               a warning, not a friendly picker, and it never chooses for you. */
+.odm-new {
+    display: block; margin: -6px 0 10px auto; padding: 3px 10px;
+    font: 600 10.5px/1.4 var(--mono, monospace); letter-spacing: .06em; text-transform: uppercase;
+    color: #b08a5a; background: transparent; border: 1px dashed #6b4a2f; border-radius: 4px; cursor: pointer;
+}
+.odm-new:disabled { opacity: .45; cursor: default; }
+.odm-forked {
+    position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+    background: rgba(6, 9, 13, .82); padding: 20px;
+}
+.odm-forked .of-box {
+    max-width: 640px; width: 100%; background: #10161d; border: 2px solid #a5522f; border-radius: 8px;
+    padding: 18px 20px; box-shadow: 0 18px 60px rgba(0, 0, 0, .6);
+    /* THE LOCKOUT FIX: the box was unbounded, so at the real N (~20) the rows ran off-screen with no way to
+       reach them — the alarm became the thing blocking entry. Bound it and scroll the LIST, so the heading,
+       the Resume-Last escape hatch and Cancel stay visible while the rows move. */
+    max-height: 86vh; display: flex; flex-direction: column;
+}
+.odm-forked .of-list { overflow-y: auto; min-height: 0; margin: 0 -4px; padding: 0 4px; }
+.odm-forked .of-esc {
+    font-size: 12px; line-height: 1.5; color: #cfe0d6; margin: 0 0 12px;
+    border-left: 3px solid #3f7d5a; padding: 6px 10px; background: rgba(63, 125, 90, .10);
+}
+.odm-forked .of-more {
+    width: 100%; text-align: left; cursor: pointer; font-size: 11.5px; color: #9fb2c4;
+    background: transparent; border: 1px dashed #2a3340; border-radius: 6px; padding: 7px 12px; margin-bottom: 8px;
+}
+.odm-forked .of-more:hover { border-color: #3f7d5a; color: #cfe0d6; }
+.odm-forked .of-dim { opacity: .62; }
+.odm-forked .of-h { font-weight: 800; letter-spacing: .03em; color: #e7a86b; margin-bottom: 8px; font-size: 15px; }
+.odm-forked .of-p { font-size: 12.5px; line-height: 1.55; color: #b9c6d3; margin: 0 0 12px; }
+.odm-forked .of-row {
+    display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; cursor: pointer;
+    background: #16202a; border: 1px solid #2a3340; border-radius: 6px; padding: 9px 12px; margin-bottom: 8px;
+}
+.odm-forked .of-row:hover { border-color: #3f7d5a; }
+.odm-forked .of-line { display: flex; align-items: stretch; gap: 6px; }
+.odm-forked .of-line .of-row { flex: 1; }
+.odm-forked .of-del {
+    flex: 0 0 auto; align-self: stretch; margin-bottom: 8px; padding: 0 11px; cursor: pointer;
+    background: #16202a; border: 1px solid #2a3340; border-radius: 6px; color: #8a98a6; font-size: 12px;
+}
+.odm-forked .of-del:hover { border-color: #a5522f; color: #e7a86b; }
+.odm-forked .of-del:disabled { opacity: .4; cursor: not-allowed; }
+.odm-forked .of-confirm {
+    border: 1px solid #a5522f; border-radius: 6px; padding: 9px 12px; margin-bottom: 8px;
+    background: rgba(165, 82, 47, .10); display: flex; flex-direction: column; gap: 8px;
+}
+.odm-forked .of-cq { font-size: 12px; line-height: 1.5; color: #f0d8c4; }
+.odm-forked .of-cbtns { display: flex; gap: 8px; }
+.odm-forked .of-yes {
+    cursor: pointer; font-size: 11.5px; padding: 5px 12px; border-radius: 5px;
+    background: #6d2f1c; border: 1px solid #a5522f; color: #ffe2cf;
+}
+.odm-forked .of-yes:disabled { opacity: .5; cursor: not-allowed; }
+.odm-forked .of-no {
+    cursor: pointer; font-size: 11.5px; padding: 5px 12px; border-radius: 5px;
+    background: transparent; border: 1px solid #2a3340; color: #cfe0d6;
+}
+.odm-forked .of-bulk {
+    width: 100%; text-align: left; cursor: pointer; font-size: 11.5px; color: #cbb7a6;
+    background: transparent; border: 1px solid #5c3a2a; border-radius: 6px; padding: 7px 12px; margin-bottom: 10px;
+}
+.odm-forked .of-bulk:hover { border-color: #a5522f; color: #e7a86b; }
+.odm-forked .of-bulk:disabled { opacity: .4; cursor: not-allowed; }
+.odm-forked .of-new {
+    width: 100%; cursor: pointer; font-size: 12px; color: #cfe0d6; margin-top: 4px;
+    background: #16202a; border: 1px solid #3f7d5a; border-radius: 6px; padding: 8px 12px;
+}
+.odm-forked .of-new:hover { background: #1b2a22; }
+/* THE CAMPAIGN DAY IS THE PRIMARY DISCRIMINATOR — it is the only field that separates a played company from
+   a stillborn one, so it leads the row. The id/name (all near-identical autosave stamps) is demoted. */
+.odm-forked .of-day { font-weight: 800; font-size: 15px; color: #e7d9a8; letter-spacing: .02em; }
+.odm-forked .of-name { font-weight: 600; font-size: 11.5px; color: #9fb2c4; }
+.odm-forked .of-when { font-family: var(--mono, monospace); font-size: 10.5px; color: #8a98a6; }
+.odm-forked .of-cancel {
+    margin-top: 4px; font-size: 11.5px; color: #9fb2c4; background: transparent;
+    border: 1px solid #2a3340; border-radius: 5px; padding: 5px 12px; cursor: pointer;
+}
