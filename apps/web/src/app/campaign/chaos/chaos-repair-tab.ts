@@ -4,20 +4,12 @@ import { CampaignSaveStore } from '../campaign-save-store';
 import { DataService } from '../../services/data.service';
 import { WarchestService } from './warchest.service';
 import { repairSP, rearmSP, healMechWarriorSP, type RepairLevel } from './chaos-sp-costs';
-import { resolved, supportCoverFraction } from './chaos-contract'; // D-110 — employer Cover under a Support term
+import { resolved, supportCoverFraction } from './chaos-contract';
 import { hasMechDamage } from '../repair/repair-bays'; // PURE module helper (NOT the Traditional service)
 import { hsDamaged } from '../battle/hs-damage'; // PD3 P1 — the ONE HS damage truth (repair list · header badge · rail stop)
 import type { ProtoInstance } from '../force/force-generator';
 import type { Pilot } from '../barracks/pilot-generator';
 
-/**
- * DIRECTIVE-111 — the Chaos "Repair & Refit" tab (first Chaos economy tab, Hot Spots fork only). Clean-room:
- * spends Support Points via WarchestService.post() at the flat SP Activity Cost Table rates (§8); it does NOT
- * touch or import the Traditional bay/tech-time economy (repair-bays.service / acquisition / personnel) — only
- * the PURE hasMechDamage predicate + the chaos-sp-costs helpers. Three actions: Repair (by damage level), Rearm
- * (spent ammo), Heal (wounded pilots). Any action costing more than the current Warchest is disabled (no debt).
- */
-// D-110d review — compile-time guard: ProtoInstance.chaosDamage's inlined union (force-generator.ts, decoupled to
 // keep force free of a chaos dependency) MUST equal the canonical RepairLevel. If either union gains/renames a
 // member, one of these assignments fails to compile. Type-only — no runtime effect.
 const _chaosDamageSubsetOfRepairLevel: RepairLevel = 'armor' as NonNullable<ProtoInstance['chaosDamage']>;
@@ -152,7 +144,6 @@ export class ChaosRepairComponent {
             (window as unknown as Record<string, unknown>)['__d111'] = {
                 ammo: (id: string): void => this.state.setStartingForce((this.state.startingForce() ?? []).map((i) => i.instanceId === id
                     ? { ...i, damage: { ...(i.damage ?? { locations: {}, crits: [], heat: { current: 0, previous: 0 }, crew: [] }), inventory: [{ id: 'test-ammo', consumed: 2, totalAmmo: 20 }] } as ProtoInstance['damage'] } : i)),
-                // D-110d — simulate a DIGITAL battle (reconcileAtResolve writes inst.damage): an internal breach → hasMechDamage + classifies to 'structure'.
                 digitalDamage: (id: string): void => this.state.setStartingForce((this.state.startingForce() ?? []).map((i) => i.instanceId === id
                     ? { ...i, damage: { locations: { CT: { internal: 1 } }, crits: [], heat: { current: 0, previous: 0 }, crew: [] } as unknown as ProtoInstance['damage'] } : i)),
                 wound: (pilotId: string): void => this.state.setPilots((this.state.pilots() ?? []).map((p) => p.pilotId === pilotId ? { ...p, status: 'Injured', hits: 2 } : p)),
@@ -166,7 +157,7 @@ export class ChaosRepairComponent {
     /** Units carrying repairable damage (mech crit/armor/internal, or a destroyed flag on any unit type). */
     protected readonly repairList = computed<RepairRow[]>(() =>
         (this.state.startingForce() ?? [])
-            .filter((i) => hsDamaged(i)) // D-110d tabletop-flagged too · PD3 P1 — the same predicate the badge + rail count
+            .filter((i) => hsDamaged(i))
             .map((inst) => {
                 const level = this.chaosRepairLevel(inst);
                 const unit = this.data.getUnitByName(inst.unitRef);
@@ -192,19 +183,16 @@ export class ChaosRepairComponent {
             .map((pilot) => { const hits = pilot.hits ?? 1; return { pilot, hits, cost: healMechWarriorSP(hits) }; }));
 
     protected money(n: number): string { return Math.round(n).toLocaleString('en-US'); }
-    /** D-110 — the employer's reimbursement (Cover) for a cost under the active contract's Support term. */
     protected coverFor(cost: number): number {
-        const c = this.state.contractFor(); // GM-2 P2a — through the ONE accessor
+        const c = this.state.contractFor();
         if (!c || c.status !== 'active') return 0;
         return Math.round(cost * supportCoverFraction(resolved(c.steps).support));
     }
     /** Affordable = the player's NET share (cost − Cover) fits the Warchest. No debt this slice. */
     protected affordable(cost: number): boolean { return (this.sp() ?? 0) >= cost - this.coverFor(cost); }
 
-    /** Self-contained Chaos repair-level classifier (§8) — a GM-recorded chaosDamage (D-110d) wins; else triage
-     *  severity, else read the digital-battle envelope. */
     private chaosRepairLevel(inst: ProtoInstance): RepairLevel {
-        if (inst.chaosDamage) return inst.chaosDamage; // D-110d — tabletop recorder / GM override
+        if (inst.chaosDamage) return inst.chaosDamage;
         if (inst.damage?.destroyed) return 'destroyed';
         switch (inst.triage) {
             case 'B': return 'destroyed';
@@ -224,7 +212,7 @@ export class ChaosRepairComponent {
         if (this.state.campaignSystem() !== 'hotspots' || !this.affordable(r.cost)) return;
         this.warchest.post(`Repair — ${r.inst.chassis} ${r.inst.model}`.trim(), r.cost, this.coverFor(r.cost));
         this.state.setStartingForce((this.state.startingForce() ?? []).map((i) =>
-            i.instanceId === r.inst.instanceId ? { ...i, damage: undefined, condition: 'Active', triage: undefined, chaosDamage: undefined } : i)); // D-110d — clear the tabletop flag too
+            i.instanceId === r.inst.instanceId ? { ...i, damage: undefined, condition: 'Active', triage: undefined, chaosDamage: undefined } : i));
         void this.store.persistCurrent();
     }
 
@@ -249,7 +237,6 @@ export class ChaosRepairComponent {
         void this.store.persistCurrent();
     }
 
-    // ── D-110d — tabletop post-battle RECORDER: flag damage/wounds when a track was played on the table (no
     //    digital battle_state). SP-abstraction only (a level marker + a wound count); feeds the lists above. ──
     protected readonly force = computed<ProtoInstance[]>(() => this.state.startingForce() ?? []);
     protected readonly injuryList = computed<Pilot[]>(() => (this.state.pilots() ?? []).filter((p) => p.status !== 'KIA')); // KIA excluded — no resurrect
@@ -282,7 +269,6 @@ export class ChaosRepairComponent {
         const hits = Math.max(0, Math.min(6, Math.floor(n)));
         this.state.setPilots((this.state.pilots() ?? []).map((p) => {
             if (p.pilotId !== pilot.pilotId) return p;
-            // D-110d review — clearing wounds (0) returns the pilot to Active with NO stale recovery clock (mirror heal()).
             return hits > 0 ? { ...p, hits, status: 'Injured' } : { ...p, hits: 0, status: 'Active', recoveryDays: undefined };
         }));
         void this.store.persistCurrent();

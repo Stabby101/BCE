@@ -8,14 +8,12 @@ import { appConfig } from './app/app.config';
 // port-isolated PLAYER bundle (main.player.ts) keeps the plain AppShell — so the wall is GM-only by
 // construction, never a route-guard. AppShellGated uses selector 'app-root' (the index.html host), renders
 // <router-outlet> only when the gate opens, and is byte-equivalent to the old shell when auth is off (dev/LAN).
-// The pin's runServiceWorkerUpdateBootstrap is DROPPED: HOTFIX-028 ships NO service worker (angular.json
 // serviceWorker:false + active SW unregistration in app-reset/index.html); re-enabling it reintroduces the
 // session-freshness wedge.
 import { AppShellGated } from './app/auth/app-shell-gated';
 import { handleFreshParam } from './app/shared/app-reset';
 
 async function boot(): Promise<void> {
-  // HOTFIX-028 — ?fresh=1 support-healing link: nuke SWs/caches/IDB + bce.* localStorage (keeping device
   // token + player name), strip the param, reload. Skip bootstrap when it fires (a reload is in flight).
   if (await handleFreshParam()) return;
   bootstrapApplication(AppShellGated, appConfig)

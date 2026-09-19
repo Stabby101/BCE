@@ -1,15 +1,9 @@
-/*
- * DIRECTIVE-IMPORT-7 Part C — track ↔ terrain coherence + the employer-echo de-dup. Pins: a title naming a biome wins over
- * a contradicting roll (the live "Reading the Jungle" on Tundra); a coherent roll is kept; terrain-agnostic texts keep the
- * roll; title outranks body; the lint predicate; and the NONE-narrator lead names the employer once with "the enemy" for
- * the unknown target.
- */
 import { biomesMentioned, terrainContradicts, coherentTerrain, BIOME_KEYWORDS } from './track-terrain';
 import { TERRAIN_TABLE, MISSION_TEMPLATES, leadSentence } from '../mission/mission-spec';
 
 const T = (b: string) => TERRAIN_TABLE.find((e) => e.biome === b)!;
 
-describe('track-terrain (IMPORT-7 Part C — the rolled biome must not contradict the track\'s words)', () => {
+describe('track-terrain (Part C — the rolled biome must not contradict the track\'s words)', () => {
     it('every keyword biome exists in TERRAIN_TABLE (the rule can always resolve to a real entry)', () => {
         for (const k of BIOME_KEYWORDS) expect(TERRAIN_TABLE.some((e) => e.biome === k.biome)).toBeTrue();
     });
@@ -38,7 +32,7 @@ describe('track-terrain (IMPORT-7 Part C — the rolled biome must not contradic
     });
 });
 
-describe('leadSentence (IMPORT-7 Part C bonus — the employer named once; the enemy named, not blanked)', () => {
+describe('leadSentence (Part C bonus — the employer named once; the enemy named, not blanked)', () => {
     it('every mission template lead renders with NO leftover token and no doubled employer', () => {
         for (const [id, t] of Object.entries(MISSION_TEMPLATES)) {
             const s = leadSentence(t.lead);

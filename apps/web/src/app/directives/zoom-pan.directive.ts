@@ -1,22 +1,3 @@
-/*
- * HOTFIX-035 — PLAYER record-sheet FIT + zoom + pan.
- *
- * The sheet is MekBay's SVG, whose svg-interaction.service preventDefault()s + setPointerCapture()s pointers
- * for its damage picker — which kills native zoom/pan AND makes external POINTER tracking unreliable (a captured
- * pointer's up can be missed → one finger read as two → "1 finger keeps zooming"). Can't touch the MekBay core
- * (MERGE-002).
- *
- * This player-layer directive:
- *   1. FIT — scales the whole sheet to fit the viewport (portrait OR landscape) and centres it, re-fitting on
- *      load / unit-switch / orientation change (ResizeObserver). "Fit" is the zoomed-OUT baseline.
- *   2. ZOOM — + / − / fit buttons (the reliable control MekBay users know) zoom about the centre; a two-finger
- *      pinch also zooms. Bounds are [fit, fit×6].
- *   3. PAN — two-finger drag, or one-finger drag once zoomed (past a threshold, so a TAP still reaches the SVG
- *      to commit damage). A capture-phase pointer blocker keeps the SVG out only during an actual gesture/pan,
- *      and any in-flight pick is cancelled so a gesture never ends in a stray damage commit.
- * Gestures use TOUCH events — e.touches is an always-authoritative finger count, so a lone finger is never
- * mistaken for a pinch.
- */
 import { Directive, ElementRef, inject, signal } from '@angular/core';
 
 const ZOOM_STEP = 1.4;

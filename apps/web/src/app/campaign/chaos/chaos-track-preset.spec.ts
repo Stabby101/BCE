@@ -1,10 +1,3 @@
-/*
- * DIRECTIVE-IMPORT-6 Part C — the D-116 preset's ADDITIVE full-objective model. Pins that a pre-IMPORT-6 preset
- * (three plain-text objectives, no `trackObjectives`) hydrates on read to VP 200/100/50 by kind + side 'both' with
- * empties dropped; that an authored `trackObjectives` list wins untouched (vp coerced); and that synthSeedFromPreset
- * keeps emitting the legacy `objectives` trio (byte-compat for old readers + the shared Forge render) AND carries the
- * full list (→ forge.trackObjectives at bind → the Part B per-objective resolve).
- */
 import { presetObjectives, synthSeedFromPreset, type PresetTrack, type PresetObjective } from './chaos-track-preset';
 import { TRACK_VP } from './track-setup';
 
@@ -21,7 +14,7 @@ const FULL_LIST: PresetObjective[] = [
     { text: 'Second primary', vp: 100, kind: 'primary', side: 'both' },
 ];
 
-describe('presetObjectives (IMPORT-6 Part C hydration)', () => {
+describe('presetObjectives (Part C hydration)', () => {
     it('hydrates a LEGACY preset: text → objective with VP by kind (200/100/50), side both, empties dropped, text trimmed', () => {
         expect(TRACK_VP).toEqual({ primary: 200, secondary: 100, bonus: 50 });
         expect(presetObjectives(legacy())).toEqual([
@@ -44,7 +37,7 @@ describe('presetObjectives (IMPORT-6 Part C hydration)', () => {
     });
 });
 
-describe('synthSeedFromPreset (IMPORT-6 Part C — trio byte-compat + the full list on the seed)', () => {
+describe('synthSeedFromPreset (Part C — trio byte-compat + the full list on the seed)', () => {
     it('LEGACY preset: emits the stored objectives trio VERBATIM and the hydrated list', () => {
         const s = synthSeedFromPreset(legacy());
         expect(s.seedId).toBe('preset-p1');

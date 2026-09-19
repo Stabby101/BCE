@@ -1,13 +1,3 @@
-/*
- * DIRECTIVE-ODM-17 P4-d — THE SUPPORT REGISTER client. packs/odm/support.json is the seed (the original's
- * battlefield_support, canonical coded rows); LIVE available/deployed/expended is the odmSupport overlay
- * (campaign state — a pack is never a system of record for live counts). COUPLINGS ARE DATA read
- * generically: any asset may carry `coupling { pool, operationalDelta, lostDelta, … }` (RELATIVE by
- * ruling — offsets around the derived pool, never absolutes) — the wrecker
- * (ENG-01) proves the seam; nothing else is hand-wired. An asset is LOST when its live available is 0 and
- * expended > 0 (a thing that existed and was destroyed) — deployed is not lost, it is out working.
- * Server-served, in-memory, C6-cleared. Floors breach in ODM-11 style (below floorMinimum = BREACH).
- */
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -67,10 +57,6 @@ export class OdmSupportService {
         });
     });
 
-    /** ODM-17 P4-d — the generic pool coupling, RELATIVE by ruling (offsets around the DERIVED pool —
-     *  an absolute rots the moment headcount moves): an operational coupled asset adds its
-     *  operationalDelta; a LOST one adds its lostDelta. The wrecker: +20 operational / −20 lost
-     *  (116 / 76 at today's 96). */
     poolModifier(pool: string): number {
         let delta = 0;
         for (const r of this.rows()) {

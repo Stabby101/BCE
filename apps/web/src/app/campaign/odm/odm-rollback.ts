@@ -1,13 +1,3 @@
-/*
- * ODM-18 P2 — the GM ROLLBACK panel (ODM-only; mounted beside the SHARED settings tab in the fork-local
- * odm-dashboard.html — Classic ships no restore surface and is untouched). Lists the server's dated
- * checkpoints (every save, 30-day window) and restores one via POST /campaigns/:id/restore — the server
- * checkpoints the CURRENT state first (a rollback you can roll back; the ruled law), appends the
- * GM-attributed log line, and fans. On success this device HARD-RELOADS: the boot path is the one
- * sanctioned full-hydrate, and an in-memory GM state left standing would clobber the restore on its next
- * debounced persist. The floor entry states the locked start honestly — the ODM start IS the authored
- * packs; there is no day-zero blob.
- */
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CampaignSaveStore } from '../campaign-save-store';
@@ -17,8 +7,6 @@ interface CheckpointRow { id: number; at: number; bytes: number; gameDate?: stri
 /** The host's campaign record, as GET /campaigns/:id returns it (the snapshot rides opaque — blob-first). */
 interface SaveRecord { id: string; name: string; savedAt: number; version: number; summary: string; snapshot: unknown; }
 
-/** ODM-26 — hand the browser a file. Same shape as the IMPORT-2 hotspot template download; the object URL
- *  is revoked either way, so a refused save does not leak one. */
 function downloadJson(text: string, filename: string): void {
     const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
     try {
@@ -42,14 +30,7 @@ function downloadJson(text: string, filename: string): void {
                 <b>A pinned state is kept indefinitely</b> — it never ages out, so the official start of the campaign is still there in six months.</div>
             @if (note(); as n) { <div class="rb-note">{{ n }}</div> }
             <button type="button" class="rb-btn" (click)="load()" [disabled]="busy()" data-testid="odm-rb-refresh">↻ Refresh</button>
-            <!-- ODM-26 option 1 — LOCK THE CANON. Captures the state that is on screen RIGHT NOW and pins it
-                 in one step. Deliberately not "pin a row from the list below": a checkpoint holds the state
-                 as it was BEFORE the save that minted it, so pinning from the list means saving twice and
-                 picking the second capture — which a GM gets wrong once, silently, about the one record
-                 every later session is measured against. -->
             <button type="button" class="rb-btn rb-pinnow" (click)="pinCurrent()" [disabled]="busy()" data-testid="odm-pin-current">★ Lock the current state as canon</button>
-            <!-- ODM-26 option 3 — THE FILE. Everything above lives in the database: the 30-day window, the
-                 restore, the campaign row itself. This is the one copy that survives the database. -->
             <button type="button" class="rb-btn" (click)="exportCampaign()" [disabled]="busy()" data-testid="odm-export">⬇ Export this campaign</button>
             <div class="rb-sub rb-exp">A complete copy of this company as a file on your machine — every unit, pilot,
                 posting and log line. It is not a backup of the server; it is the copy that outlives it. Keep it somewhere
@@ -100,9 +81,6 @@ export class OdmRollbackComponent {
     // the store's own convention (localStorage-first engine base; the auth interceptor rides HttpClient)
     private base(): string { return localStorage.getItem('bce.engine.url') || 'http://localhost:3000/api'; }
     protected when(at: number): string { return new Date(at).toLocaleString(); }
-    /* ODM-22 — the CAMPAIGN date each checkpoint holds. Without it this list was wall-clock and KB only, so
-       a GM could not tell which row held the date they wanted without restoring it to find out. Rows captured
-       before ODM-22 carry no date and render an honest dash — never a guessed or back-filled value. */
     protected gameDate(c: CheckpointRow): string {
         if (!c.gameDate) return 'date not recorded';
         try { return formatDate(JSON.parse(c.gameDate) as CampaignDate); } catch { return 'date not recorded'; }
@@ -119,9 +97,6 @@ export class OdmRollbackComponent {
         });
     }
 
-    /* ── ODM-26 option 1 — LOCK THE CANON. Capture-live-and-mark, one call. The pin is exempt from the
-       30-day sweep and from NOTHING else: a takedown or a campaign delete takes it exactly as it takes any
-       other row, because a compliance lever a rollback can undo is not a lever. ── */
     protected pinCurrent(): void {
         const id = this.store.campaignId();
         if (!id) return;
@@ -150,12 +125,6 @@ export class OdmRollbackComponent {
         });
     }
 
-    /* ── ODM-26 option 3 — THE PER-CAMPAIGN EXPORT. The server half already existed: GET /campaigns/:id
-       returns the complete SaveRecord, owner-scoped, snapshot and all. Only the button was missing.
-       This is the only durability that survives the DATABASE — the checkpoint window, the restore and the
-       campaign row all die with it, and the Railway volume backups die with the volume. It is also the
-       input the pack write-back needs: a proposed roster.json diff has to be computed against James's real
-       state, and no session should ever be reaching into production to read it. ── */
     protected exportCampaign(): void {
         const id = this.store.campaignId();
         if (!id) { this.note.set('No campaign open to export.'); return; }

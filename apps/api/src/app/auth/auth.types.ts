@@ -31,7 +31,7 @@ export interface User {
 // DEPLOY-009: 'recover' = a guest re-binding a new device. DEPLOY-010: 'campaign_created' = an operational
 // event in the activity feed (guest mint = 'register'/guest, recovery = 'recover' are already audited).
 // LINK-1: 'link' = a guest upgraded to a durable (OAuth) account; their campaigns were re-owned to it.
-export type AuditAction = 'login' | 'register' | 'approve' | 'reject' | 'ban' | 'unban' | 'role_change' | 'remove' | 'recover' | 'campaign_created' | 'link' | 'grant' | 'revoke'; // ODM-1: feature-grant governance
+export type AuditAction = 'login' | 'register' | 'approve' | 'reject' | 'ban' | 'unban' | 'role_change' | 'remove' | 'recover' | 'campaign_created' | 'link' | 'grant' | 'revoke';
 
 // DEPLOY-010 — the admin dashboard's at-a-glance metrics (GET /api/admin/stats, AdminGuard).
 export interface AdminStats {

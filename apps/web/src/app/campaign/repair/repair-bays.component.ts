@@ -1,10 +1,3 @@
-/*
- * BCE — REPAIR & SALVAGE BAYS tab (DIRECTIVE-033). THE QUEUE (walk-fed 'In repair' + cold-storage
- * prizes + skirmish damage), the 4 bays with the explodable CITED estimate / progress / ETA-in-days /
- * priority, and the dated bay history. Assign/unassign one occupant per bay; the over-treasury WARN
- * shows but never blocks; WRITE OFF for B-tagged wrecks (confirmed). GM-facing; theme tokens; height-safe.
- * Mutations + the clock-driven burn live in RepairBaysService — this is the surface only.
- */
 import { Component, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
@@ -40,12 +33,10 @@ export class RepairBaysComponent {
     /** Bumped when the lazy pack lands (the armorer attribution needs the voice record). */
     private readonly ready = signal(this.pack.isLoaded() ? 1 : 0);
     constructor() {
-        // D-037: the tech-pool identity generates ONCE on first visit (stored-not-rerolled).
         if (this.svc.ensureTechPool()) void this.store.persistCurrent();
         if (!this.pack.isLoaded()) void this.pack.ensureLoaded().then(() => this.ready.update((v) => v + 1));
     }
 
-    // ── D-037 the shop's identity + voice ──
     protected readonly pool = this.svc.techPool;
     /** The chief armorer's attribution line (the engineering staff voice; absent = unsigned shop). */
     protected readonly armorer = computed(() => {

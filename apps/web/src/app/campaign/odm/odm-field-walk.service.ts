@@ -1,12 +1,3 @@
-/*
- * FORKED FROM campaign/walk/field-walk.service.ts @ 2fa97a0 — DIRECTIVE-ODM-13 Phase 1 (a DRIFT SURFACE).
- * The SURVIVAL walk writer: the R2 trio (RECOVER / STRIP / LEAVE, both sides) writing MATERIEL to both
- * stores — ammo tonnage → the odmStocks bins (Ruling 2: extensible; ammo is ALWAYS bins), components →
- * inventory lines, a recovered enemy hulk → a COLD force instance (Ruling 4). THE C-BILL PATHS DO NOT
- * EXIST IN THIS FILE — no stripCredit, no salvageCredit, no setTreasury (which also kills the synthetic
- * order's pct:100 salvage multiplier: no salvage % math runs at all in ODM). A wreck is parts-on-legs.
- * Shares field-walk-core (pure readers) + the rows-builder shape; pilot handling copied verbatim.
- */
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { DataService } from '../../services/data.service';
@@ -18,14 +9,15 @@ import type { InventoryLine } from '../inventory/starting-inventory';
 import {
     WALK_TUNABLES, readDamage, q1ShipIt, q3WorthWhole, pilotOutcome,
     type DamageReadout, type Side, type PilotOutcome, type WalkRowResult, type FieldWalkResult, type Disposition, type WalkLoadManifest,
+    manifestLoadState, WALK_MANIFEST_TIMEOUT_MS, type ManifestParts, type ManifestPartState, // P8 — the manifest load state, said
 } from '../walk/field-walk-core';
 import type { MissionBranch } from '../mission/mission-tree'; // TABLE-2 T2-1 — selection-aware pendingBranch
 import { odmStartingStocks, round1 } from './odm-stocks';
-import { odmStripYield, addAmmoToBins, addPartLine, fieldableYield, yieldTons, yieldFieldHours, type OdmStripYield } from './odm-materiel'; // ODM-13 P2 + ODM-17 P2 — the ONE materiel block
-import { OdmFleetService } from './odm-fleet.service'; // ODM-17 P2 — the fleet IS the cap
-import { OdmShopService } from './odm-shop.service'; // ODM-17 P2 — the FIELD pool prices the strip
-import { OdmSupportService } from './odm-support.service'; // ODM-17 P4-d — the wrecker's RED-triage penalty
-import { makeDefaultBays } from '../repair/repair-bays'; // ODM-17 P4-c — the walk's SALVAGE-bay warning (the D36 gate)
+import { odmStripYield, addAmmoToBins, addPartLine, fieldableYield, yieldTons, yieldFieldHours, type OdmStripYield } from './odm-materiel';
+import { OdmFleetService } from './odm-fleet.service';
+import { OdmShopService } from './odm-shop.service';
+import { OdmSupportService } from './odm-support.service';
+import { makeDefaultBays } from '../repair/repair-bays';
 
 const COLD = 'Cold storage';
 const REPAIR = 'In repair';
@@ -45,7 +37,6 @@ export function pickPendingBranch(tree: readonly MissionBranch[], selectedId: st
  *  every wreck the enemy recovers is evidence, Exposure's business in a later directive). NO SELL, EVER. */
 export type OdmDisposition = 'RECOVER' | 'STRIP' | 'LEAVE';
 
-// ODM-13 P2 REFACTOR: ODM_STRIP_TUNABLES + the yield math moved to odm-materiel.ts (pure) so the bays'
 // donor-strip reuses THE SAME block — one tunable set, never forked constants (the Phase-2 ruling).
 
 export interface OdmWalkRow {
@@ -58,12 +49,12 @@ export interface OdmWalkRow {
     readout: DamageReadout;
     q1: boolean;
     q3: boolean;
-    q3Reason: string;   // ODM-17 P2-c — the weight-justification CALL, surfaced in her register (was computed and hidden)
+    q3Reason: string;
     pilot?: PilotOutcome;
     pilotId?: string;
     def: OdmDisposition;
     yield: OdmStripYield;      // the FIELDABLE strip preview (MAC-7-only components already removed)
-    mac7Denied: string[];      // ODM-17 P2-d — what the field CANNOT take (rides the hulk or is lost)
+    mac7Denied: string[];
     stripTons: number;         // cargo cost of a STRIP (ammo + fieldable components, catalog-priced)
     fieldHours: number;        // FIELD-pool price of a STRIP (the doctrine table)
     unpriced: string[];        // labels the catalog could not price (reported, never guessed — should be empty)
@@ -78,16 +69,48 @@ export class OdmFieldWalkService {
     private readonly shop = inject(OdmShopService);
     private readonly support = inject(OdmSupportService);
 
-    /** ODM-17 P4-c — the D36 gate, warn-only at the walk: a capture needs a SALVAGE bay to be processed. */
     readonly salvageBayOperational = computed(() => (this.state.bays() ?? makeDefaultBays()).some((b) => b.type === 'SALVAGE'));
 
     constructor() {
-        // ODM-17 P2 — a pending walk needs the fleet + the shop + the FULL catalog before it can cap-check
         // (honest nulls until then). The full catalog matters: a resident era SLICE carries weapons-only comp
         // and no equipment tonnage — a slice-priced walk would understate every yield (caught by the P2
         // harness: 4-part Phoenix Hawk, everything "unpriced"). The walk waits instead of guessing.
-        effect(() => { if (this.state.packId() === 'odm' && this.pendingBranch()) { void this.fleetSvc.ensureLoaded(); void this.shop.ensureLoaded(); void this.data.ensureFullCatalog(); } });
+        // P8 — kicked ONCE per pending branch (the effect re-runs on any dependency; the loads are idempotent but the
+        // timeout clock must not restart on every tick), with the 10 s clock that turns a silent wait into a said one.
+        effect(() => {
+            const b = this.state.packId() === 'odm' ? this.pendingBranch() : null;
+            if (b && b.branchId !== this.kickedFor) { this.kickedFor = b.branchId; this.kickLoads(); }
+            if (!b) this.kickedFor = null;
+        });
+        effect(() => { if (this.fleetReady()) this.clearClock(); }); // ready ends the clock (a late catalog is not a failure)
     }
+
+    private kickedFor: string | null = null;
+    private clock: ReturnType<typeof setTimeout> | null = null;
+    /** true once the clock ran out with the manifest still not ready (cleared by readiness or a Retry). */
+    readonly manifestTimedOut = signal(false);
+    private clearClock(): void { if (this.clock) { clearTimeout(this.clock); this.clock = null; } }
+    private kickLoads(): void {
+        this.manifestTimedOut.set(false);
+        void this.fleetSvc.ensureLoaded(); void this.shop.ensureLoaded();
+        this.data.ensureFullCatalog().catch(() => { /* reported through isFullLoaded() + the registry size below */ });
+        this.clearClock();
+        this.clock = setTimeout(() => { this.clock = null; if (!this.fleetReady()) this.manifestTimedOut.set(true); }, WALK_MANIFEST_TIMEOUT_MS);
+    }
+    /** The walk's Retry: every prerequisite asked again (the catalog's initialize() runs again — it no longer latches on a
+     *  slice), the clock restarted. */
+    retryManifest(): void { void this.fleetSvc.retry(); void this.shop.retry(); this.kickLoads(); }
+    /** Each prerequisite's state — 'ready' · 'loading' · 'failed: <why>' (the fetch status, or the catalog's own failure). */
+    readonly manifestParts = computed<ManifestParts>(() => {
+        this.data.catalogVersion();
+        const fleet: ManifestPartState = this.liftBays() != null && this.cargoCap() != null ? 'ready' : this.fleetSvc.loadError() ? `failed: ${this.fleetSvc.loadError()}` : 'loading';
+        const shop: ManifestPartState = this.fieldHoursWindow() != null ? 'ready' : this.shop.loadError() ? `failed: ${this.shop.loadError()}` : 'loading';
+        const catalog: ManifestPartState = this.data.isFullLoaded() ? 'ready' : 'loading';
+        const equipment: ManifestPartState = this.data.getEquipmentRegistry().size > 0 ? 'ready' : 'loading';
+        return { fleet, shop, catalog, equipment };
+    });
+    /** The one line the footer reads: { ready, failure, parts } — failure = the loud "fleet manifest failed: …" text. */
+    readonly manifestLoad = computed(() => manifestLoadState(this.manifestParts(), this.manifestTimedOut()));
 
     /** TABLE-2 T2-1 — which pending mission the walk addresses. When set (from an AAR row or the just-resolved
      *  branch) the walk targets THAT branch; when null it falls back to the first-pending .find() (the banner
@@ -103,7 +126,6 @@ export class OdmFieldWalkService {
 
     /** Capture slots (Ruling 4: a hulk is a COLD instance; bay space is R2's cost — the caps carry it). */
     readonly prizeSlots = computed(() => {
-        // TESTER-ODM-1 #1 (consequence, contained deliberately) — count PRIZES, which is what this cap is:
         // the tunable is "prize storage caps" and this signal is prizeSlots. The old count took EVERY
         // cold-storage unit, an assumption that only held because the authored mothballs were mislabeled
         // 'In repair' at mint; fixing that label would otherwise have silently cut capture capacity from 4
@@ -111,12 +133,10 @@ export class OdmFieldWalkService {
         // stamped provenance.origin 'captured' by this same service, so the distinction is already in the
         // data. NOT a new design decision: this PRESERVES the ratified behavior every shipped pin encodes.
         // Whether the company's own mothballs should also eat prize berths is a real question — LEDGERED
-        // for the PM, not answered here.
         const prizes = (this.state.startingForce() ?? []).filter((i) => i.condition === COLD && i.provenance?.origin === 'captured').length;
         return Math.max(0, WALK_TUNABLES.coldStorageCaps.mech - prizes);
     });
 
-    // ── ODM-17 P2 — THE FLEET IS THE CAP (recoverCap the tunable is DEAD; these are pack truth + live status).
     //    The company lives at MAC-7 Station; the DropShips are the MISSION lift — so the bays carry the
     //    machines returning from THIS engagement (+ captured hulks), the holds carry THIS walk's strip haul,
     //    and the FIELD pool's day is the extraction window. All null until fleet/shop load (the walk waits).
@@ -129,7 +149,6 @@ export class OdmFieldWalkService {
             && this.data.isFullLoaded() && this.data.getEquipmentRegistry().size > 0; // REBASE-1 P1 c: registry (ruling #2 re-home)
     });
 
-    // ── ODM-17 P2 — the catalog tonnage resolver (id-first: comp.id IS the equipment internalName; the
     //    name index is the fallback for older stored yields that predate the id field). Null = unpriceable,
     //    REPORTED by the row (never guessed). The index is keyed to catalogVersion — never cached empty.
     private nameTons: Map<string, number> | null = null;
@@ -164,7 +183,7 @@ export class OdmFieldWalkService {
     }
 
     readonly rows = computed<OdmWalkRow[]>(() => {
-        this.data.catalogVersion(); // ODM-17 P2 — re-derive when the full catalog lands (slim comp → full comp)
+        this.data.catalogVersion();
         const br = this.pendingBranch();
         if (!br?.resolution?.engaged) return [];
         const eng = br.resolution.engaged;
@@ -184,12 +203,10 @@ export class OdmFieldWalkService {
         const q1 = q1ShipIt(readout);
         const q3 = q3WorthWhole(readout);
         const pilot = side === 'blufor' && pilotId ? pilotOutcome(inst.damage) : undefined;
-        // ODM-17 P2-d — the walk's yield is UNCAPPED (the count cap died; the field CLOCK is the cap) and
         // FIELD-capable only: gyro/engine/jump-jet work is MAC-7's — those parts ride the hulk or are lost.
         const raw = odmStripYield(inst, unit, readout.severity, Number.POSITIVE_INFINITY);
         const { fieldable, mac7Only: denied } = fieldableYield(raw);
         const { ammoTons, componentTons, unpriced } = yieldTons(fieldable, this.tonsOf);
-        // ODM-17 P4-d — the wrecker's teeth: while ENG-01 is LOST, RED-triage recovery time DOUBLES
         // (the register's own coupling; the strip's field hours are the priced recovery work).
         const redPenalty = readout.severity === 'R' && this.support.redRecoveryDoubled() ? 2 : 1;
         return {
@@ -203,7 +220,6 @@ export class OdmFieldWalkService {
         };
     }
 
-    /** ODM-17 P2-c — Q3's REASON, surfaced (it was computed and hidden): the call in plain doctrine terms. */
     private q3Reason(r: DamageReadout): string {
         if (r.unitDestroyed || r.engineDead || r.cockpitDead) return 'a gutted hulk — the lift weight is not justified; strip what the field can take';
         if (r.severity === 'R') return 'heavy damage — justified: the frame repairs cheaper than it replaces';
@@ -218,9 +234,6 @@ export class OdmFieldWalkService {
         return !r.unitDestroyed && q1 ? 'RECOVER' : 'STRIP';
     }
 
-    /** ODM-17 P2 — the LOAD MANIFEST a disposition set would settle under. Mirrors apply()'s own math
-     *  EXACTLY (same row order, same prize-slot countdown, same no-slot RECOVER→STRIP downgrade) so the
-     *  preview and the enforcement can never disagree. Null while fleet/shop are unloaded (the walk waits). */
     manifestFor(dispositions: Record<string, OdmDisposition>): WalkLoadManifest | null {
         const lift = this.liftBays(); const cargo = this.cargoCap(); const window = this.fieldHoursWindow();
         if (lift == null || cargo == null || window == null) return null;
@@ -249,11 +262,6 @@ export class OdmFieldWalkService {
         };
     }
 
-    /** Atomic CONFIRM — the survival apply: dispositions land as MATERIEL (both stores), pilots settle,
-     *  everything logs, the fieldWalk record stores (totalCredit is structurally 0). NO treasury write.
-     *  ODM-17 P2 — the fleet is ENFORCED here, not just rendered: over the extraction window = refused
-     *  outright (the clock is physics); over bays/holds = refused unless the GM forces it WITH a logged
-     *  reason (the doctrine's override semantics — the overload rides, the reason rides with it). */
     apply(dispositions: Record<string, OdmDisposition>, overrides: Record<string, string[]> = {}, overrideReason?: string): { ok: true } | { ok: false; reason: string } {
         const br = this.pendingBranch();
         if (!br?.resolution?.engaged) return { ok: false, reason: 'No pending walk.' };
@@ -309,7 +317,7 @@ export class OdmFieldWalkService {
                     log.push({ date: today, text: `Recovered ${row.label} → repair bay (triage ${row.readout.severity})` });
                 } else if (disp === 'STRIP') {
                     const y = strip(row);
-                    res.tons = row.stripTons; res.fieldHours = row.fieldHours; // ODM-17 P2 — what this row put on the lift + the clock
+                    res.tons = row.stripTons; res.fieldHours = row.fieldHours;
                     force = force.filter((i) => i.instanceId !== row.instanceId);
                     pilots = this.unassign(pilots, row.instanceId);
                     log.push({ date: today, text: `Stripped ${row.label} — ${y.ammoTons ? `+${y.ammoTons} t ammunition to the magazine · ` : ''}${y.parts} component${y.parts === 1 ? '' : 's'} to stores (${row.stripTons} t · ${row.fieldHours} h field crew)${mac7Note(row)}` });
@@ -321,13 +329,13 @@ export class OdmFieldWalkService {
             } else { // OPFOR
                 if (disp === 'RECOVER' && prizeSlots > 0) { // capture — Ruling 4: a hulk is a COLD instance
                     prizeSlots--; res.captured = true;
-                    res.tons = row.tons; // ODM-17 P2 — the hulk rides whole: its catalog tons, through a bay slot
+                    res.tons = row.tons;
                     force = [...force, { ...row.inst, lanceId: undefined, isCommander: false, condition: COLD, triage: row.readout.severity, provenance: { origin: 'captured', acquiredDate: today } }];
                     log.push({ date: today, text: `Recovered ${row.label} → cold storage (captured hulk, ${row.tons} t — repairable or donor; one 'Mech bay)` });
                 } else if (disp === 'STRIP' || disp === 'RECOVER') { // no slot → the field clock says strip it
                     if (disp === 'RECOVER') res.disposition = 'STRIP';
                     const y = strip(row);
-                    res.tons = row.stripTons; res.fieldHours = row.fieldHours; // ODM-17 P2
+                    res.tons = row.stripTons; res.fieldHours = row.fieldHours;
                     log.push({ date: today, text: `Stripped ${row.label} — ${y.ammoTons ? `+${y.ammoTons} t ammunition to the magazine · ` : ''}${y.parts} component${y.parts === 1 ? '' : 's'} to stores (${row.stripTons} t · ${row.fieldHours} h field crew)${mac7Note(row)}` });
                 } else { // LEAVE — recorded; every wreck the enemy recovers is evidence (Exposure, later)
                     log.push({ date: today, text: `Left ${row.label} on the field` });
@@ -354,9 +362,6 @@ export class OdmFieldWalkService {
         return { ok: true };
     }
 
-    /** The stored record literal (the shared union): RECOVER stays RECOVER (blufor) / CLAIM_PRIZE (a capture,
-     *  the existing honest label) · STRIP is the ODM-13 additive literal · LEAVE maps by side (an own machine
-     *  left = ABANDON in the record's vocabulary; an enemy machine left = LEAVE). */
     private recordLiteral(side: Side, d: OdmDisposition): Disposition {
         if (d === 'RECOVER') return side === 'blufor' ? 'RECOVER' : 'CLAIM_PRIZE';
         if (d === 'STRIP') return 'STRIP';

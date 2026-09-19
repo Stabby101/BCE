@@ -233,7 +233,6 @@ export interface UnitSummary {
     },
     sheets: string[];
     as: AlphaStrikeUnitStats;
-    // BCE-EDIT (DIRECTIVE-127; REBASE-1 P1 c ruling): the MUL-authoritative Piece Value, folded onto every unit
     // by mirror-catalog and carried through by gen-slices. Upstream had a top-level `pv` at the fork and REMOVED
     // it; BCE re-adds it (optional) as the fallback for the AS-PV read on a per-era SLIM slice, which strips `as`.
     // See as-force-unit.model getBaseBv (`as?.PV ?? pv ?? 0`). The prerun shape check confirms gen-slices carries it.

@@ -1,20 +1,3 @@
-/*
- * FORKED FROM campaign/dashboard/resolve-modal.ts @ 6cc5dae - DIRECTIVE-ODM-1 Phase 1 (a DRIFT SURFACE).
- * Per the Phase-1 ruling this pair is a Class-1 fork. RECON NOTE: Classic resolve carries NO contract-pay
- * posting to strip (contract pay lives in the clock payTick, pack-gated; the ODM standing order pays 0) -
- * the copy is retained VERBATIM as the ruled future strip surface (wave: salvage-only field settlement).
- */
-/*
- * BCE — the mission RESOLVE modal (the 3-toggle legacy form, the D-134 two-sided VP checklist, the D-110c
- * salvage input, the D-121 field settlement, the D-122 damage capture). Markup extracted VERBATIM from
- * dashboard.html by DIRECTIVE-HARDEN-4; ALL state and logic live in the dashboard-provided ResolveService
- * (this child renders and delegates — it owns nothing). Mounted unconditionally at the dashboard template
- * root; gates itself on res.resolveOpen(), exactly as the old root-level @if did.
- * Styles: the resolve-only rules (.rq, .ynb, .rq2*, .rnotes, .rtier, .rovr, .t-*, .fs-*) moved here; the
- * shared modal chrome (.cmodal/.cbox/.cbtn/.cbtns/.ph/.cmsg/.gate-note) is DUPLICATED from dashboard.scss
- * (keep in lockstep) — a scoped-global hoist of these generic class names leaks into the dozen nested
- * dashboard components that reuse them (HARDEN-4 adversarial-panel catch), so the copies stay per-component.
- */
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { OdmResolveService as ResolveService } from './odm-resolve.service';
 
@@ -28,9 +11,6 @@ import { OdmResolveService as ResolveService } from './odm-resolve.service';
                 <div class="ph flat">Resolve mission — {{ res.activeBranch()?.name }}</div>
                 @if (res.deployedCount()) {
                     <p class="cmsg">Answer the objective facts; the engine computes the outcome tier (you may override). The result gates which branches unlock.</p>
-                    <!-- DIRECTIVE-134 — two-sided (DR VP) resolve: two objective columns + a broke toggle + a live verdict.
-                         Gated on the contract's Phase-1 \`side\`; legacy/single-sided contracts keep the three primary/
-                         secondary/bonus toggles below (byte-identical). Both paths feed computedTier() → the same tier map. -->
                     @if (res.twoSided()) {
                         @if (res.twoSidedView(); as tv) {
                             <div class="rq2cols">
@@ -57,10 +37,6 @@ import { OdmResolveService as ResolveService } from './odm-resolve.service';
                             </div>
                         }
                     } @else if (res.oneSided()) {
-                        <!-- DIRECTIVE-IMPORT-6 Part B — SINGLE-SIDED authored objectives (a single-sided custom hot spot, or a
-                             D-116 preset track played via the picker): ONE column listing EVERY authored objective + VP, the
-                             broke toggle, and a live verdict — tier = the VP share (singleSidedResolve). Sibling of the D-134
-                             two-sided block above (untouched) and the legacy 3-toggle block below (untouched). -->
                         @if (res.oneSidedView(); as sv) {
                             <div class="rq2cols one" data-testid="cc-ss-cols">
                                 <div class="rq2col">
@@ -82,20 +58,14 @@ import { OdmResolveService as ResolveService } from './odm-resolve.service';
                         <div class="rq"><div class="rqt"><b>Secondary:</b> {{ ro.secondary }}</div><div class="rqb"><button type="button" class="ynb" [class.yes]="res.rAns().secondary" (click)="res.setAns('secondary', true)">MET</button><button type="button" class="ynb" [class.no]="!res.rAns().secondary" (click)="res.setAns('secondary', false)">NOT MET</button></div></div>
                         <div class="rq"><div class="rqt"><b>Bonus:</b> {{ ro.bonus }}</div><div class="rqb"><button type="button" class="ynb" [class.yes]="res.rAns().bonus" (click)="res.setAns('bonus', true)">MET</button><button type="button" class="ynb" [class.no]="!res.rAns().bonus" (click)="res.setAns('bonus', false)">NOT MET</button></div></div>
                     }
-                    <!-- DIRECTIVE-129 — "Compromised?" is a shared tier absent from the DR two-sided (objectives + VP)
-                         resolve model + no HS hotspot authors a COMPROMISED fork, so it's inert in HS. Hide it in Hot Spots;
-                         Traditional keeps it (computeTier + the COMPROMISED gate unchanged; rAns.compromised defaults false). -->
                     @if (!res.isHotspots()) {
                     <div class="rq"><div class="rqt"><b>Compromised?</b> the enemy learned something material</div><div class="rqb"><button type="button" class="ynb" [class.no]="!res.rAns().compromised" (click)="res.setAns('compromised', false)">NO</button><button type="button" class="ynb" [class.yes]="res.rAns().compromised" (click)="res.setAns('compromised', true)">YES</button></div></div>
                     }
                     <label class="rnotes"><span>Notes</span><input type="text" [value]="res.rAns().notes" (input)="res.setNotes($any($event.target).value)" placeholder="GM notes for the log (optional)" /></label>
                     @if (res.showSalvageInput()) {
-                        <!-- D-110c — Hot Spots salvage: pre-filled with the D-110b estimate; edit for the actual SP (posts 'Salvage —'), leave it to post the estimate ('Salvage (est.) —'). -->
                         <label class="rnotes"><span>Salvage (SP)</span><input type="number" min="0" step="10" [value]="res.rAns().salvageValue ?? res.salvageEstimate()" (input)="res.setSalvage($any($event.target).value)" placeholder="salvage SP" /></label>
                         <div class="gate-note">Estimated {{ res.salvageEstimate() }} SP (OpFor BV × outcome × salvage %). Edit for the actual salvage; left untouched, the estimate is posted.</div>
                     }
-                    <!-- DIRECTIVE-121 — Hot Spots FIELD SETTLEMENT: record own-unit losses + claim prize 'Mechs. Salvage
-                         stays abstract SP; prizes are physical (Cold Storage) + slot-limited + reduce the salvage SP. -->
                     @if (res.isHotspots()) {
                         @if (res.settleBlufor().length) {
                             <div class="fs-head">Your losses</div>
@@ -136,8 +106,6 @@ import { OdmResolveService as ResolveService } from './odm-resolve.service';
                         } @else if (res.settleOpfor().length) {
                             <div class="gate-note">No prize slots — this contract's salvage term grants no captured 'Mechs.</div>
                         }
-                        <!-- DIRECTIVE-122 — the two battle-damage totals for the iteration ledger. Taken auto-sums the
-                             digital sheets (GM-editable); given is a plain GM number (OpFor damage isn't stored). -->
                         <div class="fs-head">Battle damage</div>
                         <div class="fs-dmg">
                             <label class="rnotes"><span>Damage taken</span><input type="number" min="0" step="1" [value]="res.dmgTakenShown()" (input)="res.setDmgTaken($any($event.target).value)" placeholder="own damage points" /></label>
@@ -145,9 +113,6 @@ import { OdmResolveService as ResolveService } from './odm-resolve.service';
                         </div>
                         <div class="gate-note">Damage taken is auto-summed from the digital sheets ({{ res.dmgTakenAuto() }} pts) — edit if needed. Damage given is GM-entered (the OpFor's post-battle state isn't recorded); leave it blank for “—”.</div>
                     }
-                    <!-- ODM-3 — the ODM outcome block: the packet Section-6 4-tier + the node's gate-relevant GM
-                         checklist. Renders only when the ACTIVE mission is bound to an authored tree node; choosing
-                         a tier also drives the shared override below so the ledger grades identically. -->
                     @if (res.odmNodeDef(); as node) {
                         <div class="fs-head">Operation outcome — {{ node.title }}</div>
                         <div class="odm-tiers" data-testid="odm-tiers" role="group" aria-label="ODM outcome tier">
@@ -171,7 +136,6 @@ import { OdmResolveService as ResolveService } from './odm-resolve.service';
                         </select>
                     </div>
                 } @else {
-                    <!-- HOTFIX-022 A — no deployed force: resolve cannot be a win, only a forfeit/loss -->
                     <p class="cmsg gate">No force deployed — deploy before resolving, or mark this operation a forfeit/loss. A mission resolved with nothing on the field can only be a <b class="t-FAILURE">FAILURE</b> (no default win, GM override included).</p>
                 }
                 <div class="cbtns">
@@ -194,8 +158,7 @@ import { OdmResolveService as ResolveService } from './odm-resolve.service';
         .ph { font-family: var(--label); font-weight: 600; letter-spacing: 2.5px; font-size: 13px; text-transform: uppercase; border-bottom: 1.5px solid var(--ink); padding-bottom: 6px; margin: 0 0 12px; }
         .ph.flat { border: none; margin: 0 0 6px; padding: 0; }
         .gate-note { font-family: var(--mono); font-size: 10px; letter-spacing: .4px; color: var(--ink2); font-style: italic; margin-top: 6px; }
-        .cmodal { position: fixed; inset: 0; background: rgba(10, 8, 4, .55); display: flex; align-items: center; justify-content: center; padding: 20px 20px calc(20px + var(--bce-footer-h, 0px)); z-index: 50; } /* IMPORT-7 A — clear the legal footer */
-        /* HOTFIX-038 — cap the box to the viewport + scroll internally so a tall resolve form's confirm stays reachable. */
+        .cmodal { position: fixed; inset: 0; background: rgba(10, 8, 4, .55); display: flex; align-items: center; justify-content: center; padding: 20px 20px calc(20px + var(--bce-footer-h, 0px)); z-index: 50; }
         .cbox { background: var(--paper); border: 2px solid var(--ink); max-width: 480px; width: 100%; padding: 18px 20px; max-height: calc(100dvh - 40px); overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
         .cbox.wide { max-width: 560px; }
         .cmsg { font-family: var(--type); font-size: 13.5px; line-height: 1.55; color: var(--ink); margin: 10px 0 16px; }
@@ -215,7 +178,6 @@ import { OdmResolveService as ResolveService } from './odm-resolve.service';
         .rnotes { display: flex; flex-direction: column; gap: 3px; margin: 4px 0 10px; }
         .rnotes span { font-family: var(--label); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink2); }
         .rnotes input { font-family: var(--mono); font-size: 12px; padding: 8px 10px; border: 1.3px solid var(--ink2); background: var(--paper); color: var(--ink); }
-        /* ODM-3 — outcome tier buttons + flag checklist */
         .odm-tiers { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 8px; }
         .odm-tier { font-size: 11px; letter-spacing: .06em; }
         .odm-tier.sel { outline: 1px solid var(--ok); }
@@ -241,7 +203,7 @@ import { OdmResolveService as ResolveService } from './odm-resolve.service';
         .rq2verdict b { color: var(--ink); }
         .rq2badge { font-family: var(--stencil, var(--label)); font-size: 15px; letter-spacing: 1px; }
         .rq2pay { margin-left: auto; }
-        .rq2cols.one { grid-template-columns: 1fr; } /* IMPORT-6 — the single-sided list is one column at every width */
+        .rq2cols.one { grid-template-columns: 1fr; }
         @media (max-width: 640px) { .rq2cols { grid-template-columns: 1fr; } }
         .fs-head { font-family:var(--label); font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:11px;
             color:var(--ink2); margin:12px 0 5px; display:flex; align-items:baseline; gap:8px; }
@@ -259,7 +221,6 @@ import { OdmResolveService as ResolveService } from './odm-resolve.service';
         .fs-row.lost .fs-tag, .fs-row.on .fs-tag { color:var(--stamp); }
         .fs-pilot { font-family:var(--type); font-size:12px; color:var(--ink2); white-space:nowrap; }
         .fs-fate { font-family:var(--type); font-size:12px; padding:3px 6px; border:1.2px solid var(--line); background:var(--paper); color:var(--ink); }
-        /* DIRECTIVE-122 — the two damage inputs, side by side */
         .fs-dmg { display:flex; gap:10px; flex-wrap:wrap; }
         .fs-dmg .rnotes { flex:1 1 140px; }
     `],

@@ -1,11 +1,3 @@
-/*
- * DIRECTIVE-125 — Campaign Pilot advancement service (Hot Spots fork). Every action is a ledger-visible Warchest
- * debit (D-110), gated on funds, then an immutable pilot update (mirrors PilotService's map+spread pattern, KIA-guard):
- * raise Gunnery/Piloting (skill drops → the D-070 roster BV recompute picks it up reactively) · buy Edge tokens ·
- * learn an Edge Ability/SPA (from pilot-abilities.ts, but SP-priced, stored on campaignPilot.learnedAbilities — NOT
- * the free-slot `perks`) · heal a wound box (reuses D-036 hits/status) · train Formation Commander + Command Abilities.
- * Handicap is a stored accumulator: each bought rung adds its H-column. HS-only; the caller/UI is HS-gated.
- */
 import { Injectable, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';

@@ -15,7 +15,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    height: calc(100dvh - var(--bce-footer-h, 0px)); /* IMPORT-7 A — minus the reserved legal-footer space */ /* HOTFIX-001: own the scroll (body is overflow:hidden) — was min-height, which let the page grow past the viewport and clip */
+    height: calc(100dvh - var(--bce-footer-h, 0px));
     width: 100%;
     padding: 28px;
     color: var(--ink);
@@ -26,7 +26,7 @@
         repeating-linear-gradient(0deg, transparent 0 38px, rgba(0, 0, 0, .18) 38px 39px);
     overflow-x: hidden;
     overflow-y: auto;
-    box-sizing: border-box; /* HOTFIX-001: height:100dvh includes padding (matches the dashboard host) */
+    box-sizing: border-box;
 }
 
 * { box-sizing: border-box; }
@@ -84,7 +84,6 @@ header { display: flex; justify-content: space-between; align-items: flex-end; g
 .urow:hover, .urow:focus-visible { background: var(--panel); outline: none; }
 .urow.sel { background: var(--ink); color: var(--paper); }
 .urow .umeta { font-size: 10px; color: var(--ink2); } .urow.sel .umeta { color: var(--paper); }
-/* D-061: command card — info (name/role) left, the right-side visual (crest + redrawn paint swatch) right */
 .urow .uinfo { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
 .urow .uname { font-size: 13px; line-height: 1.15; }
 .urow .ube { font-family: var(--mono); font-size: 10px; color: var(--stamp); margin-left: 4px; cursor: help; } .urow.sel .ube { color: var(--paper); }
@@ -98,7 +97,6 @@ header { display: flex; justify-content: space-between; align-items: flex-end; g
 .ownbtn.sel { background: var(--stamp); color: var(--paper); border-style: solid; }
 .ownbtn .g { font-size: 16px; }
 
-/* ── Era-gated faction picker (D-014) ── */
 .picker { min-height: 360px; }
 .pbody { padding: 9px; overflow-y: auto; max-height: 58vh; display: flex; flex-direction: column; gap: 11px; }
 
@@ -144,7 +142,6 @@ header { display: flex; justify-content: space-between; align-items: flex-end; g
 .nofrm b { color: var(--ink); }
 .nofrm span { color: var(--stamp); }
 
-/* ── Merc command setup (D-016) ── */
 .merc { margin: 6px 0 12px; display: flex; flex-direction: column; gap: 12px; }
 .mmode { display: flex; border: 1.6px solid var(--ink); width: fit-content; }
 .mtab { font-family: var(--label); font-weight: 600; letter-spacing: 1.2px; font-size: 12px; text-transform: uppercase; background: var(--paper2); border: 0; color: var(--ink2); padding: 10px 16px; cursor: pointer; min-height: 44px; }
@@ -191,7 +188,6 @@ header { display: flex; justify-content: space-between; align-items: flex-end; g
 .msrc a { color: var(--stamp); }
 .mown { font-family: var(--type); font-size: 12.5px; line-height: 1.45; color: var(--ink2); padding: 12px 13px; border: 1.4px dashed var(--ink); margin: 10px 13px 0; }
 
-/* formation detail panel (D-021) — reuses the merc .m* detail classes beneath a divider */
 .frmdetail { border-top: 1.5px dashed var(--ink); margin-top: 8px; padding-top: 6px; display: flex; flex-direction: column; }
 .lore { font-family: var(--mono); font-weight: 400; font-size: 8.5px; letter-spacing: .5px; color: var(--ink2); border: 1px solid var(--ink2); padding: 0 4px; margin-left: 6px; text-transform: uppercase; }
 

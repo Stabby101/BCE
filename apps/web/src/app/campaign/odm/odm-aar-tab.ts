@@ -1,14 +1,3 @@
-/*
- * FORKED FROM campaign/aar/aar-tab.ts @ d3300e2 — DIRECTIVE-ODM-14, re-pointed by DIRECTIVE-ODM-12 (a DRIFT SURFACE).
- * The AAR speaks with the AUTHORED crew, not Classic's rolled personas: ensureStaff (the D-025
- * voice-cast mint) DOES NOT EXIST here — this fork never mints, reads, or persists staffVoices; the
- * four section voices come from the pack's CONTACT REGISTRY (contacts.json — ONE source of people,
- * shared with Intel; the voice blocks ride on the four section authors), server-served, in-memory only.
- * Section 4 gets its own author (the medic) via the additive ctx.voices.personnel seam. The armorer's
- * closing sampleLine becomes THE BAY COUNT — authored templates from the registry filled with the
- * branch's own locked figures (machines walked / jobs / hours / parts / shortfalls), never invented.
- * Template + styles SHARED from the Classic sheet (the byline/doc chrome is voice-agnostic).
- */
 import { Component, ChangeDetectionStrategy, computed, inject, output, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { ForgePackService } from '../mission/forge-pack.service';
@@ -43,7 +32,6 @@ export class OdmAarTabComponent {
     private readonly refinedRev = signal(0);
 
     constructor() {
-        // ODM-14/12 — the Classic voice-cast mint does not run under this pack (nothing is rolled, nothing
         // written to the campaign's staff-voice map); the contact registry is the only voice source.
         void this.crewSvc.ensureLoaded().then(() => this.ready.update((v) => v + 1));
         // The forge pack still loads (NO mint) — legacy/fallback-generated resolutions carry npcFlags, and
@@ -57,7 +45,6 @@ export class OdmAarTabComponent {
         return ac ? `${ac.employer.name} · ${ac.missionName}` : 'Current operations';
     });
 
-    // DIRECTIVE-119 — kept verbatim from the base (campaignSystem is never 'hotspots' under a pack — inert).
     protected readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots');
 
     protected readonly items = computed<AarArchiveItem[]>(() => {
@@ -84,7 +71,6 @@ export class OdmAarTabComponent {
 
     protected readonly docTier = computed(() => this.selected()?.tier ?? '');
 
-    /** ODM-14 — the authored crew, not a rolled persona. Null (not yet loaded / not entitled) renders UNSIGNED. */
     private voiceRef(slot: OdmAarSlot): AarVoiceRef | null {
         return this.crewSvc.voiceRef(slot);
     }
@@ -115,7 +101,6 @@ export class OdmAarTabComponent {
         const r = br.resolution!;
         const npcNamesByFlag = this.npcNames(br);
         const tree = this.treeOf(br.branchId);
-        // D-039: reflect the GRADED matcher (the same the engine ran) so the AAR's "unlocked" line is true.
         const kids = tree.filter((c) => c.parentBranchId === br.branchId);
         const opened = new Set(selectUnlocks(kids.map((c) => ({ branchId: c.branchId, outcomeGate: c.outcomeGate })), r.outcomeTier).unlock);
         const unlocked = kids.filter((c) => opened.has(c.branchId)).map((c) => c.name);
@@ -130,7 +115,7 @@ export class OdmAarTabComponent {
             unitSizeName: this.state.unitSize()?.name ?? 'Company',
             contextLabel: contextLabel ?? this.liveContext(),
             voices: { command: this.voiceRef('command'), intelligence: this.voiceRef('intelligence'), engineering: this.voiceRef('engineering'), personnel: this.voiceRef('personnel') },
-            armorerClosing: this.bayNote(br), // ODM-14 — THE BAY COUNT (authored templates × the branch's locked figures)
+            armorerClosing: this.bayNote(br),
             pilotInfoOf: (id) => {
                 const p = pilotOf(id);
                 return p ? { name: p.callsign ? `${p.name} "${p.callsign}"` : p.name, status: p.status, recoveryDays: p.recoveryDays ?? null, kiaDateText: p.kiaDate ? formatDate(p.kiaDate) : null } : null;
@@ -141,15 +126,11 @@ export class OdmAarTabComponent {
             npcNamesByFlag,
             unlocked,
             isHotspots: this.isHotspots(),
-            survival: true, // ODM-13 P3 — every AAR under this pack speaks attrition
+            survival: true,
             refined: r.aar?.refined,
         };
     }
 
-    /** ODM-14 — MacCready's closing note, derived per her standing rules: exact machines / jobs / hours /
-     *  parts / shortfalls from THIS branch's walk + the joined bay records. Authored templates (contacts.json,
-     *  re-voiceable data); figures are locked records — nothing invented (DATA-003). Null (no walk yet /
-     *  registry unloaded) suppresses the block exactly as a missing sampleLine does in Classic. */
     private bayNote(br: MissionBranch): string | null {
         const tpl = this.crewSvc.bySlot('engineering')?.aar?.bayNote;
         const walk = br.resolution?.fieldWalk;
@@ -173,7 +154,6 @@ export class OdmAarTabComponent {
         });
     }
 
-    // ── D-038 REFINE (GM-triggered; OFF/toggle hides it) ──────────────────────────────────────────
     protected readonly canRefine = computed(() => this.narrator.mode() === 'local' && this.narrator.aarsOn() && !!this.doc());
     protected readonly refining = this.narrator.busy;
     protected readonly results = this.narrator.lastRun;
@@ -219,7 +199,6 @@ export class OdmAarTabComponent {
         if (Object.keys(accepted).length) this.storeRefined(br.branchId, accepted);
     }
 
-    /** ODM-14 — the refine voice card speaks with the authored crew too (name + standing rules). */
     private voiceCard(roleFamily: string | null): { name: string; speechRules: string[] } | null {
         if (roleFamily !== 'command' && roleFamily !== 'intelligence' && roleFamily !== 'engineering' && roleFamily !== 'personnel') return null;
         const m = this.crewSvc.bySlot(roleFamily);

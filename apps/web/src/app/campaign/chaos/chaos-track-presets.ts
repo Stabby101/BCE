@@ -4,32 +4,21 @@ import { CampaignSaveStore } from '../campaign-save-store';
 import { CHAOS_TRACK_FAMILIES, presetObjectives, type PresetTrack, type PresetObjective } from './chaos-track-preset';
 import type { MissionTypeId } from '../contract/contract-terms';
 import type { ObjectiveKind } from './hotspots-catalog';
-import { type DraftTrack, emptyTrack, emptyObjective } from './hotspot-text-parser'; // IMPORT-6 Part C — the shared editor's model
-import { TrackEditorComponent, type TrackUpdater } from './track-editor'; // IMPORT-6 Part C — the ONE shared track editor (also the hotspot builder's)
+import { type DraftTrack, emptyTrack, emptyObjective } from './hotspot-text-parser';
+import { TrackEditorComponent, type TrackUpdater } from './track-editor';
 
-/**
- * DIRECTIVE-116 — the Hot Spots "Track Presets" manager (build-your-own track). IP-SAFE: the builder ships EMPTY.
- * The user enters a track from THEIR OWN rulebook; BCE stores their campaign, the content stays theirs — no CGL
- * track text is shipped. A preset has no scale/BV (the OpFor sizes to the active contract, D-110b). Save/Duplicate/
- * Delete + Export/Import JSON (portable across campaigns). Generate a saved preset from the operations board. HS-only.
- *
- * IMPORT-6 Part C — the track itself (operation title · situation · objectives with VP/kind/side · deployment · special
- * rules · track end · salvage policy · your role) is edited by the SHARED <bce-track-editor> over a `DraftTrack`; the
- * preset keeps its own generator-steering fields around it (name/family/location/terrain/OpFor sketch/arms mix/days/notes).
- * Mapping: `track.name` ↔ `PresetTrack.title` (the op name); `PresetTrack.name` stays the saved-list label.
- */
 interface Draft {
     name: string; family: MissionTypeId; location: string;
     composition: string; behavior: string;
     armsMix: '' | 'MECH_ONLY' | 'COMBINED_ARMS'; terrainBiome: string; operationDays: string; notes: string;
-    track: DraftTrack; // IMPORT-6 Part C — title (= track.name) · situation · objectives · the optional sheet fields
+    track: DraftTrack;
 }
 const blank = (): Draft => ({ name: '', family: 'OBJECTIVE_RAID', location: '', composition: '', behavior: '', armsMix: '', terrainBiome: '', operationDays: '', notes: '', track: emptyTrack() });
 
 @Component({
     selector: 'bce-chaos-track-presets',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TrackEditorComponent], // IMPORT-6 Part C
+    imports: [TrackEditorComponent],
     template: `
         <div class="tp-head">
             <div><span class="l">Custom Tracks — build a track to play</span> <span class="tp-c">{{ presets().length }}</span></div>
@@ -39,7 +28,6 @@ const blank = (): Draft => ({ name: '', family: 'OBJECTIVE_RAID', location: '', 
                 @if (presets().length) { <button type="button" class="tp-btn" (click)="exportAll()">Export all</button> }
             </div>
         </div>
-        <!-- DIRECTIVE-132 — clarify: this builds ONE track (a single battle), not a contract; point to the Generate picker. -->
         <p class="tp-ip">Build one track (a single scenario/battle) from your own rulebook, then choose it at Generate below, in place of the rolled track. This is one battle — not a contract. BCE ships no track content.</p>
         @if (presets().length) { <p class="tp-ip tp-ptr">Saved — pick it under “Pick a track to play” (My tracks) when you Generate an operation.</p> }
 
@@ -86,10 +74,6 @@ const blank = (): Draft => ({ name: '', family: 'OBJECTIVE_RAID', location: '', 
                     </label>
                     <label class="tf"><span>Location <small>(optional)</small></span><input type="text" [value]="d().location" (input)="set('location', $any($event.target).value)" maxlength="60" /></label>
                     <label class="tf"><span>Terrain biome <small>(optional)</small></span><input type="text" [value]="d().terrainBiome" (input)="set('terrainBiome', $any($event.target).value)" maxlength="40" /></label>
-                    <!-- IMPORT-6 Part C — the SHARED track editor: operation title (= track.name) · your role · situation · deployment ·
-                         objectives with VP/kind/side · special rules · track end · salvage policy. Template hidden (the preset's
-                         Type/family drives the seed); the hotspot-only OpFor faction/mix hidden (the preset's own OpFor sketch/arms
-                         mix fields below steer the generator); not removable (a preset IS one track). -->
                     <div class="tf wide tp-track">
                         <span>Track</span>
                         <bce-track-editor [track]="d().track" [showName]="true" [nameLabel]="'Operation title'" [showTemplate]="false" [showOpfor]="false" [removable]="false" (trackChange)="setTrack($event)" />
@@ -121,7 +105,7 @@ const blank = (): Draft => ({ name: '', family: 'OBJECTIVE_RAID', location: '', 
         .tp-c { font-family:var(--mono); font-size:11px; color:var(--stamp); border:1px solid var(--stamp); padding:1px 7px; margin-left:6px; }
         .tp-actions { display:flex; gap:8px; flex-wrap:wrap; }
         .tp-ip { font-family:var(--type); font-size:12px; font-style:italic; color:var(--ink2); border-left:3px solid var(--stamp); padding:5px 10px; margin:10px 0 12px; }
-        .tp-ptr { font-style:normal; color:var(--ink); border-left-color:var(--ok, #3a7d44); } /* D-132 — the after-save pointer to the Generate picker */
+        .tp-ptr { font-style:normal; color:var(--ink); border-left-color:var(--ok, #3a7d44); }
         .tp-btn { font-family:var(--label); font-weight:600; letter-spacing:1px; font-size:11px; text-transform:uppercase; border:1.5px solid var(--ink); background:var(--paper); color:var(--ink); padding:7px 12px; cursor:pointer; min-height:34px; }
         .tp-btn.go { border-color:var(--stamp); color:var(--stamp); } .tp-btn.go:hover:not(:disabled) { background:var(--stamp); color:var(--paper); }
         .tp-btn.ghost { background:transparent; } .tp-btn:disabled { opacity:.4; cursor:not-allowed; }
@@ -167,7 +151,6 @@ export class ChaosTrackPresetsComponent {
 
     protected familyLabel(id: string): string { return this.families.find((f) => f.id === id)?.label ?? id; }
     protected set<K extends keyof Draft>(k: K, v: string): void { this.d.update((x) => ({ ...x, [k]: v as Draft[K] })); }
-    /** IMPORT-6 Part C — the shared editor emits the whole patched track. */
     protected setTrack(upd: TrackUpdater): void { this.d.update((x) => ({ ...x, track: upd(x.track) })); } // an updater over the CURRENT track (never a stale child snapshot)
     /** name · operation title (track.name) · situation · ≥1 non-blank objective (mirrors the hotspot builder's track rule). */
     protected readonly canSave = computed(() => { const x = this.d(); return !!x.name.trim() && !!x.track.name.trim() && !!x.track.situation.trim() && x.track.objectives.some((o) => o.text.trim()); });
@@ -181,8 +164,6 @@ export class ChaosTrackPresetsComponent {
     protected cancelForm(): void { this.d.set(blank()); this.editingId.set(null); this.formOpen.set(false); }
     /** The header button toggles the builder: open a fresh form when closed, cancel (discard) when open. */
     protected toggleForm(): void { if (this.formOpen()) this.cancelForm(); else this.newPreset(); }
-    /** Preset → draft. IMPORT-6 Part C: the track hydrates through presetObjectives (a pre-IMPORT-6 preset's three
-     *  plain-text objectives → VP 200/100/50 by kind, side 'both'), so an old preset opens fully editable and saves forward. */
     protected editPreset(p: PresetTrack): void {
         const objs: PresetObjective[] = presetObjectives(p);
         this.d.set({
@@ -199,9 +180,6 @@ export class ChaosTrackPresetsComponent {
         this.editingId.set(p.id); this.ioMode.set(null); this.formOpen.set(true);
     }
 
-    /** Assemble the draft into a PresetTrack (id/createdAt from the edited row when editing, else fresh).
-     *  IMPORT-6 Part C — writes BOTH objective shapes: the full `trackObjectives` list (the editor's rows with text) AND the
-     *  legacy `objectives` trio (FIRST objective of each kind — what old readers + the shared Forge render consume). */
     private fromDraft(id: string, createdAt: number): PresetTrack {
         const x = this.d();
         const days = parseInt(x.operationDays, 10);
@@ -262,7 +240,6 @@ export class ChaosTrackPresetsComponent {
         for (const raw of arr) {
             const o = raw as Partial<PresetTrack>;
             if (!o || typeof o.name !== 'string' || typeof o.title !== 'string' || typeof o.situation !== 'string' || !o.objectives || !o.opforSketch) continue;
-            // D-116 review — coerce/validate the numeric + enum fields as strictly as the builder (fromDraft), so a
             // hand-edited/corrupt import can't inject a string operationDays (→ NaN in the dossier), an out-of-range
             // vehicleShare, or an invalid family/armsMix into the generator.
             const family = this.families.find((f) => f.id === o.family)?.id;
@@ -270,7 +247,6 @@ export class ChaosTrackPresetsComponent {
             const days = typeof o.operationDays === 'number' && Number.isFinite(o.operationDays) && o.operationDays > 0 ? Math.floor(o.operationDays) : undefined;
             const vShare = typeof o.vehicleShare === 'number' && Number.isFinite(o.vehicleShare) ? Math.max(0, Math.min(1, o.vehicleShare)) : undefined;
             const arms = o.armsMix === 'MECH_ONLY' || o.armsMix === 'COMBINED_ARMS' ? o.armsMix : undefined;
-            // IMPORT-6 Part C — the full objective list + the optional track-sheet fields ride through with the same
             // per-field coercion (a legacy JSON without them still imports; presetObjectives hydrates it on read).
             // Rows need a non-blank text; vp coerced to a number; an unknown kind/side falls back to primary/both.
             const isKind = (k: unknown): k is ObjectiveKind => k === 'primary' || k === 'secondary' || k === 'bonus';

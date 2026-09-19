@@ -1,9 +1,3 @@
-/*
- * BCE retool — New Campaign starting RESOURCE LEVEL config. DIRECTIVE-007.
- * Static BCE setup config (NOT the formation backfill): three resource tiers and the
- * DropShip provided at each unit size. Capital (cash) and resources (hardware) are
- * separate, complementary dials. Tier ids: 'lean' | 'normal' | 'established'.
- */
 
 export type ResourceTierId = 'lean' | 'normal' | 'established';
 

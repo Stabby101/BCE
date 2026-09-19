@@ -1,10 +1,3 @@
-/*
- * BCE — SETTINGS tab (DIRECTIVE-038). The narrator's controls: mode OFF / LOCAL (CLOUD greyed —
- * "arrives with the engine"), endpoint + model display, TEST CONNECTION (round-trip + latency),
- * per-function toggles (briefings / AARs), and a fuller live stats view. Hosts the D-036 SPA-cap
- * knob, migrated here from localStorage. Mode LOCAL POSTs /load (the sidecar spawns llama-server on
- * demand); OFF unloads immediately. All settings persist via NarratorService (localStorage).
- */
 import { Component, ChangeDetectionStrategy, OnDestroy, inject, signal } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { NarratorService } from './narrator.service';

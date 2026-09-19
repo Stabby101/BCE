@@ -4,9 +4,9 @@
         <div class="header">
             <div class="brand" (click)="toggleMenuOpenClose()" aria-label="MekBay">
             @if (tinyMode()) {
-                <img class="logo" src="/icons/icon-192x192.png" alt="BCE"><!-- HOTFIX-025: BCE badge -->
+                <img class="logo" src="/icons/icon-192x192.png" alt="BCE">
             } @else {
-                <img class="logo" src="/images/bce-icon.svg" alt="BCE"><!-- HOTFIX-025: BCE badge (compact) -->
+                <img class="logo" src="/images/bce-icon.svg" alt="BCE">
                 @if (isNextBuild) { <span class="next-badge" (click)="showNextDialog(); $event.stopPropagation()">NEXT</span> }
             }
             </div>

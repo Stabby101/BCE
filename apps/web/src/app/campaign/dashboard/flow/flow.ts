@@ -1,12 +1,3 @@
-/*
- * BCE — the FLOW tab (DIRECTIVE-028). Renders the D-026 mission tree natively on the dossier theme
- * tokens: depth-columned node cards connected by gate-labeled SVG edges, with a side drawer per node
- * state. GENERATE on an AVAILABLE node calls the SAME MissionTreeService action as the Missions tab
- * (one action, two surfaces); OPEN FULL PACKAGE on the ACTIVE node is emitted to the dashboard's
- * existing package overlay. The veil rule holds by construction — LOCKED nodes have no spec, so their
- * drawer shows only the fork's trigger/consequence teaser. A contract selector recalls archived trees
- * (read-only). MERC/contract-scoped. Height-safe (the canvas pans inside a bounded viewport).
- */
 import { Component, ChangeDetectionStrategy, computed, inject, signal, output, input, viewChild, effect, untracked, type ElementRef } from '@angular/core';
 import { NewCampaignState } from '../../new-campaign-state';
 import { MissionTreeService } from '../../mission/mission-tree.service';
@@ -15,13 +6,8 @@ import type { MissionBranch } from '../../mission/mission-tree';
 import { deployedSet } from '../../force/deployed';
 import { hsDamagedCount } from '../../battle/hs-damage'; // PD3 P1 — the rail's Repair stop carries the damaged count
 
-/** DIRECTIVE-073 — one lifecycle stage of the current mission, read-only over the real state/gates. */
 interface GateNode { key: string; name: string; status: 'done' | 'pending' | 'blocked'; detail: string; badge?: number; }
 
-/** DIRECTIVE-115 — the advisory rail: each lifecycle step → the tab (+ optional Missions-hub sub) where the player
- *  performs it, per campaign system. Post-D-114 Hot Spots layout: the mission hub lives in the Contracts tab
- *  (chaos-contracts, subs brief/force/claims/aar), repair + heal in Repair & Refit (chaos-repair); Traditional keeps
- *  missions / repair / barracks. Advisory navigation only — never forces the step. */
 type FlowDest = { tab: string; sub?: 'brief' | 'force' | 'claims' | 'aar' };
 const STEP_DEST: Record<string, { traditional: FlowDest; hotspots: FlowDest }> = {
     brief:     { traditional: { tab: 'missions', sub: 'brief' }, hotspots: { tab: 'chaos-contracts', sub: 'brief' } },
@@ -33,13 +19,10 @@ const STEP_DEST: Record<string, { traditional: FlowDest; hotspots: FlowDest }> =
     outcome:   { traditional: { tab: 'repair' },                 hotspots: { tab: 'chaos-repair' } },
 };
 
-/** DIRECTIVE-119 P2 — the Hot Spots lifecycle as a top-of-sheet Process Rail: ordered steps + where each is done.
- *  `advance` is the P1 clock-advance action (not a navigate). Reuses the same navigate/advancePhase outputs. */
 const HS_RAIL: readonly { key: string; label: string; dest: FlowDest | 'advance'; next: string }[] = [
     // PD3 P3 — `next` = what to do at this stop, in words (the "PHASE: <name> — <next>" line under the rail)
     { key: 'force',    label: 'Your force',         dest: { tab: 'roster' },                         next: 'review the roster, then sign a contract' },
     { key: 'contract', label: 'Contract',           dest: { tab: 'chaos-contracts', sub: 'brief' },  next: 'pick an offer on the Contracts board and sign it' },
-    // DECISION (D-119 P2) — DEPLOY lands on the Contracts BRIEF sub, where the D-118 inline deploy roster lives (the
     // primary deploy UX), not the legacy /force battle-view; the brief hub adapts (board when idle → deploy roster
     // once a track is active), so CONTRACT and DEPLOY share it state-adaptively.
     { key: 'deploy',   label: 'Deploy',             dest: { tab: 'chaos-contracts', sub: 'brief' },  next: 'generate the track and deploy your force on the Brief' },
@@ -59,19 +42,14 @@ const HS_RAIL: readonly { key: string; label: string; dest: FlowDest | 'advance'
     host: { '(document:keydown.escape)': 'closeDrawer()' },
 })
 export class FlowComponent {
-    /** ACTIVE node → open the dashboard's existing D-025 package overlay (one action, two surfaces). */
     readonly openPackage = output<void>();
-    /** DIRECTIVE-115 — advisory rail: a step click → navigate the dashboard to where that step is done. */
     readonly navigate = output<{ tab: string; sub?: string }>();
-    /** DIRECTIVE-119 — Hot Spots only: the final "Advance phase" step → the dashboard advances the clock + returns to CONTRACT. */
     readonly advancePhase = output<void>();
-    /** DIRECTIVE-119 P2 — 'rail' renders the compact top-of-sheet Process Rail (Hot Spots, above the tab bar);
-     *  'full' (default) is the Flow tab's tree + gate window (Traditional). */
     readonly variant = input<'full' | 'rail'>('full');
 
     private readonly state = inject(NewCampaignState);
     private readonly tree = inject(MissionTreeService);
-    protected readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots'); // D-115 — picks the destination column
+    protected readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots');
 
     // ── Contract selector: the live (active) contract + archived completed contracts (read-only) ──
     private readonly selectedId = signal<string>('current');
@@ -121,7 +99,6 @@ export class FlowComponent {
 
     /** The live spec's objectives, for the ACTIVE node drawer (archived trees never carry an ACTIVE node). */
     protected readonly activeObjectives = computed(() => this.state.missionSpec()?.objectives ?? []);
-    /** HOTFIX-021 — a real forge seed is bound → the full package exists; generic (seedless) → the brief is the whole operation (matches the Contract/Brief gate). */
     protected readonly hasPackage = computed(() => !!this.state.missionSpec()?.forge?.seedId);
 
     protected generate(b: MissionBranch): void {
@@ -137,12 +114,10 @@ export class FlowComponent {
     protected dateText(d?: { y: number; m: number; d: number }): string {
         return d ? `${d.y}-${String(d.m + 1).padStart(2, '0')}-${String(d.d).padStart(2, '0')}` : '—';
     }
-    /** IMPORT-6 FOLLOWUPS — the player's authored objectives + marks as resolved (resolution.aar.objectiveMarks, 'our' rows). */
     protected ourMarks(b: MissionBranch): { text: string; vp: number; met: boolean }[] {
         return (b.resolution?.aar?.objectiveMarks ?? []).filter((o) => o.side !== 'opp');
     }
 
-    // ── D-039 — gate edges read as THRESHOLDS; AVAILABLE siblings that survived a resolve are "still open" ──
     private readonly hasProgress = computed(() => this.selectedTree().some((b) => b.state === 'ACTIVE' || b.state === 'RESOLVED'));
     /** A still-playable, un-taken option: AVAILABLE while the campaign has already moved past a mission. */
     protected stillOpen(b: MissionBranch): boolean {
@@ -153,23 +128,18 @@ export class FlowComponent {
         return { ANY: 'always', FAILURE: 'on failure', COMPROMISED: 'if compromised', PARTIAL: '≥ partial', SUCCESS: '≥ success', FULL_SUCCESS: 'full success only' }[gate] ?? gate;
     }
 
-    /** D-129 — a friendly label for the authored DR track template (Hot Spots only; e.g. 'Breakthrough' → "Breakthrough").
-     *  Title-cases + normalizes separators; empty for a missing type (Traditional nodes carry none → nothing renders). */
     protected trackTypeLabel(id?: string): string {
         return id ? id.replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '';
     }
 
-    // ── DIRECTIVE-073 — the CURRENT mission's STATE MACHINE + GATES (dev/diagnostic). A READ-ONLY reflection
     //    of the real lifecycle state — it adds no state engine and touches no gate. Lives below the campaign
     //    flow above. Sources: the live mission tree (branch state ACTIVE/RESOLVED + resolution snapshot),
-    //    deployedSet (D-027), the resolution's engaged/fieldWalk (D-034/D-037), pilots (infirmary), bays. ──
     /** The mission whose lifecycle the gate window tracks: the ACTIVE branch, else a RESOLVED branch still
      *  awaiting the field-walk (resolved but not yet walked → AAR done, outcome pending). Null = idle. */
     private readonly missionBranch = computed<MissionBranch | null>(() => {
         const tree = this.state.missionTree() ?? [];
         const active = tree.find((b) => b.state === 'ACTIVE');
         if (active) return active;
-        // D-119 — a phase-advanced HS branch is finalized (leaves the rail → idle/CONTRACT). Traditional never sets
         // `advanced`, so `!undefined` keeps this byte-identical to the fieldWalk-only condition there.
         const pendingWalk = tree.filter((b) => b.state === 'RESOLVED' && b.resolution && !b.resolution.fieldWalk && !b.resolution.advanced);
         return pendingWalk.length ? pendingWalk[pendingWalk.length - 1] : null;
@@ -182,11 +152,10 @@ export class FlowComponent {
         if (!cur) return null;
         const resolved = cur.state === 'RESOLVED';
         const walked = !!cur.resolution?.fieldWalk;
-        // D-119 — Hot Spots settles the post-battle AT RESOLVE (SP economy — combat pay + Salvage% + damage, D-110b/c/d);
         // there is NO field walk, so a resolved HS mission is FINALIZED (never stuck "pending walk"). Traditional keeps
         // the walk semantics exactly: `settled`/the outcome node fall through to the untouched `walked` branches below.
         const hs = this.isHotspots();
-        const advanced = !!cur.resolution?.advanced; // D-119 — HS phase-advanced marker
+        const advanced = !!cur.resolution?.advanced;
         const settled = hs ? resolved : walked;       // repair/infirmary "done" gate (Traditional: === walked, unchanged)
         const deployed = deployedSet(this.state.startingForce()).length;
         const injured = (this.state.pilots() ?? []).filter((p) => p.status === 'Injured').length;
@@ -215,7 +184,6 @@ export class FlowComponent {
         return { label: `${cur.name} · ${cur.state}${resolved && tier ? ' · ' + tier : ''}`, nodes };
     });
 
-    // ── DIRECTIVE-115 — the advisory rail: "do this next" + click-to-jump. Navigation only; never blocks/forces. ──
     /** The primary next-actionable step: the first pending stage, else the first blocked one (else null). */
     protected readonly nextGate = computed<GateNode | null>(() => {
         const s = this.missionStage();
@@ -225,7 +193,6 @@ export class FlowComponent {
 
     /** Click a step → jump to the tab/sub where it's performed (per system). Advisory; the drawer closes if open. */
     protected goStep(n: GateNode): void {
-        // D-119 — Hot Spots: the final step is "Advance phase" (advance the clock + return to CONTRACT), not a plain
         // navigate. Traditional's outcome node keeps navigating (the HS gate is false there → unchanged).
         if (n.key === 'outcome' && this.isHotspots()) { this.advancePhase.emit(); this.closeDrawer(); return; }
         const d = STEP_DEST[n.key];
@@ -240,7 +207,6 @@ export class FlowComponent {
         this.closeDrawer();
     }
 
-    // ── DIRECTIVE-119 P2 — the Hot Spots top-of-sheet PROCESS RAIL (locked-until-earned). Same state sources as the
     //    advisory rail; the earned frontier is expressed as the existing done/pending/blocked status (blocked = locked
     //    = ahead of the frontier = non-navigating; done/pending = at/behind = clickable, back-free). ──
     protected readonly hsRail = computed<GateNode[]>(() => {
@@ -249,7 +215,6 @@ export class FlowComponent {
         const resolved = cur?.state === 'RESOLVED';
         const hasActive = cur?.state === 'ACTIVE';
         const deployed = deployedSet(this.state.startingForce()).length;
-        // PD3 P1 (PD3-12) — Repair & Refit is REACHABLE whenever damaged units exist (a digital envelope or a tabletop level,
         // hs-damage.ts): before P1 the stop was locked until the current track resolved, so after ADVANCE PHASE a hurt force
         // had no way back in. Pending (◉ + badge) while unresolved, done (✓ + badge) after — never blocked over damage.
         const damaged = hsDamagedCount(this.state.startingForce());
@@ -270,7 +235,6 @@ export class FlowComponent {
     });
     /** The first pending step — the "do this next" ▶ highlight. */
     protected readonly hsRailNext = computed<string | null>(() => this.hsRail().find((n) => n.status === 'pending')?.key ?? null);
-    /** PD3 P3 (PD3-10) — the phase line: the current (▶) stop's name + what to do there; every stop done → the loop is closed. */
     protected readonly railPhase = computed<{ key: string; name: string; next: string } | null>(() => {
         if (this.variant() !== 'rail') return null;
         const key = this.hsRailNext();

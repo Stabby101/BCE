@@ -1,20 +1,3 @@
-/*
- * BCE campaign-pack — CAMPAIGN OPERATIONS contract terms (DIRECTIVE-017). Pure TS, no Angular/DOM.
- *
- * A faithful 1-to-1 port of the Campaign Operations contract-terms math — the Master
- * Contract Terms Table (CamOps 4th printing p.42) and Supplemental Contract Terms Table
- * (p.43), and the Missions Table (p.40). Cross-checked against MekHQ's GPLv3
- * reference/mekhq:
- *   - market/contractMarket/ContractTerms.java   (clause modifiers + resolution)
- *   - market/contractMarket/MissionSelector.java  (employer -> mission tables, p.40)
- *   - mission/enums/AtBContractType.java           (length + ops-tempo multipliers)
- *   - market/contractMarket/AbstractContractMarket.java (merc command-rights thresholds)
- * MekHQ data files are CC BY-NC-SA and are NOT used; only the GPLv3 code logic + the
- * canon CamOps table NUMBERS (game facts) are reproduced, cited (T-022 / reference/mekhq/HARVEST.md).
- *
- * INTERIM deviations from RAW are flagged inline; the rolled values are STORED by the
- * caller (the reroll/renegotiation hook is a later slice).
- */
 
 /** The contract/mission types the CamOps Missions Table (p.40) can yield for a merc. */
 export type MissionTypeId =

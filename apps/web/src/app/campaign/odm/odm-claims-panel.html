@@ -1,7 +1,4 @@
-<!-- FORKED FROM campaign/claims/claims-panel.html @ 1ab399b - DIRECTIVE-ODM-9 Part C (a DRIFT SURFACE). Divergence: the OPFOR empty-state string only. -->
 <div class="claims-panel">
-    <!-- HOTFIX-030 — the board IS the roster. No Claim button (players claim on their own devices). Header
-         carries the counts that used to live in the Joined panel. -->
     <div class="cl-head">
         <h3 class="ph">Roster / claim board</h3>
         <div class="cl-counts">
@@ -21,7 +18,6 @@
     @for (side of sides(); track side.key) {
         <section class="cl-group cl-{{ side.key }}">
             <h4 class="cl-side">{{ side.label }} <span class="cl-side-sub">{{ side.sub }}</span> <span class="cl-side-n">{{ side.units.length }}</span>
-                <!-- ODM-9 FORK: the D-130 HS builder button STRIPPED (isHotspots is always false here; ODM's OpFor is the authored roll) -->
             </h4>
             @if (side.units.length === 0) {
                 <p class="cl-empty" [attr.data-testid]="side.key === 'opfor' ? 'odm-claims-opfor-empty' : null">No {{ side.label }} units yet@if (side.key === 'blufor') { — set a unit to <b>Deployed</b> on the roster}@if (side.key === 'opfor') { @if (isComposed()) { — the GM composed this operation without an opposing force } @else { — OpFor for this operation is authored: see the ⚔ OPFOR tab in the Briefing} }.</p>
@@ -48,7 +44,6 @@
         </section>
     }
 
-    <!-- HOTFIX-030 — joined-but-unclaimed players (spectators): name · presence dot · reassign · kick. Hidden when empty. -->
     @if (unclaimedPlayers().length) {
         <section class="cl-group cl-spectators">
             <h4 class="cl-side">Joined · no unit yet <span class="cl-side-n">{{ unclaimedPlayers().length }}</span></h4>
@@ -67,5 +62,4 @@
         </section>
     }
 
-    <!-- ODM-9 FORK: the D-130 HS builder modal STRIPPED (with its engine-hs import — the fence caught it) -->
 </div>

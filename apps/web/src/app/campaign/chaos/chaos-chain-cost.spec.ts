@@ -1,14 +1,9 @@
-/*
- * GM-2 P2b-fix — the PATH CHECK, pinned against the STEPS table (chaos-contract-steps.ts): the minimal Rep a D-128 chain
- * must spend to reach a signed terms vector, em-dash rows paid, sacrifices free, the per-term cap, the two-sacrifice cap,
- * unreachable landings, a column moved down outside a sacrifice, and the locked Command.
- */
 import { minimalRepCost, type Steps } from './chaos-chain-cost';
 import { repCostUp } from './chaos-contract-steps';
 
 const seed = (over: Partial<Steps> = {}): Steps => ({ basePay: 3, command: 7, salvage: 3, support: 3, transport: 5, ...over });
 
-describe('minimalRepCost — the D-128 chain, re-derived', () => {
+describe('minimalRepCost — the chain, re-derived', () => {
     it('no change → 0 Rep, 0 sacrifices', () => {
         expect(minimalRepCost(seed(), seed(), 2)).toEqual({ ok: true, minimalRep: 0, sacrifices: 0 });
     });

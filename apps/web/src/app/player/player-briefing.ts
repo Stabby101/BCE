@@ -1,20 +1,7 @@
-/*
- * BCE PLAYER — the BRIEFING card (DIRECTIVE-048 phase C). The player's read-only mission brief, rendered
- * from the PERSISTED MissionSpec ALONE (objectives/terrain/OpFor/deployment/victory/window/slots + the
- * optional D-035 theater + comms) — NOT the GM MissionPackageComponent (which pulls the narrator + the
- * costs/gates/accept machinery, out of D-048 scope), so the player bundle stays off that graph (DATA-003:
- * prose from the record). A "Print my brief" button isolates this card (ViewEncapsulation.None + @media
- * print, the D-025 pattern) so a player can take a paper copy to the table. Shown inside the overlay shell.
- *
- * DIRECTIVE-117 — Hot Spots: when the campaign runs the Chaos/Hot Spots system, the brief renders the rulebook
- * FIVE-PART TRACK layout (name → italic blurb → GAME SETUP → OBJECTIVES w/ VP → SPECIAL RULES incl. Track End +
- * Salvage + the standing track rules) from the record + the additive spec.forge fields bound at generation, then
- * the same player addendum (deployment · window · comms). Traditional stays byte-identical (the @else branch).
- */
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import type { MissionSpec } from '../campaign/mission/mission-spec';
 import { NewCampaignState } from '../campaign/new-campaign-state';
-import { trackArchetypeForSpec, templateTrackEnd, playerRoleLabel, opposingRoleLabel, TRACK_VP, SALVAGE_POLICY_LABEL, type TrackArchetype } from '../campaign/chaos/track-setup'; // IMPORT-6 Part E — picked-template-aware
+import { trackArchetypeForSpec, templateTrackEnd, playerRoleLabel, opposingRoleLabel, TRACK_VP, SALVAGE_POLICY_LABEL, type TrackArchetype } from '../campaign/chaos/track-setup';
 import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
 
 @Component({
@@ -23,13 +10,10 @@ import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
     encapsulation: ViewEncapsulation.None, // the @media print rule below must reach the whole page
     template: `
         @if (phase() === 'complete') {
-            <!-- PD3 P2 (PD3-11) — the contract is COMPLETE: the brief says so instead of the last track (the phase gate, shared with the pick window) -->
             <div class="pbrief pb-complete" data-testid="pb-complete"><div class="pb-tk-tag">HOT SPOT</div><p class="pb-tk-lead">Contract complete — {{ result() }}. Waiting for the GM's next contract.</p></div>
         } @else if (spec(); as s) {
             @if (isHotspots()) {
               @if (hotspotBrief(); as hb) {
-                <!-- DIRECTIVE-124 — the AUTHORED premade-hotspot brief: the SAME single brief the GM deploy view shows,
-                     read directly from the persisted forge.hotspot (no slot-fill). One version, both surfaces. -->
                 <div class="pbrief pb-track pb-hs">
                     <div class="pb-tk-tag">HOT SPOT</div>
                     <div class="pb-tk-name">{{ hb.trackName }}</div>
@@ -51,7 +35,6 @@ import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
                     <section class="pb-sec"><h4>Special Rules</h4>
                         @if (hb.templateRules) { <p class="pb-tk-rule"><b>Template.</b> {{ hb.templateRules }}</p> }
                         @if (hb.specialRules) { <p class="pb-tk-rule"><b>This track.</b> {{ hb.specialRules }}</p> }
-                        <!-- IMPORT-6 Part E — same blank-field fallbacks as the GM Full Package (one brief, both surfaces) -->
                         <p class="pb-tk-rule"><b>Track End.</b> {{ hb.trackEnd || templateTrackEnd(hb.trackTemplate) }}</p>
                         <p class="pb-tk-rule"><b>Salvage.</b> {{ hb.salvagePolicy || '—' }}</p>
                     </section>
@@ -60,7 +43,6 @@ import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
                         @if (hb.tally) { <p class="pb-tk-rule"><b>Tally.</b> {{ hb.tally }}</p> }
                         @if (hb.bonus) { <p class="pb-tk-rule"><b>Bonus.</b> {{ hb.bonus }}</p> }
                         @if (hb.constraints) { <p class="pb-tk-rule"><b>Constraints.</b> {{ hb.constraints }}</p> }
-                        <!-- IMPORT-7 Part D — authored requirements as provenance + the live signed Scale (mirrors the GM package) -->
                         @if (hb.additionalRequirements) { <p class="pb-tk-rule"><b>Requirements@if (hb.authoredScale) { (authored at Track Scale {{ hb.authoredScale }})}.</b> {{ hb.additionalRequirements }}@if (hb.authoredScale && hb.signedScale && hb.signedScale !== hb.authoredScale) { <span class="pb-dim"> · Signed at Scale {{ hb.signedScale }} — the scale-dependent figures are the author's for Scale {{ hb.authoredScale }}.</span> }</p> }
                         @if (hb.purchaseOptions) { <p class="pb-tk-rule"><b>Purchases.</b> {{ hb.purchaseOptions }}</p> }
                         @if (hb.complications.length) {
@@ -71,8 +53,6 @@ import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
                             <p class="pb-dim pb-tk-lead">Named characters:</p>
                             @for (n of hb.namedCharacters; track $index) { <p class="pb-tk-rule"><b>{{ n.name }}</b> — {{ n.role }}@if (n.chassis) { · {{ n.chassis }} }@if (n.skill) { · {{ n.skill }} }</p> }
                         }
-                        <!-- IMPORT-6 FOLLOWUPS — RESULTS ONLY: the special personnel actually HIRED and fielding with you (persisted
-                             forge.hiredWithYou); the hire OFFERS (hb.hireable) are never rendered player-side. -->
                         @if (hiredWithYou().length) {
                             <p class="pb-dim pb-tk-lead" data-testid="pb-hired-lead">Special personnel fielding with you:</p>
                             @for (m of hiredWithYou(); track $index) { <p class="pb-tk-rule" data-testid="pb-hired-row"><b>{{ m.name }}</b>@if (m.role) { — {{ m.role }} }@if (m.chassis) { · {{ m.chassis }} {{ m.model || '' }} } · G {{ m.gunnery }} / P {{ m.piloting }}</p> }
@@ -88,7 +68,6 @@ import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
                     <button type="button" class="pb-print pb-noprint" (click)="print()">Print my brief</button>
                 </div>
               } @else if (track(); as t) {
-                <!-- DIRECTIVE-117 — the Hot Spots TRACK: the rulebook five-part layout, then the player addendum. -->
                 <div class="pbrief pb-track">
                     <div class="pb-tk-tag">TRACK</div>
                     <div class="pb-tk-name">{{ t.name }}</div>
@@ -121,7 +100,6 @@ import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
                         @for (cx of t.complications; track cx.name) {
                             <p class="pb-tk-rule"><b>{{ cx.name }}.</b> {{ cx.effect || cx.text }}</p>
                         }
-                        <!-- IMPORT-6 Part C/E — a preset's authored special rules line (mirrors the GM sheet) -->
                         @if (t.specialRules) { <p class="pb-tk-rule"><b>Special Rules.</b> {{ t.specialRules }}</p> }
                         <p class="pb-tk-rule"><b>Track End.</b> {{ t.trackEnd }}</p>
                         <p class="pb-tk-rule"><b>Salvage.</b> {{ t.salvage }}</p>
@@ -134,7 +112,6 @@ import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
                         }
                     </section>
 
-                    <!-- IMPORT-6 FOLLOWUPS — RESULTS ONLY: special personnel actually fielding with you (persisted forge.hiredWithYou). -->
                     @if (hiredWithYou().length) {
                         <section class="pb-sec">
                             <h4>Special personnel fielding with you</h4>
@@ -142,8 +119,6 @@ import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
                         </section>
                     }
 
-                    <!-- IMPORT-6 Part E — deployment lines from the same rule as the GM sheet (a preset's authored line wins;
-                         the contract type's lines only while the rendered template IS the contract type's) -->
                     @if (t.deployment.player || t.deployment.opfor) {
                     <div class="pb-grid">
                         @if (t.deployment.player) { <div><h4>Your deployment</h4><p>{{ t.deployment.player }}</p></div> }
@@ -230,7 +205,6 @@ import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
         .pb-emer { font-size: 12px; color: #e7a86b; margin: 4px 0 0; }
         .pb-print { margin-top: 16px; background: #2f5a6b; color: #fff; border: none; border-radius: 9px; padding: 12px 18px; font-size: 14px; font-weight: 700; cursor: pointer; }
         .pb-none { color: #7f8a96; font-style: italic; }
-        /* DIRECTIVE-117 — Hot Spots TRACK layout (phone-formatted; scrolls inside the overlay shell). */
         .pb-tk-tag { text-align: center; letter-spacing: .3em; font-weight: 800; font-size: 12px; color: #8fb0cf; margin-bottom: 8px; }
         .pb-tk-name { text-align: center; font-weight: 800; font-size: 20px; letter-spacing: .03em; text-transform: uppercase; }
         .pb-tk-meta { text-align: center; }
@@ -247,7 +221,6 @@ import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
         .pb-tk-ovp { font-weight: 800; color: #8fb0cf; }
         .pb-tk-lead { font-style: italic; margin: 0 0 6px; }
         .pb-tk-rule { margin: 5px 0; line-height: 1.5; } .pb-tk-rule b { color: #cdd8e3; }
-        /* DIRECTIVE-124 — the authored hotspot system-profile grid (player) */
         .pb-hs-sys { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; }
         .pb-hs-kv { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px solid #1c242e; padding: 2px 0; font-size: 12.5px; }
         .pb-hs-kv span { color: #7f8a96; text-transform: uppercase; letter-spacing: .03em; font-size: 10px; }
@@ -255,7 +228,7 @@ import { CHAOS_STANDING_RULES } from '../campaign/chaos/chaos-complications';
         @media print {
             body * { visibility: hidden !important; }
             .pbrief, .pbrief * { visibility: visible !important; color: #000 !important; }
-            .pbrief { position: fixed !important; inset: 0 !important; margin: 0 !important; padding: 18px 18px calc(18px + var(--bce-footer-h, 0px)) !important; /* IMPORT-7 A — clear the legal footer */
+            .pbrief { position: fixed !important; inset: 0 !important; margin: 0 !important; padding: 18px 18px calc(18px + var(--bce-footer-h, 0px)) !important;
                       background: #fff !important; max-height: none !important; overflow: visible !important; }
             .pb-emp, .pb-tgt, .pb-word { color: #000 !important; }
             .pb-occ, .pb-tk-side { border-left-color: #000 !important; }
@@ -273,10 +246,7 @@ export class PlayerBriefingComponent {
     protected readonly occupation = computed(() => this.spec()?.theater?.occupation || null);
     protected readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots');
 
-    // ── DIRECTIVE-124 — the authored premade-hotspot brief (the SAME single brief the GM shows; read from the
-    //    persisted forge.hotspot). Its presence renders the authored layout instead of the D-117 generic track. ──
     protected readonly hotspotBrief = computed(() => this.spec()?.forge?.hotspot ?? null);
-    /** IMPORT-6 FOLLOWUPS — RESULTS ONLY: the special personnel actually fielded (persisted forge.hiredWithYou); never the offers. */
     protected readonly hiredWithYou = computed(() => this.spec()?.forge?.hiredWithYou ?? []);
     protected readonly sysProfileRows = computed(() => {
         const sp = this.hotspotBrief()?.systemProfile;
@@ -292,13 +262,11 @@ export class PlayerBriefingComponent {
         return rows.filter(([, v]) => v != null && v !== '').map(([label, v]) => ({ label, value: String(v) }));
     });
 
-    /** DIRECTIVE-117 — the Hot Spots TRACK view-model, rendered from the persisted spec + additive forge fields
-     *  ALONE (no seed/pack access). Book layout is the static track-setup archetype keyed by the mission family. */
     protected readonly track = computed(() => {
         const s = this.spec();
         if (!s) return null;
-        const sheet = s.forge?.trackSheet; // IMPORT-6 Part C/E — a preset's authored sheet overrides (else the archetype)
-        const arch = trackArchetypeForSpec(s.forge?.trackTemplate, s.type, sheet?.playerRole); // IMPORT-6 Part E — a picked §18 template / authored role wins over the contract type (value-identical otherwise)
+        const sheet = s.forge?.trackSheet;
+        const arch = trackArchetypeForSpec(s.forge?.trackTemplate, s.type, sheet?.playerRole);
         const attacker = arch.playerSide === 'attacker';
         const forceSize = s.forge?.slots?.FORCE_SIZE || '';
         // Deployment lines: the preset's authored line wins; the contract type's lines only while the rendered template IS
@@ -306,7 +274,6 @@ export class PlayerBriefingComponent {
         const deployment = sheet?.deployment
             ? { player: sheet.deployment, opfor: '' }
             : arch.templateKey === trackArchetypeForSpec(undefined, s.type).templateKey ? s.deployment : { player: '', opfor: '' };
-        // IMPORT-6 Part B/C — a preset track's FULL authored objective list (persisted at bind) — every objective + its VP,
         // the same list the GM resolves against; else the three generic slots as before.
         const authored = s.forge?.trackObjectives ?? [];
         const playerBlock = {
@@ -326,7 +293,7 @@ export class PlayerBriefingComponent {
                 ? authored.map((o) => ({ label: o.kind.charAt(0).toUpperCase() + o.kind.slice(1), text: o.text, vp: o.vp }))
                 : (s.objectives ?? []).map((text, i) => ({ label: this.vpLabel(i), text, vp: this.objVp(s, i) })),
             complications: s.forge?.trackComplications ?? [],
-            specialRules: sheet?.specialRules ?? '', // IMPORT-6 Part C/E
+            specialRules: sheet?.specialRules ?? '',
             trackEnd: sheet?.trackEnd || arch.trackEndText,
             salvage: this.salvageSentence(s, arch, sheet?.salvagePolicy),
             standingRules: CHAOS_STANDING_RULES,
@@ -355,10 +322,9 @@ export class PlayerBriefingComponent {
         const pctPart = cl.salvageExchange
             ? `Salvage exchange in effect — recovered materiel converts to a ${cl.salvagePct}% cash bonus rather than kept units`
             : `Your command retains ${cl.salvagePct}% of recovered materiel under the contract's negotiated terms`;
-        // IMPORT-6 Part C/E — a preset's authored salvage policy replaces the template default (mirrors the GM sheet).
         return `${pctPart}. ${authoredPolicy ? `Track policy: ${authoredPolicy.replace(/\.$/, '')}.` : `Track default: ${SALVAGE_POLICY_LABEL[arch.salvagePolicy]}.`}`;
     }
-    protected readonly templateTrackEnd = templateTrackEnd; // IMPORT-6 Part E — template-aware Track End fallback for a blank authored field
+    protected readonly templateTrackEnd = templateTrackEnd;
 
     protected slot(s: MissionSpec, key: 'EMPLOYER' | 'TARGET_FACTION' | 'WORLD' | 'YEAR'): string {
         return s.forge?.slots?.[key] || '—';

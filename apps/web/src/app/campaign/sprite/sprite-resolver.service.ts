@@ -1,11 +1,3 @@
-/*
- * BCE — THE sprite lookup path (HOTFIX-003). ONE resolver: the roster, the market BUY list, and the
- * mission OpFor read-out all flow through it (it is the only sprite-normalization layer in apps/web).
- * Given a unit-ish subject it returns either an EXACT manifest key (exact / case-punct-normalized /
- * nearest-silhouette family) or null → render a weight-class silhouette. MekBay's SpriteStorageService
- * and unit-icon are read-only (FORK-001): we consume getManifest() and hand unit-icon a resolved-key
- * clone; the question mark (unknown.png) never reaches a unit we generated.
- */
 import { Injectable, inject, signal } from '@angular/core';
 import { SpriteStorageService } from '../../services/sprite-storage.service';
 import { SPRITE_ALIASES, normSprite, normWeightClass, type WeightClass } from './sprite-aliases';

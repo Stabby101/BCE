@@ -1,13 +1,3 @@
-/*
- * BCE campaign-pack — HOUSE ORDERS generator (DIRECTIVE-032). Pure TS, no Angular/DOM. The non-merc
- * mission ignition: command cuts an ORDER (a synthetic ContractOffer with employer = your OWN faction,
- * target = an era-active rival, no pay/clauses) that rides the IDENTICAL D-025/26 pipeline once
- * acknowledged. T-024's logistics seam: mercs negotiate a market, regulars obey orders.
- *
- * CANON_RIVALRIES is interim-cited to the classic Succession Wars rivalries (Sarna), FLAGGED until
- * T-010 makes fronts real. HOUSE_ORDER_WEIGHTS is a garrison-posture default; faction-posture variants
- * are a later T-024 enrichment.
- */
 import { MISSION_TYPES, type MissionTypeId } from '../contract/contract-terms';
 import type { ContractOffer } from '../contract/contract-market';
 

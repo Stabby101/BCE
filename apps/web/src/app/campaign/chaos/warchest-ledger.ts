@@ -1,16 +1,9 @@
 import { Component, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
-import { StarSystemsService } from '../star/star-systems.service'; // D-109 — resolve the location slug → display name
-import { WarchestService } from './warchest.service'; // IMPORT-2 Part D — manual SP adjust posts through the ledger
+import { StarSystemsService } from '../star/star-systems.service';
+import { WarchestService } from './warchest.service';
 import { CampaignSaveStore } from '../campaign-save-store';
 
-/**
- * DIRECTIVE-109 — the Chaos Campaign Warchest ledger view (Hot Spots fork). Renders the current Warchest SP
- * balance + Reputation + Contract Scale, then the book-faithful Contract Record Sheet
- * (Month | Event | Cost | Cover | Paid | Balance | Rep) from state.warchestLedger(). Cost/Paid are shown from
- * the balance's perspective (a spend is −, income is +); Cover is 0 this slice (no active contract → D-110).
- * Its own styles — the dashboard's transaction-table CSS is view-encapsulated and does not reach this child.
- */
 @Component({
     selector: 'bce-warchest-ledger',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,7 +20,6 @@ import { CampaignSaveStore } from '../campaign-save-store';
             <div class="wc-stat"><span class="l">Contract Scale</span><span class="v">{{ scale() }}</span></div>
         </div>
 
-        <!-- IMPORT-2 Part D — GM manual SP adjust (required reason → logged to the Contract Record Sheet). -->
         <div class="wc-adjust">
             <span class="wca-l">GM adjust SP</span>
             <input class="wca-in amt" type="number" min="1" [value]="adjAmt() || ''" (input)="adjAmt.set(+$any($event.target).value || 0)" placeholder="amount" aria-label="SP amount">
@@ -36,8 +28,6 @@ import { CampaignSaveStore } from '../campaign-save-store';
             <button type="button" class="wca-btn ded" [disabled]="!canAdjust()" (click)="manualAdjust(1)" data-testid="cc-sp-deduct">－ Deduct</button>
             @if (adjMsg()) { <span class="wca-msg">{{ adjMsg() }}</span> }
         </div>
-        <!-- DIRECTIVE-PD3 P4 (S56, was S55) — GM manual REPUTATION set, same shape as the SP adjust: a value + a required reason, logged to the
-             Contract Record Sheet as a 0-SP line ("Reputation set to N by GM — reason"). setReputation BEFORE the post: post() stamps s.reputation(). -->
         <div class="wc-adjust wc-adjust-rep">
             <span class="wca-l">GM adjust Rep</span>
             <input class="wca-in amt" type="number" min="0" max="20" [value]="adjRep() ?? ''" (input)="adjRep.set($any($event.target).value === '' ? null : +$any($event.target).value)" placeholder="reputation" aria-label="Reputation value" data-testid="cc-rep-value">
@@ -100,7 +90,6 @@ import { CampaignSaveStore } from '../campaign-save-store';
         .crs-r.pos .num { color:var(--ok, #3a7d44); }
         .crs-r.neg .num.bal, .crs-r.pos .num.bal { color:var(--ink); }
         .crs-empty { font-family:var(--type); font-size:13px; color:var(--ink2); line-height:1.6; padding:14px 12px; margin:0; }
-        /* IMPORT-2 Part D — GM manual SP adjust */
         .wc-adjust { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:10px 0 14px; padding:8px 0; border-top:1px dotted var(--ink2); }
         .wca-l { font-family:var(--label); font-weight:600; letter-spacing:.06em; font-size:10.5px; text-transform:uppercase; color:var(--ink2); }
         .wca-in { font:inherit; font-size:12px; padding:5px 8px; border:1.2px solid var(--ink); background:var(--paper); color:var(--ink); }
@@ -137,15 +126,12 @@ export class WarchestLedgerComponent {
         return id ? (this.star.byId(id)?.name ?? id) : null;
     });
 
-    // ── IMPORT-2 Part D — GM manual Warchest / SP adjustment with a REQUIRED reason (reconcile off-system events). ──
     private readonly warchest = inject(WarchestService);
     private readonly store = inject(CampaignSaveStore);
     protected readonly adjAmt = signal(0);
     protected readonly adjReason = signal('');
     protected readonly adjMsg = signal('');
     protected canAdjust(): boolean { return this.adjAmt() > 0 && this.adjReason().trim().length > 0; }
-    /** sign −1 = Add SP (income), +1 = Deduct SP (spend). The reason is required and lands on the ledger via the
-     *  normal post path (non-silent → the D-139 toast); a manual adjust is a reconciliation, so it isn't debt-capped. */
     protected manualAdjust(sign: -1 | 1): void {
         if (!this.canAdjust()) { this.adjMsg.set('Enter an SP amount and a reason.'); return; }
         const amt = Math.round(this.adjAmt());
@@ -156,7 +142,6 @@ export class WarchestLedgerComponent {
         void this.store.persistCurrent();
     }
 
-    // ── DIRECTIVE-PD3 P4 (S56) — GM manual Reputation SET with a REQUIRED reason: the ONE field (state.reputation), then a 0-SP ledger line. ──
     protected readonly adjRep = signal<number | null>(null);
     protected readonly adjRepReason = signal('');
     protected readonly repMsg = signal('');

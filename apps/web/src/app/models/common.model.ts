@@ -7,7 +7,6 @@
 // crests + fluff) hangs off this one constant, so resolving it to OUR same-origin /mekbay on a hosted
 // (non-localhost/LAN) origin routes all of it through the Cloudflare edge-cache proxy — users never hit
 // db.mekbay.com at runtime. Dev/LAN keeps the db.mekbay.com default UNCHANGED. Override: localStorage
-// 'bce.remote.host'. Falls back to db.mekbay.com if anything is unavailable (SSR/no-window). HOTFIX-028's
 // law (never derive on public, only replace unreachable values) is proven by verify-hf028 at P2.
 function resolveRemoteHost(): string {
     try {

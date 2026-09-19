@@ -6,9 +6,6 @@
 </div>
 
 @if (mode() === 'contacts') {
-    <!-- ODM-12b C7 — the honest state: nothing files itself. No packet and no tree datum links an
-         operation to a contact, so the engine cannot open a channel on the company's behalf, and this
-         copy must not imply it will. Plain speech, no promise the engine cannot keep. -->
     <p class="note">The company's register of <b>people and cells</b> — who it can reach, how, and at what delay. Contacts you have not made do not appear. <b>Nothing files itself:</b> when the company uses a channel, file it here by hand. Status is the GM's call and persists with the save. Tap a card to read the full dossier.</p>
     <div class="ctc-bar">
         <span class="ctc-count">{{ contacts().length }} contact{{ contacts().length === 1 ? '' : 's' }} on file</span>

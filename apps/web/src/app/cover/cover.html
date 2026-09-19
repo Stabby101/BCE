@@ -27,9 +27,6 @@
         <div class="engine-offline" role="alert">
             <span class="eo-tag">ENGINE&middot;OFFLINE</span>
             <span class="eo-msg">{{ offlineReason() || 'Engine host unreachable.' }} Campaign operations are paused — start the host (<code>npx nx serve api</code>), then reload. Record sheets (door 03) stay available.</span>
-            <!-- HOTFIX-028: a wedged device (stale/garbage engine URL, poisoned cache) self-heals here. Runs the
-                 ?fresh=1 path (evict caches + clear bce.* local except device token / player name, then reload).
-                 Campaigns live on the host, so nothing durable is lost. -->
             <button type="button" class="eo-reset" (click)="resetAppData()">Reset app data</button>
         </div>
     }
@@ -60,7 +57,6 @@
             <span class="enter" aria-hidden="true">&rsaquo;</span>
         </button>
 
-        <!-- DIRECTIVE-067 — Quick Mission: a one-shot (force → BV-matched mission + OpFor), no campaign upkeep. -->
         <button type="button" class="door" [disabled]="!online()" [attr.aria-disabled]="!online()" (click)="quickMission()">
             <span class="num">&#9889;</span>
             <span class="dmain">
@@ -75,9 +71,6 @@
             <span class="enter" aria-hidden="true">&rsaquo;</span>
         </button>
 
-        <!-- DIRECTIVE-ODM-1 — the hidden pack door: renders ONLY for an entitled account (hasPack('odm'); dev/LAN
-             single-tenant is permissive). Absent for everyone else — no placeholder, no gap. The server enforces
-             regardless (pack-gate on persist + entitled pack endpoints); this render gate is UX. -->
         @if (odmEntitled() && odmCard()) {
             <button type="button" class="door door-odm" [disabled]="!online()" [attr.aria-disabled]="!online()" (click)="startOdm()" data-testid="odm-door">
                 <span class="num">&#9670;</span>
@@ -92,17 +85,13 @@
                 }
                 <span class="enter" aria-hidden="true">&rsaquo;</span>
             </button>
-            <!-- ODM-20 — the deliberate escape hatch, shown ONLY where a campaign already exists (cover.ts). -->
-            @if (odmHasExisting()) {
+            @if (odmHasExisting() && !odmCoGm()) {
                 <button type="button" class="odm-new" [disabled]="!online()" (click)="askOdmNew()" data-testid="odm-force-new">
                     start a SECOND ODM campaign
                 </button>
             }
         }
 
-        <!-- GM-1 P1 — the MASTER GM door: renders ONLY for an entitled account (hasPack('gm-mode'); dev/LAN
-             single-tenant is permissive). Absent for everyone else — no placeholder, no gap. gm-mode is a
-             feature flag, not a pack: static copy, no server manifest fetch. -->
         @if (gmEntitled()) {
             <button type="button" class="door door-gm" [disabled]="!online()" [attr.aria-disabled]="!online()" (click)="startGmSession()" data-testid="gm-session-door">
                 <span class="num">&#9733;</span>
@@ -151,8 +140,6 @@
             <div><span class="dot" [class.on]="online()" [class.off]="!online()" aria-hidden="true"></span><span class="k">ENGINE</span> {{ online() ? 'ONLINE' : 'OFFLINE' }} &middot; <span class="k">ROLE</span> GM</div>
             <div><span class="k">{{ online() ? 'AWAITING INPUT' : 'AWAITING HOST' }}</span> <span class="cursor" aria-hidden="true"></span></div>
         </div>
-        <!-- HOTFIX-025: gated-mode account line (replaces the removed floating chip). Absent in dev/LAN (no gmUser).
-             LINK-1: a GUEST is handled by the guest-upgrade block below, so this line is for non-guest GM/admin only. -->
         @if (gmUser(); as u) {
             @if (u.role !== 'guest') {
                 <div class="acct">
@@ -192,8 +179,6 @@
         <bce-load-browser (pick)="onPick($event)" (cancel)="loadOpen.set(false)"></bce-load-browser>
     }
 
-    <!-- D-053: save-aware CREATE — reuses the D-013 exit confirm + save dialog so a new campaign can
-         never feel like losing the active one. Declining never deletes it (the host keeps every record). -->
     @if (confirmCreate() && !saveOpen()) {
         <bce-exit-confirm actionLabel="Create"
             question="Start a new campaign? Your current campaign is kept on the host — save or name it now so it's easy to find later, or just continue."
@@ -202,8 +187,6 @@
     @if (saveOpen()) {
         <bce-save-dialog (saved)="onCreateSaved()" (cancel)="onCreateSaveCancel()"></bce-save-dialog>
     }
-    <!-- ODM-20 — the ANOMALY alarm. Under the singleton rule more than one ODM campaign is not supposed to
-         happen, so this reads as a warning, never a friendly picker, and it NEVER chooses for you. -->
     @if (odmForked(); as forked) {
         <div class="odm-forked" role="alertdialog" aria-modal="true" data-testid="odm-forked">
             <div class="of-box">
@@ -224,8 +207,6 @@
                                 <span class="of-name">{{ r.name || r.id }}</span>
                                 <span class="of-when">{{ odmTouched(r) }}</span>
                             </button>
-                            <!-- ODM-24 — per-row delete on the DATED campaigns only. Two-tap, and the confirm
-                                 names the campaign DAY because that is what he recognises. -->
                             <button type="button" class="of-del" [disabled]="deleteBusy()" (click)="askDelete(r)"
                                     [attr.aria-label]="'Delete the campaign at ' + odmDay(r)" data-testid="odm-forked-del">&#10005;</button>
                         </div>
@@ -243,8 +224,6 @@
                         <button type="button" class="of-more" (click)="toggleUnplayed()" data-testid="odm-forked-unplayed-toggle">
                             {{ showUnplayed() ? '▾' : '▸' }} {{ forkedUnplayed().length }} unplayed instance{{ forkedUnplayed().length === 1 ? '' : 's' }} — created and never played
                         </button>
-                        <!-- ODM-24 — the BULK action, confined to the provable set. There is deliberately NO
-                             "delete all": the played campaigns are each deleted on purpose, one at a time. -->
                         @if (confirmBulk()) {
                             <div class="of-confirm" data-testid="odm-forked-bulk-confirm">
                                 <span class="of-cq">Delete these {{ forkedUnplayed().length }} unplayed instances? Their clocks never left the start date, so there is nothing in them — but their checkpoint history goes too, and this cannot be undone. Nothing you have played is included.</span>
@@ -269,7 +248,6 @@
                         }
                     }
                 </div>
-                <!-- ODM-24 — START OVER, routed through the EXISTING force-new path (ODM-20), not a second door. -->
                 <button type="button" class="of-new" (click)="startNewFromPicker()" data-testid="odm-forked-new">
                     None of these — start a new ODM campaign
                 </button>

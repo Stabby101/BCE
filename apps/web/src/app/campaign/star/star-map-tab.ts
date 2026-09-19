@@ -1,17 +1,3 @@
-/*
- * DIRECTIVE-104 → 107 — Star Map. v1 (D-104) Voronoi facets. v1.1 (D-105) lossy ISCS ring merge. v1.2 (D-106)
- * ISCS canon HEX-FILL. v1.3 (D-107): the ISCS snapshot lumps ALL periphery into one "P" and its planet list
- * dropped 81 unaligned worlds → periphery states showed as a lump/gone, or as territory with no stars. Fix:
- *   (A) ONE complete fixed star set = UNION(ISCS_PLANETS ∪ systems.json) by name (~2164) — the dot layer, click
- *       index, labels, capital + flashpoint anchors; plotted identically EVERY era (positions fixed).
- *   (B) Territory = the systems.json ownerAt(era) hex-fill for ALL 12 eras (the ISCS snapshot lump branch is
- *       GONE) → distinct periphery states (Magistracy / Taurian / Marian / Outworlds / Circinus) in every era.
- *       A coverage safeguard adds a hex under any plotted world the ISCS lattice doesn't reach.
- * systems.json is the ownership truth (D-082); the ISCS layer contributes only the hex geometry + IS dot density.
- *
- * ISOLATION: injects only StarSystemsService + NewCampaignState. Manual era (not the campaign clock). IP: own
- * render from canon facts ("Territory: systems.json ownerByEra" + "Flashpoints: Sarna.net BattleTechWiki, GNU FDL 1.2 — cited facts"); raw local.
- */
 import { Component, ChangeDetectionStrategy, ElementRef, effect, inject, signal, computed, viewChild, untracked } from '@angular/core';
 import { Delaunay } from 'd3-delaunay';
 import { select, pointer, type Selection } from 'd3-selection';
@@ -244,7 +230,7 @@ export class StarMapTabComponent {
     private readonly zoomK = signal(1);
     private readonly selName = signal<string | null>(null);
     protected readonly legend = signal<LegendItem[]>([]);
-    protected readonly legendOpen = signal(true); // HOTFIX-039 — the faction legend is collapsible (default open)
+    protected readonly legendOpen = signal(true);
 
     protected readonly eras = ERAS;
     protected readonly eraLabel = computed(() => { const e = ERAS.find((x) => x.id === this.era()); return e ? `${e.from}–${e.to >= 9999 ? 'present' : e.to} · ${e.name}` : ''; });
@@ -488,7 +474,6 @@ export class StarMapTabComponent {
         const x = Math.min(Math.max(ev.clientX - stage.left, 8), Math.max(8, stage.width - 262));
         const y = Math.min(Math.max(ev.clientY - stage.top, 8), Math.max(8, stage.height - 220));
         this.selName.set(name); this.detail.set({ name, x, y }); this.drawDots();
-        // HOTFIX-039 — re-clamp with the rendered card's REAL box so it is ALWAYS fully on-stage (the 262/220 guesses
         // underestimate the ~350px card; .sm-stage is overflow:hidden so an off-stage card is clipped + unreachable).
         // max-height (calc(100% - 48px), padding/border-aware) keeps the card box below the stage, so the clamp
         // range is always valid → fully on-stage on both axes, even on a short phone stage.

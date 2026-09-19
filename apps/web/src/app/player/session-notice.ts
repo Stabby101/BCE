@@ -1,10 +1,3 @@
-/*
- * GM-3 P0 — the SESSION-CLOCK NOTICE on a joined device (PD2-4): "Session date → <date>. Your base pay lands with each
- * track's results slip." Renders NOTHING until the fanned snapshot's date moves past the one this device acknowledged
- * (PlayerSessionService.clockNotice — the pure decision in gm/session-clock-notice); stands until dismissed, so a device
- * that slept through the fan still reads it. Mounted on the roster AND the sheet page (every joined device, whichever
- * screen it is on). Dark player theme, matches the brief card. Player-layer only.
- */
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { PlayerSessionService } from './player-session.service';
 

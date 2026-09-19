@@ -1,31 +1,3 @@
-/*
- * BCE campaign-pack — EMPLOYER TRAITS (merc contract market · CamOps employer rows).
- *
- * The contract market's EMPLOYER POOL is era-authoritative from MekBay data (the same
- * `faction.eras[selectedEra]` gating as the D-014 picker); THIS file only classifies a
- * matched employer onto the CamOps contract-terms employer rows — power tier, plus the
- * Periphery major/minor split the employer-SELECTION column uses — and adds the four
- * BCE-GENERIC employers (nobles / planetary governments / corporations / merc
- * subcontracts) that CamOps offers but MekBay does not model as factions.
- *
- * RULES PROVENANCE (T-022): the tier→modifier MATH lives in the contracts module, ported
- * 1-1 from Campaign Operations (Master / Supplemental Contract Terms Tables, CamOps
- * 4th printing pp. 42–43; cross-checked against MekHQ's GPLv3 ContractTerms.java in
- * reference/mekhq). THIS file is only the per-faction CLASSIFICATION onto those rows —
- * BCE-original assignments, Sarna-verified. It is NOT derived from MekHQ's factions.xml
- * (MekHQ data files are CC BY-NC-SA assets and must never enter BCE — see
- * reference/mekhq/HARVEST.md).
- *
- * TEMPERAMENT (stingy / generous / controlling / lenient — the CamOps employer
- * variations) is carried but NEUTRAL (null) for every employer this slice; per-employer
- * cited assignments arrive with the economy pass (T-022). The schema hook exists so the
- * terms math can already consume it.
- *
- * Wiring (CC): match a MekBay `faction.name` against `match[]` (case/loose-insensitive,
- * the faction-flavor.ts pattern — console resolve-probe on misses). No match =>
- * DEFAULT_TIER_BY_GROUP fallback. CLAN factions are EXCLUDED from the merc employer pool
- * entirely (Clans hire only within their own Clan — enforce in code, do not list here).
- */
 
 /** CamOps contract-terms employer row (drives the terms modifiers). */
 export type EmployerTier =
@@ -97,7 +69,6 @@ export const EMPLOYER_TRAITS: EmployerTraits[] = [
     { match: ['Circinus Federation'], tier: 'minor', periphery: 'minor', temperament: null,
       sources: ['https://www.sarna.net/wiki/Circinus_Federation'] },
 
-    // --- Cited additions from the D-017 resolve-probe (were group-fallback) ---
     { match: ['Star League (Second)', 'Second Star League'], tier: 'super', temperament: null,
       sources: ['https://www.sarna.net/wiki/Second_Star_League', 'CamOps 4th printing p.42 (employer rows: alliance of all Great Houses, 3058-3067)'] },
     { match: ["Wolf's Dragoons", 'Dragoons'], tier: 'mercenary', temperament: null,

@@ -1,8 +1,6 @@
 <main class="sheet">
     <div class="classbar">{{ classbar() }}</div>
 
-    <!-- GM-3 P3 — the hand-off return: the root app was opened at this home campaign FROM a GM's table. One tap goes back to
-         the join link (campaign + engine intact); the session stays joined. Only when the returnTo survived the client gate. -->
     @if (tableReturn.returnTo()) {
         <button type="button" class="table-back" (click)="tableReturn.back()" data-testid="back-to-table">&#9668; Back to the table</button>
     }
@@ -32,8 +30,6 @@
         </div>
     }
 
-    <!-- DIRECTIVE-119 P2 — the Hot Spots top-of-sheet PROCESS RAIL (above the tab bar). Reuses the flow engine in
-         'rail' mode; HS-only (Traditional keeps its full tab bar + advisory Flow-tab rail). -->
     @if (isHotspots()) {
         <bce-campaign-flow variant="rail" (navigate)="goToStep($event)" (advancePhase)="advancePhase()"></bce-campaign-flow>
     }
@@ -44,12 +40,9 @@
                 [attr.data-t]="t.id" [attr.aria-selected]="activeTab() === t.id" (click)="select(t.id)">{{ t.label }}</button>
         }
         <div class="tab-actions">
-            <!-- D-053: the autosave note — specific + bold (campaign · Day N · M missions), never a datestamp.
-                 It autosaves to the host record and stays in Load even after you Create a new campaign.
-                 D-067: a Quick Mission is EPHEMERAL — no autosave note / Save (it never writes a campaign record). -->
             @if (!quickMission()) {
-                <span class="save-note" title="This campaign autosaves to the host record — it stays in Load even if you Create a new one">
-                    <span class="sn-k">AUTOSAVE</span><b class="sn-v">{{ commandName() }} &middot; {{ saveProgress() }}</b>
+                <span class="save-note" title="This campaign autosaves to the host record — it stays in Load even if you Create a new one. One dashboard at a time: two open dashboards of one account overwrite each other, last save wins." data-testid="save-one-dashboard">
+                    <span class="sn-k">AUTOSAVE</span><b class="sn-v">{{ commandName() }} &middot; {{ saveProgress() }} &middot; one dashboard at a time</b>
                 </span>
                 <button type="button" class="tab-action" (click)="openSave()">Save</button>
             } @else {
@@ -73,8 +66,6 @@
                 <span class="ftag">{{ ff }}</span>
             </div>
         }
-        <!-- D-108/108b — read-only Campaign System badge (reuses the framing chip styling: .ftag = system,
-             .frat = the chosen Hot Spot campaign). `.csys-badge` is a hook class only (no CSS of its own). -->
         <div class="framing csys-badge">
             <span class="ftag">{{ campaignSystemLabel() }}</span>
             @if (hotSpotCampaignName(); as hn) { <span class="frat">{{ hn }}</span> }
@@ -96,11 +87,8 @@
             <div class="stat"><div class="l">Transport</div><div class="v">{{ transport().value }}</div><div class="s">{{ transport().sub }}</div></div>
         </div>
 
-        <!-- DIRECTIVE-079 — Star Map Phase 1: current location line + GM setter (extracted → current-location.ts). -->
         <bce-current-location />
 
-        <!-- DIRECTIVE-074 — the monthly economy summary (reuses the D-058 ledger → same numbers as the inventory
-             tab, single source) + a transaction log of recent money in/out (date · what · ±amount · balance). -->
         <div class="econ">
             <div class="econ-led" data-testid="overview-ledger">
                 <div class="ph flat">Monthly economy</div>
@@ -112,7 +100,6 @@
                     <span class="el-l">Net / month</span>
                     <span class="el-v" data-econ="net">{{ ledger().net >= 0 ? 'IN THE BLACK +' : 'IN THE RED −' }}{{ money(absVal(ledger().net)) }}@if (ledger().runway != null) { · ~{{ ledger().runway }} mo runway }</span>
                 </div>
-                <!-- D-075 — the monthly payroll cue (visible, not silent) + the next-month pre-warning + the shortfall flag -->
                 @if (lastPayroll(); as lp) {
                     <div class="el-cue" data-testid="payroll-cue">Last payroll −{{ money(lp.amount) }} · {{ lp.date }}</div>
                 }
@@ -197,12 +184,10 @@
         <bce-unit-roster (navigate)="select($event)" />
     </section>
 
-    <!-- INVENTORY (D-056) — the rolled stockpile, by category, collapsible -->
     <section class="panel" [class.active]="activeTab() === 'inventory'">
         @if (activeTab() === 'inventory') { <bce-inventory-tab /> }
     </section>
 
-    <!-- BARRACKS (D-020; people depth D-036) -->
     <section class="panel" [class.active]="activeTab() === 'barracks'">
         @if (hasBarracks()) {
             <div class="ph">Barracks <span class="scaf">{{ barracksCount().total }} personnel</span></div>
@@ -237,7 +222,6 @@
             </div>
             }
 
-            <!-- D-036 INFIRMARY — the D-031 injuries + the clock tick, surfaced at last -->
             @if (infirmary().length) {
                 <div class="ph flat" style="margin-top:18px">Infirmary <span class="scaf">{{ infirmary().length }}</span></div>
                 <div class="inf-rows">
@@ -251,7 +235,6 @@
                 </div>
             }
 
-            <!-- D-036 the roll of the fallen — dead stays dead; the table will care -->
             @if (fallen().length) {
                 <div class="ph flat" style="margin-top:18px">Roll of the fallen <span class="scaf">{{ fallen().length }}</span></div>
                 <div class="inf-rows">
@@ -276,7 +259,6 @@
             </div>
         }
 
-        <!-- HOTFIX-023 (2): support staff + the D-059 hiring hall render for ALL commands incl. custom / no-starting-force — the support-hire path is independent of the pilot roster (was previously inside the hasBarracks() guard → custom commands had a blank hall). -->
         <bce-support-personnel />
         <bce-hiring-hall />
     </section>
@@ -284,16 +266,9 @@
     <!-- MISSIONS -->
     <section class="panel" [class.active]="activeTab() === 'missions' || (isHotspots() && activeTab() === 'chaos-contracts')">
         @if (activeTab() === 'missions' || (isHotspots() && activeTab() === 'chaos-contracts')) {
-        <!-- D-072: Missions is the mission-lifecycle HUB — Brief → Force Preview (deploy) → Claims (play) → AAR (resolve).
-             D-114: this panel DOUBLE-DUTIES the HS Contracts tab — the Chaos contract layer renders on top, the hub below.
-             Traditional (isHotspots false) is unaffected: the new clause + contract block are false, so it renders as before. -->
         @if (isHotspots() && activeTab() === 'chaos-contracts') {
             <div class="ph">Contracts &middot; Chaos Campaign</div>
             <bce-chaos-contracts />
-            <!-- DIRECTIVE-120 — the mission FLOWCHART (D-028 branching tree: resolved past + active + available/locked
-                 future forks) restored inside the Contracts hub after D-119 P2 unpinned the Flow tab. Reuses the SAME
-                 tree engine via <bce-campaign-flow variant="full"> (no duplicate engine); HS-only (the whole block is
-                 HS-gated). Wired to the existing package overlay + goToStep, mirroring the top rail. -->
             @if (branches().length) {
                 <div class="ph flat" style="margin-top:16px">Mission flow</div>
                 <bce-campaign-flow variant="full" (openPackage)="openPackage()" (navigate)="goToStep($event)" (advancePhase)="advancePhase()"></bce-campaign-flow>
@@ -302,18 +277,15 @@
         <div class="msub" role="tablist">
             <button type="button" class="msub-b" [class.on]="missionsSub() === 'brief'" (click)="selectMissionSub('brief')">Contract / Brief</button>
             <button type="button" class="msub-b" [class.on]="missionsSub() === 'force'" (click)="selectMissionSub('force')">Force Preview</button>
-            <!-- HOTFIX-029 — Claims moved to the Lobby tab (join QR + roster + claim board together). -->
             <button type="button" class="msub-b" [class.on]="missionsSub() === 'aar'" (click)="selectMissionSub('aar')">AAR</button>
         </div>
         @if (missionsSub() === 'brief') {
         @if (isMerc()) {
             @if (isHotspots() && !hasChaosContract()) {
-                <!-- D-114 — the Chaos negotiation is at the TOP of this same panel; point up (no redundant tab jump). -->
                 <div class="ph">Contract / Brief</div>
                 <p class="note">No active contract. Negotiate and accept one in the <b>contract panel above</b> to start a mission tree and generate tracks.</p>
             } @else if (accepted(); as ac) {
                 @if (isHotspots()) {
-                <!-- D-114 — the contract (terms + End Contract) is at the TOP of this same panel; the track board is below. -->
                 <div class="ph">Active contract</div>
                 <p class="note">Your live Hot Spots engagement. Resolve tracks on the board below for <b>Combat Pay</b> + <b>Salvage (est.)</b> into the Warchest; the contract auto-completes at its Intensity. Manage terms or end it in the <b>contract panel above</b>.</p>
                 } @else {
@@ -385,7 +357,6 @@
                 </div>
             }
         } @else {
-            <!-- D-032 ORDERS FROM COMMAND (non-merc mission ignition) -->
             <div class="ph">Orders from command <span class="scaf">{{ factionName() }}</span></div>
             <p class="note">Your chain of command cuts the orders — mission, target, window. Regulars <b>acknowledge</b> and execute (no negotiation); the House provides logistics and claims the field. New orders stand at the start of each month when no operation is open.</p>
             @if (houseOrder(); as ord) {
@@ -415,13 +386,10 @@
             }
         }
 
-        <!-- D-116 — Hot Spots track presets (build-your-own track): manage saved presets; generate one from the board below. -->
         @if (isHotspots()) { <bce-chaos-track-presets /> }
 
-        <!-- SHARED operation zones (D-032) — a merc active contract OR an acknowledged House order; the IDENTICAL D-025/26 pipeline -->
         @if (accepted()) {
             @if (walkPending() && !isHotspots()) {
-                <!-- D-110b — the C-bill field walk (salvage/strip) is Traditional; Hot Spots salvage is SP (estimated at resolve; SP walk is D-110c). -->
                 <div class="walk-banner">
                     <span class="wb-t">⚠ Field walk pending</span>
                     <span class="wb-s">A resolved engagement awaits dispositions — recover, salvage, claim prizes off the live end-state.</span>
@@ -442,15 +410,12 @@
                         @if (missionSpec(); as m) {
                             <div class="bsec"><div class="bsl">OpFor</div><div class="ofsum">{{ m.opforForce.length }} ’Mechs &middot; {{ m.opforBv }} BV (vs your {{ m.playerBv }} BV) &middot; {{ m.terrain.biome }}</div></div>
                         }
-                        <!-- D-118 — inline deploy roster: check units to deploy them to THIS track right here (no Roster hop). -->
                         <div class="bsec"><div class="bsl">Deploy to this track</div><bce-deploy-roster /></div>
-                        <!-- IMPORT-3 P2 — hire special personnel for Support Points BEFORE the battle (book track-setup order); self-hides when the hot spot offers none. -->
                         <bce-hire-personnel />
                         <div class="msn-actions">
                             <button type="button" class="gobtn primary" [disabled]="!deployedCount()" (click)="playMission()">&#9654; Play mission &raquo;</button>
                             <button type="button" class="gobtn" [disabled]="!deployedCount()" (click)="prepareDeploy()">Prepare &amp; deploy &raquo;</button>
                             @if (hasPackage()) { <button type="button" class="gobtn" (click)="openPackage()">Open full package &raquo;</button> }
-                            <!-- GM-1 P1 — table mode blanks resolve from the projected screen (tableMode.on() is constant false outside a GM session) -->
                             @if (!tableMode.on()) { <button type="button" class="gobtn" (click)="res.askResolve()">Resolve mission &raquo;</button> }
                             <button type="button" class="gobtn" (click)="askReroll()">Reroll &raquo;</button>
                         </div>
@@ -465,11 +430,6 @@
             <!-- ZONE 2 — OPERATIONS BOARD -->
             @if (availableBranches().length || lockedBranches().length) {
                 <div class="ph flat" style="margin-top:18px">Operations board <span class="scaf">{{ availableBranches().length }} open</span></div>
-                <!-- D-077 — operational-tempo cue (read-only escalation) + GM reset/adjust. Drives the next OpFor BV drift.
-                     IMPORT-8 Part B — Traditional ONLY: D-124d dropped escalation drift for Hot Spots (the generator hard-zeros
-                     esc when centered), so under HS this row was an inert control lying to the GM. The Enemy Arms toggle below
-                     is NOT gated — it is genuinely wired into HS OpFor generation (resolveOpForArms → generateOpFor pool filter);
-                     whether HS should keep it is a design ruling (STOP-flagged in the IMPORT-8 hand-back), not residue. -->
                 @if (!quickMission() && !isHotspots()) {
                     <div class="tempo-cue" data-testid="tempo-cue">
                         <span class="tempo-lbl">Operational tempo</span>
@@ -482,7 +442,6 @@
                         </span>
                     </div>
                 }
-                <!-- D-076 — GM OpFor arms-mix toggle: Auto honors the seed; Mech-only / Combined-arms force the next gen. -->
                 @if (!quickMission()) {
                     <div class="amx-gm" role="group" aria-label="Enemy arms mix for the next mission">
                         <span class="amx-lbl">Enemy arms</span>
@@ -498,16 +457,8 @@
                             <div class="bmeta"><span class="bgate">{{ br.parentBranchId ? 'unlocked · ' + br.outcomeGate : 'opening' }}</span> <span class="bthreat">{{ br.threat }}</span></div>
                             @if (br.forkContext) { <div class="bctx">{{ br.forkContext.consequence }}</div> }
                             <button type="button" class="gobtn" [disabled]="!canGenerateBranch()" (click)="generateBranch(br.branchId)">Generate &raquo;</button>
-                            <!-- DIRECTIVE-132 — optional TRACK OVERRIDE: play a specific authored hotspot track ("This hot
-                                 spot") OR a saved Custom Track ("My tracks"), in place of the default rolled/authored track.
-                                 Un-gated for hotspot contracts (D-124 #9's !isHotspotContract removed); reuses the D-116
-                                 generateBranch({presetSeed}) override path. Plain "Generate »" above is unchanged. -->
                             @if (isHotspots()) {
-                                <!-- DIRECTIVE-IMPORT-5 (Part A) — the D-132 track picker is now the shared <bce-track-picker>
-                                     (also mounted on the active-contract card next to "Advance a month"). Same options + the
-                                     generateBranch({presetSeed}) override path; plain "Generate »" above is unchanged. -->
                                 <bce-track-picker [branchId]="br.branchId" />
-                                <!-- IMPORT-3 — the universal-library play loop: pick a track here (hot-spot pool / your Custom Tracks / the §18 library), or use the plain Generate » to roll one; between tracks, advance a month in the Contract tab. -->
                                 <div class="gate-note">Pick from this hot spot's tracks, your Custom Tracks, or the universal §18 library — or roll one with Generate ». No embedded track is required.</div>
                             }
                             @if (!canGenerateBranch()) { <div class="gate-note">resolve the active mission first — one operation runs at a time</div> }
@@ -551,21 +502,16 @@
             </div>
         }
         }
-        <!-- D-072: the relocated lifecycle surfaces (unchanged behavior, just folded under Missions in order) -->
         @if (missionsSub() === 'force') { <bce-battle-view /> }
-        <!-- HOTFIX-029: Claims moved to the Lobby tab. -->
         @if (missionsSub() === 'aar') { <bce-aar-tab /> }
         }
     </section>
 
-    <!-- DIRECTIVE-067 — QUICK MISSION: one-shot generate (BV-matched OpFor) + deploy. No contract market. -->
     <section class="panel" [class.active]="activeTab() === 'quickmission'">
         @if (activeTab() === 'quickmission') {
-            <!-- D-072: Quick Mission follows the same hub — Mission (generate) → Force Preview (deploy) → Claims (play). -->
             <div class="msub" role="tablist">
                 <button type="button" class="msub-b" [class.on]="missionsSub() === 'brief'" (click)="selectMissionSub('brief')">Mission</button>
                 <button type="button" class="msub-b" [class.on]="missionsSub() === 'force'" (click)="selectMissionSub('force')">Force Preview</button>
-                <!-- HOTFIX-029 — Claims moved to the Lobby tab. -->
             </div>
             @if (missionsSub() === 'brief') {
                 <div class="ph">One-shot mission</div>
@@ -582,15 +528,10 @@
                 }
             }
             @if (missionsSub() === 'force') { <bce-battle-view /> }
-            <!-- HOTFIX-029: Claims moved to the Lobby tab. -->
         }
     </section>
 
-    <!-- D-072: the MekBay (Force Preview) panel was folded into the Missions/Quick-Mission hubs above. -->
 
-    <!-- LOBBY (D-048 + HOTFIX-029) — the join QR + live roster, and the Claims board (its natural home: the
-         claim board is where players who joined here pick their units). Both share ClaimRealtimeService; the
-         second ensure() is idempotent (single socket, single room-join). -->
     <section class="panel" [class.active]="activeTab() === 'lobby'">
         @if (activeTab() === 'lobby') {
             <bce-lobby-panel (viewTrack)="viewTrack()" (resolveMission)="res.askResolve()" />
@@ -598,34 +539,25 @@
         }
     </section>
 
-    <!-- AAR (D-034) — the after-action archive: resolved missions render classified documents FROM stored records.
-         D-072: ALSO reachable inside Missions (dual-placed); the front-row AAR tab stays for now. -->
     <section class="panel" [class.active]="activeTab() === 'aar'">
         <bce-aar-tab />
     </section>
 
-    <!-- INTEL (D-034, T-031 slice 1) — contacts met through play + the campaign notebook -->
     <section class="panel" [class.active]="activeTab() === 'intel'">
         <bce-intel-tab />
     </section>
 
-    <!-- FLOW (D-028) — the native branching-tree view -->
     <section class="panel" [class.active]="activeTab() === 'flow'">
         <bce-campaign-flow (openPackage)="openPackage()" (navigate)="goToStep($event)" (advancePhase)="advancePhase()"></bce-campaign-flow>
     </section>
 
-    <!-- STAR MAP (DIRECTIVE-104) — 762-system contour-smoothed faction territories; lazy-mounted (heavy d3 render) -->
     <section class="panel" [class.active]="activeTab() === 'starmap'">
         @if (activeTab() === 'starmap') { <bce-star-map-tab /> }
     </section>
 
-    <!-- WARCHEST (DIRECTIVE-109) — the Hot Spots (Chaos Campaign) SP economy home: summary + Contract Record Sheet.
-         Only in the HOTSPOTS_TABS set (stands in for Overview); lazy-mounted like the other rich tabs. -->
     <section class="panel" [class.active]="activeTab() === 'warchest'">
         @if (activeTab() === 'warchest') {
             <div class="ph">Warchest &middot; Chaos Campaign</div>
-            <!-- D-109 — Warchest stands in for Overview, so it carries the campaign clock (the only advance control;
-                 Overview isn't in the Hot Spots tab set). +1 Month crosses a boundary → the SP Maintenance tick posts. -->
             <div class="clockbar">
                 <div class="cdate"><span class="cdl">Campaign date</span><span class="cdv">{{ dateText() }}</span></div>
                 <div class="cadv">
@@ -639,10 +571,7 @@
         }
     </section>
 
-    <!-- CONTRACTS (DIRECTIVE-110) — D-114: the Chaos contract layer (<bce-chaos-contracts>) now double-duties inside the
-         Missions panel above (the HS 'chaos-contracts' tab renders it on top + the track hub below). No standalone panel. -->
 
-    <!-- REPAIR & REFIT (DIRECTIVE-111) — the Chaos economy tab: SP repair/rearm/heal. Hot Spots tab set only. -->
     <section class="panel" [class.active]="activeTab() === 'chaos-repair'">
         @if (activeTab() === 'chaos-repair') {
             <div class="ph ph-led">Repair &amp; Refit &middot; Chaos Campaign
@@ -652,8 +581,6 @@
         }
     </section>
 
-    <!-- MARKET (DIRECTIVE-112) — the Chaos "acquire" tab: buy/sell units + hire MechWarriors for SP. Hot Spots only.
-         D-114 — Hiring folded in here (its standalone tab/panel removed); both spend SP. -->
     <section class="panel" [class.active]="activeTab() === 'chaos-market'">
         @if (activeTab() === 'chaos-market') {
             <div class="ph ph-led">Market &middot; Chaos Campaign
@@ -667,7 +594,6 @@
         }
     </section>
 
-    <!-- GM-1 P1 — the MASTER GM panel (gmSession-only tab: session controls in one place; P2 adds Present/sides) -->
     <section class="panel" [class.active]="activeTab() === 'gm'">
         @if (activeTab() === 'gm') {
             <div class="ph">Game Master &middot; session controls</div>
@@ -675,19 +601,15 @@
         }
     </section>
 
-    <!-- SETTINGS (D-038) — the narrator controls (OFF/LOCAL), TEST CONNECTION, toggles, SPA-cap knob -->
     <section class="panel" [class.active]="activeTab() === 'settings'">
         <bce-settings-tab />
     </section>
 
-    <!-- REPAIR & SALVAGE (D-033) — the canon-timed bays: queue, assignment, clock-driven burn, prize refit -->
     <section class="panel" [class.active]="activeTab() === 'repair'">
         <bce-repair-bays />
     </section>
 
     <footer>
-        <!-- D-038: the narrator console strip lives in the footer deadspace; renders ONLY when mode is on
-             (OFF → the clean dossier footer, nothing). Height-safe (occupies the existing footer line). -->
         <bce-narrator-console />
         <div class="meta">BCE v0.1 · campaign dashboard · field-dossier theme</div>
         <!-- COMPLIANCE-3 — the legal notice attached to the dashboard chrome (same component + wording; the
@@ -753,10 +675,7 @@
             </div>
         </div>
     }
-    <!-- DIRECTIVE-HARDEN-4 — the resolve modal → resolve-modal.ts (dashboard-provided ResolveService). -->
-    <!-- GM-1 P1 — unmounted in table mode: blanking the triggers alone still leaves the modal reachable via seams. -->
     @if (!tableMode.on()) { <bce-resolve-modal /> }
-    <!-- DIRECTIVE-139 — the SP transaction toast (HS-only; Traditional never calls warchest.post so it stays silent). -->
     <bce-sp-toast (viewLedger)="select('warchest')" (viewRepair)="select('chaos-repair')" />
 </main>
 @if (packageOpen()) {

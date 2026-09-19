@@ -1,17 +1,3 @@
-/*
- * BCE Inventory I (DIRECTIVE-055, T-037 slice 1) — SOURCE (B): the structural components.
- *
- * These are the parts MekBay stores as UNIT STRING ATTRIBUTES (armorType / structureType / engine /
- * gyro / cockpit / actuators), NOT equipment rows — so the catalog must author them. This is
- * BCE-AUTHORED rules data implementing canon facts (cost, tonnage rule, intro/extinct/reintro years),
- * CITED to TechManual + cross-checked against Sarna. NOT copied from any witness file (REF-001).
- *
- * Pricing (TechManual): engine, internal structure, and armor scale with the 'Mech's tonnage → they
- * carry a `cost_formula` KEY (evaluated by catalog-rules.evalCostFormula), NOT a flat cost. Gyro,
- * cockpit, and actuators are flat per the directive (their full tonnage/rating scaling is a shop-slice
- * refinement — flagged in `notes`). Years are canon (Sarna-verifiable); the lostech gap (extinct →
- * reintroduced) is what gates XL / Endo-Steel / Ferro-Fibrous out of 3025 but back by ~3035–3040.
- */
 
 const TM = (section) => `TechManual — ${section}; rules data, xref Sarna`;
 const row = (o) => ({

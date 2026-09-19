@@ -1,11 +1,3 @@
-/*
- * BCE campaign-pack — PILOT BIO generator (DIRECTIVE-036). Pure TS, no Angular/DOM.
- *
- * Two-sentence service bios keyed to the campaign's REGISTER + ERA — the name-pool precedent:
- * BCE-ORIGINAL tunable fragment pools, no sourcebook text. Generated ONCE at pilot creation
- * (or ensured once for pre-D-036 pilots) and STORED on the pilot (stored-not-rerolled);
- * GM-editable afterward — the stored text is the record, the generator only seeds it.
- */
 
 interface BioPools {
     origins: string[]; // "came up ..." — where they're from, in the register's idiom

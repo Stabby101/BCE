@@ -14,9 +14,9 @@
     --mono: 'JetBrains Mono', monospace;
 
     display: flex;
-    align-items: safe center; /* HOTFIX-001: center when it fits, scroll-from-top when content overflows (no clipped top) */
+    align-items: safe center;
     justify-content: center;
-    height: calc(100dvh - var(--bce-footer-h, 0px)); /* IMPORT-7 A — minus the reserved legal-footer space */ /* HOTFIX-001: own the scroll (body is overflow:hidden) */
+    height: calc(100dvh - var(--bce-footer-h, 0px));
     width: 100%;
     padding: 34px;
     color: var(--ink);
@@ -27,7 +27,7 @@
         repeating-linear-gradient(0deg, transparent 0 38px, rgba(0, 0, 0, .18) 38px 39px);
     overflow-x: hidden;
     overflow-y: auto;
-    box-sizing: border-box; /* HOTFIX-001: height:100dvh includes padding (matches the dashboard host) */
+    box-sizing: border-box;
 }
 
 * { box-sizing: border-box; }
@@ -109,12 +109,10 @@ footer { display: flex; justify-content: space-between; align-items: flex-end; g
 .dot.on { background: var(--ok); }
 .dot.off { background: var(--stamp); animation: blink 1.05s steps(1) infinite; }
 
-/* engine-offline banner (D-041 / MERGE-002 / T-003) — campaign ops paused, honest reason. */
 .engine-offline { display: flex; align-items: baseline; gap: 12px; margin: 12px 0 2px; padding: 10px 14px; border: 1.6px solid var(--stamp); background: var(--paper2); }
 .engine-offline .eo-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--paper); background: var(--stamp); padding: 3px 8px; white-space: nowrap; flex: 0 0 auto; }
 .engine-offline .eo-msg { font-family: var(--type); font-size: 13px; color: var(--ink); line-height: 1.5; }
 .engine-offline code { font-family: var(--mono); font-size: 11px; background: var(--paper); border: 1px solid var(--stamp); padding: 0 4px; }
-/* HOTFIX-028 — the wedged-device self-heal affordances (offline alert + footer). Field-dossier, unobtrusive. */
 .engine-offline .eo-reset { flex: 0 0 auto; font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); background: transparent; border: 1px solid var(--stamp); border-radius: 3px; padding: 4px 9px; cursor: pointer; align-self: center; }
 .engine-offline .eo-reset:hover { background: var(--stamp); color: var(--paper); }
 .reset-link { font-family: var(--mono); font-size: 10px; letter-spacing: .04em; color: var(--ink2); background: transparent; border: none; padding: 2px 0 0; margin-top: 2px; cursor: pointer; text-decoration: underline; }
@@ -122,7 +120,6 @@ footer { display: flex; justify-content: space-between; align-items: flex-end; g
 .cursor { display: inline-block; width: 9px; height: 15px; background: var(--ink); vertical-align: -2px; animation: blink 1.05s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 .meta { text-align: right; font-family: var(--mono); font-size: 10.5px; color: var(--ink2); line-height: 1.7; }
-/* HOTFIX-025 — gated-mode account line (replaces the removed floating chip); field-dossier styling. */
 .acct { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; font-family: var(--mono); font-size: 11px; color: var(--ink2); }
 .acct-who b { color: var(--ink); }
 .acct-btn { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); background: transparent; border: 1px solid var(--ink); border-radius: 3px; padding: 4px 9px; cursor: pointer; }
@@ -161,11 +158,6 @@ footer { display: flex; justify-content: space-between; align-items: flex-end; g
     .meta { text-align: left; }
 }
 
-/* ── DIRECTIVE-ODM-20 — the singleton's two surfaces ─────────────────────────────────────────────────
-   .odm-new    the deliberate escape hatch under the ODM door (only where a campaign exists) — small and
-               quiet on purpose: it is not a second front door.
-   .odm-forked THE ANOMALY ALARM. More than one ODM campaign is not supposed to happen, so this reads as
-               a warning, not a friendly picker, and it never chooses for you. */
 .odm-new {
     display: block; margin: -6px 0 10px auto; padding: 3px 10px;
     font: 600 10.5px/1.4 var(--mono, monospace); letter-spacing: .06em; text-transform: uppercase;

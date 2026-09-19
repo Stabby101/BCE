@@ -1,7 +1,3 @@
-/*
- * DIRECTIVE-GM-2 P1 — the "Apply to my campaign" transform, pinned: the identity match, the returning-unit end-state,
- * the loss semantics copied from applyHsSettlement, the ONE ledger line, the idempotency key, and every typed refusal.
- */
 import { applySlipToSnapshot, applyVoidToSnapshot, campaignMonthOf, slipLedgerEvent } from './apply-slip';
 import type { CampaignSnapshot } from '../campaign-persistence.service';
 import type { ResultsSlip, SlipUnitRow } from './results-slip';
@@ -142,7 +138,7 @@ describe('helpers', () => {
     });
 });
 
-describe('applySlipToSnapshot — GM-2 P2a: per-player pay (S21)', () => {
+describe('applySlipToSnapshot — P2a: per-player pay (S21)', () => {
     it('a slip carrying THIS home\'s own figure lands that figure, not the team share', () => {
         const r = applySlipToSnapshot(home(), slip({ pay: { 'home-pen': { combatPay: 3000, salvageSp: 500 } } }), [rowOk()]);
         expect(r.ok).toBeTrue(); if (!r.ok) return;
@@ -161,7 +157,7 @@ describe('applySlipToSnapshot — GM-2 P2a: per-player pay (S21)', () => {
     });
 });
 
-describe('applySlipToSnapshot — GM-2 P2b: base pay + transport in the ONE line, the rep write-back', () => {
+describe('applySlipToSnapshot — P2b: base pay + transport in the ONE line, the rep write-back', () => {
     it('own terms: combat + salvage + base pay − transport in ONE line; reputation = start + repDelta (floored at 0)', () => {
         const r = applySlipToSnapshot(home(), slip({ pay: { 'home-pen': { combatPay: 1000, salvageSp: 100, basePaySp: 700, transportSp: 420, repDelta: -1 } } }), [rowOk()]);
         expect(r.ok).toBeTrue(); if (!r.ok) return;
@@ -183,7 +179,7 @@ describe('applySlipToSnapshot — GM-2 P2b: base pay + transport in the ONE line
     });
 });
 
-describe('applySlipToSnapshot — GM-2 P3: career SP lands on the home pilot by originPilotId', () => {
+describe('applySlipToSnapshot — P3: career SP lands on the home pilot by originPilotId', () => {
     it('a slip crediting hp-1 375 SP initializes the card and lands exactly that; a second slip adds; another home\'s id is ignored', () => {
         const r = applySlipToSnapshot(home(), slip({ pilotSp: { 'hp-1': 375, 'bp-9': 500 } }), [rowOk()]);
         expect(r.ok).toBeTrue(); if (!r.ok) return;
@@ -203,7 +199,7 @@ describe('applySlipToSnapshot — GM-2 P3: career SP lands on the home pilot by 
     });
 });
 
-describe('applySlipToSnapshot — GM-3 P1 (S27) the completion-only entry, and applyVoidToSnapshot (hook 5)', () => {
+describe('applySlipToSnapshot — P1 (S27) the completion-only entry, and applyVoidToSnapshot (hook 5)', () => {
     it('a slip with NO rows of mine but a pay entry under my home key (the hint) applies as pay + rep alone: one line, the +1, the idempotency key', () => {
         const s = slip({ pay: { 'home-pen': { combatPay: 0, salvageSp: 0, basePaySp: 0, repDelta: 1 } } });
         const r = applySlipToSnapshot(home(), s, [], 'home-pen');
@@ -236,7 +232,7 @@ describe('applySlipToSnapshot — GM-3 P1 (S27) the completion-only entry, and a
     });
 });
 
-describe('applySlipToSnapshot — DIRECTIVE-PD3 P1 (PD3-12): damage comes home and is COUNTED', () => {
+describe('applySlipToSnapshot — P1 damage comes home and is COUNTED', () => {
     it('a row carrying the tabletop chaosDamage lands it on the home unit (and triage rides), and the unit is counted damaged', () => {
         const r = applySlipToSnapshot(home(), slip(), [rowOk({ damage: null, crewHits: undefined, chaosDamage: 'structure', triage: 'Y' })]);
         expect(r.ok).toBeTrue(); if (!r.ok) return;

@@ -30,7 +30,6 @@
         }
     </div>
 
-    <!-- MODEL PICKER (D-040) — the registry; the sidecar swaps llama-server on change -->
     <div class="set-card">
         <div class="sc-h">Model</div>
         @if (mode() !== 'local') {
@@ -60,9 +59,8 @@
         <p class="sc-note">The REFINE button on those views is GM-triggered — never automatic. A toggle off hides it.</p>
     </div>
 
-    <!-- SPA CAP (migrated from localStorage, D-036) -->
     <div class="set-card">
-        <div class="sc-h">Special-ability force cap <span class="mig">migrated from D-036</span></div>
+        <div class="sc-h">Special-ability force cap <span class="mig">migrated from </span></div>
         <select class="sc-sel" (change)="setCap($any($event.target).value)" aria-label="SPA force-wide cap variant">
             @for (o of capOptions; track o.v) { <option [value]="o.v" [selected]="o.v === capVariant()">{{ o.l }}</option> }
         </select>

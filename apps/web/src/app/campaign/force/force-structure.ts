@@ -1,13 +1,3 @@
-/*
- * BCE campaign-pack — FORCE STRUCTURE (DIRECTIVE-019). Pure TS, no Angular/DOM.
- *
- * Organizes a flat generated force (D-018 proto-instances) into canon sub-units — IS lances
- * of 4 / Clan Stars of 5, nesting up through company/Trinary, battalion/Cluster, regiment/Galaxy
- * — with a deterministically-designated command unit anchoring the Command Lance and an overflow
- * RESERVE. Membership is a LINK (`lanceId` on the instance), not a property, so reassignment is a
- * later-slice no-op against this shape. ALL templates + naming live in STRUCTURE_TUNABLES behind a
- * seam (House/Clan naming conventions arrive with the OOB pass, D-021/T-024). Lifts to apps/api.
- */
 import type { ProtoInstance } from './force-generator';
 
 export interface Lance {
@@ -50,7 +40,6 @@ export const STRUCTURE_TUNABLES = {
         is: { lance: 'Lance', company: 'Company', battalion: 'Battalion' },
         clan: { lance: 'Star', company: 'Trinary', battalion: 'Cluster' },
     },
-    // ── D-027 lance-management knobs ──
     /** false = moving past the basis only badges OVERSTRENGTH (amber); true = hard-cap at basis (PROD-001 GM freedom). */
     enforceBasis: false,
     /** false = an emptied non-Command lance auto-removes; true = keep empty lances around. */
@@ -103,7 +92,6 @@ export function assignStructure(instances: ProtoInstance[], archetype: string | 
 
     if (!instances.length) return { instances: [], structure: { lances: [], basis } };
 
-    // Command = heaviest tonnage, BV tiebreak, then instanceId (deterministic; D-018 doesn't flag it).
     const commander = [...instances].sort(
         (a, b) => b.tons - a.tons || (b.bv ?? 0) - (a.bv ?? 0) || a.instanceId.localeCompare(b.instanceId),
     )[0];
@@ -125,7 +113,6 @@ export function hasStructure(instances: ProtoInstance[] | null, structure: Force
     return !!structure && !!structure.lances.length && !!instances?.some((i) => i.lanceId);
 }
 
-// ── D-027: live lance management (membership = the lanceId link, made editable) ──
 
 /** The next lance to append via + NEW LANCE — continues the phonetic sequence, top-level (no parent group).
  *  Ordinal is max+1 (collision-free after a prune); the NAME follows the same index. */
@@ -151,8 +138,6 @@ export function pruneLance(
     return { ...structure, lances: structure.lances.filter((l) => l.id !== lanceId) };
 }
 
-/** D-029: re-pick the commander (the D-019 rule — heaviest tonnage, BV then instanceId tiebreak) when the
- *  prior commander has left the force (sold/deleted). No-op if a commander remains or the force is empty. */
 export function redesignateCommander(instances: ProtoInstance[]): ProtoInstance[] {
     if (!instances.length || instances.some((i) => i.isCommander)) return instances;
     const cmd = [...instances].sort(

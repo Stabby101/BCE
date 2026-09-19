@@ -15,7 +15,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    height: calc(100dvh - var(--bce-footer-h, 0px)); /* IMPORT-7 A — minus the reserved legal-footer space */
+    height: calc(100dvh - var(--bce-footer-h, 0px));
     width: 100%;
     padding: 30px;
     color: var(--ink);
@@ -86,7 +86,6 @@ input:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--ink); }
 .cols { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
 .cat, .chz { border: 1.5px solid var(--ink); background: var(--paper2); padding: 10px 12px; }
 .csearch { margin-bottom: 8px; }
-/* DIRECTIVE-123 — the FORCE search + two-key sort control */
 .ctools { margin-bottom: 8px; }
 .ctools .csearch { margin-bottom: 6px; }
 .csort { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
@@ -96,10 +95,8 @@ input:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--ink); }
 .ssel select:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--ink); }
 .dirtog { align-self: flex-end; font-family: var(--mono); font-size: 13px; line-height: 1; border: 1.4px solid var(--ink); background: var(--paper); color: var(--ink); min-width: 40px; min-height: 36px; cursor: pointer; }
 .dirtog:hover, .dirtog:focus-visible { background: var(--ink); color: var(--paper); outline: none; }
-/* DIRECTIVE-123 — the per-row unit-type tag (MECH / VEHICLE) */
 .ctype { display: inline-block; font-family: var(--label); font-weight: 600; letter-spacing: .5px; font-size: 8.5px; text-transform: uppercase; border: 1px solid var(--ink2); color: var(--ink2); padding: 0 4px; margin-right: 5px; border-radius: 2px; vertical-align: 1px; }
 .ctype.veh { border-color: var(--ok); color: var(--ok); }
-/* DIRECTIVE-123b — the FORCE filter groups (Weight / BV / Era chips) */
 .ffilters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed var(--ink2); }
 .fgroup { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .fglabel { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 9px; text-transform: uppercase; color: var(--ink2); margin-right: 2px; }
@@ -140,3 +137,8 @@ footer { display: flex; justify-content: space-between; align-items: center; bor
     footer { flex-direction: column; align-items: stretch; gap: 12px; }
     .nav { justify-content: space-between; } .meta { text-align: left; }
 }
+.crow.off { border-bottom-style: dashed; opacity: .92; }
+.ctag { font-family: var(--mono); font-size: 8.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--stamp); border: 1px solid var(--stamp); padding: 0 4px; margin-left: 6px; vertical-align: middle; }
+/* ORDER-15 (a) — the affiliation select + its hint */
+.affsel { font: inherit; font-size: 13px; min-height: 34px; padding: 4px 8px; border: 1.2px solid var(--ink2); background: var(--paper); color: var(--ink); max-width: 320px; }
+.fhint { display: block; font-family: var(--type); font-size: 12px; color: var(--ink2); margin-top: 4px; line-height: 1.5; }

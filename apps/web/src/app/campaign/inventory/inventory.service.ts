@@ -1,12 +1,3 @@
-/*
- * BCE Inventory II (DIRECTIVE-056, T-037 slice 2) — the impure inventory service.
- *
- * Owns the FORWARD-ONLY starting-inventory roll: resolves the fielded force's mounted weapons →
- * ammo classes (DataService, the proven getUnitByName path), fetches the era-legal catalog (D-055),
- * calls the PURE generateStartingInventory, and stores the realized InventoryState on the campaign
- * snapshot (DATA-002 — durable campaign state, travels with saves). Rolls ONCE (guard on a present
- * inventory) so a fresh Begin AND an old save back-fill identically without a re-roll. GM surface only.
- */
 import { Injectable, Injector, effect, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { DataService } from '../../services/data.service';
@@ -48,7 +39,7 @@ export class InventoryService {
             const inv = generateStartingInventory({
                 ammo, weapons, jumperCount, fieldedMechTonnage, unitCount, tier, year, catalog, seed,
                 generatedAt: date ? formatDate(date) : 'Begin',
-                logistics: this.resolveLogistics(), // DIRECTIVE-065 — House MIC starts deep, merc lean
+                logistics: this.resolveLogistics(),
             });
             this.state.setInventory(inv);
             return true;
@@ -59,9 +50,6 @@ export class InventoryService {
         }
     }
 
-    /** DIRECTIVE-065 — the campaign's logistics for starting depth. A MERCENARY always buys its own (merc-market
-     *  lean), whatever formation it fields; otherwise the chosen formation's `logistics` (formation-oob), else a
-     *  House/Clan command draws on its military-industrial complex (house-mic deep). */
     private resolveLogistics(): Logistics {
         if (this.state.force() === 'MERC') return 'merc-market';
         const fname = this.state.formation();
@@ -73,10 +61,6 @@ export class InventoryService {
         return 'house-mic';
     }
 
-    /** Resolve the force → ammo classes + a force-wide weapon tally (for the spare-weapon spread) + jump-capable
-     *  count + total fielded 'Mech tonnage + unit count. DIRECTIVE-057: ammoType/rackSize come from the slim
-     *  build-time stub `comp.at`/`comp.rs` (the hosted dashboard runs off the slim slice with no runtime `eq`,
-     *  D-006) OR the full-catalog hydrated `comp.eq` (localhost / market). No 24MB catalog pulled here. */
     private resolveForce(force: ProtoInstance[]): { ammo: ForceAmmoInput[]; weapons: ForceWeaponInput[]; jumperCount: number; fieldedMechTonnage: number; unitCount: number } {
         const ammoMap = new Map<string, ForceAmmoInput>();
         const weaponMap = new Map<string, number>(); // weapon display name → mounted count across the whole force
@@ -92,7 +76,6 @@ export class InventoryService {
                 // weapon tally (E/M/B/A or a hydrated WeaponEquipment) by display name → the spare-weapon spread
                 const isWeapon = c.t === 'E' || c.t === 'M' || c.t === 'B' || c.t === 'A' || c.eq instanceof WeaponEquipment;
                 if (isWeapon && c.n) weaponMap.set(c.n, (weaponMap.get(c.n) ?? 0) + (c.q || 1));
-                // ammo class — slim stub at/rs (D-057) first, else the full-catalog hydrated WeaponEquipment.
                 // SLICE-1 CONSTRAINT — this branch has NO type gate, deliberately: it keys on `at`, which is
                 // the LAUNCHER's ammo class. Since SLICE-1 a slice also carries `X` (ammunition) comps, and if
                 // generate-slices.mjs ever emitted `at` on an X row this loop would count the load TWICE — once

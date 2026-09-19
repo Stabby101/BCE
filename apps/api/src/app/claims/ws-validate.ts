@@ -1,19 +1,3 @@
-/*
- * BCE ENGINE — DIRECTIVE-HARDEN-5 Part A: WebSocket payload VALIDATION (pure type-guards, no framework).
- * Every mutating gateway message (+ join/join-lobby) passes through one of these guards before any state
- * is touched; malformed input is rejected cleanly (an error ack, no crash, no partial write).
- *
- * DECISION (manual guards over class-validator + WS ValidationPipe): the gateway's 13 messages are tiny,
- * FLAT, single-level objects — a pure guard module covers them all in ~90 lines, adds ZERO dependencies
- * (the repo pins deps deliberately), keeps the reject path additive (mirrors the handlers' existing
- * early-return style), and is trivially unit-testable. class-validator would add two deps + DTO classes +
- * a WsException filter for shapes this small; if the REST side later adopts DTOs (flagged follow-up),
- * that decision can be made there on its own merits.
- *
- * Bounds: ids/tokens/keys ≤ 500 chars; display names ≤ 200; the battle `state` must be a non-null JSON
- * object/array whose serialized size is ≤ 256 KB (a serialized MekBay sheet is a few KB — the bound is
- * generous headroom, not a squeeze).
- */
 
 export interface Verdict { ok: boolean; reason?: string }
 const OK: Verdict = { ok: true };
@@ -22,7 +6,6 @@ const bad = (reason: string): Verdict => ({ ok: false, reason });
 const MAX_STR = 500;
 const MAX_NAME = 200;
 export const MAX_BATTLE_STATE_BYTES = 256 * 1024;
-// GM-1 P3 — the join-with-force payload bound: 3× the measured 28-unit worst case (43,081 B); an explicit
 // gate with a denied ack — the silent 1 MB socket.io frame disconnect must never be the failure mode (R3).
 export const MAX_IMPORT_FORCE_BYTES = 128 * 1024;
 export const MAX_IMPORT_UNITS = 24;
@@ -33,18 +16,34 @@ const isStrOpt = (v: unknown, max = MAX_STR): boolean => v === undefined || (typ
 /** Optional string-or-null field (the favorite clear shape). */
 const isStrOrNullOpt = (v: unknown, max = MAX_STR): boolean => v === undefined || v === null || (typeof v === 'string' && v.length <= max);
 const isNumOpt = (v: unknown): boolean => v === undefined || (typeof v === 'number' && Number.isFinite(v));
-/** engagementKey is required-as-a-string but MAY be empty. Pre-engagement clients actually send 'none'
- *  (engagementKeyOf's default — the GM-1b pre-track join rides it); '' stays accepted for older/other clients. */
 const isKey = (v: unknown): boolean => typeof v === 'string' && v.length <= MAX_STR;
 
 const rec = (m: unknown): Record<string, unknown> | null => (m !== null && typeof m === 'object' && !Array.isArray(m) ? (m as Record<string, unknown>) : null);
 
-/** ORDER-4 H18 — engagement-close — { campaignId, engagementKey } (both non-empty; the key names the fight being ended). */
 export function vEngagementClose(m: unknown): Verdict {
     const o = rec(m);
     if (!o) return bad('payload must be an object');
     if (!isStr(o['campaignId'])) return bad('campaignId: non-empty string required');
     if (!isStr(o['engagementKey'])) return bad('engagementKey: non-empty string required');
+    return OK;
+}
+
+export function vHandTable(m: unknown): Verdict {
+    const o = rec(m);
+    if (!o) return bad('payload must be an object');
+    if (!isStr(o['campaignId'])) return bad('campaignId: non-empty string required');
+    if (!isStr(o['toUserId'])) return bad('toUserId: non-empty string required');
+    if (!isStr(o['toDeviceId']) || (o['toDeviceId'] as string).length > 64) return bad('toDeviceId: non-empty string (≤ 64) required');
+    return OK;
+}
+
+export function vSeat(m: unknown): Verdict {
+    const o = rec(m);
+    if (!o) return bad('payload must be an object');
+    if (!isStr(o['campaignId'])) return bad('campaignId: non-empty string required');
+    if (!isStr(o['instanceId'])) return bad('instanceId: non-empty string required');
+    if (typeof o['toToken'] !== 'string' || o['toToken'].length > MAX_STR) return bad("toToken: string required ('' = clear the seat)");
+    if (!isStrOpt(o['nonce'], 40)) return bad('nonce: string ≤40 when present');
     return OK;
 }
 
@@ -119,19 +118,15 @@ export function vBattle(m: unknown): Verdict {
     return OK;
 }
 
-/** ODM-18 P1 — THE INTENT ALLOWLIST (the ruled LAW: the vocabulary is an allowlist, never "any public
- *  method"). burnDays / write-off / clock / resolve / QM-depot verbs are OUT BY CONSTRUCTION — a verb not
- *  on this list never reaches a handler (pinned by the negative specs). donor-strip-request is the two-key
- *  verb: the player RAISES it; the GM approves/declines on the panel. */
 export const ODM_INTENT_VERBS = [
     'reassign-pilot', 'set-deploy',
     'bay-assign', 'bay-unassign', 'bay-priority', 'bay-type',
     'bench-assess', 'bench-inspect', 'bench-repair', 'bench-ammo-clear',
     'donor-strip-request',
+    'rename-pilot', 'seat-note', 'seat-request',
 ] as const;
 const isFin = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
-/** ODM-18 P1 — odm-intent — { campaignId, token, verb, payload }: per-verb payload shapes, allowlist-gated. */
 export function vOdmIntent(m: unknown): Verdict {
     const o = rec(m);
     if (!o) return bad('payload must be an object');
@@ -189,14 +184,26 @@ export function vOdmIntent(m: unknown): Verdict {
         case 'donor-strip-request':
             if (!isStr(p['instanceId'])) return bad('instanceId: non-empty string required');
             return OK;
+        case 'rename-pilot':
+            if (!isStr(p['instanceId'])) return bad('instanceId: non-empty string required');
+            if (!isStr(p['name'], 60) || !(p['name'] as string).trim().length) return bad('name: non-blank string ≤60 required');
+            return OK;
+        // a free-text note pinned to the seat ('' clears it)
+        case 'seat-note':
+            if (!isStr(p['instanceId'])) return bad('instanceId: non-empty string required');
+            if (typeof p['text'] !== 'string' || p['text'].length > 500) return bad("text: string ≤500 required ('' = clear)");
+            return OK;
+        // a loadout / repair REQUEST on the seat — recorded for the GM; it changes nothing on the machine
+        case 'seat-request':
+            if (!isStr(p['instanceId'])) return bad('instanceId: non-empty string required');
+            if (p['kind'] !== 'repair' && p['kind'] !== 'loadout') return bad("kind: 'repair'|'loadout' required");
+            if (!isStr(p['text'], 300) || !(p['text'] as string).trim().length) return bad('text: non-blank string ≤300 required');
+            return OK;
         default:
             return bad('verb: not in the intent allowlist'); // unreachable — the allowlist check above holds
     }
 }
 
-/** GM-1 P3 — import-force — { campaignId, token, engagementKey?, name?, units[], pilots? }: the one-shot
- *  join-with-force payload. Per-unit shape-checked; the WHOLE {units, pilots} payload is size-bounded at
- *  128 KB (serialize-once, the vBattle pattern). */
 export function vImportForce(m: unknown): Verdict {
     const o = rec(m);
     if (!o) return bad('payload must be an object');
@@ -204,14 +211,14 @@ export function vImportForce(m: unknown): Verdict {
     if (!isStr(o['token'])) return bad('token: non-empty string required');
     if (o['engagementKey'] !== undefined && !isKey(o['engagementKey'])) return bad('engagementKey: string required');
     if (!isStrOpt(o['name'], MAX_NAME)) return bad('name: string ≤200 required');
-    if (!isStrOpt(o['sourceCampaignId'], MAX_NAME)) return bad('sourceCampaignId: string ≤200 required'); // GM-2 P1 — the HOME campaign
-    if (!isNumOpt(o['reputation']) || (typeof o['reputation'] === 'number' && (o['reputation'] < 0 || o['reputation'] > 99))) return bad('reputation: finite 0..99 when present'); // GM-2 P2b — the company's home reputation rides IN
+    if (!isStrOpt(o['sourceCampaignId'], MAX_NAME)) return bad('sourceCampaignId: string ≤200 required');
+    if (!isNumOpt(o['reputation']) || (typeof o['reputation'] === 'number' && (o['reputation'] < 0 || o['reputation'] > 99))) return bad('reputation: finite 0..99 when present');
     const units = o['units'];
     if (!Array.isArray(units) || units.length < 1 || units.length > MAX_IMPORT_UNITS) return bad(`units: 1..${MAX_IMPORT_UNITS} required`);
     for (const u of units) {
         const uo = rec(u);
         if (!uo) return bad('units[]: object required');
-        if (!isStrOpt(uo['instanceId'], MAX_NAME)) return bad('units[]: instanceId string required'); // GM-2 P1 — the origin id (optional)
+        if (!isStrOpt(uo['instanceId'], MAX_NAME)) return bad('units[]: instanceId string required');
         if (!isStr(uo['unitRef'], MAX_NAME) || !isStr(uo['chassis'], MAX_NAME) || !isStr(uo['model'], MAX_NAME)) return bad('units[]: unitRef/chassis/model strings required');
         for (const k of ['mulId', 'tons', 'bv']) { if (typeof uo[k] !== 'number' || !Number.isFinite(uo[k] as number)) return bad(`units[]: ${k} finite number required`); }
         if (uo['unitType'] !== undefined && uo['unitType'] !== 'mech' && uo['unitType'] !== 'vehicle') return bad("units[]: unitType 'mech'|'vehicle' required");
@@ -224,7 +231,7 @@ export function vImportForce(m: unknown): Verdict {
             const po = rec(p);
             if (!po) return bad('pilots[]: object required');
             if (!isStr(po['name'], MAX_NAME)) return bad('pilots[]: name string required');
-            if (!isStrOpt(po['pilotId'], MAX_NAME)) return bad('pilots[]: pilotId string required'); // GM-2 P1 — the origin id (optional)
+            if (!isStrOpt(po['pilotId'], MAX_NAME)) return bad('pilots[]: pilotId string required');
             if (!isStrOpt(po['callsign'], MAX_NAME)) return bad('pilots[]: callsign string required');
             for (const k of ['gunnery', 'piloting']) { if (typeof po[k] !== 'number' || !Number.isFinite(po[k] as number)) return bad(`pilots[]: ${k} finite number required`); }
             if (!isStrOpt(po['assignedInstanceId'])) return bad('pilots[]: assignedInstanceId string required');
@@ -237,7 +244,6 @@ export function vImportForce(m: unknown): Verdict {
     return OK;
 }
 
-/** GM-1 P2 — side-pref — { campaignId, token, pref: 'a' | 'b' | null } (the advisory side preference). */
 export function vSidePref(m: unknown): Verdict {
     const o = rec(m);
     if (!o) return bad('payload must be an object');
@@ -270,9 +276,6 @@ export function vFavorite(m: unknown): Verdict {
     return OK;
 }
 
-/** GM-2 P2b — sign-contract — { campaignId, token, key, contract, nonce? }: a PLAYER device signs its own company's
- *  contract on the phone. The server validates SHAPE only (bounded, allowlisted keys — never the D-128 math: the GM device
- *  re-checks the belts it can and applies through its own state setters, the one-writer law). 32 KB bound. */
 export const CONTRACT_COLUMNS_WIRE = ['basePay', 'command', 'salvage', 'support', 'transport'] as const;
 export function vSignContract(m: unknown): Verdict {
     const o = rec(m);

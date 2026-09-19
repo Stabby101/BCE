@@ -1,10 +1,3 @@
-/*
- * BCE campaign-pack — WALK THE FIELD core (DIRECTIVE-031). Pure TS, no Angular/DOM. Reads the LIVE
- * persisted battle end-state (D-030 instance.damage = MekBay's CBTSerializedState) and derives, per
- * engaged unit: a damage read-out, the Three Questions (ODM D-26 / pub_triage.py concepts, cited), the
- * severity triage tag (the D-032 bays' feed), the unit value (the salvage clause's base), and the pilot
- * outcome. DATA-003 — nothing is captured or parsed; we read the structure the engine already committed.
- */
 import type { ProtoInstance } from '../force/force-generator';
 import type { CBTSerializedState, CriticalSlot } from '../../models/force-serialization';
 
@@ -13,11 +6,10 @@ export type Side = 'blufor' | 'opfor';
 export type Disposition =
     | 'RECOVER' | 'FIELD_STRIP' | 'ABANDON'                   // BLUFOR
     | 'CLAIM_PRIZE' | 'SALVAGE' | 'LEAVE'                     // OPFOR
-    | 'STRIP';                                                // ODM-13 — the materiel strip (both sides; the odm walk's record literal — Classic never produces it; aar-render falls through to the raw label)
+    | 'STRIP';
 export type PilotOutcomeStatus = 'OK' | 'Injured' | 'KIA';
 
 // ── WALK_TUNABLES — every interim number, flagged + in one block (the CamOps salvage-math + full
-//    infirmary passes replace these wholesale; D-032/034). ──
 export const WALK_TUNABLES = {
     /** field-strip credit = stripFraction × cost × conditionFactor (INTERIM until parts/Inventory). */
     stripFraction: 0.25,
@@ -29,10 +21,7 @@ export const WALK_TUNABLES = {
     coldStorageCaps: { mech: 4 },
     /** recovery (haul-back) capacity by transport/resource tier (Lean/Standard/Established DropShip lift). */
     transportLift: { lean: 4, standard: 8, established: 16 } as Record<string, number>,
-    /** salvage-exchange contracts: the player's C-bill share of value (D-017 stored exchange term; INTERIM
-     *  fraction until the cited CamOps exchange math — read the flag, this is the rate). */
     exchangeShare: 0.5,
-    /** hits -> recovery DAYS (ODM pub_triage recovery model concept, cited; INTERIM table, full infirmary D-032/034). */
     recoveryDaysByHits: [0, 2, 5, 10, 20, 40] as number[],
 };
 
@@ -121,7 +110,6 @@ export function pilotOutcome(damage: CBTSerializedState | undefined | null): Pil
     return { status: 'OK', hits: 0, recoveryDays: 0 };
 }
 
-// ── The walk records — stored on the D-026 resolution (D-033's raw material). ──
 export interface EngagedSnapshot {
     bluforIds: string[];       // deployed BLUFOR instanceIds (live in startingForce)
     opfor: ProtoInstance[];    // the OpFor instances, snapshotted at RESOLVE (the spec is cleared)
@@ -137,11 +125,9 @@ export interface WalkRowResult {
     captured?: boolean;
     pilot?: PilotOutcome & { pilotId?: string };
     overrides?: string[];      // logged GM overrides
-    tons?: number;             // DIRECTIVE-ODM-17 P2 (additive; odm walk only): what this row put on the lift — strip yield tonnage, or the hulk's catalog tons on a capture. Classic never writes it.
-    fieldHours?: number;       // DIRECTIVE-ODM-17 P2 (additive; odm walk only): the strip's FIELD-pool price (the doctrine table). Classic never writes it.
+    tons?: number;
+    fieldHours?: number;
 }
-/** DIRECTIVE-ODM-17 P2 (additive; odm walk only) — the LOAD MANIFEST the walk settled under: what rode
- *  home, against what the operational fleet could lift. Classic walks never write one. */
 export interface WalkLoadManifest {
     ammoTons: number; componentTons: number;   // the strip haul (cargo holds)
     hulks: number; hulkTons: number;           // captures (bay slots)
@@ -155,5 +141,42 @@ export interface FieldWalkResult {
     rows: WalkRowResult[];
     totalCredit: number;
     prizesClaimed: number;
-    manifest?: WalkLoadManifest; // ODM-17 P2 additive — absent on every Classic (and pre-P2 odm) record
+    manifest?: WalkLoadManifest;
+}
+
+/** S66 (2026-09-18) — the BattleTech weight class off tonnage: Light 20–35 · Medium 40–55 · Heavy 60–75 · Assault 80+.
+ *  The walk row shows it beside the tonnage so the DAMAGE badge ("LIGHT" = light damage) can no longer be read as the
+ *  class — a 50 t Rifleman is MEDIUM. Vehicles share the bands here (the walk's rows are mixed). */
+export type WeightClass = 'LIGHT' | 'MEDIUM' | 'HEAVY' | 'ASSAULT';
+export function weightClassOf(tons: number | null | undefined): WeightClass | null {
+    if (tons == null || !Number.isFinite(tons) || tons <= 0) return null;
+    if (tons <= 35) return 'LIGHT';
+    if (tons <= 55) return 'MEDIUM';
+    if (tons <= 75) return 'HEAVY';
+    return 'ASSAULT';
+}
+
+export const WALK_MANIFEST_TIMEOUT_MS = 10_000;
+export type ManifestPartState = 'ready' | 'loading' | `failed: ${string}`;
+export interface ManifestParts { fleet: ManifestPartState; shop: ManifestPartState; catalog: ManifestPartState; equipment: ManifestPartState }
+export interface ManifestLoadState {
+    ready: boolean;
+    /** the loud line — null while genuinely loading inside the timeout */
+    failure: string | null;
+    /** the per-part readout for the loading line, e.g. "fleet ✓ · shop ✓ · catalog … · equipment …" */
+    parts: string;
+}
+const PART_MARK = (s: ManifestPartState): string => (s === 'ready' ? '✓' : s === 'loading' ? '…' : '✗');
+export function manifestLoadState(parts: ManifestParts, timedOut: boolean): ManifestLoadState {
+    const entries = Object.entries(parts) as [keyof ManifestParts, ManifestPartState][];
+    const ready = entries.every(([, s]) => s === 'ready');
+    const line = entries.map(([k, s]) => `${k} ${PART_MARK(s)}`).join(' · ');
+    if (ready) return { ready: true, failure: null, parts: line };
+    const failed = entries.filter(([, s]) => s.startsWith('failed'));
+    if (failed.length) return { ready: false, failure: failed.map(([k, s]) => `${k} ${s.slice('failed: '.length)}`).join(' · '), parts: line };
+    if (timedOut) {
+        const pending = entries.filter(([, s]) => s === 'loading').map(([k]) => k).join(', ');
+        return { ready: false, failure: `timeout after ${WALK_MANIFEST_TIMEOUT_MS / 1000} s — still loading: ${pending}`, parts: line };
+    }
+    return { ready: false, failure: null, parts: line };
 }

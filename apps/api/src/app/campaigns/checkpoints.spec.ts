@@ -1,16 +1,9 @@
-/*
- * ODM-18 P2 — the checkpoint history + restore pins, against a REAL CampaignsService on a temp SQLite
- * file (BCE_DB_PATH override; node:sqlite is synchronous, so no Nest bootstrap is needed). Pins:
- * capture-on-save for pack campaigns only · no-change saves mint nothing · 30-day prune · the
- * NON-NEGOTIABLE pre-restore checkpoint · the GM-attributed log line · owner-scoping (cross-tenant
- * reads the same not-found the campaign itself would) · D-0b (plain campaigns accumulate NO rows).
- */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CampaignsService, type SaveRecord, type Viewer } from './campaigns.service';
 
-describe('checkpoints (ODM-18 P2 — history + GM rollback)', () => {
+describe('checkpoints (P2 — history + GM rollback)', () => {
     let svc: CampaignsService;
     let dir: string;
     const owner: Viewer = { ownerId: 'gm-1', admin: false };
@@ -86,7 +79,7 @@ describe('checkpoints (ODM-18 P2 — history + GM rollback)', () => {
         expect(svc.listCheckpoints('c1', stranger).length).toBe(0);
     });
 
-    it('PURGE-ON-TAKEDOWN (the PM rider, IP-002): a DMCA takedown deletes the history — zero rows, the restore list is empty, nothing can resurrect the removed content', () => {
+    it('PURGE-ON-TAKEDOWN (the takedown rider): a DMCA takedown deletes the history — zero rows, the restore list is empty, nothing can resurrect the removed content', () => {
         const withHotspot = (n: number): Record<string, unknown> => ({ ...odmSnap(n), customHotSpots: [{ id: 'hs-x', title: 'Infringing' }] });
         svc.upsert(rec('c1', withHotspot(0)), owner);
         svc.upsert(rec('c1', withHotspot(1)), owner);
@@ -120,6 +113,26 @@ describe('checkpoints (ODM-18 P2 — history + GM rollback)', () => {
         expect(log.some((l) => /GM rollback — campaign restored/.test(l.text) && l.kind === 'admin')).toBe(true);
     });
 
+    it('P3: a restore CARRIES the current ledger forward and records the ROLLBACK as an entry — never erases', () => {
+        const e = (n: number) => ({ ts: n, actor: 'Bravo', actorKey: 'anon-b', seat: 'unit-B', seatLabel: 'Locust', field: 'pilot name', was: `n${n - 1}`, now: `n${n}`, verb: 'rename-pilot', outcome: 'applied' });
+        svc.upsert(rec('c1', { ...odmSnap(0), gmOnly: { odmLedger: [e(1)], pilotNotes: { p1: 'kept' } } }), owner);
+        svc.upsert(rec('c1', { ...odmSnap(1), gmOnly: { odmLedger: [e(1), e(2)] } }), owner); // checkpoint #1 = state 0, whose ledger holds ONE entry
+        const chk = svc.listCheckpoints('c1', owner)[0];
+        expect(((svc.getCheckpointSnapshot('c1', chk.id, owner) as { gmOnly: { odmLedger: unknown[] } }).gmOnly.odmLedger).length).toBe(1); // the fixture is well-formed: the checkpoint's own ledger is the SHORTER one
+        const snap = svc.restoreCheckpoint('c1', chk.id, owner).snapshot as { counter: number; gmOnly: { odmLedger: { verb: string; outcome: string; actor: string; ts: number }[]; pilotNotes?: Record<string, string> } };
+        expect(snap.counter).toBe(0);                                                  // the state rolled back
+        expect(snap.gmOnly.odmLedger.map((x) => x.verb)).toEqual(['rename-pilot', 'rename-pilot', 'rollback']); // …the ledger did NOT
+        expect(snap.gmOnly.odmLedger[2]).toEqual(expect.objectContaining({ outcome: 'rollback', actor: 'GM', field: 'campaign' }));
+        expect(snap.gmOnly.pilotNotes).toEqual({ p1: 'kept' });                        // the rest of the restored gmOnly block is the checkpoint's own
+    });
+    it('P3: a campaign of ANOTHER pack gains no ledger on restore (ODM only)', () => {
+        const other = (n: number) => ({ packId: 'some-pack', startingForce: [], counter: n, currentDate: { y: 3050, m: 1, d: n }, campaignLog: [] });
+        svc.upsert(rec('c2', other(0)), owner);
+        svc.upsert(rec('c2', other(1)), owner);
+        const out = svc.restoreCheckpoint('c2', svc.listCheckpoints('c2', owner)[0].id, owner).snapshot as Record<string, unknown>;
+        expect(out['gmOnly']).toBeUndefined();
+    });
+
     it('the NON-NEGOTIABLE pre-restore checkpoint: the pre-restore state is captured FIRST and restores back', () => {
         svc.upsert(rec('c1', odmSnap(0)), owner);
         svc.upsert(rec('c1', odmSnap(1)), owner);
@@ -143,7 +156,6 @@ describe('checkpoints (ODM-18 P2 — history + GM rollback)', () => {
         expect(svc.listCheckpoints('c1', { ownerId: null, admin: true }).length).toBe(1);
     });
 
-    // ── ODM-26 option 1 — THE PIN: exempt from AGE, never from DELETION FOR CAUSE ────────────────────────
     //
     // The pin exists at exactly ONE of the four `DELETE FROM checkpoints` statements. These specs are the
     // structure that keeps it there: the first proves the exemption works, the mutation-kill proves the

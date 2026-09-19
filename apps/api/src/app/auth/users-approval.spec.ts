@@ -1,9 +1,3 @@
-/*
- * DIRECTIVE-LINK-1 policy — new-account approval default, at the UsersService seam (real temp DB, deleted after).
- * Pins: a new OAuth GM is APPROVED by default; PENDING only when BCE_GM_REQUIRES_APPROVAL (passed as the
- * gmRequiresApproval arg); admin email → admin + approved regardless; a returning banned/rejected account is
- * never silently re-approved (the ban path stays intact).
- */
 import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

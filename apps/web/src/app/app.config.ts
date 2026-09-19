@@ -2,13 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Author: Drake
 
-// BCE FORK-EDIT (DEPLOY-002 P4 + HOTFIX-009/028; REBASE-1 P1 c) — merged onto the pin's app.config:
 //   · `provideServiceWorker` + `isDevMode` REMOVED — BCE ships no service worker (actively unregistered at
 //     boot in index.html + app-reset.ts; a stale SW was the session-freshness wedge). Re-adding it on a
-//     re-baseline reintroduces the wedge HOTFIX-028 closed. angular.json also holds serviceWorker:false.
 //   · `withInterceptors([authInterceptor])` added — the GM bundle attaches the cookie + Bearer JWT.
 //   · two BCE app-initializers added (session resolve; campaign-save-store rehydrate), both TIMEOUT-BOUND
-//     (HOTFIX-028) so a blackhole engine URL cannot black-screen first paint.
 // The pin's equipment-handlers + wake-lock initializers and OVERLAY_DEFAULT_CONFIG are preserved as-is.
 import { type ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, ErrorHandler, provideAppInitializer, inject } from '@angular/core';
 import { OVERLAY_DEFAULT_CONFIG } from '@angular/cdk/overlay';
@@ -38,12 +35,11 @@ export const appConfig: ApplicationConfig = {
         provideHttpClient(withInterceptors([authInterceptor])),
         // Resolve the session FIRST (before routing) so the gated shell knows wall/pending/in with no app flash.
         // Auth off (dev/LAN) → resolves to 'open' instantly; a slow/absent host fails open (no wall on a blip).
-        // HOTFIX-028 — TIMEOUT-BOUND first paint (~3.5s): a blackhole engine URL must not hang /auth/me (6s) and
         // black-screen the shell. On the deadline, fail OPEN (paint the cover); the refresh finishes in the
         // background and sets the real gate. A reachable host answers in well under this.
         provideAppInitializer(() => {
             const auth = inject(AuthService);
-            auth.adoptAuthFragment(); // HOTFIX-040 Fix A — Bearer-first for OAuth: read + strip #bce_auth BEFORE the first /auth/me
+            auth.adoptAuthFragment();
             const done = auth.refresh();
             return Promise.race([done, new Promise<void>((resolve) => setTimeout(() => { auth.resolveOpenOnTimeout(); resolve(); }, 3500))]);
         }),
@@ -55,9 +51,7 @@ export const appConfig: ApplicationConfig = {
             inject(WakeLockService);
         }),
         provideAppInitializer(async () => {
-            // BCE (DIRECTIVE-011/013): open the multi-save store + migrate the legacy slot, then rehydrate the
             // "last" campaign BEFORE routing — so a refresh on /campaign stays on the dashboard.
-            // HOTFIX-028 — TIMEOUT-BOUND first paint (~4s). A garbage/slow stored engine URL made
             // store.init()+rehydrateLast() (each host-bounded at 6s, sequential) block bootstrap ~12s → the GM
             // "black screen". Cap the initializer; the rehydrate finishes in the BACKGROUND (its signals update
             // reactively → the dashboard restores when it lands). A corrupt/old-schema blob is CAUGHT → warn +
@@ -69,7 +63,6 @@ export const appConfig: ApplicationConfig = {
             })();
             await Promise.race([boot, new Promise<void>((resolve) => setTimeout(resolve, 4000))]);
         }),
-        // HOTFIX-009/028: the vendored MekBay PWA service worker is DISABLED (provideServiceWorker removed;
         // angular.json serviceWorker:false; index.html + app-reset.ts evict any already-registered SW). A
         // branded BCE PWA is a deliberate later task.
         { provide: OVERLAY_DEFAULT_CONFIG, useValue: { usePopover: false } },

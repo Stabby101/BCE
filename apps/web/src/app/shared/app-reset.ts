@@ -1,13 +1,3 @@
-/*
- * HOTFIX-028 — client-side reset / recovery utilities. Two levels, both pre-bootstrap-safe (no Angular deps):
- *   evictAndReload() — LIGHT: unregister SWs + delete CacheStorage, then reload. Gets the newest bundle
- *     WITHOUT touching campaign data. Used by the version-mismatch "tap to update" banner + the guarded
- *     single auto-reload.
- *   freshReset()     — NUCLEAR: also deletes the IndexedDB mirrors + clears every bce.* localStorage key
- *     EXCEPT the device token + player name (identity survives). Used by ?fresh=1 (the support healing link)
- *     and the cover's "Reset app data" affordance. The caller reloads.
- * Deliberately NOT Clear-Site-Data headers (origin-wide — would nuke GM local state on the shared origin).
- */
 const TOKEN_KEY = 'bce.device.token';
 const NAME_KEY = 'bce.player.name';
 const KEEP_KEYS = [TOKEN_KEY, NAME_KEY];

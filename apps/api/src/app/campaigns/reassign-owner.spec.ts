@@ -1,8 +1,3 @@
-/*
- * DIRECTIVE-LINK-1 — CampaignsService.reassignOwner (the lossless guest→account re-own), at the DB seam
- * (a real temp DB, deleted after). Pins: additive re-own, MERGE into an existing owner, idempotency, the
- * "last" pointer transfer (keep the target's own), and the no-op/fail-safe edge cases.
- */
 import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

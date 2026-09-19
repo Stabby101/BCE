@@ -1,17 +1,3 @@
-/*
- * BCE — DIRECTIVE-102 A1: the faction-matchup oracle. PURE TS (no Angular/DOM) so it unit-tests and
- * lifts to apps/api with the rest of the contract math. Answers "is TARGET a plausible opponent of
- * EMPLOYER at this era?" from TERRITORY adjacency (derived from systems.json `ownerByEra` — passed in
- * as a plain faction→borders map so this file stays pure) + a categorical floor mirroring the D-091
- * `eraImpossible` discipline (no IS-House-vs-Clan before the Clan Invasion; pirates always plausible).
- *
- * The adjacency map uses the SAME full faction-name strings as the catalog/contract (verified: systems.json
- * owners are "Capellan Confederation", "Clan Wolf", … — identical to EmployerEntry.name / target). Because
- * the territory data is multi-era (D-082), at the campaign era a Clan only appears in the borders of the
- * realms whose space it actually occupies — so a Capellan employer never borders Clan Wolf → that matchup
- * is excluded WITHOUT any hand-authored enmity table. The categorical floor is the belt-and-suspenders for
- * eras the territory data is too sparse to cover.
- */
 
 const norm = (s: string): string => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 const isClan = (name: string): boolean => /clan/i.test(name);

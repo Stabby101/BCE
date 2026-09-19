@@ -11,16 +11,14 @@ import { Injectable, computed, effect, inject, signal, untracked } from '@angula
 import { CampaignSaveStore } from '../campaign/campaign-save-store';
 import { ClaimRealtimeService } from '../campaign/claims/claim-realtime.service';
 import { sessionPhase } from '../campaign/chaos/chaos-contract'; // PD3 P2 — the session phase (the retention yields at 'complete')
-import { NewCampaignState } from '../campaign/new-campaign-state'; // ORDER-3 H17 — the retained last-OPFOR view is re-applied on the player's state
+import { NewCampaignState } from '../campaign/new-campaign-state';
 import type { CampaignSnapshot } from '../campaign/campaign-persistence.service';
-import type { MissionSpec } from '../campaign/mission/mission-spec'; // ORDER-3 H17 (type-only)
-import { sessionClockNotice, type SessionClockNotice } from '../campaign/gm/session-clock-notice'; // GM-3 P0 — tell the table
+import type { MissionSpec } from '../campaign/mission/mission-spec';
+import { sessionClockNotice, type SessionClockNotice } from '../campaign/gm/session-clock-notice';
 
-// GM-3 P0 — the session date this device has ACKNOWLEDGED, per campaign (localStorage; survives a reload, so a device that
 // slept through the fan is still told on reconnect). Written on the first sight (silently) and on dismiss.
 const SEEN_DATE_KEY = (campaignId: string) => `bce.session.date.${campaignId}`;
 
-// GM-1c — the join page's sign-in round-trip. Before leaving for the provider the page stashes what the player had
 // typed (name + side) in sessionStorage (per-tab, survives the redirect chain on the same origin); on return the
 // stash is restored and consumed. A stash older than this is stale (an abandoned attempt) and is dropped unread.
 const SIGNIN_STASH_KEY = 'bce.player.signin-stash';
@@ -47,9 +45,8 @@ export function parseLastJoin(raw: string | null): LastJoin | null {
 export class PlayerSessionService {
     private readonly store = inject(CampaignSaveStore);
     private readonly rt = inject(ClaimRealtimeService);
-    private readonly state = inject(NewCampaignState); // ORDER-3 H17
+    private readonly state = inject(NewCampaignState);
 
-    // ── ORDER-3 H17 (SMOKE-ODM-4P S45) — THE RETAINED LAST-OPFOR VIEW. The dashboard reconcile clears missionSpec the moment
     //    no branch is ACTIVE, so the fanned snapshot after a resolve carries NO spec and an OPFOR device's roster + sheet
     //    (missionSpec.opforForce) emptied. On the PLAYER's hydrate the last spec that carried an OpFor is kept and re-applied
     //    while the live snapshot has none — the same posture BLUFOR already has via deployedSet — marked "Resolved — awaiting
@@ -73,15 +70,11 @@ export class PlayerSessionService {
         const live = snap.missionSpec ?? null;
         if (live && (live.opforForce?.length ?? 0) > 0) { this.retainedSpec = live; this.retainedFor = id; this.specRetained.set(false); return; }
         if (live) { this.specRetained.set(false); return; } // a live spec without an OpFor (pre-roll) is the truth — nothing to retain over it
-        // PD3 P2 (PD3-11) — the retention YIELDS once the contract is COMPLETE: re-applying the last track's spec here was the
-        // brief that outlived its contract on Pendragon's phone. The phase is the shared pure decider over the fanned fields.
         if (sessionPhase({ presented: snap.presentedHotspot, contract: snap.contractSummary ?? snap.activeChaosContract, completed: snap.completedChaosContract, tree: snap.missionTree, spec: live }) === 'complete') { this.dropRetained(); return; }
         if (this.retainedSpec && this.retainedFor === id) { this.state.setMissionSpec(this.retainedSpec); this.specRetained.set(true); return; }
         this.specRetained.set(false);
     }
     private dropRetained(): void { this.retainedSpec = null; this.retainedFor = null; this.specRetained.set(false); }
-    /** GM-1c — this boot adopted a #bce_auth fragment: the page is the landing of a join-page sign-in. The join
-     *  component re-opens Bring-my-company off this so the account's campaigns list with no retry tap. */
     readonly returnedFromSignIn = signal(false);
     markSignInReturn(): void { this.returnedFromSignIn.set(true); }
     stashForSignIn(v: { name: string; side: string }): void {
@@ -99,8 +92,6 @@ export class PlayerSessionService {
         } catch { return null; }
     }
 
-    /** GM-3 P0 — TELL THE TABLE (PD2-4): the session-clock notice this device shows (null when none). Set off the fanned
-     *  snapshot's date vs the acknowledged one (the pure decision in gm/session-clock-notice); cleared by dismiss. */
     readonly clockNotice = signal<SessionClockNotice | null>(null);
     private seenDateKey(campaignId: string): string | null { try { return localStorage.getItem(SEEN_DATE_KEY(campaignId)); } catch { return null; } }
     private ackDate(campaignId: string, key: string): void { try { localStorage.setItem(SEEN_DATE_KEY(campaignId), key); } catch { /* no storage — the notice re-shows next time, never lost */ } }
@@ -116,8 +107,7 @@ export class PlayerSessionService {
         // Set up here (constructor = injection context); start() below is called after the awaited init.
         effect(() => {
             const snap = this.rt.campaignSnapshot();
-            if (snap) { this.store.hydrateFromSocket(snap as CampaignSnapshot); this.retainOrReapply(snap as CampaignSnapshot); } // ORDER-3 H17 — after the hydrate, never instead of it
-            // GM-3 P0 — the SAME fan tells the table: diff the fanned session date against the acknowledged one. The decision is
+            if (snap) { this.store.hydrateFromSocket(snap as CampaignSnapshot); this.retainOrReapply(snap as CampaignSnapshot); }
             // gated on the snapshot's own gmSession flag (a plain campaign's device never notifies); the first sight acks silently.
             // Reads below are UNTRACKED so this effect's dependency stays the snapshot alone (a dismiss must not re-hydrate).
             const id = untracked(() => this.store.campaignId());
@@ -145,13 +135,6 @@ export class PlayerSessionService {
     }
     lastJoin(): LastJoin | null { try { return parseLastJoin(localStorage.getItem(LAST_JOIN_KEY)); } catch { return null; } }
 
-    /** Called AFTER the (possibly-skipped) rehydrate so the hosted-join URL's ?campaign is authoritative.
-     *  HOTFIX-028: no ?campaign → leave campaignId null (the join screen prompts for the current QR; the
-     *  initializer already skipped binding the stale "last" on a public origin — no zombie session). A
-     *  ?campaign that DIFFERS from the currently-bound one is a switch → clear the prior campaign's residue
-     *  (claims/lobby/roster/snapshot mirrors) BEFORE binding, keeping device token + player name.
-     *  P5 (ORDER-2 b): no ?campaign BUT a persisted last join → rebind to it (the reload / tab-restore resume);
-     *  the HOTFIX-028 null-campaign branch keeps its behaviour when NOTHING is persisted. */
     start(): void {
         const params = new URLSearchParams(location.search);
         const urlId = params.get('campaign') || params.get('c');
@@ -164,7 +147,7 @@ export class PlayerSessionService {
             this.resumed.set(id);
         }
         const current = this.store.campaignId();
-        if (current && current !== id) { this.rt.resetCampaignResidue(); this.dropRetained(); } // campaign switch → drop old-session residue (+ the retained OpFor view, ORDER-3 H17)
+        if (current && current !== id) { this.rt.resetCampaignResidue(); this.dropRetained(); }
         this.store.setCampaignId(id); // the player components' effect joins THIS room over the socket
         this.rt.enableCampaignSync(); // pull the host snapshot over the P3-confined socket (cloud roster)
     }

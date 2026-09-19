@@ -1,13 +1,6 @@
-/*
- * BCE Inventory I (DIRECTIVE-055, T-037 slice 1) — the CATALOG service (read-only, server-authoritative).
- * Reads the `component_catalog` table baked by apps/api/seed/seed-catalog.mjs (DATA-002 — no runtime
- * fetch; the seed pulls the witness at build time). The era-gate + tech-base filter + formula cost come
- * from the pure catalog-rules module. CREATE TABLE IF NOT EXISTS here is a safety so the api serves an
- * (empty) catalog even before the seed runs.
- */
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { DatabaseSync } from 'node:sqlite';
-import { openDb } from '../open-db'; // HARDEN-7 A2 — shared durability-PRAGMA opener
+import { openDb } from '../open-db';
 import { dbPath } from '../db-path';
 import { type CatalogRow, type TechBase, availableInEra, techBaseMatches, evalCostFormula } from './catalog-rules';
 
@@ -25,7 +18,7 @@ export class CatalogService implements OnModuleInit {
     private db!: DatabaseSync;
 
     onModuleInit(): void {
-        this.db = openDb(dbPath()); // HARDEN-7 A2 — shared opener (WAL + busy_timeout + synchronous=NORMAL, asserted)
+        this.db = openDb(dbPath());
         this.db.exec(CREATE);
         const n = (this.db.prepare('SELECT COUNT(*) AS n FROM component_catalog').get() as { n: number }).n;
         this.log.log(`catalog ready (${n} rows)${n === 0 ? ' — run apps/api/seed/seed-catalog.mjs to populate' : ''}`);

@@ -1,11 +1,3 @@
-/*
- * BCE — BATTLE-VIEW force service (DIRECTIVE-030). Builds the MEKBAY-tab battle view: the DEPLOYED
- * BLUFOR (via the D-027 deployedSet() accessor — its designed consumer) + the active mission's OpFor
- * (the stored MissionSpec.opforForce), each as its own CBTForce of MekBay ForceUnits. Sheets load
- * lazily per viewport (T-020 scale guard). Persisted battle damage is re-applied on load; every live
- * armor/internal/crit/ammo edit MIRRORS back to the owning instance and debounce-persists. MekBay
- * components reused unedited (the D-010 pipeline; the round-trip is BCE-side wrappers + an effect).
- */
 import { DestroyRef, Injectable, Injector, effect, inject, signal, untracked } from '@angular/core';
 import { DataService } from '../../services/data.service';
 import { LoggerService } from '../../services/logger.service'; // ORDER-6 P6 — the era-less-boot fallback console line
@@ -23,7 +15,7 @@ import { engagementKeyOf } from '../claims/engagement-key';
 import { deployedSet } from '../force/deployed';
 import type { ProtoInstance } from '../force/force-generator';
 import { extractDamage, applyDamage, applyLiveState, liveState } from './battle-damage';
-import { resolveInstanceUnit } from '../dashboard/roster/resolve-instance-unit'; // GM-1 P3 — the positive-mulId leg (both dirs unscoped — fence-exempt)
+import { resolveInstanceUnit } from '../dashboard/roster/resolve-instance-unit';
 
 export type Side = 'blufor' | 'opfor';
 
@@ -48,7 +40,7 @@ export class BattleForceService {
     private readonly state = inject(NewCampaignState);
     private readonly store = inject(CampaignSaveStore);
     private readonly pilotService = inject(PilotService);
-    private readonly rt = inject(ClaimRealtimeService); // D-048 phase B — the battle-state fan
+    private readonly rt = inject(ClaimRealtimeService);
     private readonly destroyRef = inject(DestroyRef);
 
     private readonly forces: Record<Side, CBTForce | null> = { blufor: null, opfor: null };
@@ -57,7 +49,6 @@ export class BattleForceService {
     private readonly cache = new Map<string, BattleEntry>();      // `${side}:${id}` -> loaded entry (fu cached)
     private readonly mirrored = new Set<string>();               // sheets whose mirror effect is registered
     private readonly lastSeen = new Map<string, string>();       // `${side}:${id}` -> json of last emitted/applied state (echo guard)
-    // Authority is split by BUNDLE: the GM app persists battle edits to the campaign snapshot (D-030);
     // the PLAYER app fans its edits but never writes the snapshot (configurePlayer()).
     private authoritative = true;
     private built = false;
@@ -68,9 +59,6 @@ export class BattleForceService {
     readonly hasMission = signal(false);
     readonly ready = signal(false);
     readonly dataError = signal<string | null>(null);
-    /** ORDER-3 H17 — READ-ONLY: while true the sheet's local edits are mirrored but NEVER fanned to the host (the player sheet
-     *  sets it while it shows the RETAINED post-resolve view; the GM never sets it). A guard in the markup alone is decoration —
-     *  this is the witness the harness reads on the server. */
     readonly readOnly = signal(false);
     /** bumped when a sheet finishes loading, so the derivation re-emits the now-loaded entry. */
     private readonly rev = signal(0);
@@ -84,7 +72,6 @@ export class BattleForceService {
     async build(): Promise<void> {
         if (this.built) return;
         this.built = true;
-        // D-048 phase B — inbound battle deltas apply to the matching loaded sheet (the live fan).
         this.destroyRef.onDestroy(this.rt.onBattle((instanceId, state) => this.applyRemote(instanceId, state)));
         // The battle view (GM) / player sheet must JOIN the campaign room themselves to receive the fan —
         // the GM may never open the Claims/Lobby tab (which is what otherwise calls ensure). Idempotent.
@@ -127,7 +114,6 @@ export class BattleForceService {
         // are cached the same way now. A re-derivation returns the cached terminal entry, so the sheet effect (which only
         // ensureSheet's a 'pending' entry) can never re-drive a failed load — the change-detection resurrection loop
         // (entryFor re-creates 'error'→'pending' → effect → ensureSheet → throw → 'error' → …, which prod's uncapped CD
-        // turned into a permanent hang, H20) cannot form. retrySheet() is the ONLY path back to 'pending'.
         if (cached && cached.status !== 'pending') return cached;
         const unit = this.resolveUnit(inst);
         const entry: BattleEntry = { side, instanceId: id, name: inst.chassis, model: inst.model, tons: inst.tons, status: unit ? 'pending' : 'missing', unit };
@@ -168,7 +154,7 @@ export class BattleForceService {
             const live = this.rt.battleStates()[instanceId]; // a newer LIVE state (mid-battle load / late join) supersedes the persisted
             if (live) applyLiveState(fu, live.state as CBTSerializedState);
             if (side === 'blufor') this.applyCrew(instanceId, fu); // campaign pilot on the BLUFOR sheet
-            else if (this.state.campaignSystem() === 'hotspots') this.applyOpForSkill(fu); // D-124 — GM difficulty raises OpFor skill (HS-only)
+            else if (this.state.campaignSystem() === 'hotspots') this.applyOpForSkill(fu);
             this.lastSeen.set(key, JSON.stringify(liveState(fu))); // prime the echo guard AFTER all init -> no spurious fan on load
             this.registerMirror(side, instanceId, fu); // round-trip seam
             await this.tick();
@@ -189,19 +175,19 @@ export class BattleForceService {
         let primed = false;
         effect(() => {
             fu.getLocations(); fu.getCritSlots(); fu.getInventory(); fu.getHeat(); // track (heat now rides the live fan)
-            fu.phaseTrigger(); // D-049: re-fire after MekBay's COMMIT/END-PHASE (endPhase bumps this) so the CONSOLIDATED state fans
+            fu.phaseTrigger();
             fu.crewTrigger(); // TABLE-2 T2-3: re-fire on a crew/pilot-hit change so a pilot hit fans on its own (crew hits aren't a tracked getter)
             if (!primed) { primed = true; return; }
             const inst = this.instById.get(key);
             if (!inst) return;
             const live = liveState(fu);              // full state (heat intact) — the fan payload + dedup key
             const liveJson = JSON.stringify(live);
-            inst.damage = extractDamage(fu);          // the persisted envelope (heat NEUTRALIZED — D-030 live-only)
+            inst.damage = extractDamage(fu);
             if (liveJson !== this.lastSeen.get(key)) { // a GENUINE local edit (not an echo of an applied remote)
                 this.lastSeen.set(key, liveJson);
-                if (!this.readOnly()) this.rt.publishBattle(instanceId, live); // -> host persists + fans the delta to the room (ORDER-3 H17: never while read-only)
+                if (!this.readOnly()) this.rt.publishBattle(instanceId, live);
             }
-            if (this.authoritative) this.schedulePersist(); // GM writes the campaign snapshot (D-030); player never does
+            if (this.authoritative) this.schedulePersist();
         }, { injector: this.injector });
     }
 
@@ -232,9 +218,6 @@ export class BattleForceService {
         }
     }
 
-    /** D-124 — Hot Spots: the OpFor has no campaign pilot, so its sheet crew defaults to MekBay's baseline. The GM
-     *  difficulty slider raises the OpFor skill TIER (≤1.0 Regular · 1.1–1.3 Veteran · >1.3 Elite). Render-time only;
-     *  Traditional (and pre-D-124 HS) never reach this branch (gated at the call site). */
     private applyOpForSkill(fu: CBTForceUnit): void {
         const crew = fu.getCrewMember(0);
         if (!crew) return;
@@ -245,7 +228,6 @@ export class BattleForceService {
     }
 
     private resolveUnit(inst: ProtoInstance): Unit | undefined {
-        // GM-1 P3 — delegate to the PLATFORM-1 chain (roster-force's pattern): this sheet-side chain was
         // missing the positive-mulId leg (id:-1 sentinel guarded — 1,545 catalog units share -1), which
         // bites exactly the player-imported units whose unitRef drifted from the receiving catalog's names.
         return resolveInstanceUnit(inst, this.dataService.getUnitByName(inst.unitRef), this.dataService.getUnits());

@@ -1,17 +1,8 @@
-/*
- * BCE retool — New Campaign, step 4: unit size + starting capital + resource level
- * (SCAFFOLD). DIRECTIVE-006 (size + capital) + DIRECTIVE-007 (resource level).
- * Pick a unit size (Single 'Mech → Regiment); capital presets scale with the size's
- * 'Mech count (+ write-in custom); the resource level (Lean / Normal / Established)
- * provides a DropShip scaled to the size. "Begin campaign" needs size + capital +
- * resources, then writes all three to the wizard state and advances to the campaign
- * dashboard. No persistence yet — that is a later directive; this only assembles the choice.
- */
 import { Component, ChangeDetectionStrategy, computed, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NewCampaignState, type CampaignCapital, type CampaignUnitSize } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
-import { WarchestService } from '../chaos/warchest.service'; // D-109 — seed the Warchest for a Hot Spots campaign
+import { WarchestService } from '../chaos/warchest.service';
 import { ContractMarketService } from '../contract/contract-market.service';
 import { OrdersService } from '../orders/orders.service';
 import { ForceGeneratorService } from '../force/force-generator.service';
@@ -62,17 +53,16 @@ export class SizeCapitalComponent {
     private readonly orders = inject(OrdersService);
     private readonly forceGen = inject(ForceGeneratorService);
     private readonly pilots = inject(PilotService);
-    private readonly warchest = inject(WarchestService); // D-109
+    private readonly warchest = inject(WarchestService);
 
     protected readonly sizes = SIZES;
     protected readonly generating = signal(false);
-    protected readonly beginError = signal<string | null>(null); // HOTFIX-005: catalog-load failure at Begin (error + retry, never a silent empty force)
+    protected readonly beginError = signal<string | null>(null);
 
     protected readonly selectedSize = signal<SizeDef | null>(null);
     protected readonly selectedCapital = signal<CampaignCapital | null>(null);
     protected readonly customText = signal<string>('');
     protected readonly selectedResource = signal<string | null>(null); // tier id
-    // DIRECTIVE-068 — the Quick Mission arms-mix toggle ('Mechs only / Combined Arms); flows into the pool.
     protected readonly quickMission = this.state.quickMission;
     protected readonly armsMix = this.state.armsMix;
     protected setArmsMix(v: 'mechs' | 'combined'): void { this.state.setArmsMix(v); }
@@ -172,14 +162,11 @@ export class SizeCapitalComponent {
         this.state.setCapital(c);
         this.state.setResources(res);
         // Generate the campaign's one-time content ONCE now, so it rides the initial save and
-        // reload never rerolls (D-017/D-018). Both gens are pure + stored on the snapshot.
         this.generating.set(true);
         this.beginError.set(null);
-        // HOTFIX-005: the FORCE draw must not proceed on an unready catalog. generateForCampaign now RETRIES
         // the load and THROWS CatalogUnavailableError if it still can't load — surface that (error + retry),
         // never open the dashboard with a 0-mech force.
         try {
-            // D-018: RNG starting force (every campaign; build-your-own writes an empty roster).
             await this.forceGen.generateForCampaign();
         } catch {
             this.generating.set(false);
@@ -187,14 +174,10 @@ export class SizeCapitalComponent {
             return; // no force stored → a Retry re-generates cleanly; do NOT open an empty dashboard
         }
         try {
-            // D-020: pilots — one per 'Mech + spares, commander gets the best (needs the D-019
-            // structure's commander designation, set inside generateForCampaign above). D-067: auto-crew runs
             // for a Quick Mission too, so the one-shot force is immediately playable.
             this.pilots.generateForCampaign();
-            // D-067: a Quick Mission SKIPS the campaign chrome — no contract market / House orders. The
             // one-shot synthesizes its own ACTIVE contract on "Generate Mission".
             if (!this.state.quickMission()) {
-                // D-017: merc contract market (merc only). D-032: non-merc campaigns get House orders instead.
                 if (this.state.force() === 'MERC') await this.market.generateForCampaign();
                 else await this.orders.generateForCampaign();
             }
@@ -202,27 +185,20 @@ export class SizeCapitalComponent {
             /* non-catalog pilots/contract hiccup — non-fatal; the dashboard shows the partial state (as before) */
         }
         this.generating.set(false);
-        // D-022: start the campaign clock at the start date + seed the live treasury from capital (the Quick
         // Mission market still needs a treasury to field/buy the force).
         this.state.setCurrentDate(this.state.startDate());
         this.state.setTreasury(c.amount);
-        // D-109 — Hot Spots campaigns seed the Warchest (3,000 SP + Rep 1 + Scale 1 + the opening ledger line).
         // Traditional keeps the C-bill treasury above; the two economies don't mix (the treasury still exists for
         // the shared shop/market plumbing, but the Hot Spots UI drives the Warchest).
         if (this.state.campaignSystem() === 'hotspots') this.warchest.seed();
-        // D-079 — default the campaign's Star Map location to the chosen faction's capital (GM-changeable
         // later on the Overview). Pure synchronous lookup (tiny capital map; the big systems.json stays lazy).
         this.state.setCurrentLocation(capitalSystemIdFor(this.state.faction()));
         if (!this.state.quickMission()) {
             // Save point = Begin: write an initial autosave + set "last" so a dashboard refresh and cover
-            // Resume restore this campaign (multi-save store, D-013).
             void this.store.beginSave();
         } else {
-            // D-069 (B): a one-shot force is simply FIELDED — every unit DEPLOYED (no reserve/cold for a quick
             // mission), so the roster reads as deployed AND the battle gets the full BLUFOR (deployedSet).
             this.state.setStartingForce((this.state.startingForce() ?? []).map((i) => ({ ...i, condition: 'Deployed' })));
-            // D-069 (A): create the EPHEMERAL server session NOW so the dashboard Lobby has a real campaignId
-            // (the D-048 join-QR / claims bind to it). Ephemeral = not a resumable save, but a real host room.
             await this.store.beginEphemeralSession();
         }
         void this.router.navigate(['/campaign']);

@@ -1,11 +1,3 @@
-/*
- * BCE — DIRECTIVE-IMPORT-5 (Part A) — the shared TRACK PICKER. Extracted from the dashboard operations board's inline
- * D-132 picker so the SAME control can also sit on the active-contract card ("▶ Play a track", next to "Advance a
- * month") — the book's two moves side by side. Given an AVAILABLE branch id, it offers every track source (This hot
- * spot / My tracks / Universal §18 / 🎲 Random) and drives the existing MissionTreeService.generateBranch({presetSeed})
- * override path. Works for a custom hot spot with ZERO embedded tracks (the §18 + Random paths need no authored track).
- * Pure presentation over already-shared helpers — no new state, no schema change.
- */
 import { Component, ChangeDetectionStrategy, computed, inject, input } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { MissionTreeService } from '../mission/mission-tree.service';
@@ -18,8 +10,6 @@ import { synthSeedFromTemplate, UNIVERSAL_TRACK_LIBRARY, type TrackTemplateKey }
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         <div class="tp-pick">
-            <!-- IMPORT-5 — no fixed DOM id: this shared component can mount twice on the Contracts tab (active-card +
-                 operations board) for the same branch; a static id would collide. The select carries its aria-label. -->
             <span class="tp-lbl">Pick a track to play:</span>
             <select #tsel class="tp-sel" data-testid="cc-track-select" aria-label="Track to play">@for (g of trackGroups(); track g.group) { <optgroup [label]="g.group">@for (c of g.items; track c.value) { <option [value]="c.value">{{ c.name }}</option> }</optgroup> }</select>
             <button type="button" class="tp-btn go" [disabled]="!canGenerate()" (click)="playChosen(tsel.value)" data-testid="cc-generate-chosen">Play this track &#9656;</button>

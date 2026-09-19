@@ -1,10 +1,3 @@
-/*
- * BCE — the MEKBAY tab = the BATTLE VIEW (DIRECTIVE-030). Two allegiance-separated sections: the
- * DEPLOYED BLUFOR (deployedSet) + the active mission's OPFOR, both on MekBay's own editable Classic
- * sheets. Sheets load lazily per viewport (bceInView, T-020). No mission -> deployed-only skirmish;
- * nothing deployed -> empty state. GM-facing this slice (ROLE-002 / player view = T-030). BCE chrome
- * on theme tokens; MekBay's sheet UI inside is MekBay's. Height-safe (the dashboard panel owns scroll).
- */
 import { Component, ChangeDetectionStrategy, computed, inject } from '@angular/core';
 import { BattleForceService, type Side } from './battle-force.service';
 import { BattleSheetComponent } from './battle-sheet';

@@ -1,14 +1,6 @@
-/*
- * BCE — UNIT ACQUISITION overlay (DIRECTIVE-029). A full-screen dossier overlay (the D-025 pattern:
- * Esc/click-out, height-safe internal scroll) opened from the roster header. Two tabs: BUY (the
- * eligibility-filtered + gated catalog, search + weight-class filter, a GM override that widens to all
- * combat 'Mechs and surfaces the gate failures per row, a per-row GM ADD) and SELL/STRIKE (the force's
- * units at resale, with a deployed guard + confirm). All actions route through AcquisitionService.
- */
 import { Component, ChangeDetectionStrategy, computed, inject, signal, output } from '@angular/core';
 import { AcquisitionService, type BuyRow, type OwnedRow } from './acquisition.service';
 import { BceUnitSpriteComponent } from '../sprite/unit-sprite';
-// DIRECTIVE-063 (C): reuse MekBay's unit-browser filter MODEL (field keys + labels) so our market popover names
 // the same dimensions as the unit browser — applied with light market-native predicates here, not MekBay's worker
 // / advanced-search UI. RANGE_FILTERS gives tons/bv/year; DROPDOWN_FILTERS gives techBase/weightClass; SORT_OPTIONS
 // the sort labels.
@@ -31,10 +23,9 @@ export class AcquisitionComponent {
     readonly close = output<void>();
     protected readonly acq = inject(AcquisitionService);
 
-    // HOTFIX-005: catalog readiness for the BUY tab's loading / failed+retry states.
     protected readonly catalogReady = this.acq.catalogReady;
     protected readonly catalogLoading = this.acq.catalogLoading;
-    protected readonly catalogError = this.acq.catalogError; // HOTFIX-012
+    protected readonly catalogError = this.acq.catalogError;
     protected retryCatalog(): void { this.acq.retryCatalog(); }
 
     constructor() {
@@ -54,7 +45,7 @@ export class AcquisitionComponent {
     protected readonly sortDir = signal<'asc' | 'desc'>('asc');
     protected readonly sortFields: { key: SortKey; label: string }[] = [
         { key: 'name', label: this.mekLabel(SORT_OPTIONS, 'name', 'Name') },
-        { key: 'tons', label: 'Tonnage' }, // MekBay calls it 'Tons'; James asked for 'Tonnage'
+        { key: 'tons', label: 'Tonnage' },
         { key: 'bv', label: this.mekLabel(SORT_OPTIONS, 'bv', 'BV') },
         { key: 'year', label: this.mekLabel(SORT_OPTIONS, 'year', 'Year') },
     ];

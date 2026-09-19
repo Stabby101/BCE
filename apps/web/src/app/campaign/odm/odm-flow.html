@@ -1,5 +1,3 @@
-<!-- FORKED FROM campaign/dashboard/flow/flow.html @ 06b1947 - DIRECTIVE-ODM-4 (a DRIFT SURFACE). Strips: the rail variant + every Forge affordance + HS branches; adds: authored 4-tier edge labels, authored gate text in the veil, true-tier badges. -->
-<!-- ODM-4 FORK: the D-119 rail variant STRIPPED -->
 @if (isEmpty()) {
     <div class="fl-head"><div class="ph">Campaign flow</div></div>
     <div class="fl-empty">
@@ -23,11 +21,9 @@
          background (never on a node), drag, release. Pointer events, mouse only — touch keeps the native scroll. -->
     <div class="flow-pan" [class.panning]="panning()" (pointerdown)="panStart($event)" (pointermove)="panMove($event)" (pointerup)="panEnd($event)" (pointercancel)="panEnd($event)" data-testid="odm-board">
         <div class="flow-canvas" [style.width.px]="layout().width" [style.height.px]="layout().height">
-            <!-- ODM-5 — the NOW bar: semi-transparent, carries the campaign date, descends as the clock advances -->
             @if (layout().barY >= 0) {
                 <div class="now-bar" [style.top.px]="layout().barY" data-testid="now-bar"><span class="nb-date">▼ NOW · {{ nowText() }}</span></div>
             }
-            <!-- ODM-8: AT REST the calendar draws NO edges — the branching is a per-node reveal (tap/hover/focus). -->
             <svg class="edges" [attr.width]="layout().width" [attr.height]="layout().height" aria-hidden="true">
                 @for (e of litEdges(); track $index) {
                     <path [attr.d]="e.path" class="edge lit" [class.e-fail]="e.gate.includes('FAILURE')" data-testid="lit-edge"></path>
@@ -83,8 +79,6 @@
                 @switch (n.state) {
                     @case ('RESOLVED') {
                         <div class="fd-tier t-{{ n.resolution?.outcomeTier }}">{{ odmTierOf(n.branchId) ?? n.resolution?.outcomeTier }}</div>
-                        <!-- IMPORT-6 FOLLOWUPS — a Hot Spots track resolved under a VP model: the AUTHORED objectives with the marks the
-                             GM set (snapshotted at resolve, resolution.aar.objectiveMarks). Legacy / Traditional → the trio below, unchanged. -->
                         @if (n.resolution?.aar?.objectiveMarks?.length) {
                             <div class="fd-sec">Objective outcome</div>
                             <ul class="fd-ans">
@@ -102,8 +96,6 @@
                         }
                         @if (n.resolution?.notes) { <div class="fd-sec">Notes</div><p class="fd-p">{{ n.resolution?.notes }}</p> }
                         <div class="fd-date">Resolved {{ dateText(n.resolution?.resolvedDate) }}</div>
-                        <!-- DIRECTIVE-122 — the per-mission ITERATION LEDGER pop-out (Hot Spots-only; Traditional never
-                             sets resolution.ledger). Renders the stored snapshot verbatim — no re-derive. -->
                         @if (isHotspots() && n.resolution?.ledger; as L) {
                             <details class="fd-ledger">
                                 <summary>Iteration ledger<span class="fdl-win">@if (L.dateFrom) { {{ L.dateFrom }}@if (L.dateTo && L.dateTo !== L.dateFrom) {  → {{ L.dateTo }} } }</span></summary>
@@ -138,7 +130,6 @@
                             <p class="fd-p">A hand-authored operation — its packet is the mission document.</p>
                         }
                         @if (windowInfo(n.branchId); as w) { @if (w.closes) { <p class="fd-note" [class.warn]="w.soon">Window closes {{ w.closes }}@if (w.soon) { — this one dies if you jump elsewhere first }</p> } }
-                        <!-- ODM-5 Part D: the tree IS the board — BEGIN OPERATION lives here (still never a Forge roll) -->
                         @if (packetOf(n.branchId)) {
                             <button type="button" class="fd-btn go" [disabled]="!canBegin()" (click)="doBegin(n.branchId)" data-testid="tree-begin">BEGIN OPERATION &raquo;</button>
                             <button type="button" class="fd-btn" (click)="doBriefing(n.branchId)" data-testid="tree-brief">View briefing &raquo;</button>
@@ -171,18 +162,11 @@
     }
 }
 
-<!-- DIRECTIVE-073 — the CURRENT mission's STATE MACHINE + GATES (dev/diagnostic). READ-ONLY reflection of the
-     real lifecycle state; sits BELOW the campaign flow above (which is unchanged). Updates live as the mission
-     advances (deploy → claims → AAR → repair & salvage → infirmary → outcome). -->
-<!-- DIRECTIVE-120 — the advisory gate window duplicates the D-119 top-of-sheet Process Rail under Hot Spots, so hide
-     it there (the HS Contracts embed shows the TREE only). Traditional keeps it in its Flow tab (unchanged). -->
 @if (!isHotspots()) {
 <section class="gateflow">
     <div class="fl-head"><div class="ph">Mission state &amp; gates <span class="gf-tag">dev · live</span></div></div>
     @if (missionStage(); as ms) {
         <p class="note">The current mission's lifecycle — what's resolved and what's gating completion. <b>{{ ms.label }}</b></p>
-        <!-- DIRECTIVE-115 — advisory clickable rail: each step jumps to where it's done; the next actionable step is
-             flagged "do this next". Navigation only — you can still open any tab and edit. -->
         <div class="gf-track">
             @for (g of ms.nodes; track g.key) {
                 <button type="button" class="gf-node st-{{ g.status }}" [class.is-next]="g.key === nextGate()?.key"

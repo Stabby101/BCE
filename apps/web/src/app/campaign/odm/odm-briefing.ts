@@ -1,19 +1,3 @@
-/*
- * DIRECTIVE-ODM-2 — the GM MISSION BRIEFING surface (NEW odm/ component, not a fork: no Classic analog renders
- * tagged mission markdown). Fetches packet documents from the entitlement-gated pack API at view time and
- * renders the DOCTRINE §8 tag set mapped to the pack's canonical boxes.
- *
- * THE OPFOR GATE: opfor.md renders ONLY here, behind the clearly-labeled GM-ONLY sub-tab. This component
- * lives in the GM bundle (odm-dashboard mount), fetches into LOCAL signals only — nothing it loads touches
- * NewCampaignState, the persisted snapshot, or any socket fan. Session players never receive this content
- * through ANY client path: the snapshot-fan carries campaign state only, and the pack API is entitlement-gated
- * server-side WHEN AUTH IS ON (hosted). CAVEAT (adversarial-panel finding, ruled posture): in dev/LAN
- * single-tenant mode (BCE_AUTH_REQUIRED unset) the pack API is permissive like every other surface — a LAN
- * player who knows the URL could fetch the packet directly. Flagged to James for a ruling if LAN-table play
- * with untrusted players needs a stricter pack gate.
- *
- * engine-odm scope: imports the odm pack service + Angular core only — never engine-classic/hs files.
- */
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { rollOpfor, type OdmForceSpec, type OdmRolledRoster } from './odm-opfor-roll';
@@ -124,14 +108,11 @@ export function parsePacket(text: string): Block[] {
                     <button type="button" class="ob-vbtn" [class.on]="view() === 'maps'" (click)="setView('maps')" data-testid="ob-maps">Maps</button>
                     <button type="button" class="ob-vbtn opfor" [class.on]="view() === 'opfor'" (click)="setView('opfor')" data-testid="ob-opfor">⚔ OPFOR (GM)</button>
                 </div>
-                <!-- ODM-3 addendum C — in-app print: browser-print over the rendered view (build.py = the premium docx path).
-                     OPFOR prints only from the GM view — the same gate as rendering (an unrendered doc can't print). -->
                 <button type="button" class="ob-vbtn ob-print" [disabled]="!sel() || !doc()" (click)="onPrint()" data-testid="ob-print">Ὓ6 Print</button>
             </div>
 
             @if (view() === 'opfor') {
                 <div class="ob-gmwarn" data-testid="ob-gmwarn">OPFOR PACKET — GM EYES ONLY. The truth behind the intelligence gaps. Never show this surface to players; the player packet is the Package + FRAGORD.</div>
-                <!-- ODM-7 — the seeded roster: authored identity fixed, rank-and-file rolled from authored pools. -->
                 @if (rolledRoster(); as r) {
                     <div class="ob-roster" data-testid="ob-roster">
                         <div class="obr-h">FORCE ROSTER — THIS PLAYTHROUGH <span class="obr-seed">seed {{ r.seed.slice(0, 8) }}</span>
@@ -160,7 +141,7 @@ export function parsePacket(text: string): Block[] {
                 <div class="ob-empty">Loading packet…</div>
             } @else if (doc() === '') {
                 @if (view() === 'opfor') {
-                    <div class="ob-empty">OPFOR packets serve only on a hosted, entitled session (PM ruling — the player-peek cheat is what the two-packet split prevents). LAN tables: print it via tools/odm-docx/build.py.</div>
+                    <div class="ob-empty">OPFOR packets serve only on a hosted, entitled session (the player-peek cheat is what the two-packet split prevents). LAN tables: print it via tools/odm-docx/build.py.</div>
                 } @else {
                     <div class="ob-empty">This packet failed to load (entitlement or host unreachable).</div>
                 }
@@ -220,8 +201,6 @@ export function parsePacket(text: string): Block[] {
         .ob-gmwarn { background:#3a1714; border:1px solid #6b3a2f; color:#f2a4a4; border-radius:9px; padding:10px 14px; font-size:12px; font-weight:700; margin-bottom:10px; }
         .ob-print { margin-left:auto; }
         .ob-print-run { display:none; }
-        /* ODM-3 addendum C — print pagination: boxes never split; classification repeats per page (fixed);
-           FRAGORD-compact comes from the shared 10.5pt print body. */
         @media print {
             .ob-bar, .ob-gmwarn { display:none !important; }
             .ob-doc { font-size:10.5pt; padding:0.35in 0.15in; border-radius:0; }
@@ -230,7 +209,6 @@ export function parsePacket(text: string): Block[] {
                             letter-spacing:.08em; color:#1A1000; background:#FFF8E6; padding:2px 0; }
             .ob-print-run.top { top:0; } .ob-print-run.bot { bottom:0; }
         }
-        /* ODM-7 — the rolled roster (GM-side) */
         .ob-roster { background:#141a21; border:1px solid #6b3a2f; border-radius:9px; padding:10px 14px; margin-bottom:10px; }
         .ob-roster.pending { color:#9fb2c4; font-size:12px; font-style:italic; }
         .obr-h { font-weight:800; font-size:12px; letter-spacing:.08em; color:#e0c88b; display:flex; gap:12px; flex-wrap:wrap; align-items:baseline; }
@@ -286,8 +264,6 @@ export class OdmBriefingComponent {
     private readonly state = inject(NewCampaignState);
     private readonly data = inject(DataService);
     protected readonly missions = signal<OdmMissionEntry[]>([]);
-    // ── ODM-7 — FORCE ROSTER (THIS PLAYTHROUGH): fetched force-spec + the seeded roll, GM-side only.
-    //    The roster is NEVER persisted — a pure fn(seed, spec) recomputed here behind the ODM-2 opfor gate. ──
     protected readonly opforSpec = signal<OdmForceSpec | null>(null);
     protected readonly odmNodes = signal<{ id: string; packet: string | null }[]>([]);
     /** The tree node bound to the shown packet (seeds are keyed by NODE id, the briefing by PACKET id). */
@@ -320,7 +296,6 @@ export class OdmBriefingComponent {
         void (async () => {
             const ms = await this.pack.missionIndex();
             this.missions.set(ms);
-            // ODM-3 — a "View briefing ▸" deep-link (the missions board) pre-selects its packet; one-shot.
             const focus = this.pack.briefingFocus();
             this.pack.briefingFocus.set(null);
             // TABLE-2 T2-2 — the Briefing tab FOLLOWS THE ACTIVE MISSION, never the manifest's first packet (ms[0]).
@@ -342,7 +317,6 @@ export class OdmBriefingComponent {
 
     protected onPick(e: Event): void { this.sel.set((e.target as HTMLSelectElement).value); void this.loadDoc(); }
     protected setView(v: View): void { this.view.set(v); void this.loadDoc(); }
-    /** ODM-3 addendum C — body.odm-printing scopes the global print rules (hide the app shell, show the doc). */
     protected onPrint(): void {
         document.body.classList.add('odm-printing');
         const done = () => { document.body.classList.remove('odm-printing'); window.removeEventListener('afterprint', done); };
@@ -354,7 +328,6 @@ export class OdmBriefingComponent {
         if (!id) return;
         this.doc.set(null);
         this.doc.set((await this.pack.missionDoc(id, this.view())) ?? '');
-        // ODM-7 — the force-spec rides the opfor view only (same gate class; null when unauthored/ungated)
         if (this.view() === 'opfor') {
             if (!this.odmNodes().length) {
                 const t = await this.pack.treeJson();

@@ -1,11 +1,3 @@
-/*
- * BCE retool — UNIT ACQUISITION service (DIRECTIVE-029). The Angular seam around the market: builds the
- * BUY browse rows (D-018 eligibility ∩ the four MARKET GATES, GM-override-aware) and the SELL rows from
- * the force, and runs BUY / GM-ADD / SELL / DELETE against the live D-022 treasury. Mints into RESERVE
- * pristine + pilotless with provenance (D-029); SELL/DELETE unassign the pilot to spares (never sell
- * people), prune an emptied lance (D-027), and re-designate the commander (D-019). All mutations persist
- * in place + write a dated campaign-log entry. Market money is flagged INTERIM (T-022/T-025 valuation).
- */
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { DataService } from '../../services/data.service';
@@ -25,8 +17,6 @@ export interface BuyRow {
     gates: GateFlags;
     passes: boolean; // clears all four gates (buyable without GM override)
     overrides: string[]; // the gate-failure labels (shown when GM override is on)
-    // DIRECTIVE-063 (D): the sort/filter dimensions mirrored flat onto the row so the market's sort + filter
-    // read a stable VM (not the Unit shape). year = D-055 intro_year; techBase/weightClass/tons/bv from the unit.
     tons: number;
     bv: number;
     year: number; // intro year
@@ -56,12 +46,10 @@ export class AcquisitionService {
     readonly resaleRatio = MARKET_TUNABLES.resaleRatio;
     readonly treasury = computed(() => this.state.treasury() ?? 0);
 
-    // HOTFIX-005 + DEPLOY-005: the market's GM-override browses the FULL catalog (the era slice has only the
     // era's units), so readiness here = isFullLoaded — and opening the market LAZY-LOADS the full catalog
     // (the one place the 24MB loads), showing a loading state until then. A per-era slice does NOT satisfy it.
     readonly catalogReady = computed(() => this.data.isFullLoaded());
     readonly catalogLoading = computed(() => this.data.isDownloading());
-    // HOTFIX-012: surface a genuine failure (or a hang past the timeout) so the BUY tab shows an error + Retry
     // instead of an endless "Loading the unit catalog…". Set when the load resolves without isFullLoaded, or
     // after a hard timeout; cleared on a fresh attempt.
     readonly catalogError = signal(false);
@@ -91,7 +79,7 @@ export class AcquisitionService {
             const gates = evalGates(u, ctx);
             return {
                 unit: u, price: priceOf(u), fallback: priceIsFallback(u), gates, passes: passesAllGates(gates), overrides: overriddenGates(gates),
-                tons: u.tons, bv: u.bv, year: u.year, techBase: u.techBase, mixed: u.mixed, weightClass: u.weightClass, // DIRECTIVE-063 (D); REBASE-1: mixed flag
+                tons: u.tons, bv: u.bv, year: u.year, techBase: u.techBase, mixed: u.mixed, weightClass: u.weightClass,
             };
         });
     });
@@ -127,7 +115,7 @@ export class AcquisitionService {
         this.state.setTreasury(this.treasury() - price);
         this.mint(unit, { origin: 'purchased', acquiredDate: this.today() });
         this.pilots.mintRecruit();
-        this.state.logMoney(`Purchased ${unit.chassis} ${unit.model}`, -price, null, 'purchase'); // D-074 (±amount + balance)
+        this.state.logMoney(`Purchased ${unit.chassis} ${unit.model}`, -price, null, 'purchase');
         void this.store.persistCurrent();
         return true;
     }
@@ -154,7 +142,7 @@ export class AcquisitionService {
         if (mode === 'sell') {
             const resale = this.resaleFor(inst, this.unitFor(inst));
             this.state.setTreasury(this.treasury() + resale);
-            this.state.logMoney(`Sold ${inst.chassis} ${inst.model}`, resale, null, 'sale'); // D-074 (±amount + balance)
+            this.state.logMoney(`Sold ${inst.chassis} ${inst.model}`, resale, null, 'sale');
         } else {
             this.log(`Struck ${inst.chassis} ${inst.model} from the rolls (write-off)`);
         }
@@ -171,8 +159,6 @@ export class AcquisitionService {
     }
 
     private mint(u: Unit, provenance: Provenance): void {
-        // RESERVE = no lanceId; pristine (Active); pilotless. The player crews + assigns a lance via D-020/27.
-        // HF-020: a Quick Mission is DEPLOYED-ONLY — D-069 removed the per-cell deploy dropdown, so a unit added
         // here (a CUSTOM quick force builds entirely through this seam) must be DEPLOYED on add, matching the
         // begin-time deploy-all that pre-made forces get (size-capital). Otherwise it lands in Reserve with no
         // way to deploy → deployedSet empty → the one-shot can't field/start. Ordering-proof: it doesn't matter

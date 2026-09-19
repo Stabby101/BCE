@@ -169,4 +169,25 @@ describe('UnitsCatalogService custom servers', () => {
         expect(dbMock.getCustomServerUnits).not.toHaveBeenCalled();
         httpMock.verify(); // no outstanding custom-server requests
     });
+    // BCE-EDIT (P8, 2026-09-18): a resident era SLICE is not hydrated catalog data. With the remote ETag unavailable the base
+    // treats hydrated data as "loaded from cache" and latches `initialized` — on a slice that meant the full catalog was never
+    // fetched again in the session (the ODM field walk's catalog prerequisite waited for good). The witness: HEAD fails, a slice
+    // is resident → the catalog still fetches the full set; a real hydrate clears the flag.
+    it('a resident SLICE does not satisfy hasHydratedData: with no remote ETag the full catalog is still fetched', async () => {
+        optionsSignal.set({ unitServers: [] as string[] } as unknown as Options);
+        service.hydrateSlice([createEmptyUnit({ id: 7, name: 'Slim One' })]);
+        expect(service.getUnits().length).toBe(1);
+        const initializePromise = service.initialize();
+        await settleMicrotasks();
+        const head = httpMock.expectOne(`${REMOTE_HOST}/units.json?ngsw-bypass=true`);
+        expect(head.request.method).toBe('HEAD');
+        head.flush('', { status: 500, statusText: 'held' }); // no ETag → the "loaded from cache" branch is on the table
+        await settleMicrotasks();
+        const primaryBody: Units = { version: '1', etag: '', units: buildPrimaryUnits(9000) }; // the validator's floor
+        await flush(`${REMOTE_HOST}/units.json?ngsw-bypass=true`, 'GET', primaryBody, 'full-etag'); // it fetched: the slice did not count
+        await initializePromise;
+        expect(service.getUnits().length).toBe(9001);
+        await service.initialize(); // now initialized on the FULL set — no further request
+        httpMock.expectNone(`${REMOTE_HOST}/units.json?ngsw-bypass=true`);
+    });
 });

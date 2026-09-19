@@ -71,10 +71,18 @@ export class UnitsCatalogService extends CatalogBaseService<Units, Units> {
     // so no consumer observes a half-hydrated catalog. Modeled on the custom-units working-set mutator below.
     public hydrateSlice(units: readonly UnitSummary[]): void {
         this.hydrate({ units: units as UnitSummary[] } as Units);
+        this.sliceResident = true; // BCE-EDIT (P8): a slice in the working set is NOT hydrated catalog data
     }
 
+    // BCE-EDIT (P8, 2026-09-18): true while the working set is an era SLICE (slim units — no `as`, weapons-only comp).
+    // hasHydratedData() must NOT count it: with a slice resident and the remote ETag unavailable, the base's
+    // "loaded from cache (offline or remote unavailable)" branch latched `initialized` on the SLICE, so every later
+    // initialize() skipped the full download, post-processed slim units (getUnitVariantGroupKey → as.TP → TypeError)
+    // and isFullLoaded never flipped — the ODM field walk waited on its catalog for good, with no path back.
+    private sliceResident = false;
+
     protected override hasHydratedData(): boolean {
-        return this.units.length > 0;
+        return this.units.length > 0 && !this.sliceResident;
     }
 
     protected override async loadFromCache(): Promise<Units | undefined> {
@@ -89,6 +97,7 @@ export class UnitsCatalogService extends CatalogBaseService<Units, Units> {
         this.units = normalizeNullMulUnitIds(data.units);
         this.unitRuntimeService.preprocessUnits(this.units);
         this.etag = data.etag || '';
+        this.sliceResident = false; // BCE-EDIT (P8): a cache/remote hydrate IS the catalog (hydrateSlice re-flags after this)
     }
 
     protected override normalizeFetchedData(data: Units, etag: string): Units {

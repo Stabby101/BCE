@@ -1,12 +1,5 @@
-/*
- * DIRECTIVE-HARDEN-6 Part B — pins the shipped WS payload guards (ws-validate.ts). Every mutating message's
- * shape/type rules, the string bounds, and — specifically — the battle-state gate (non-object/null, non-
- * serializable, and the 256 KB size bound). These lock HARDEN-5 Part A: a legit client payload passes; only
- * malformed is rejected. If one fails after a refactor, the refactor changed a validation rule — do not loosen
- * the guard to match; compare against the shipped behavior.
- */
-import { vJoin, vClaim, vRelease, vLobbyJoin, vLobbyMut, vBattle, vFavorite, vSidePref, vImportForce, vOdmIntent, ODM_INTENT_VERBS, MAX_BATTLE_STATE_BYTES, MAX_IMPORT_FORCE_BYTES, MAX_IMPORT_UNITS } from './ws-validate';
-import { vSignContract, vEngagementClose } from './ws-validate';
+import { vJoin, vClaim, vRelease, vLobbyJoin, vLobbyMut, vBattle, vFavorite, vSidePref, vImportForce, vOdmIntent, ODM_INTENT_VERBS, MAX_BATTLE_STATE_BYTES, MAX_IMPORT_FORCE_BYTES, MAX_IMPORT_UNITS, vSeat } from './ws-validate';
+import { vSignContract, vEngagementClose, vHandTable } from './ws-validate';
 
 const ok = (v: { ok: boolean }) => expect(v.ok).toBe(true);
 const bad = (v: { ok: boolean; reason?: string }) => { expect(v.ok).toBe(false); expect(typeof v.reason).toBe('string'); };
@@ -117,7 +110,7 @@ describe('vBattle — the state gate (shape + non-serializable + 256 KB bound)',
     });
 });
 
-describe('vOdmIntent (ODM-18 P1 — the allowlist LAW)', () => {
+describe('vOdmIntent (P1 — the allowlist LAW)', () => {
     const base = { campaignId: 'c', token: 't' };
     it('accepts every allowlisted verb with its shape', () => {
         ok(vOdmIntent({ ...base, verb: 'reassign-pilot', payload: { instanceId: 'u1', pilotId: 'p1' } }));
@@ -132,7 +125,31 @@ describe('vOdmIntent (ODM-18 P1 — the allowlist LAW)', () => {
         ok(vOdmIntent({ ...base, verb: 'bench-repair', payload: { label: 'Medium Laser', n: 1 } }));
         ok(vOdmIntent({ ...base, verb: 'bench-ammo-clear', payload: { bin: 'Narc' } }));
         ok(vOdmIntent({ ...base, verb: 'donor-strip-request', payload: { instanceId: 'u1' } }));
-        expect(ODM_INTENT_VERBS.length).toBe(11); // the pinned vocabulary — growth is a deliberate act
+        ok(vOdmIntent({ ...base, verb: 'rename-pilot', payload: { instanceId: 'u1', name: 'Imara "Spire" Cross' } }));
+        ok(vOdmIntent({ ...base, verb: 'seat-note', payload: { instanceId: 'u1', text: 'left knee actuator sticks' } }));
+        ok(vOdmIntent({ ...base, verb: 'seat-note', payload: { instanceId: 'u1', text: '' } })); // '' clears the note
+        ok(vOdmIntent({ ...base, verb: 'seat-request', payload: { instanceId: 'u1', kind: 'repair', text: 'armour, left torso' } }));
+        ok(vOdmIntent({ ...base, verb: 'seat-request', payload: { instanceId: 'u1', kind: 'loadout', text: 'swap the SRM-4 for an MG array' } }));
+        expect(ODM_INTENT_VERBS.length).toBe(14); // the pinned vocabulary — growth is a deliberate act
+    });
+    it('P5 — vSeat: { campaignId, instanceId, toToken } — the empty token is the unseat; a missing one is malformed', () => {
+        ok(vSeat({ campaignId: 'c1', instanceId: 'u1', toToken: 'tok-a' }));
+        ok(vSeat({ campaignId: 'c1', instanceId: 'u1', toToken: '', nonce: 'n1' }));
+        bad(vSeat({ campaignId: 'c1', instanceId: 'u1' }));
+        bad(vSeat({ campaignId: 'c1', toToken: 'tok-a' }));
+        bad(vSeat({ instanceId: 'u1', toToken: 'tok-a' }));
+        bad(vSeat({ campaignId: 'c1', instanceId: 'u1', toToken: 7 }));
+        bad(vSeat({ campaignId: 'c1', instanceId: 'u1', toToken: 'tok-a', nonce: 'x'.repeat(41) }));
+        bad(vSeat(null));
+    });
+    it('P2 — the seat verbs reject a blank name, an over-long note, an unknown request kind, a missing seat', () => {
+        bad(vOdmIntent({ ...base, verb: 'rename-pilot', payload: { instanceId: 'u1', name: '   ' } }));
+        bad(vOdmIntent({ ...base, verb: 'rename-pilot', payload: { instanceId: 'u1', name: 'x'.repeat(61) } }));
+        bad(vOdmIntent({ ...base, verb: 'rename-pilot', payload: { name: 'No Seat' } }));
+        bad(vOdmIntent({ ...base, verb: 'seat-note', payload: { instanceId: 'u1', text: 'x'.repeat(501) } }));
+        bad(vOdmIntent({ ...base, verb: 'seat-note', payload: { instanceId: 'u1' } }));
+        bad(vOdmIntent({ ...base, verb: 'seat-request', payload: { instanceId: 'u1', kind: 'write-off', text: 'scrap it' } }));
+        bad(vOdmIntent({ ...base, verb: 'seat-request', payload: { instanceId: 'u1', kind: 'repair', text: ' ' } }));
     });
     it('THE NEGATIVE LAW: burnDays / writeOff / clock / resolve / QM verbs are NOT in the allowlist', () => {
         for (const verb of ['burn-days', 'burnDays', 'write-off', 'writeOff', 'advance-month', 'advance', 'resolve', 'stocks-adjust', 'depot-adjust', 'settle-attempt', 'donor-strip']) {
@@ -168,16 +185,15 @@ describe('vOdmIntent (ODM-18 P1 — the allowlist LAW)', () => {
     });
 });
 
-describe('vImportForce (GM-1 P3)', () => {
+describe('vImportForce (P3)', () => {
     const unit = { unitRef: 'Atlas AS7-D', chassis: 'Atlas', model: 'AS7-D', mulId: 31, tons: 100, bv: 1897 };
     const base = { campaignId: 'c', token: 't', units: [unit] };
     it('accepts a well-formed import (units only; pilots + engagementKey + name optional)', () => {
         ok(vImportForce(base));
-        ok(vImportForce({ ...base, engagementKey: '', name: 'Pendragon', pilots: [{ name: 'Sasha', gunnery: 3, piloting: 4, assignedInstanceId: 'x' }] }));
+        ok(vImportForce({ ...base, engagementKey: '', name: 'Ravenscroft', pilots: [{ name: 'Sasha', gunnery: 3, piloting: 4, assignedInstanceId: 'x' }] }));
         ok(vImportForce({ ...base, units: [{ ...unit, unitType: 'vehicle', damage: { crits: [] } }] }));
     });
     it('rejects missing campaignId/token, empty/oversized unit lists, and malformed units', () => {
-        // GM-2 P1 — the identity cut's keys are accepted (strings) and rejected when malformed
         ok(vImportForce({ ...base, sourceCampaignId: 'home-pen', units: [{ ...unit, instanceId: 'h-1' }], pilots: [{ pilotId: 'hp-1', name: 'Sasha', gunnery: 3, piloting: 4, assignedInstanceId: 'h-1' }] }));
         bad(vImportForce({ ...base, sourceCampaignId: 42 }));
         bad(vImportForce({ ...base, units: [{ ...unit, instanceId: { not: 'a string' } }] }));
@@ -201,7 +217,7 @@ describe('vImportForce (GM-1 P3)', () => {
     });
 });
 
-describe('vSidePref (GM-1 P2)', () => {
+describe('vSidePref (P2)', () => {
     it("accepts { campaignId, token, pref } with pref 'a' | 'b' | null", () => {
         ok(vSidePref({ campaignId: 'c', token: 't', pref: 'a' }));
         ok(vSidePref({ campaignId: 'c', token: 't', pref: 'b' }));
@@ -231,7 +247,7 @@ describe('vFavorite', () => {
     });
 });
 
-describe('GM-2 P2b — the reputation on the handshake + vSignContract', () => {
+describe('P2b — the reputation on the handshake + vSignContract', () => {
     const base = { campaignId: 'c1', token: 't1', units: [{ chassis: 'Atlas', model: 'AS7-D', unitRef: 'Atlas AS7-D', mulId: 31, tons: 100, bv: 1897 }], sourceCampaignId: 'home-a' };
     it('vImportForce: reputation optional, finite 0..99', () => {
         expect(vImportForce({ ...base, reputation: 4 }).ok).toBe(true);
@@ -265,5 +281,16 @@ describe('vEngagementClose — ORDER-4 H18', () => {
         expect(vEngagementClose({ engagementKey: 'k' }).ok).toBe(false);
         expect(vEngagementClose('nope').ok).toBe(false);
         expect(vEngagementClose(null).ok).toBe(false);
+    });
+});
+
+describe('vHandTable (P3b (b) → P5: the target is a DEVICE of that account)', () => {
+    it('accepts { campaignId, toUserId, toDeviceId }; refuses a missing/empty/oversized toDeviceId (a cached bundle sends none)', () => {
+        expect(vHandTable({ campaignId: 'c', toUserId: 'u-ryan', toDeviceId: 'dev-ryan-phone' }).ok).toBe(true);
+        expect(vHandTable({ campaignId: 'c', toUserId: 'u-ryan' }).ok).toBe(false);
+        expect(vHandTable({ campaignId: 'c', toUserId: 'u-ryan', toDeviceId: '' }).ok).toBe(false);
+        expect(vHandTable({ campaignId: 'c', toUserId: 'u-ryan', toDeviceId: 'x'.repeat(65) }).ok).toBe(false);
+        expect(vHandTable({ campaignId: 'c', toUserId: '', toDeviceId: 'dev' }).ok).toBe(false);
+        expect(vHandTable(null).ok).toBe(false);
     });
 });

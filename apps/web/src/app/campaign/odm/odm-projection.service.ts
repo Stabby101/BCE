@@ -1,11 +1,3 @@
-/*
- * ODM-18 P1 (ruling 2) — the GM-side PROJECTION BUILDER: publishes the pack-fed surfaces a joined
- * account-less player can never fetch (the /pack/odm/* 401 wall) as the ENUMERATED OdmProjection snapshot
- * field. Derived-cache: rebuilt reactively whenever its inputs move (pack loads, overlays, bay hours —
- * which covers "on hydrate and on apply", since every apply moves an input); written only when the value
- * actually changed (JSON-compare — no persist churn). Dashboard-lifetime (the GM app only — the player
- * app never instantiates it); persistCurrent no-ops off the owning device anyway.
- */
 import { Injectable, effect, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
@@ -55,7 +47,7 @@ export class OdmProjectionService {
                 name: v.name,
                 klass: v.class,
                 status: v.status,
-                fuelPct: v.type === 'DropShip' ? pct : null, // the shared tank IS the fuel truth (ODM-17 P2-e)
+                fuelPct: v.type === 'DropShip' ? pct : null,
                 kf: v.type === 'JumpShip' ? (v.lfBattery ? 'LF battery' : 'no LF battery') : null,
             })),
             support: this.support.rows().map((r) => ({ id: r.id, label: r.name, count: r.available })),

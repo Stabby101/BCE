@@ -2,7 +2,7 @@
    host class) — no raw palette here, so a future theme swaps by redefining tokens. */
 :host {
     display: block;
-    height: calc(100dvh - var(--bce-footer-h, 0px)); /* IMPORT-7 A — minus the reserved legal-footer space */       /* MekBay's body is overflow:hidden → own the scroll */
+    height: calc(100dvh - var(--bce-footer-h, 0px));/* MekBay's body is overflow:hidden → own the scroll */
     width: 100%;
     overflow-y: auto;
     overflow-x: hidden;
@@ -20,13 +20,11 @@
 
 .ph { font-family: var(--label); font-weight: 600; letter-spacing: 2.5px; font-size: 13px; text-transform: uppercase; border-bottom: 1.5px solid var(--ink); padding-bottom: 6px; margin: 0 0 12px; }
 .ph.flat { border: none; margin: 0 0 6px; padding: 0; }
-/* DIRECTIVE-139 — a section header with a right-aligned "View Warchest ledger ▸" affordance (Repair/Market/Hiring). */
 .ph.ph-led { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .led-link { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 10.5px; text-transform: uppercase; border: 1.4px solid var(--stamp); background: transparent; color: var(--stamp); padding: 5px 10px; cursor: pointer; min-height: 32px; }
 .led-link:hover, .led-link:focus-visible { background: var(--stamp); color: var(--paper); outline: none; }
 .gate-note { font-family: var(--mono); font-size: 10px; letter-spacing: .4px; color: var(--ink2); font-style: italic; margin-top: 6px; }
-.cmodal { position: fixed; inset: 0; background: rgba(10, 8, 4, .55); display: flex; align-items: center; justify-content: center; padding: 20px 20px calc(20px + var(--bce-footer-h, 0px)); z-index: 50; } /* IMPORT-7 A — clear the legal footer */
-/* HOTFIX-038 — cap the box to the viewport + scroll internally so a tall resolve form's confirm stays reachable. */
+.cmodal { position: fixed; inset: 0; background: rgba(10, 8, 4, .55); display: flex; align-items: center; justify-content: center; padding: 20px 20px calc(20px + var(--bce-footer-h, 0px)); z-index: 50; }
 .cbox { background: var(--paper); border: 2px solid var(--ink); max-width: 480px; width: 100%; padding: 18px 20px; max-height: calc(100dvh - 40px); overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .cbox.wide { max-width: 560px; }
 .cmsg { font-family: var(--type); font-size: 13.5px; line-height: 1.55; color: var(--ink); margin: 10px 0 16px; }
@@ -59,7 +57,6 @@
 .tab:hover { color: var(--ink); }
 .tab.active { color: var(--ink); border-bottom-color: var(--stamp); background: var(--paper); }
 .tab-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; padding: 5px 0 5px 10px; }
-/* D-053: the specific, bold autosave note (campaign · Day N · M missions) — sits with the Save control. */
 .save-note { display: inline-flex; align-items: baseline; gap: 6px; margin-right: 4px; min-width: 0; }
 .save-note .sn-k { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 9px; text-transform: uppercase; color: var(--ink2); border: 1px solid var(--ink2); padding: 1px 4px; white-space: nowrap; flex: none; }
 .save-note .sn-v { font-family: var(--mono); font-weight: 700; font-size: 11.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -71,7 +68,6 @@
 .panel { padding: 20px 26px; display: none; }
 .panel.active { display: block; }
 
-/* Merc free-agent framing (D-016) */
 .framing { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: -4px 0 14px; }
 .ftag { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 11px; text-transform: uppercase; color: var(--paper); background: var(--stamp); padding: 4px 10px; }
 .frat { font-family: var(--mono); font-size: 11px; letter-spacing: .5px; color: var(--stamp); border: 1.2px solid var(--stamp); padding: 3px 9px; text-transform: uppercase; }
@@ -95,18 +91,15 @@
 .field .lbl { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 10px; text-transform: uppercase; color: var(--stamp); display: block; }
 .gobtn { font-family: var(--label); font-weight: 600; letter-spacing: 2px; font-size: 12px; text-transform: uppercase; border: 1.6px solid var(--stamp); background: transparent; color: var(--stamp); padding: 10px 14px; cursor: pointer; margin-top: 12px; min-height: 44px; }
 .gobtn:hover:not(:disabled), .gobtn:focus-visible { background: var(--stamp); color: var(--paper); outline: none; }
-/* HOTFIX-004: gated controls render disabled WITH the gate named (.gate-note) — no silent no-ops. */
 .gobtn:disabled { border-color: var(--ink2); color: var(--ink2); opacity: .6; cursor: not-allowed; }
 .gobtn.primary { border-color: var(--ok); color: var(--ok); }
 .gobtn.primary:hover:not(:disabled), .gobtn.primary:focus-visible { background: var(--ok); color: var(--paper); }
-/* D-031: field-walk-pending banner */
 .walk-banner { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding: 10px 14px; border: 1.6px solid var(--stamp); background: var(--paper2); }
 .walk-banner .wb-t { font-family: var(--label); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 12px; color: var(--stamp); }
 .walk-banner .wb-s { font-family: var(--mono); font-size: 11px; color: var(--ink2); flex: 1 1 200px; }
 .walk-banner .gobtn { margin-top: 0; }
 /* DEPLOY-009: the GUEST recovery-code banner lives as a SEPARATE inline styles[] block on the component
    (dashboard.scss is at its 20kB per-stylesheet budget) — see .rec-banner in dashboard.ts. */
-/* D-032: House orders panel — an order, not an offer */
 .order { border: 1.5px solid var(--ink2); background: var(--paper2); padding: 12px 14px; margin-top: 10px; display: flex; flex-direction: column; }
 .order.pending { border-color: var(--stamp); }
 .order.active { border-left: 4px solid var(--ok); }
@@ -115,7 +108,6 @@
 .log { font-family: var(--mono); font-size: 11.5px; line-height: 1.95; }
 .log .t { color: var(--ink2); }
 
-/* ── Contract market (D-017) ── */
 .offers { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 11px; margin-top: 12px; }
 .offer { border: 1.6px solid var(--ink); background: var(--paper2); padding: 11px 12px; display: flex; flex-direction: column; }
 .offer.active { border-color: var(--ok); box-shadow: inset 0 0 0 1px var(--ok); }
@@ -133,7 +125,6 @@
 .cl b { font-family: var(--label); font-weight: 600; letter-spacing: .8px; font-size: 9.5px; text-transform: uppercase; color: var(--ink2); display: block; }
 .offer .gobtn { margin-top: 11px; align-self: flex-start; }
 
-/* ── Campaign clock (D-022) ── */
 .clockbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border: 1.6px solid var(--ink); background: var(--paper2); padding: 9px 13px; margin: 4px 0 14px; }
 .cdate { display: flex; flex-direction: column; gap: 1px; }
 .cdl { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 9.5px; text-transform: uppercase; color: var(--ink2); }
@@ -143,21 +134,18 @@
 .cadvb { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 11.5px; text-transform: uppercase; border: 1.4px solid var(--stamp); background: transparent; color: var(--stamp); padding: 8px 12px; cursor: pointer; min-height: 40px; }
 .cadvb:hover, .cadvb:focus-visible { background: var(--stamp); color: var(--paper); outline: none; }
 
-/* ── Active-contract progress (D-022) ── */
 .cprog { margin-top: 10px; }
 .cpbar { height: 7px; background: var(--paper); border: 1px solid var(--ink); overflow: hidden; }
 .cpfill { height: 100%; background: var(--ok); }
 .cprow { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-family: var(--mono); font-size: 10.5px; color: var(--ink2); margin-top: 4px; }
 .cprow b { color: var(--ink); }
 
-/* ── Per-clause renegotiation (D-022) ── */
 .oclauses.neg { grid-template-columns: 1fr 1fr; }
 .clrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
 .negbtn { flex: 0 0 auto; font-family: var(--mono); font-size: 9px; letter-spacing: .5px; text-transform: uppercase; border: 1px solid var(--stamp); background: transparent; color: var(--stamp); padding: 2px 6px; cursor: pointer; min-height: 26px; }
 .negbtn:hover:not(:disabled), .negbtn:focus-visible { background: var(--stamp); color: var(--paper); outline: none; }
 .negbtn:disabled { border-color: var(--ink2); color: var(--ink2); cursor: default; }
 
-/* ── Completed-contract log (D-022) ── */
 .clog { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
 .clog-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; border: 1.3px solid var(--ink2); background: var(--paper2); padding: 7px 11px; }
 .clg-m { font-family: var(--label); font-weight: 600; letter-spacing: .5px; font-size: 12.5px; text-transform: uppercase; }
@@ -165,7 +153,6 @@
 .clg-p { font-family: var(--mono); font-size: 11px; color: var(--stamp); }
 .clg-s { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; border: 1px solid var(--ok); color: var(--ok); padding: 1px 6px; }
 
-/* ── Mission briefing (D-023) — a VIEW of the spec (DATA-003) ── */
 .brief { border: 1.6px solid var(--ink); background: var(--paper2); padding: 13px 15px; margin-top: 8px; display: flex; flex-direction: column; gap: 12px; }
 .bsec { display: flex; flex-direction: column; gap: 4px; }
 .bsl { font-family: var(--label); font-weight: 600; letter-spacing: 2px; font-size: 10.5px; text-transform: uppercase; color: var(--ink2); border-bottom: 1px solid var(--line); padding-bottom: 3px; }
@@ -182,14 +169,11 @@
 .ofsum { font-family: var(--mono); font-size: 11px; color: var(--ink2); margin-top: 7px; padding-top: 6px; border-top: 1px solid var(--line); }
 
 
-/* D-036 cleanup-sweep: the dead D-008 scaffold blocks (.rlist/.roster-row/.dot and the old .flow/.fnode
-   mock — both superseded by the real roster/flow components' own scss) are deleted. */
 
 footer { padding: 12px 26px 0; border-top: 2px solid var(--ink); margin-top: 6px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .meta { font-family: var(--mono); font-size: 10.5px; color: var(--ink2); text-align: right; line-height: 1.7; }
 .narr { display: inline-block; font-family: var(--mono); font-size: 10px; letter-spacing: 1px; border: 1px solid var(--ink2); color: var(--ink2); padding: 2px 7px; }
 
-/* ── Barracks (D-020; people depth D-036) — personnel registry ── */
 .bk-sum { display: flex; gap: 16px; margin: 10px 0 12px; font-family: var(--mono); font-size: 12px; color: var(--ink2); }
 .bk-sum b { font-family: var(--stencil); font-size: 16px; color: var(--ink); }
 .bk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 10px; }
@@ -199,7 +183,6 @@ footer { padding: 12px 26px 0; border-top: 2px solid var(--ink); margin-top: 6px
 .bk-perk { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--stamp); border: 1.2px solid var(--stamp); padding: 1px 6px; white-space: nowrap; }
 .bk-msn { font-family: var(--mono); font-size: 9.5px; letter-spacing: .5px; color: var(--ink2); margin-left: auto; }
 .bk-status.inj { border-color: var(--warn); color: var(--warn); }
-/* D-036 infirmary + the roll of the fallen */
 .inf-rows { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; max-width: 720px; }
 .inf-row, .mem-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; width: 100%; text-align: left; font: inherit; color: inherit; border: 1.4px solid var(--warn); background: var(--paper2); padding: 8px 12px; cursor: pointer; }
 .inf-row:hover, .inf-row:focus-visible, .mem-row:hover, .mem-row:focus-visible { box-shadow: inset 3px 0 0 var(--warn); outline: none; }
@@ -226,7 +209,6 @@ footer { padding: 12px 26px 0; border-top: 2px solid var(--ink); margin-top: 6px
 .bk-empty { border: 1.6px dashed var(--ink2); background: var(--paper2); padding: 18px 16px; margin-top: 10px; max-width: 560px; }
 .bk-empty-h { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 14px; text-transform: uppercase; color: var(--ink2); margin-bottom: 4px; }
 
-/* ── Mission tree (D-026) — the three-zone operations board (DATA-003: cards are a VIEW of the branch records) ── */
 .branches { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-top: 8px; }
 .branch { border: 1.5px solid var(--ink); background: var(--paper2); padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
 .branch.avail { box-shadow: inset 3px 0 0 var(--ok); }
@@ -244,8 +226,6 @@ footer { padding: 12px 26px 0; border-top: 2px solid var(--ink); margin-top: 6px
 .bbadge.ret { background: var(--ink2); }
 .msn-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 2px; }
 
-/* RESOLVE questionnaire — the gate seam (the AAR/debrief pipeline is deferred to D-027+) */
-/* DIRECTIVE-134 — two-sided (DR VP) resolve: two objective columns + a live verdict */
 
 /* ── Tablet ── */
 @media (max-width: 780px) {
@@ -266,5 +246,4 @@ footer { padding: 12px 26px 0; border-top: 2px solid var(--ink); margin-top: 6px
     .meta { text-align: left; }
 }
 
-/* GM-2 P3-fold — the empty-field witness on the track/spec */
 .msn-banner { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 11.5px; text-transform: uppercase; color: var(--paper); background: var(--stamp); border-radius: 6px; padding: 8px 12px; margin: 0 0 10px; }

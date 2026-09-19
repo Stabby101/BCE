@@ -1,7 +1,3 @@
-/*
- * DIRECTIVE-IMPORT-3 Part 2 — hireable personnel: the pure charge/afford rules + the merc mint. Pins per-track
- * charging by default, one-time charged once, the can't-afford block, and a well-formed deployed instance + pilot.
- */
 import { mercHireCharge, canAffordHire, buildMercInstance, buildMercPilot, hiredWithYouRows } from './hire-personnel';
 import type { HotSpotHireable } from './hotspots-catalog';
 
@@ -61,8 +57,7 @@ describe('buildMercInstance / buildMercPilot (mint)', () => {
     });
 });
 
-// ── IMPORT-6 FOLLOWUPS — the RESULTS-ONLY "fielding with you" rows stamped onto the persisted spec (never the offers). ──
-describe('hiredWithYouRows (IMPORT-6 FOLLOWUPS — results-only player render)', () => {
+describe('hiredWithYouRows (FOLLOWUPS — results-only player render)', () => {
     const merc: HotSpotHireable = { name: 'Captain Vasquez', role: 'Ace lance leader', gunnery: 2, piloting: 3, edge: 2, chassis: 'Marauder', model: 'MAD-3R', spCost: 300, oneTimeHire: true };
     it('joins the hire record to its minted unit + pilot; carries NO cost / one-time / edge (offer data stays GM-side)', () => {
         const inst = buildMercInstance(merc);

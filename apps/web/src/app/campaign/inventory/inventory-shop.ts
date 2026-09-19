@@ -1,40 +1,13 @@
-/*
- * BCE Inventory III (DIRECTIVE-064, T-037 the SHOP) — the PURE parts-shop model.
- *
- * No Angular/DOM/service deps: given the era-legal D-055 catalog rows + the campaign year + seed + the
- * current restock-period key, it deterministically produces the IN-SYSTEM stock (the availability-TN roll)
- * and the OUT-OF-SYSTEM list (the full era-legal catalog at a transport surcharge). The owning
- * InventoryShopService does the impure work (fetch the catalog, read the clock/seed, mutate treasury +
- * inventory + persist) and calls this.
- *
- * ★ WITNESS — MekHQ / CamOps acquisition (REF-001, canon is the spec; T-037 digest). The rarity engine is
- * AVAILABILITY CODE → 2d6 TARGET NUMBER: per refresh cycle, roll 2d6 vs each era-legal item's TN; a success
- * (roll ≥ TN) is in stock this cycle. A/B (TN 2–4) auto-passes ~every cycle → emergent STAPLES (no hardcoded
- * list); C–F flicker = the rotation; X (TN 13, impossible) never appears in-system. A small STAPLES_FORCE
- * union (armor, common ammo, heat sinks, actuators, endo-when-legal) is belt-and-suspenders so the commons
- * never edge-case out. Our RNG-rotating stock + flat surcharge is a deliberate simplification on CamOps'
- * full acquisition system (planet socio-industrial mods + delivery time skipped — T-037).
- *
- * Determinism (T-037 invariant): the roll is a pure function of (seed, periodKey, item.id) — stable within a
- * cycle (reload = identical), and re-rolls only when the clock crosses `restockWeeks` (the period key flips).
- */
 import type { CatalogItem } from './starting-inventory';
 
 // ── TUNABLES (HEURISTIC, PM-tunable) ─────────────────────────────────────────────────────────────────────
 export const SHOP_TUNABLES = {
     /** restock cadence in campaign weeks — the in-system stock re-rolls when the clock crosses a boundary. */
     restockWeeks: 3,
-    /** out-of-system transport surcharge on price (James's flat +30%; CamOps models delivery TIME instead). */
     outOfSystemSurcharge: 0.3,
-    /** DIRECTIVE-065: out-of-system orders aren't instant — they ship in this many months (lands on the clock). */
     outOfSystemDeliveryMonths: 2,
-    /** DIRECTIVE-065: cap the in-system browse to a believable local stock (no 1,000-item dump). The realized
-     *  count scales between these by the market rating. */
     inSystemMin: 30,
     inSystemMax: 50,
-    /** DIRECTIVE-065: the system's MARKET RATING (0..1) — stock size within [min,max] + the rare-find chance.
-     *  Eventually the world's population/industry/tech (T-010 star map); for now a resource-level proxy + a hook
-     *  (override per-system later). A developed world stocks more/better; a backwater fewer. */
     marketRatingByResource: { lean: 0.3, normal: 0.6, established: 1.0 } as Record<string, number>,
     marketRatingDefault: 0.6,
     /** fraction of the non-staple fill reserved for an "occasional rare" (E/F lucky find), scaled by the rating. */
@@ -65,7 +38,6 @@ export interface ShopEntry {
     source: 'in-system' | 'out-of-system';
 }
 
-/** A pending OUT-OF-SYSTEM order (DIRECTIVE-065) — paid at request (+surcharge), delivered on the clock. */
 export interface ShopOrder {
     id: string;
     catalogId: string;
@@ -79,7 +51,6 @@ export interface ShopOrder {
     delivered: boolean;
 }
 
-/** Category bucket for the collapsible shop UI (DIRECTIVE-065). */
 export type ShopCategory = 'weapon' | 'ammo' | 'armor' | 'structure' | 'component';
 export function shopCategoryOf(item: CatalogItem): ShopCategory {
     const c = item.category;
@@ -90,7 +61,6 @@ export function shopCategoryOf(item: CatalogItem): ShopCategory {
     return 'component'; // misc / engine / gyro / cockpit / actuator
 }
 
-// ── deterministic PRNG (mulberry32 over a cyrb-style string hash) — same seed → same roll (matches D-056) ──
 function seedHash(s: string): number {
     let h = 1779033703 ^ s.length;
     for (let i = 0; i < s.length; i++) {
@@ -139,8 +109,6 @@ export function availabilityCode(item: CatalogItem, year: number, playerClan = f
     return code;
 }
 
-/** Tech-level TN mod from the tech RATING proxy (the D-055 catalog has no rules-level column): INTRO/STANDARD
- *  (rating A–D, unknown) −2, ADVANCED/EXPERIMENTAL (E/F) −1. // DECISION: rating proxies rules level. */
 export function levelModFromRating(rating: string | null | undefined): number {
     const r = (rating ?? '').toUpperCase();
     return r === 'E' || r === 'F' ? -1 : -2;
@@ -161,9 +129,6 @@ export function priceOfPart(item: CatalogItem): number {
     return SHOP_TUNABLES.fallbackCostByCategory[item.category] ?? 50000;
 }
 
-/** STAPLES_FORCE — James's belt-and-suspenders union: armor, common ammo (MG/AC2/AC5/std SRM/LRM), heat sinks,
- *  actuators, endo-steel (only when era-legal — i.e. present in the era-filtered catalog at all). These are
- *  force-stocked every cycle regardless of the roll. (The era window keeps endo correctly absent pre-reintro.) */
 const STAPLE_TESTS: ((c: CatalogItem) => boolean)[] = [
     (c) => /^standard armor$/i.test(c.name) || c.id === 'struct:armor_standard',
     (c) => c.category === 'ammo' && /machine gun ammo/i.test(c.name),
@@ -186,15 +151,8 @@ function stockQty(rng: () => number, staple: boolean): number {
  * IN-SYSTEM stock for the current restock cycle: for each era-legal item, roll 2d6 vs its TN (deterministic
  * per seed+period+item) → in stock on a success, plus the STAPLES_FORCE union. X never appears (TN 13).
  */
-/** HOTFIX-014 — personal/infantry/BA arms by NAME, the degraded-mode safety net (the catalog row carries no
- *  flags, so this is name-only). Catches Whip/Revolver/(Laser/Support) Pistol/Man-Portable/sub-machine/etc. while
- *  sparing 'Mech weapons (Medium Laser, Medium Rifle, PPC, AC, LRM/SRM, MG, Gauss — no paren/personal token). */
 const CLUTTER_NAME = /\b(auto-?pistol|pistol|revolver|whip|sub-?machine ?gun|smg|musket|derringer|blowgun|needler|gyrojet|nullifier|shotgun)\b|man-?portable|\b(laser|support|portable|semi-?portable)\s+(pistol|rifle|laser|ppc|smg|weapon)\b|rifle\s*\(|\bvibro-?(blade|knife|sword|katana|mace|axe|claw|dagger)\b|^ba /i;
 
-/** 'Mech/vehicle-relevant? Authored structural rows (struct:*) always are; otherwise the build-time relevant-id
- *  set (parts-relevant.json) is authoritative. HOTFIX-014: when that set fails to load we DO NOT fall open to the
- *  full catalog (that no-op was the actual infantry-weapon leak) — a name blocklist still drops personal/infantry/BA
- *  arms (degraded but safe). */
 export function isRelevantPart(item: CatalogItem, relevantIds: Set<string> | null | undefined): boolean {
     if (typeof item.id === 'string' && item.id.startsWith('struct:')) return true;
     if (relevantIds && relevantIds.size > 0) return relevantIds.has(String(item.id));

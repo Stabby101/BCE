@@ -1,20 +1,3 @@
-/*
- * FORKED FROM campaign/repair/repair-bays.service.ts @ dd1a717 — DIRECTIVE-ODM-13 Phase 2 (a DRIFT SURFACE).
- * The SURVIVAL bays: repair costs TIME and PARTS — the two things a resistance actually spends.
- *   R3 (HARD): a replace-action requires the named component in inventory (exact line, else a compatible
- *   donor-stripped line). Present → the job runs and DEBITS ON COMPLETION, never on start (an interrupted
- *   job half-consumes nothing). Absent → the WHOLE JOB HOLDS naming the component (Bay.heldFor) — the
- *   recourse is the game: salvage one, strip a donor. Armor/structure work stays time-gated as today.
- *   REARM-FROM-BINS (dry-not-held): completion computes the ammo RESTORED from the damage state
- *   (consumed/totalAmmo per slot — game truth) and DEBITS the matching odmStocks bin; an insufficient bin
- *   completes the repair DRY on that weapon with the shortfall stated. A rearm-driven floor crossing
- *   renders BREACH per ODM-11 — the system working, not a bug.
- *   DONOR-STRIP (Ruling 4): a COLD hulk → inventory lines + bin tonnage via THE SAME odm-materiel math as
- *   the walk (one tunable block), destroying the instance — one direction, no round-trip.
- * THE C-BILL CALL SITES DO NOT EXIST IN THIS FILE — no cost(), no cbillsPerTechHour, no setTreasury
- * (the Phase-1 by-construction standard). The burn is driven by a fork-owned currentDate effect (the
- * shared clock's burnDays call is pack-gated — the 5th sanctioned gate; classic→odm imports are fenced).
- */
 import { Injectable, computed, effect, inject, isDevMode, untracked } from '@angular/core';
 import { NewCampaignState, type CampaignStartDate } from '../new-campaign-state';
 import { DataService } from '../../services/data.service';
@@ -23,26 +6,15 @@ import { readDamage } from '../walk/field-walk-core';
 import type { ProtoInstance } from '../force/force-generator';
 import { estimateRepairJob, type RepairBill } from '../repair/repair-times';
 import {
-    BAY_TUNABLES, makeDefaultBays, freeBay, remainingHours, dailyAllocation, hasMechDamage, // ODM-17 P1: the rolled mint is GONE · P4: burnPool too — the LADDER allocates, bay weights are dead
+    BAY_TUNABLES, makeDefaultBays, freeBay, remainingHours, dailyAllocation, hasMechDamage,
     type Bay, type BayHistoryEntry,
 } from '../repair/repair-bays';
 import { daysBetween } from '../clock/campaign-clock';
 import { odmStartingStocks, round1 } from './odm-stocks';
-import { odmStripYield, addAmmoToBins, addPartLine, rearmNeeds, ODM_BENCH, effGrades, installableCount, consumeInstallable, heldRecourse } from './odm-materiel'; // ODM-17 P3 — grades and the lifecycle
+import { odmStripYield, addAmmoToBins, addPartLine, rearmNeeds, ODM_BENCH, effGrades, installableCount, consumeInstallable, heldRecourse } from './odm-materiel';
 import type { OdmBenchJob, CampaignLogEntry } from '../new-campaign-state';
-import { OdmShopService } from './odm-shop.service'; // ODM-17 P1 — the authored facility (MAC-7, D39 pools)
+import { OdmShopService } from './odm-shop.service';
 
-/* ── DIRECTIVE-ODM-17 P4-a — THE 30-DAY MAINTENANCE CYCLE (the doctrine's own figures, not tunables):
- * "Every BattleMech requires a full maintenance cycle at MAC-7 once every 30 days regardless of combat
- * damage … It comes before salvage repairs in the tech-hour budget." Hours = the doctrine's repair-table
- * row: "Full 30-day maintenance cycle — MAC-7 only — 18-24 hrs — Light: 18hrs. Heavy usage previous
- * cycle: up to 24hrs." HEAVY = the machine took the field during the cycle window (the honest BCE key:
- * fieldWalk blufor rows + engaged bluforIds, dated — the recon'd derivation; nothing else records
- * deployment per-instance). The breakdown check is canon §4 (repair_time_canonical): 2D6 + (overdue
- * months − 1), 10+ = failure, 1D6−3 crits (min 0) against the REAR ARC, rolled MONTHLY per overdue
- * machine. Canon's twice-monthly clause requires short parts AND short techs — the tech half cannot
- * honestly occur in BCE (the no-hiring economy fixes headcount), so that branch is coded and
- * structurally unreachable, stated here rather than faked. */
 export const ODM_MAINTENANCE = {
     cycleDays: 30,
     lightHours: 18,
@@ -67,7 +39,7 @@ export interface QueueItem {
     triage: 'G' | 'Y' | 'R' | 'B';
     bill: RepairBill;
     writeOff: boolean;
-    missingParts: string[]; // ODM-13 P2 — replace-components NOT currently in stores (advisory at queue time)
+    missingParts: string[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -75,7 +47,7 @@ export class OdmRepairBaysService {
     private readonly state = inject(NewCampaignState);
     private readonly data = inject(DataService);
     private readonly store = inject(CampaignSaveStore);
-    private readonly shop = inject(OdmShopService); // ODM-17 P1
+    private readonly shop = inject(OdmShopService);
 
     /** The fork burn driver: a currentDate effect (the shared clock cannot import the fork — the fence).
      *  Tracks the last-seen date; a forward move burns the delta days. First sight (hydrate/mount) only
@@ -83,7 +55,6 @@ export class OdmRepairBaysService {
     private lastSeen: CampaignStartDate | null = null;
 
     constructor() {
-        // HOTFIX-024 self-heal (copied): a unit stranded 'In repair' with NO damage returns to service, logged.
         effect(() => {
             const force = this.state.startingForce() ?? [];
             if (!force.length) return;
@@ -99,7 +70,6 @@ export class OdmRepairBaysService {
                 void this.store.persistCurrent();
             });
         });
-        // ODM-17 P4-c — the D36 bay-type migration, forward-only: ENGINE (and the dormant FIELD) retire to
         // GENERAL; a null-bays campaign materializes the migrated seed so fresh ODM campaigns are born D36.
         effect(() => {
             if (this.state.packId() !== 'odm') return;
@@ -116,8 +86,6 @@ export class OdmRepairBaysService {
                 void this.store.persistCurrent();
             });
         });
-        // ODM-13 P2 — the fork burn driver (see above). Fires after any clock advance lands the new date.
-        // ODM-17 P1 — the driver WAITS for the shop: hours derive from the authored pools, so burning at
         // an unloaded shop's 0 h/day would eat days for nothing. lastSeen arms only once pools are known;
         // the accumulated delta burns on the first tick after the shop lands (the effect reads shop.shop()
         // so the load itself re-fires it). Shop never loads (unentitled/offline) → no burn, honestly.
@@ -140,15 +108,9 @@ export class OdmRepairBaysService {
     readonly bays = computed<Bay[]>(() => this.state.bays() ?? makeDefaultBays());
     readonly history = computed<BayHistoryEntry[]>(() => this.state.bayHistory() ?? []);
 
-    /* ODM-17 P1-a — THE FORGE BLEED KILLED. The fork's pool identity is AUTHORED (packs/odm/shop.json:
-     * MAC-7 Station, MacCready's) — generateTechPool (the rolled "Halvorsen 7"-class syllable mint)
-     * NEVER runs under the pack, and this fork no longer reads OR writes the persisted techPool state:
-     * a pre-P1 campaign's rolled pool becomes inert residue (the 12b staffVoices precedent — nothing
-     * cleared, nothing migrated, D-0b untouched). Classic's own service keeps its mint byte-identical. */
     readonly shopFile = this.shop.shop;
     ensureTechPool(): boolean {
         void this.shop.ensureLoaded(); // authored identity — fetched, never minted
-        // ODM-17 P1-b (the dev fail-loud, fork-side): the shared tier table silently falls back on an
         // unrecognized key — exactly how ODM ran at 80 h/day for a year. The fork no longer keys hours
         // off the tier at all; this guard makes any future tier-keyed read impossible to miss in dev.
         const tier = this.state.resources() || '(unset)';
@@ -166,20 +128,9 @@ export class OdmRepairBaysService {
         });
     });
 
-    /* ODM-17 P1-c — hours are DERIVED from the authored pools (headcount × hoursPerTechDay), never the
-     * tier table (the 'normal'-key fallback bug dies structurally: there is no tier read to fall back).
-     * Null while the shop loads → 0 h/day and the burn driver WAITS (no days are lost — the delta burns
-     * on the first tick after the shop lands, because lastSeen only arms once the shop is loaded). */
     readonly perDayHours = computed<number>(() => this.shop.poolHours('mac7') ?? 0);
     readonly fieldPoolHours = computed<number>(() => this.shop.poolHours('field') ?? 0); // rendered P1; consumed P2
-    /** TESTER-ODM-1 #6 — per-pool DERIVED hours for the bays header (the coupling choke point, not the raw
-     *  headcount × rate the header used to recompute). */
     poolHoursOf(id: string): number { return this.shop.poolHours(id) ?? 0; }
-    /* ODM-17 P1-d — THE COMMIT/RELEASE LEDGER, derived not persisted (a second book cannot drift):
-     * committed = Σ remaining estimated hours across occupied bays (assignment commits the estimate by
-     * construction; completion/unassign/write-off release it the same way). Over-commitment is VISIBLE
-     * (amber past one day's capacity — the doctrine's own rule: too much scheduled work means the
-     * lowest-priority items do not get done; Phase 4 enforces the ladder, P1 shows the truth). */
     readonly committedHours = computed<number>(() =>
         Math.round(this.bays().reduce((s, b) => s + (b.occupantId ? Math.max(0, remainingHours(b)) : 0), 0) * 100) / 100);
     readonly allocation = computed<Record<string, number>>(() => dailyAllocation(this.bays(), this.perDayHours()));
@@ -240,9 +191,6 @@ export class OdmRepairBaysService {
         return needed;
     }
 
-    /** The R3 gate math — ODM-17 P3: only INSTALLABLE grades satisfy a replace-component: A (ready) or C
-     *  (installs with its parts-repair hours ledgered). B needs its bench inspection first; RAW cannot be
-     *  installed until reclassified (doctrine Part VI) — a pre-P3 line reads all-A via effGrades. */
     private missingFor(components: string[], lines: import('../inventory/starting-inventory').InventoryLine[]): string[] {
         const norm = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
         const budget = new Map<string, number>();
@@ -264,16 +212,12 @@ export class OdmRepairBaysService {
         return rate > 0 ? Math.ceil(rem / rate) : null;
     }
 
-    /** ODM-17 P4-b — the doctrine's default job priority from triage: B→P1, R→P2, Y→P3, G→P4. */
     private priorityFromTriage(inst: ProtoInstance): 1 | 2 | 3 | 4 {
         const t = inst.triage ?? readDamage(inst.damage, 0).severity;
         return ({ B: 1, R: 2, Y: 3, G: 4 } as const)[t] ?? 3;
     }
 
-    /** Assign — snapshot the bill; estimateCost is 0 BY CONSTRUCTION (no bench rate exists here).
-     *  ODM-17 P4: the job's LADDER priority stamps from triage (GM-adjustable after); a PRIZE REFIT
-     *  (cold-storage hulk) routes through a SALVAGE bay ONLY — the D36 rule made real. */
-    assign(instanceId: string, bayId: string): boolean { // ODM-18 P1 — belts report refusal (audit lines gate on it); GM UI ignores the return, behavior unchanged
+    assign(instanceId: string, bayId: string): boolean {
         if (this.occupantIds().has(instanceId)) return false;
         const target = this.bays().find((b) => b.id === bayId);
         if (!target || target.occupantId) return false;
@@ -309,9 +253,7 @@ export class OdmRepairBaysService {
      *  attempt every burn, so a job held for parts RELEASES when supply arrives. Persists on change. */
     burnDays(days: number): void {
         if (days <= 0) { this.settleAttempt(this.bays()); return; }
-        // ── ODM-17 P4-b — THE STRICT LADDER (bay weights are DEAD; burnPool's priority-weighted spill is
         //    not called here anymore): MAINTENANCE (the doctrine's budget precedence) → P1 → P2 → the
-        //    BENCH (the PM's placement — the doctrine is silent on bench rank) → P3 → P4. Sequential
         //    allocation IS the strictness: a lower tier sees only what the higher tiers left; a job held
         //    for parts has no remaining hours, so it is STARVED, never BLOCKING (the card says so). ──
         let remaining = this.perDayHours() * days;
@@ -334,7 +276,6 @@ export class OdmRepairBaysService {
         this.settle(bays, ids);
     }
 
-    // ── ODM-17 P4-a — THE MAINTENANCE MACHINERY (see ODM_MAINTENANCE for the source figures). ──
 
     /** The per-machine cycle view (renders + the burn read the same derivation — never stored totals).
      *  Cold-storage hulks are mothballed and do not cycle (DECISION, flagged: the doctrine says "every
@@ -421,11 +362,6 @@ export class OdmRepairBaysService {
         return rem;
     }
 
-    /** ODM-17 P4-a — the breakdown CRIT WRITER: BCE campaign code's first crit minter, on the sheet-write
-     *  pattern (the walk's damage READER is the precedent; CriticalSlot has no rear encoding — the rear
-     *  arc is the canon HIT TABLE, so the crit lands in a rear-arc-rolled torso location). Destroys a
-     *  random live equipment comp in the rolled location; a location with no equipment takes internal
-     *  structure instead. Returns human-readable descriptions; writes force state. */
     private applyBreakdownCrits(force: ProtoInstance[], instanceId: string, n: number): string[] {
         const idx = force.findIndex((i) => i.instanceId === instanceId);
         if (idx < 0) return [];
@@ -458,7 +394,6 @@ export class OdmRepairBaysService {
         return applied;
     }
 
-    // ── ODM-17 P3-b — THE BENCH (doctrine: "Component bench test and assessment — MAC-7 only — 1-4 hrs
     //    per item"). Items live IN-SHOP (out of the stores) while the hours burn; landings are CACHED
     //    grades / cleared tonnage, each a ledger row. FIFO within the leftover; P4 brings the ladder. ──
     private burnBench(leftover: number): number {
@@ -516,7 +451,6 @@ export class OdmRepairBaysService {
         }
     }
 
-    /** ODM-17 P3-b — the held card's line: every missing part with its doctrine recourse. */
     heldLineFor(bay: Bay): string {
         const lines = this.state.inventory()?.lines ?? [];
         const bench = this.state.odmBench();
@@ -600,7 +534,6 @@ export class OdmRepairBaysService {
             if (missing.length) {
                 const heldChanged = JSON.stringify(bay.heldFor ?? []) !== JSON.stringify(missing);
                 bay.heldFor = missing;
-                // ODM-17 P3-b — the held card names the doctrine RECOURSE per part ("on the bench, 3 h" /
                 // "in RAW stock — bench-assess it" / "grade B — inspection needed" / genuinely absent).
                 if (heldChanged) {
                     const bench = this.state.odmBench();
@@ -609,7 +542,6 @@ export class OdmRepairBaysService {
                 continue; // the bay stays occupied; every future burn/supply/bench-landing re-attempts
             }
 
-            // parts present → DEBIT the lines (completion-time, per the ruling). ODM-17 P3: A first; a
             // C-grade install LEDGERS its parts-repair hours onto the job (the doctrine's "parts-repair,
             // ledgered when consumed by a hold-release").
             const used: string[] = [];
@@ -659,18 +591,14 @@ export class OdmRepairBaysService {
 
     /** DONOR-STRIP (Ruling 4) — a COLD hulk becomes inventory lines + bin tonnage via THE SAME materiel
      *  math as the walk; the instance is DESTROYED (one direction, no round-trip). Releases held jobs. */
-    /** ODM-17 P4-c — salvage work is SALVAGE-bay work (D36): no operational SALVAGE bay → no donor strip. */
     readonly salvageBayOperational = computed(() => this.bays().some((b) => b.type === 'SALVAGE'));
 
-    /** ODM-17 P4-b — the job's LADDER priority (stored, else derived live from the occupant's triage —
-     *  the same derivation the burn uses; a pre-P4 job reads honestly, forward-only). */
     jobPriorityOf(b: Bay): number {
         if (b.jobPriority) return b.jobPriority;
         const inst = (this.state.startingForce() ?? []).find((i) => i.instanceId === b.occupantId);
         return inst ? this.priorityFromTriage(inst) : 3;
     }
 
-    /** ODM-17 P4-b — GM-set job priority on an occupied bay (the ladder reads it next burn). */
     setJobPriority(bayId: string, p: 1 | 2 | 3 | 4): boolean {
         const bays = this.bays();
         if (!bays.find((b) => b.id === bayId)?.occupantId) return false;
@@ -679,7 +607,6 @@ export class OdmRepairBaysService {
         return true;
     }
 
-    /** ODM-17 P4-c — bay conversion (D36): EMPTY bays only; GENERAL or SALVAGE, nothing else writes. */
     setBayType(bayId: string, type: 'GENERAL' | 'SALVAGE'): boolean {
         const bays = this.bays();
         const bay = bays.find((b) => b.id === bayId);

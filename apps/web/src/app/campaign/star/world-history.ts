@@ -1,11 +1,3 @@
-/*
- * DIRECTIVE-GAZETTEER-1 Phase 2 — the world-history loader (the gazetteer's data half).
- * Lazy-loads world-history.json (the Phase 1 Sarna facts pack, ~1.6 MB → its own code-split chunk, fetched on
- * first Star Map use — the systems.json/world-facts pattern) + world-facts.json (HSFORGE-1b; shared chunk with
- * the forge's loader). Sparse-legal: a missing pack or an unknown system resolves to nothing and the UI section
- * simply doesn't render. Facts only — every event row carries its sarnaUrl citation; license GNU FDL 1.2
- * (see NOTICE.md §2b). Mode-agnostic platform data: no campaignSystem() reads, no engine imports.
- */
 import { Injectable, signal } from '@angular/core';
 
 /** The world-facts.json per-system shape (HSFORGE-1b) — the subset the gazetteer renders. Declared HERE (not imported

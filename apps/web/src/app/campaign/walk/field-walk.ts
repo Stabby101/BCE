@@ -1,9 +1,3 @@
-/*
- * BCE — WALK THE FIELD screen (DIRECTIVE-031). The post-RESOLVE triage table: every engaged unit both
- * sides in allegiance sections, the damage read-out from the live envelope, the Three Questions auto-
- * scored (each GM-overridable), and the per-allegiance disposition with the per-row math shown. CONFIRM
- * applies atomically (FieldWalkService); "walk later" leaves it pending. GM-facing; theme tokens; height-safe.
- */
 import { Component, ChangeDetectionStrategy, computed, inject, signal, output } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { FieldWalkService, type WalkRow } from './field-walk.service';

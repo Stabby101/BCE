@@ -1,19 +1,7 @@
-/*
- * DIRECTIVE-130 — the GM-side MANUAL OPFOR BUILDER (Hot Spots). A modal that lets the GM hand-pick the current
- * mission's OpFor roster from the unit catalog — so a group fields the minis they actually own — instead of (or
- * on top of) the auto-generated force. Two panes: a CATALOG PICKER (faction-legal by default — the D-127 MUL/era
- * gate — with an explicit "field any unit" off-list override) and the WORKING OPFOR ROSTER (preloaded from the
- * current opforForce; add/remove/clear/duplicates). Save emits a fresh ProtoInstance[] to the host (claims-panel
- * writes it to missionSpec.opforForce/opforBv). Units only + default pilot skills — parity with generated OpFor
- * (per-unit OpFor pilot-skill editing is a logged fast-follow). No BV cap (advisory readout only).
- *
- * Reuses the D-124e .cpv / D-128 .cng overlay pattern (fixed, viewport-capped, scroll, overscroll-behavior:contain).
- * Additive + HS-only (claims-panel gates the entry button on isHotspots()); Traditional never mounts it.
- */
 import { Component, ChangeDetectionStrategy, computed, signal, inject, input, output, effect, untracked } from '@angular/core';
 import { DataService } from '../../services/data.service';
 import { ForceGeneratorService } from '../force/force-generator.service';
-import { MulAllowlistService } from '../chaos/mul-allowlist.service'; // D-127 — the OpFor faction MUL gate
+import { MulAllowlistService } from '../chaos/mul-allowlist.service';
 import type { ProtoInstance } from '../force/force-generator';
 import type { UnitSummary as Unit } from '../../models/unit-summary.model';
 
@@ -92,7 +80,7 @@ const VISIBLE_CAP = 120; // mirror chaos-market-tab.ts
     `,
     styles: [`
         :host { display:contents; }
-        .opb-overlay { position:fixed; inset:0; background:rgba(20,16,10,.55); display:flex; align-items:flex-start; justify-content:center; padding:32px 16px calc(32px + var(--bce-footer-h, 0px)); overflow-y:auto; overscroll-behavior:contain; z-index:60; } /* IMPORT-7 A — clear the legal footer */
+        .opb-overlay { position:fixed; inset:0; background:rgba(20,16,10,.55); display:flex; align-items:flex-start; justify-content:center; padding:32px 16px calc(32px + var(--bce-footer-h, 0px)); overflow-y:auto; overscroll-behavior:contain; z-index:60; }
         .opb { position:relative; width:min(860px,100%); max-height:calc(100dvh - 64px); overflow-y:auto; overscroll-behavior:contain; background:var(--paper2, var(--paper)); border:1.8px solid var(--ink); box-shadow:0 8px 30px rgba(0,0,0,.4); padding:18px 20px 16px; font-family:var(--type); color:var(--ink); }
         .opb-x { position:absolute; top:9px; right:11px; border:none; background:transparent; font-size:18px; color:var(--ink2); cursor:pointer; line-height:1; }
         .opb-h { border-bottom:1.5px solid var(--line); padding-bottom:9px; margin-bottom:12px; }
@@ -130,7 +118,7 @@ const VISIBLE_CAP = 120; // mirror chaos-market-tab.ts
 export class OpforBuilderComponent {
     private readonly data = inject(DataService);
     private readonly forceGen = inject(ForceGeneratorService);
-    private readonly mulAllow = inject(MulAllowlistService); // D-127
+    private readonly mulAllow = inject(MulAllowlistService);
 
     /** The OpFor faction the mission was generated for (claims-panel resolves spec.forge.opforFaction ?? target ?? enemyFaction). */
     readonly faction = input<string>('');
@@ -150,7 +138,6 @@ export class OpforBuilderComponent {
     private seeded = false;
 
     constructor() {
-        // D-127 — warm the MUL allow-list so the gated list re-runs once it lands (fire-and-forget; inert outside a
         // Hot Spots ilClan campaign → idsFor() null → the faction×era set gates instead).
         void this.mulAllow.ensure();
         // Seed the working roster from the current opforForce ONCE (the modal is created fresh per open; signal inputs
@@ -161,7 +148,6 @@ export class OpforBuilderComponent {
             this.seeded = true;
             untracked(() => this.roster.set(init.map((i) => ({ ...i }))));
         });
-        // D-130 test seam (OPT-IN: localStorage['bce.test.d130']): drive the real builder so a headless render proves
         // the gate/off-list breadth, add/remove/clear, and the minted ProtoInstance shape (provenance gm-added).
         if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage.getItem('bce.test.d130')) {
             (window as unknown as Record<string, unknown>)['__d130'] = {
@@ -184,8 +170,6 @@ export class OpforBuilderComponent {
     protected readonly catalogReady = computed(() => { this.data.isDataReady(); return this.data.getUnits().length > 0; });
     /** The whole catalog of fieldable (valued) units — the off-list source. */
     private readonly catalogFieldable = computed<Unit[]>(() => { this.data.isDataReady(); return this.data.getUnits().filter((u) => u.bv > 0); });
-    /** The faction-legal id set (the default gate = D-127 MUL list when live, else the faction×era set) — used to tag
-     *  off-list rows and as the default source. */
     private readonly gatedIds = computed<Set<number>>(() => {
         this.data.isDataReady();
         const mulIds = this.mulAllow.idsFor(this.faction());

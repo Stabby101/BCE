@@ -1,18 +1,8 @@
-/*
- * BCE retool — Campaign dashboard (opening panel + 7 tabs) — SCAFFOLD. DIRECTIVE-008.
- * The post-wizard terminus: "Begin campaign" lands here (the D-006 summary read-back
- * is superseded — its role moves into Overview). Overview reads the assembled
- * NewCampaignState (treasury/force/pilots/threat/transport + command identity + a
- * templated seed mission + a campaign log); the other six tabs are tagged SCAFFOLD
- * placeholders. Empty state (refresh / direct nav — no persistence yet) → cover.
- * Styled through the .theme-dossier token set (T-015 swap seam), not hardcoded hex.
- * No engine, no generator, no persistence, no real tab data — all later directives.
- */
 import { Component, ChangeDetectionStrategy, computed, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { TableReturnService } from '../../shared/table-return.service'; // GM-3 P3 — the hand-off return control
+import { TableReturnService } from '../../shared/table-return.service';
 import { NewCampaignState } from '../new-campaign-state';
-import { CHAOS_CAMPAIGNS } from '../setup/chaos-campaigns'; // D-108 — resolve the Hot Spot campaign name for the badge
+import { CHAOS_CAMPAIGNS } from '../setup/chaos-campaigns';
 import { computeLedger } from '../economy-ledger';
 import { ARCH_NAMES, CUSTOM_UNIT } from '../faction/faction-data';
 import { shipForSize } from '../size-capital/resources';
@@ -20,8 +10,8 @@ import { OrdersService } from '../orders/orders.service';
 import { orderText as houseOrderText } from '../orders/house-orders';
 import { RosterComponent } from './roster/roster';
 import { FlowComponent } from './flow/flow';
-import { StarMapTabComponent } from '../star/star-map-tab'; // DIRECTIVE-104 — Star Map tab
-import { CurrentLocationComponent } from './current-location'; // DIRECTIVE-HARDEN-2 — the D-079 Overview location slice
+import { StarMapTabComponent } from '../star/star-map-tab';
+import { CurrentLocationComponent } from './current-location';
 import { ExitConfirmComponent } from './exit-confirm';
 import { SaveDialogComponent } from './save-dialog';
 import { CampaignSaveStore, campaignProgress } from '../campaign-save-store';
@@ -35,8 +25,8 @@ import { CLOCK_TUNABLES, formatDate, campaignWeek, type SpanId } from '../clock/
 import { MissionGeneratorService } from '../mission/mission-generator.service';
 import { NONE_NARRATOR, MISSION_TUNABLES } from '../mission/mission-spec';
 import { MissionPackageComponent } from '../mission/mission-package';
-import { DeployRosterComponent } from './deploy-roster'; // D-118 — inline deploy roster in the Prepare & deploy box
-import { HirePersonnelComponent } from '../chaos/hire-personnel-panel'; // IMPORT-3 P2 — hire named mercs at the deploy/track-setup step
+import { DeployRosterComponent } from './deploy-roster';
+import { HirePersonnelComponent } from '../chaos/hire-personnel-panel';
 import { BattleViewComponent } from '../battle/battle-view';
 import { MissionTreeService } from '../mission/mission-tree.service';
 import type { MissionBranch } from '../mission/mission-tree'; // the __d110b deployAndActivate seam's test branch
@@ -53,28 +43,28 @@ import { AarTabComponent } from '../aar/aar-tab';
 import { IntelTabComponent } from '../intel/intel-tab';
 import { PilotDetailComponent } from '../barracks/pilot-detail';
 import { PilotService } from '../barracks/pilot.service';
-import { ResolveService } from './resolve.service'; // DIRECTIVE-HARDEN-4 — the resolve subsystem
-import { ResolveModalComponent } from './resolve-modal'; // DIRECTIVE-HARDEN-4 — the resolve modal markup
-import { SpToastComponent } from './sp-toast'; // DIRECTIVE-139 — the SP transaction toast
+import { ResolveService } from './resolve.service';
+import { ResolveModalComponent } from './resolve-modal';
+import { SpToastComponent } from './sp-toast';
 import { SettingsTabComponent } from '../narrator/settings-tab';
 import { NarratorConsoleComponent } from '../narrator/narrator-console';
 import { LegalFooterComponent } from '../../shared/legal-footer'; // COMPLIANCE-3 — inline notice in the dashboard chrome
 import { ClaimsPanelComponent } from '../claims/claims-panel';
 import { LobbyPanelComponent } from '../claims/lobby-panel';
 import { AuthService } from '../../auth/auth.service';
-import { WarchestLedgerComponent } from '../chaos/warchest-ledger'; // D-109 — the Hot Spots Warchest tab
+import { WarchestLedgerComponent } from '../chaos/warchest-ledger';
 import { WarchestService } from '../chaos/warchest.service';
-import { ChaosRepairComponent } from '../chaos/chaos-repair-tab'; // D-111 — the Chaos Repair & Refit tab
-import { ChaosContractsComponent } from '../chaos/chaos-contracts-tab'; // D-110 — the Chaos Contracts tab
-import { ChaosMarketComponent } from '../chaos/chaos-market-tab'; // D-112 — the Chaos Market tab
-import { ChaosHiringComponent } from '../chaos/chaos-hiring-tab'; // D-112 — the Chaos Hiring tab
-import { ChaosTrackPresetsComponent } from '../chaos/chaos-track-presets'; // D-116 — the Hot Spots track-preset manager
-import { TrackPickerComponent } from '../chaos/track-picker'; // DIRECTIVE-IMPORT-5 (Part A) — the shared track picker (was the inline D-132 picker)
-import { GmPanelComponent } from '../gm/gm-panel'; // GM-1 P1 — the Master GM session's control tab
-import { TableModeService } from '../gm/table-mode.service'; // GM-1 P1 — blanks GM surfaces on the projected screen
-import { ForceImportService } from '../gm/force-import.service'; // GM-1 P3 — the GM-side join-with-force merge
-import { ContractSignService } from '../gm/contract-sign.service'; // GM-2 P2b
-import { rollComplications } from '../chaos/chaos-complications'; // D-110e — test seam: verify the count scales with Command
+import { ChaosRepairComponent } from '../chaos/chaos-repair-tab';
+import { ChaosContractsComponent } from '../chaos/chaos-contracts-tab';
+import { ChaosMarketComponent } from '../chaos/chaos-market-tab';
+import { ChaosHiringComponent } from '../chaos/chaos-hiring-tab';
+import { ChaosTrackPresetsComponent } from '../chaos/chaos-track-presets';
+import { TrackPickerComponent } from '../chaos/track-picker';
+import { GmPanelComponent } from '../gm/gm-panel';
+import { TableModeService } from '../gm/table-mode.service';
+import { ForceImportService } from '../gm/force-import.service';
+import { ContractSignService } from '../gm/contract-sign.service';
+import { rollComplications } from '../chaos/chaos-complications';
 
 interface TabDef {
     id: string;
@@ -85,30 +75,26 @@ const TABS: readonly TabDef[] = [
     { id: 'roster', label: 'Unit Roster' },
     { id: 'inventory', label: 'Inventory' },
     { id: 'barracks', label: 'Barracks' },
-    { id: 'missions', label: 'Missions' }, // D-072: the lifecycle hub — folds Force Preview (was MekBay) + Claims + AAR as sub-tabs
+    { id: 'missions', label: 'Missions' },
     { id: 'lobby', label: 'Lobby' },
-    { id: 'aar', label: 'AAR' }, // D-072: kept on the front row for now (also reachable inside Missions — dual-placed)
+    { id: 'aar', label: 'AAR' },
     { id: 'intel', label: 'Intel' },
     { id: 'flow', label: 'Flow' },
-    { id: 'starmap', label: 'Star Map' }, // DIRECTIVE-104
+    { id: 'starmap', label: 'Star Map' },
     { id: 'repair', label: 'Repair & Salvage' },
     { id: 'settings', label: 'Settings' },
 ];
-// DIRECTIVE-109 — the Hot Spots (Chaos Campaign) tab set: the shared-substrate tabs + the new Warchest (the SP
 // economy home, standing in for Overview). The Traditional economy tabs (Overview/Inventory/Barracks/Repair &
 // Salvage) are EXCLUDED here — they're replaced by from-scratch Chaos economy tabs as those slices land.
 const HOTSPOTS_TABS: readonly TabDef[] = [
-    // DIRECTIVE-119 P2 — reduced to the always-on surfaces. The mission-lifecycle surfaces (Contracts, Lobby, AAR,
     // Repair & Refit) are reached through the top-of-sheet Process Rail, not pinned tabs; Intel + Flow are unpinned
-    // (the top rail replaces the Flow tab). Star Map stays pinned (a reference surface, James's call). Every unpinned
     // surface stays ROUTABLE BY ID (select(): the rail + goToStep still navigate them).
-    { id: 'warchest', label: 'Warchest' }, // SP balance + Contract Record Sheet + maintenance (D-109)
-    { id: 'chaos-market', label: 'Market' }, // buy/sell/hire for SP (D-112/D-114)
+    { id: 'warchest', label: 'Warchest' },
+    { id: 'chaos-market', label: 'Market' },
     { id: 'roster', label: 'Unit Roster' },
     { id: 'starmap', label: 'Star Map' },
     { id: 'settings', label: 'Settings' },
 ];
-// GM-1 P1 — a MASTER GM SESSION pins the GM panel first; everything else is the HS set unchanged.
 const GM_HOTSPOTS_TABS: readonly TabDef[] = [{ id: 'gm', label: 'GM' }, ...HOTSPOTS_TABS];
 
 @Component({
@@ -133,7 +119,6 @@ const GM_HOTSPOTS_TABS: readonly TabDef[] = [{ id: 'gm', label: 'GM' }, ...HOTSP
         .rec-banner .rec-copy, .rec-banner .rec-ack { font-family:var(--label); font-size:12px; font-weight:700; letter-spacing:.5px;
             text-transform:uppercase; padding:7px 13px; border:1.4px solid #c79a3a; background:var(--paper); color:#8a6410; cursor:pointer; }
         .rec-banner .rec-ack { background:#c79a3a; color:#1a1407; }
-        /* DIRECTIVE-067 — the Quick Mission panel */
         .qm-intro { font-family:var(--type); font-size:13px; color:var(--ink2); line-height:1.5; max-width:640px; margin:0 0 14px; }
         .qm-gen { font-family:var(--label); font-weight:700; letter-spacing:1px; text-transform:uppercase; font-size:14px; padding:13px 22px;
             border:2px solid var(--stamp); background:var(--stamp); color:var(--paper); cursor:pointer; }
@@ -153,8 +138,6 @@ const GM_HOTSPOTS_TABS: readonly TabDef[] = [{ id: 'gm', label: 'GM' }, ...HOTSP
         .bk-grouphd:hover { background:var(--paper2); }
         .bk-grouphd .caret { display:inline-block; transition:transform .12s; color:var(--ink2); font-size:11px; }
         .bk-grouphd .caret.open { transform:rotate(90deg); }
-        /* D-074 — Overview economy summary + transaction log */
-        /* D-079 — current-location line + GM setter */
         .econ { display:grid; grid-template-columns:1fr 1.4fr; gap:14px; margin:14px 0; }
         @media (max-width:760px) { .econ { grid-template-columns:1fr; } }
         .econ .box, .econ-led, .econ-log { border:1.5px solid var(--ink); background:var(--paper); padding:11px 13px; }
@@ -169,11 +152,9 @@ const GM_HOTSPOTS_TABS: readonly TabDef[] = [{ id: 'gm', label: 'GM' }, ...HOTSP
         .tx-d { font-family:var(--mono); font-size:11px; color:var(--ink2); }
         .tx-a { font-family:var(--mono); font-weight:700; text-align:right; } .tx.neg .tx-a { color:var(--warn,#c2622a); } .tx.pos .tx-a { color:var(--ok,#3a7d44); }
         .tx-b { font-family:var(--mono); font-size:11px; color:var(--ink2); text-align:right; min-width:74px; }
-        /* D-075 — payroll cue + warnings on the economy box */
         .el-cue { font-family:var(--mono); font-size:11px; color:var(--ink2); margin-top:8px; padding-top:7px; border-top:1px dashed var(--line); }
         .el-warn, .el-short { font-family:var(--type); font-size:12px; line-height:1.4; margin-top:8px; padding:7px 9px; border:1.4px solid #c2622a; border-left-width:4px; background:color-mix(in srgb, #c2622a 8%, var(--paper)); color:#8a3d12; }
         .el-short { border-color:var(--stamp); background:color-mix(in srgb, var(--stamp) 9%, var(--paper)); color:var(--stamp); font-weight:600; }
-        /* D-072 — the Missions lifecycle sub-tab bar (brief → Force Preview → Claims → AAR) */
         .msub { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 16px; border-bottom:1.5px solid var(--ink); padding-bottom:8px; }
         .msub-b { font-family:var(--label); font-weight:600; letter-spacing:1px; text-transform:uppercase; font-size:12px; padding:8px 14px; border:1.4px solid var(--ink2); background:var(--paper); color:var(--ink2); cursor:pointer; }
         .msub-b:hover { color:var(--ink); }
@@ -182,33 +163,28 @@ const GM_HOTSPOTS_TABS: readonly TabDef[] = [{ id: 'gm', label: 'GM' }, ...HOTSP
 })
 export class CampaignDashboardComponent {
     private readonly router = inject(Router);
-    protected readonly tableReturn = inject(TableReturnService); // GM-3 P3 — the "◄ Back to the table" control
+    protected readonly tableReturn = inject(TableReturnService);
     private readonly state = inject(NewCampaignState);
     private readonly store = inject(CampaignSaveStore);
-    private readonly warchest = inject(WarchestService); // D-109
+    private readonly warchest = inject(WarchestService);
     private readonly contracts = inject(ContractMarketService);
     private readonly clock = inject(CampaignClockService);
     private readonly missionGen = inject(MissionGeneratorService);
-    /** GM-2 P3-fold — the EMPTY-FIELD witness: on a GM session, a spec whose stored sizing input is the 1-BV floor (nothing was
-     *  deployed on side A at Generate) and that no D-130 save has since replaced by hand. Persistent until regenerate or that save. */
     protected readonly emptyField = computed(() => {
         const spec = this.state.missionSpec();
         return this.state.gmSession() && !!spec && (spec.playerBv ?? 0) <= 1 && !spec.opforManual;
     });
     private readonly tree = inject(MissionTreeService);
     private readonly pilotSvc = inject(PilotService);
-    // DIRECTIVE-HARDEN-4 — the resolve subsystem (dashboard-provided = the original field lifetime).
     protected readonly res = inject(ResolveService);
-    protected readonly tableMode = inject(TableModeService); // GM-1 P1 — constant false outside a GM session
+    protected readonly tableMode = inject(TableModeService);
     private readonly inventorySvc = inject(InventoryService);
     private readonly personnelSvc = inject(PersonnelService);
     private readonly auth = inject(AuthService); // DEPLOY-009: drives the guest recovery-code banner
-    private readonly star = inject(StarSystemsService); // D-079 — Star Map systems (lazy chunk)
+    private readonly star = inject(StarSystemsService);
 
-    // DIRECTIVE-067 — Quick Mission reduces the surface to fielding/buying the force + the one-shot deploy.
     protected readonly quickMission = computed(() => this.state.quickMission());
 
-    // DIRECTIVE-108 — read-only Campaign System badge on the Overview (null/old saves → Traditional).
     protected readonly campaignSystemLabel = computed(() => (this.state.campaignSystem() === 'hotspots' ? 'Hot Spots' : 'Traditional'));
     protected readonly hotSpotCampaignName = computed(() => {
         if (this.state.campaignSystem() !== 'hotspots') return null;
@@ -216,21 +192,18 @@ export class CampaignDashboardComponent {
     });
     private static readonly QUICK_TABS: readonly TabDef[] = [
         { id: 'roster', label: 'Unit Roster' }, // roster + Acquire/Market + pilot assignment
-        { id: 'quickmission', label: 'Mission' }, // D-072: the one-shot hub — generate → Force Preview → Claims
-        { id: 'lobby', label: 'Lobby' }, // D-069: host the one-shot — the join QR + live player roster
+        { id: 'quickmission', label: 'Mission' },
+        { id: 'lobby', label: 'Lobby' },
     ];
-    // D-109 — 3-way tab set: Quick Mission → QUICK_TABS; Hot Spots (Chaos Campaign) → HOTSPOTS_TABS; else the
     // Traditional TABS. Quick Mission wins if both (a one-shot is never the Hot Spots economy set).
     protected readonly tabs = computed<readonly TabDef[]>(() =>
         this.quickMission() ? CampaignDashboardComponent.QUICK_TABS
-            : this.state.campaignSystem() === 'hotspots' ? (this.state.gmSession() ? GM_HOTSPOTS_TABS : HOTSPOTS_TABS) // GM-1 P1
+            : this.state.campaignSystem() === 'hotspots' ? (this.state.gmSession() ? GM_HOTSPOTS_TABS : HOTSPOTS_TABS)
                 : TABS);
     protected readonly activeTab = signal<string>('overview');
     // HF-016: the barracks combat-pilot (MechWarriors) group is collapsible + starts COLLAPSED.
     protected readonly pilotsOpen = signal(false);
-    // D-072: the Missions/Quick-Mission lifecycle sub-tab — brief → Force Preview (deploy) → Claims (play) →
     // AAR (resolve). One signal serves both hubs (campaign 'missions' + Quick Mission 'quickmission').
-    // HOTFIX-029 — 'claims' removed: the Claims board moved into the Lobby tab (its natural home alongside the
     // join QR + roster). Deep-links to the old 'claims' sub route to the Lobby tab (see goToStep).
     protected readonly missionsSub = signal<'brief' | 'force' | 'aar'>('brief');
     protected selectMissionSub(s: 'brief' | 'force' | 'aar'): void { this.missionsSub.set(s); }
@@ -250,51 +223,36 @@ export class CampaignDashboardComponent {
     }
 
     constructor() {
-        // DIRECTIVE-HARDEN-4 — hand the resolve service the dashboard-owned modal signals (same instances).
         this.res.bindHostUi({ packageOpen: this.packageOpen, walkOpen: this.walkOpen });
-        // GM-1 P3 — instantiate the import-merge (dashboard-lifetime; gmSession-gated internally — the GM
         // tab need not be open for a player's join-with-force to land).
         inject(ForceImportService);
-        inject(ContractSignService); // GM-2 P2b — a phone's signing lands here (dashboard-lifetime; gmSession-gated internally)
+        inject(ContractSignService);
         // A refresh / direct nav with an empty state → back to cover.
         if (!this.state.era() || !this.state.resources()) {
             void this.router.navigate(['/']);
             return;
         }
-        // D-067: a Quick Mission lands on the roster (field/buy the force) and SKIPS the campaign ensures
         // (mission tree, support personnel/payroll, starting parts inventory, autosave) — no economy/clock
         // side-effects. The date is already set at Begin; the roster + Acquire market lazy-load on their own.
         if (this.quickMission()) {
             this.activeTab.set('roster');
             return;
         }
-        // D-109 — a Hot Spots campaign opens on its economy home (Warchest); Overview isn't in its tab set.
-        // Back-fill the Warchest for a hotspots save created before D-109 (warchestSP still null) — forward-only,
         // mirrors ensureClock/ensureTree. A seeded campaign (warchestSP set) is left untouched.
         if (this.state.campaignSystem() === 'hotspots') {
-            // GM-3 P2 — a TABLE WITH NO COMPANY (warchestSP null on a gmSession) is NOT back-filled a 3,000 SP warchest and
-            // opens on the GM tab (its home), not the Warchest (R0.2 worst-five #3). The D-109 back-fill is for a plain HS
-            // save created before D-109 — a company-less table is empty BY DESIGN, so it stays null. Everything else unchanged.
             const table = this.state.companylessTable();
             this.activeTab.set(table ? 'gm' : 'warchest');
             if (this.state.warchestSP() === null && !table) { this.warchest.seed(); void this.store.persistCurrent(); }
         }
-        // D-022: a pre-clock save gets a date + treasury on load (migrate IN PLACE, no autosave).
         if (this.clock.ensureClock()) void this.store.persistCurrent();
-        // D-026: a pre-tree save with a live contract gets a root branch (mid-mission → ACTIVE) on load.
         if (this.tree.ensureTree()) void this.store.persistCurrent();
-        // D-036: pre-D-036 pilots gain bios + records-begin ONCE (forward-only, stored).
         if (this.pilotSvc.ensureBios()) void this.store.persistCurrent();
-        // D-056: roll the starting inventory at Begin / back-fill an older save ONCE (async — awaits
         // MekBay data + the era-legal catalog; forward-only, persists only when it actually stored).
         void this.inventorySvc.ensureStartingInventory().then((changed) => { if (changed) void this.store.persistCurrent(); });
-        // D-058: roll the starting SUPPORT roster at Begin / back-fill an older save ONCE (sync — generated
         // purely from force size × tier × seed; forward-only, persists only when it actually stored).
         if (this.personnelSvc.ensureStartingPersonnel()) void this.store.persistCurrent();
-        // HOTFIX-023 (2): roll the D-059 hiring market for ALL campaigns (incl. custom / no-starting-force) so the
         // Hiring Hall is never a blank tab — not only lazily when the bce-hiring-hall component effect happens to run.
         if (this.personnelSvc.ensureHiringMarket()) void this.store.persistCurrent();
-        // D-079: back-fill currentLocation on a pre-D-079 save (forward-only, ONCE) to the faction capital,
         // then lazy-load the star map (its own ~72 KB chunk) so the Overview location line + GM setter resolve.
         if (!this.state.currentLocation() && this.state.faction()) { this.state.setCurrentLocation(capitalSystemIdFor(this.state.faction())); void this.store.persistCurrent(); }
         void this.star.ensureLoaded();
@@ -306,9 +264,7 @@ export class CampaignDashboardComponent {
         if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && (localStorage.getItem('bce.test.d110b') || localStorage.getItem('bce.test.d110c'))) {
             (window as unknown as Record<string, unknown>)['__d110b'] = {
                 deployAll: (): void => this.state.setStartingForce((this.state.startingForce() ?? []).map((u) => ({ ...u, condition: 'Deployed' }))),
-                // HOTFIX-029 test seam: open the lobby deployment gate deterministically (ACTIVE engagement +
                 // all units Deployed) so a harness can exercise the gated join/copy/QR affordances.
-// ORDER-4 H18 — the test seam's synthetic engagement is UNIQUE per activation: the server now CLOSES a resolved
 // engagement key and refuses battle writes to it, so a fixed 'test-active' re-activated after a resolve was a closed
 // key (gm2p2a T2k went red — a fixture artefact: a real re-generate mints a new branch id). Dev-seam only (localStorage-gated).
                 deployAndActivate: (): void => {
@@ -316,13 +272,12 @@ export class CampaignDashboardComponent {
                     this.state.setMissionTree([{ branchId: `test-active-${Date.now().toString(36)}`, state: 'ACTIVE', name: 'Test Engagement' } as MissionBranch]);
                     void this.store.persistCurrent(); // persist so a joined player's snapshot sees the deploy
                 },
-                // GM-2 P3 test seam — ACTIVATE without deploying anything of the GM's own: the brought companies are already
                 // Deployed from the mint, so this proves the referee field (zero own units) end to end.
                 activate: (): void => {
                     const t = this.state.missionTree() ?? [];
                     if (!t.some((b) => b.state === 'ACTIVE')) {
                         const av = t.find((b) => b.state === 'AVAILABLE');
-                        this.state.setMissionTree(av ? t.map((b) => (b.branchId === av.branchId ? { ...b, state: 'ACTIVE' as const } : b)) : [{ branchId: `test-active-${Date.now().toString(36)}`, state: 'ACTIVE', name: 'Test Engagement' } as MissionBranch]); // ORDER-4 H18 — unique per activation (see deployAndActivate)
+                        this.state.setMissionTree(av ? t.map((b) => (b.branchId === av.branchId ? { ...b, state: 'ACTIVE' as const } : b)) : [{ branchId: `test-active-${Date.now().toString(36)}`, state: 'ACTIVE', name: 'Test Engagement' } as MissionBranch]);
                     }
                     void this.store.persistCurrent();
                 },
@@ -335,24 +290,20 @@ export class CampaignDashboardComponent {
                     hasOffer: !!this.state.acceptedContract(),
                     ledger: (this.state.warchestLedger() ?? []).map((e) => e.event),
                     treeStates: (this.state.missionTree() ?? []).map((b) => b.state),
-                    // D-110c — faction OpFor + salvage assertions
                     enemyFaction: this.state.activeChaosContract()?.enemyFaction ?? null,
                     acceptedTarget: this.state.acceptedContract()?.target ?? null,
                     opforCount: this.state.missionSpec()?.opforForce?.length ?? null,
                     opforBv: this.state.missionSpec()?.opforBv ?? null,
                     ledgerFull: (this.state.warchestLedger() ?? []).map((e) => ({ event: e.event, cost: e.cost })),
-                    // D-116
                     presetCount: (this.state.chaosTrackPresets() ?? []).length,
                     forgeSeedId: this.state.missionSpec()?.forge?.seedId ?? null,
                     activeBranchName: (this.state.missionTree() ?? []).find((b) => b.state === 'ACTIVE')?.name ?? null,
-                    // D-110e
                     command: this.state.missionSpec()?.clauses?.command ?? null,
                     rolledComps: (this.state.missionSpec()?.forge?.rolledComplications ?? []).map((c) => c.name),
                     rollCounts: { Independent: rollComplications('Independent', [], 'k').length, Liaison: rollComplications('Liaison', [], 'k').length, House: rollComplications('House', [], 'k').length, Integrated: rollComplications('Integrated', [], 'k').length },
                 }),
             };
         }
-        // D-134 test seam (OPT-IN: localStorage['bce.test.d134']): drive the two-sided VP resolve + read the live view/
         // verdict/pay + the resolved tier + the posted combat pay + the available forks, so a headless render proves the
         // two-column checklist, the verdict/pay cases, and the tree unlock from a two-sided resolve.
         if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage.getItem('bce.test.d134')) {
@@ -368,7 +319,6 @@ export class CampaignDashboardComponent {
                 resolvedTier: (): unknown => (this.state.missionTree() ?? []).find((b) => b.state === 'RESOLVED')?.resolution?.outcomeTier ?? null,
                 availCount: (): unknown => (this.state.missionTree() ?? []).filter((b) => b.state === 'AVAILABLE').length,
                 combatPayPosted: (): unknown => (this.state.warchestLedger() ?? []).filter((e) => e.event.startsWith('Combat pay:')).map((e) => Math.abs(e.paid ?? e.cost ?? 0)),
-                // IMPORT-6 Part B — the single-sided model (additive keys; the D-134 keys above are untouched)
                 model: (): unknown => this.res.resolveModel(),
                 oneSided: (): unknown => this.res.oneSided(),
                 ssView: (): unknown => { const v = this.res.oneSidedView(); return v ? { tier: v.tier, ourVp: v.ourVp, totalVp: v.totalVp, ourMetCount: v.ourMetCount, ourTotal: v.ourTotal, texts: v.ourObjs.map((o) => o.text) } : null; },
@@ -378,11 +328,9 @@ export class CampaignDashboardComponent {
                 trackTemplate: (): unknown => this.state.missionSpec()?.forge?.trackTemplate ?? null,
                 // resolvedTier() above = the FIRST resolved branch (stale after a contract's first resolve); this = the LATEST
                 lastResolvedTier: (): unknown => { const r = (this.state.missionTree() ?? []).filter((b) => b.state === 'RESOLVED'); return r.length ? r[r.length - 1].resolution?.outcomeTier ?? null : null; },
-                // IMPORT-6 FOLLOWUPS — the AAR snapshot of the authored marks (aftermath alignment) + the results-only fielded personnel
                 lastResolvedMarks: (): unknown => { const r = (this.state.missionTree() ?? []).filter((b) => b.state === 'RESOLVED'); const a = r.length ? r[r.length - 1].resolution?.aar : undefined; return a ? { model: a.model ?? null, marks: a.objectiveMarks ?? null } : null; },
                 hiredWithYou: (): unknown => this.state.missionSpec()?.forge?.hiredWithYou ?? null,
                 continuityLead: (): unknown => this.state.missionSpec()?.forge?.continuityLead ?? null,
-                // IMPORT-7 Part C — the rolled terrain + the track's own words (title first) for the title-vs-terrain lint; the
                 // NONE-narrator situation line for the employer-echo check; Part D — the brief's authored/signed Scale.
                 terrain: (): unknown => this.state.missionSpec()?.terrain ?? null,
                 trackTexts: (): unknown => { const s = this.state.missionSpec(); const hb = s?.forge?.hotspot; return s ? [hb?.trackName ?? s.forge?.opName ?? null, hb?.trackSituation ?? null, hb?.deployment ?? null, s.forge?.trackSheet?.deployment ?? null, hb?.situation ?? null, hb?.systemProfile?.climate ?? null, hb?.systemProfile?.description ?? null] : null; },
@@ -392,20 +340,15 @@ export class CampaignDashboardComponent {
         }
     }
 
-    // D-079 star-map current-location slice → dashboard/current-location.ts (extracted, DIRECTIVE-HARDEN-2).
 
     protected select(id: string): void {
-        // D-072: opening the mission hub lands on the Brief sub-tab (the lifecycle start); deploy jumps it to
         // Force Preview afterwards (prepareDeploy sets the sub AFTER this).
-        if (id === 'missions' || id === 'quickmission' || id === 'chaos-contracts') this.missionsSub.set('brief'); // D-114 — HS Contracts double-duties the Missions hub; open on the brief/track sub-tab
+        if (id === 'missions' || id === 'quickmission' || id === 'chaos-contracts') this.missionsSub.set('brief');
         this.activeTab.set(id);
     }
 
-    // ── Save + exit controls (DIRECTIVE-012/013) ──
     protected readonly confirmAction = signal<'main' | 'exit' | null>(null);
     protected readonly confirmLabel = computed(() => (this.confirmAction() === 'main' ? 'Exit to Main' : 'Exit'));
-    /** D-053: the specific, datestamp-free save label (Day N · M missions), live from state — pairs with
-     *  the command name on the dashboard autosave note so James always knows which campaign this is. */
     protected readonly saveProgress = computed(() =>
         campaignProgress({
             startDate: this.state.startDate(),
@@ -465,7 +408,7 @@ export class CampaignDashboardComponent {
     // ── Command identity ──
     protected readonly commandName = computed(() => {
         const name = this.state.commandName();
-        if (name) return name; // merc / explicitly-named command (D-016)
+        if (name) return name;
         const u = this.state.unit();
         if (!u) return '—';
         return u === CUSTOM_UNIT ? 'Custom command' : u;
@@ -475,16 +418,12 @@ export class CampaignDashboardComponent {
         const c = this.state.force();
         return c ? ARCH_NAMES[c] ?? c : '—';
     });
-    /** Starting rating (merc commands; D-016). */
     protected readonly rating = computed(() => this.state.rating());
-    /** Free-agent / market-logistics framing for merc commands (display-only; D-016). Archetype-guarded
-     *  (D-021) so a House formation with merc-market logistics — e.g. McCarron's — never reads as merc. */
     protected readonly mercFraming = computed(() =>
         this.state.force() === 'MERC' && this.state.logisticsProfile() === 'merc-market'
             ? 'Mercenary command · free agent · market logistics'
             : null,
     );
-    /** Non-merc OOB formation framing (D-021): "<size> · <formation> · <faction> · <logistics>". */
     protected readonly formationFraming = computed(() => {
         if (this.state.force() === 'MERC') return null;
         const f = this.state.formation();
@@ -494,14 +433,13 @@ export class CampaignDashboardComponent {
         return [size, f, this.factionName(), logi].filter(Boolean).join(' · ');
     });
 
-    // ── Merc contract market (D-017) — archetype-keyed (D-021), not logistics-keyed. ──
     protected readonly isMerc = computed(() => this.state.force() === 'MERC');
     protected readonly offers = computed<ContractOffer[]>(() => this.state.contractMarket()?.offers ?? []);
     protected readonly accepted = computed(() => this.state.acceptedContract());
     protected readonly hasOffers = computed(() => this.isMerc() && this.offers().length > 0);
-    protected readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots'); // D-110b
-    protected readonly hasChaosContract = computed(() => !!this.state.activeChaosContract()); // D-110b — a live Hot Spots contract
-    protected readonly isHotspotContract = computed(() => !!this.state.activeChaosContract()?.hotspotId); // D-124 — a premade authored hotspot (authored tree; no per-branch preset choice)
+    protected readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots');
+    protected readonly hasChaosContract = computed(() => !!this.state.activeChaosContract());
+    protected readonly isHotspotContract = computed(() => !!this.state.activeChaosContract()?.hotspotId);
     protected readonly acceptTarget = signal<ContractOffer | null>(null);
 
     protected askAccept(o: ContractOffer): void {
@@ -514,12 +452,11 @@ export class CampaignDashboardComponent {
         const o = this.acceptTarget();
         if (!o) return;
         this.contracts.accept(o);
-        this.tree.mintRoot(o); // D-026 — the contract's opening branch (AVAILABLE)
+        this.tree.mintRoot(o);
         this.acceptTarget.set(null);
         await this.store.persistCurrent(); // in-place (no autosave); reload restores the ACTIVE contract
     }
 
-    // ── Contract lifecycle (D-022): renegotiation + completion + progress + log ──
     protected rerollUsed(o: ContractOffer, clause: ClauseId): boolean {
         return !!o.rerollsUsed?.[clause];
     }
@@ -561,13 +498,11 @@ export class CampaignDashboardComponent {
     });
     protected readonly completedLog = computed<ContractOffer[]>(() => this.state.completedContracts() ?? []);
 
-    // ── Campaign clock (D-022) — GM advance controls. ──
     protected readonly spans = CLOCK_TUNABLES.spans;
     protected advance(span: SpanId): void {
         this.clock.advance(span);
     }
 
-    // ── Mission spec (D-023) — the active contract's generated mission + its briefing view. ──
     /** The active mission spec, only when it belongs to the current contract (else stale → none). */
     protected readonly missionSpec = computed(() => {
         const spec = this.state.missionSpec();
@@ -583,15 +518,12 @@ export class CampaignDashboardComponent {
     protected generateMission(): void {
         void this.missionGen.generate();
     }
-    // ── D-076 — GM per-mission OpFor arms-mix toggle (campaign only). 3 states: Auto (honor the seed) /
     //    Mech-only / Combined-arms. The next campaign generation (opener, reroll, branch) reads it; precedence
     //    GM toggle > seed.armsMix > campaign default. Quick Mission is unaffected (own arms style). ──
     protected readonly missionArmsMixOverride = this.state.missionArmsMixOverride;
     protected setMissionArmsMixOverride(v: 'auto' | 'mechs' | 'combined'): void {
         this.state.setMissionArmsMixOverride(v);
     }
-    // ── D-077 — operational-tempo cue (read-only) + GM reset/adjust. The escalation level the next generation
-    //    will drift the OpFor BV by; the prior outcome of the active thread; a D-075-style GM edit. ──
     protected readonly tempoLevel = computed(() => this.state.escalationLevelFor(this.state.acceptedContract()?.id));
     protected readonly tempoPrior = computed(() => {
         const ac = this.state.acceptedContract();
@@ -613,7 +545,6 @@ export class CampaignDashboardComponent {
         this.state.setEscalationLevel(this.state.acceptedContract()?.id, 0);
         void this.store.persistCurrent();
     }
-    // ── DIRECTIVE-067 — Quick Mission: synthesize a one-shot ACTIVE contract (era/faction-appropriate +
     //    a sensible enemy) then BV-match the OpFor via the existing generator. No contract market. ──
     protected readonly generatingQuick = signal(false);
     protected async generateQuickMission(): Promise<void> {
@@ -634,12 +565,11 @@ export class CampaignDashboardComponent {
         this.rerollOpen.set(false);
     }
     protected confirmReroll(): void {
-        void this.tree.rerollActive(); // D-026 — regenerate the active branch + re-mint its children
+        void this.tree.rerollActive();
         this.rerollOpen.set(false);
         this.packageOpen.set(false); // the package belonged to the prior spec
     }
 
-    // ── Mission tree (D-026) — the three-zone board + the RESOLVE questionnaire. ──
     protected readonly branches = computed(() => this.state.missionTree() ?? []);
     protected readonly activeBranch = computed(() => this.branches().find((b) => b.state === 'ACTIVE'));
     protected readonly availableBranches = computed(() => this.branches().filter((b) => b.state === 'AVAILABLE'));
@@ -650,40 +580,30 @@ export class CampaignDashboardComponent {
     protected generateBranch(id: string): void {
         void this.tree.generateBranch(id);
     }
-    // DIRECTIVE-IMPORT-5 (Part A) — the D-132 track picker (hotspotTracks/trackChoices/trackGroups/generateChosenTrack/
     // pickRandomTrack/generateBranchFromPreset) moved into the shared <bce-track-picker> component (chaos/track-picker.ts),
     // mounted both here (operations board, dashboard.html) and on the active-contract card. Plain "Generate »" stays above.
 
-    // ── HOTFIX-004: the Missions → D-030 battle-view handoff. The prepare/deploy forward action
     //    focuses the MEKBAY tab with the engagement loaded (deployed BLUFOR + the active OpFor).
-    //    Gated on a deployed force, with the gate NAMED when empty (the D-029 no-silent-no-op standard).
     protected readonly deployedCount = computed(() => deployedSet(this.state.startingForce(), this.state.quickMission()).length); // HF-020: quick one-shot counts the whole force
     protected prepareDeploy(): void {
-        // D-072: deploy = the Force Preview stage of the mission hub (was the standalone MekBay tab). Campaign
         // uses the Missions hub; Quick Mission uses its own 'quickmission' hub. Set the sub AFTER select().
-        // D-114 — Hot Spots folded the Missions hub into the Contracts tab, so route there (a real HS tab) — else
         // activeTab would land on 'missions' (no longer in HOTSPOTS_TABS) and de-highlight the whole HS tab bar.
         this.select(this.quickMission() ? 'quickmission' : (this.isHotspots() ? 'chaos-contracts' : 'missions'));
         this.missionsSub.set('force');
     }
 
-    /** DIRECTIVE-115 — the Flow rail's advisory jump: land on the tab (select() first — it resets the hub sub to
-     *  'brief'), then apply the requested sub-tab. Navigation only; nothing is forced. */
     protected goToStep(d: { tab: string; sub?: string }): void {
-        // HOTFIX-029 — Claims moved to the Lobby tab: an inbound sub:'claims' (old Flow-rail deep-link) lands on
         // Lobby, not a now-removed Missions sub. Other subs route as before.
         if (d.sub === 'claims') { this.select('lobby'); return; }
         this.select(d.tab);
         if (d.sub) this.selectMissionSub(d.sub as 'brief' | 'force' | 'aar');
     }
 
-    // ── D-031 Walk the field — the post-RESOLVE dispositions screen (skippable + resumable). ──
     private readonly fieldWalk = inject(FieldWalkService);
     protected readonly walkPending = this.fieldWalk.pendingCount;
     protected readonly walkOpen = signal(false);
     protected openWalk(): void { this.walkOpen.set(true); }
 
-    // ── D-032 House orders — the non-merc mission ignition (the contract market's sibling). ──
     private readonly orders = inject(OrdersService);
     protected readonly houseOrder = this.state.houseOrder;
     protected readonly canReportOrders = computed(() => this.orders.canReportCompletion());
@@ -697,31 +617,25 @@ export class CampaignDashboardComponent {
     protected cancelReportOrders(): void { this.reportConfirm.set(false); }
     protected confirmReportOrders(): void { this.orders.reportCompletion(); this.reportConfirm.set(false); }
 
-    // ── Mission package (D-025) — the full forge-driven dossier. ──
-    /** A forge seed is bound → the full package is available; absent/generic → the D-023 template. ──*/
     protected readonly hasPackage = computed(() => !!this.missionSpec()?.forge?.seedId);
     protected readonly genericMission = computed(() => !!this.missionSpec()?.forge?.generic);
     protected readonly packageOpen = signal(false);
     protected openPackage(): void {
-        if (this.hasPackage()) this.packageOpen.set(true); // HOTFIX-021 — never mount the overlay empty on a generic/seedless mission
+        if (this.hasPackage()) this.packageOpen.set(true);
     }
     protected closePackage(): void {
         this.packageOpen.set(false);
     }
-    // D-118 — "▶ Play mission": one tap from the contract brief to the live Lobby (QR + claim board). prepareDeploy()
     // is pure navigation (Force Preview) — the required setup is just landing on the right surface; here that is the
     // Lobby, so we route straight there. The deployed force + active engagement (already set) drive the lobby gate.
     protected playMission(): void {
         this.select('lobby');
     }
-    // D-118 — "▦ View track" (from the Lobby panel): re-open the ACTIVE engagement's order via the EXISTING package
-    // path (the same overlay, printable). Enable the condensed order first so the D-117 TRACK (HS) / FRAGORD
     // (Traditional) is shown, not just the WARNORD masthead.
     protected viewTrack(): void {
         try { localStorage.setItem('bce.order.fragord', '1'); } catch { /* private mode / no storage */ }
         this.openPackage();
     }
-    // DIRECTIVE-119 — Hot Spots ADVANCE PHASE: settle the period between tracks — advance the campaign clock a month
     // (monthly maintenance + base pay run through the existing clock-advance ripple), mark the resolved branch
     // finalized so the flow rail leaves it (→ idle/CONTRACT, no double-advance), then return to CONTRACT for the next
     // track. HS-only — Traditional's `outcome` node navigates and never reaches this.
@@ -745,7 +659,6 @@ export class CampaignDashboardComponent {
         () => `${this.factionName()} · ${this.commandName()} · Operational Use Only`,
     );
 
-    // ── Clock display (D-022 — currentDate, falling back to the start date) ──
     protected readonly dateText = computed(() => {
         const d = this.clock.currentDate();
         return d ? formatDate(d) : '—';
@@ -756,7 +669,6 @@ export class CampaignDashboardComponent {
 
     // ── Overview stat cards ──
     protected readonly forceCount = computed(() => this.state.unitSize()?.count ?? 0);
-    /** Live treasury (D-022) — the capital value made mutable; falls back to capital for pre-D-022 state. */
     protected readonly treasuryShort = computed(() => {
         const t = this.state.treasury() ?? this.state.capital()?.amount;
         return t != null ? this.short(t) : '—';
@@ -783,7 +695,6 @@ export class CampaignDashboardComponent {
             `Treasury seeded: ${c ? c.amount.toLocaleString('en-US') : '—'} C-bills.`,
         ];
         const base = lines.map((text) => ({ t: d, text }));
-        // D-029: the dated purchase/sale/admin entries from the campaign log (newest last).
         const entries = (this.state.campaignLog() ?? []).map((e) => ({ t: `${e.date.y}-${String(e.date.m + 1).padStart(2, '0')}-${String(e.date.d).padStart(2, '0')}`, text: e.text }));
         return [...base, ...entries];
     });
@@ -792,7 +703,6 @@ export class CampaignDashboardComponent {
         return n >= 1e9 ? (n / 1e9).toFixed(2).replace(/\.00$/, '') + 'B' : Math.round(n / 1e6) + 'M';
     }
 
-    // ── DIRECTIVE-074 — Overview economy summary (the D-058 ledger via the SHARED computeLedger — same numbers
     //    as the inventory tab, single source) + a transaction log of recent money in/out. ──
     protected readonly ledger = computed(() => computeLedger(this.state));
     /** Recent MONEY events only (signed amount + resulting balance), reverse-chron, capped at 15 (scroll for the rest). */
@@ -801,18 +711,16 @@ export class CampaignDashboardComponent {
     protected absVal(n: number): number { return Math.abs(n); }
     protected txnDate(d: { y: number; m: number; d: number }): string { return `${d.y}-${String(d.m + 1).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`; }
 
-    // ── DIRECTIVE-075 — payroll: the monthly-debit cue, the shortfall flag, and the next-month pre-warning ──
     /** The latest "Personnel payroll" debit (the visible monthly cue that the tick fired — not silent). */
     protected readonly lastPayroll = computed(() => {
         const e = [...(this.state.campaignLog() ?? [])].reverse().find((x) => /^Personnel payroll/.test(x.text) && x.amount != null);
         return e ? { amount: Math.abs(e.amount as number), date: this.txnDate(e.date) } : null;
     });
-    /** Recorded payroll shortfalls (D-075) — the Overview flag; the future T-040 turnover system consumes them. */
     protected readonly payrollShortfall = computed(() => {
         const list = this.state.payrollShortfalls() ?? [];
         if (!list.length) return null;
         const last = list[list.length - 1];
-        const kinds = [...new Set(list.map((x) => x.kind ?? 'payroll'))].join(' + '); // D-076: payroll and/or maintenance
+        const kinds = [...new Set(list.map((x) => x.kind ?? 'payroll'))].join(' + ');
         return { count: list.length, total: list.reduce((s, x) => s + x.unpaid, 0), lastMonth: this.txnDate(last.month), kinds };
     });
     /** Pre-warning: next month's obligations (payroll + unit maintenance) won't be covered by treasury + income. */
@@ -822,7 +730,6 @@ export class CampaignDashboardComponent {
         return due > 0 && l.treasury + l.income < due;
     });
 
-    // ── Barracks (D-020/D-036) — the personnel registry; KIA pilots file under the memorial. ──
     protected readonly pilotRoster = computed(() => {
         const pilots = this.state.pilots() ?? [];
         const byId = new Map((this.state.startingForce() ?? []).map((i) => [i.instanceId, i]));
@@ -862,7 +769,6 @@ export class CampaignDashboardComponent {
         const assigned = all.filter((p) => p.status !== 'KIA' && p.assignedInstanceId).length;
         return { total: all.length, assigned, spares: all.length - kia - assigned, kia };
     });
-    // ── D-036 infirmary + the roll of the fallen (the D-031 data + clock tick, surfaced at last) ──
     protected readonly infirmary = computed(() =>
         (this.state.pilots() ?? [])
             .filter((p) => p.status === 'Injured')
@@ -874,7 +780,6 @@ export class CampaignDashboardComponent {
             .filter((p) => p.status === 'KIA')
             .map((p) => ({ id: p.pilotId, name: p.name, callsign: p.callsign ?? '', date: p.kiaDate ? formatDate(p.kiaDate) : '', missions: p.missionCount ?? 0 })),
     );
-    // ── D-036 pilot detail (explode from a Barracks card; the roster hosts its own instance) ──
     protected readonly detailPilot = signal<string | null>(null);
     protected openPilot(id: string): void {
         this.detailPilot.set(id);

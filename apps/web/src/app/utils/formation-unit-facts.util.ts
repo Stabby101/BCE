@@ -95,7 +95,6 @@ export function cbtCanDealDamage(unit: UnitSummary, minDamage: number, atRange: 
     return false;
 }
 
-// BCE FORK-EDIT (SLICE-1 / DIRECTIVE-061 gate; REBASE-1 P1 e ruling #4 RE-HOME): a comp is a WEAPON only for the
 // E/M/B/A types — X (ammo), C (components), O/S/P are NOT weapons. The launcher predicates match on the comp NAME
 // as a slice-fallback (comp.eq is unbound on a slice — the side-car carries only C/X, never weapons), and without
 // this gate an "AC/5 Ammo" / "MML 5/LRM Ammo" row flips a unit to "has an autocannon/LRM it has not got". Measured

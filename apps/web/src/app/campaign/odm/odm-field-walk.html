@@ -1,6 +1,3 @@
-<!-- FORKED FROM campaign/walk/field-walk.html @ 2fa97a0 - DIRECTIVE-ODM-13 Phase 1 (a DRIFT SURFACE).
-     Divergences: the R2 trio both sides, the strip-yield preview replaces the credit column, the materiel
-     footer replaces the money total. Nothing here prices anything. -->
 <div class="fw-overlay" (click)="later()">
     <div class="fw" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Walk the field">
         <div class="fw-head">
@@ -16,7 +13,7 @@
             <div class="fw-shead"><span class="badge">BLUFOR</span><span class="sh-t">Your force</span><span class="sh-c">{{ recoversSelected() }} riding home</span></div>
             @for (r of blu(); track r.instanceId) {
                 <div class="fw-row sev-{{ r.readout.severity }}">
-                    <div class="fw-unit"><span class="fw-name">{{ r.label }}</span><span class="fw-tons">{{ r.tons }}t</span></div>
+                    <div class="fw-unit"><span class="fw-name">{{ r.label }}</span><span class="fw-tons">{{ r.tons }}t@if (weightClass(r.tons); as wc) { <span class="fw-wc" data-testid="odm-walk-wc">{{ wc }}</span> }</span></div>
                     <div class="fw-readout">
                         <span class="sev sev-{{ r.readout.severity }}">{{ sevLabel(r.readout.severity) }}</span>
                         <span class="ro">armor {{ pct(r.readout.armorPct) }}%</span>
@@ -51,7 +48,7 @@
             <div class="fw-shead"><span class="badge">OPFOR</span><span class="sh-t">Enemy machines</span><span class="sh-c">{{ capturesSelected() }}/{{ prizeSlots() }} captures</span></div>
             @for (r of opf(); track r.instanceId) {
                 <div class="fw-row sev-{{ r.readout.severity }}">
-                    <div class="fw-unit"><span class="fw-name">{{ r.label }}</span><span class="fw-tons">{{ r.tons }}t</span></div>
+                    <div class="fw-unit"><span class="fw-name">{{ r.label }}</span><span class="fw-tons">{{ r.tons }}t@if (weightClass(r.tons); as wc) { <span class="fw-wc" data-testid="odm-walk-wc">{{ wc }}</span> }</span></div>
                     <div class="fw-readout">
                         <span class="sev sev-{{ r.readout.severity }}">{{ sevLabel(r.readout.severity) }}</span>
                         <span class="ro">armor {{ pct(r.readout.armorPct) }}%</span>
@@ -84,8 +81,10 @@
         <div class="fw-foot">
             @if (fleetReady() && manifest(); as m) {
                 <div class="fw-total" data-testid="odm-walk-manifest">LOAD MANIFEST — components <b>{{ m.componentTons }} t</b> · ammunition <b>{{ m.ammoTons }} t</b> · hulks <b>{{ m.hulks }}</b> ({{ m.hulkTons }} t) — bays <b [class.fw-over]="overBays()">{{ m.baysUsed }}/{{ m.liftBays }}</b> · doored holds <b [class.fw-over]="overCargo()">{{ m.cargoUsed }}/{{ m.cargoTons }} t</b> · field crew <b [class.fw-over]="overHours()">{{ m.fieldHours }}/{{ m.fieldHoursWindow }} h</b> · captures <b>{{ capturesSelected() }}</b>/{{ prizeSlots() }}</div>
+            } @else if (manifestLoad().failure; as why) {
+                <div class="fw-total fw-fail" data-testid="odm-walk-manifest-failed">LOAD MANIFEST — <b>fleet manifest failed: {{ why }}</b> <span class="fw-parts">({{ manifestLoad().parts }})</span> <button type="button" class="fw-retry" (click)="retryManifest()" data-testid="odm-walk-manifest-retry">Retry</button></div>
             } @else {
-                <div class="fw-total" data-testid="odm-walk-manifest">LOAD MANIFEST — <b>fleet manifest loading…</b> the walk waits for the ships before it can cap-check.</div>
+                <div class="fw-total" data-testid="odm-walk-manifest">LOAD MANIFEST — <b>fleet manifest loading…</b> the walk waits for the ships and the catalog before it can cap-check <span class="fw-parts" data-testid="odm-walk-manifest-parts">({{ manifestLoad().parts }})</span></div>
             }
             @if (overHours()) { <div class="gate-note" data-testid="odm-walk-hours-gate">Over the extraction window — the field crew has {{ manifest()?.fieldHoursWindow }} h. Leave something on the field (no override: the clock is physics).</div> }
             @if (needsForce() && !overHours()) {

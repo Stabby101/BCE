@@ -1,11 +1,4 @@
-/*
- * DIRECTIVE-ERA-1 (rulings 2 + 4, 2026-09-02) — pins the Hot Spots CHAMBER predicate (the era/region filter
- * `hotSpotCatalog` runs — STRICT era equality, the IMPORT-2 custom bypass, region-null = general) that IMPORT-2
- * Part A asked for and never got, and the ERA-1 side rules: a Clan that does not hire mercenaries is never offered
- * as a side to fight FOR (the D-133 mirror goes side-A-only), while an Inner Sphere enemy still authors both sides.
- * Pure functions only — no TestBed. Mutation-kill notes are inline: each `it` names the regression it would catch.
- */
-import { inChamber, factionHiresMercenaries, resolveSides, opposingFaction, type CatalogHotSpot } from './hotspots-catalog';
+import { inChamber, factionHiresMercenaries, factionHiresCommand, hirableSides, resolveSides, opposingFaction, type CatalogHotSpot } from './hotspots-catalog';
 
 const hs = (over: Partial<CatalogHotSpot> = {}): CatalogHotSpot => ({
     id: 'hs-x', title: 'T', world: 'W', employer: 'Federated Suns — the district garrison command', type: 'Objective Raid', situation: '',
@@ -38,7 +31,7 @@ describe('ERA-1 · inChamber — the offer-board chamber predicate', () => {
         expect(inChamber(authored, 'ilclan', 'capellan-march')).toBeFalse();
         expect(inChamber(hs({ era: 'ilclan', region: null }), 'ilclan', 'capellan-march')).toBeTrue();
     });
-    it('IMPORT-2 Part A — a CUSTOM hot spot always lists, regardless of era and theater', () => {
+    it('Part A — a CUSTOM hot spot always lists, regardless of era and theater', () => {
         const custom = hs({ custom: true, era: 'general', region: null });
         expect(inChamber(custom, 'clan-invasion', 'invasion-corridor')).toBeTrue();
         expect(inChamber(custom, 'star-league', 'capellan-march')).toBeTrue();
@@ -58,7 +51,7 @@ describe('ERA-1 · factionHiresMercenaries — Clans do not hire; the HS-modeled
             expect(factionHiresMercenaries(f)).withContext(f).toBeFalse();
         }
     });
-    it('the exception is exactly the MUL-allowlisted trading Clans (D-127): Sea Fox and Raven Alliance / Snow Raven', () => {
+    it('the exception is exactly the MUL-allowlisted trading Clans Sea Fox and Raven Alliance / Snow Raven', () => {
         expect(factionHiresMercenaries('Clan Sea Fox')).toBeTrue();
         expect(factionHiresMercenaries('Clan Diamond Shark')).toBeTrue(); // the alias — the catalog's name for Sea Fox
         expect(factionHiresMercenaries('Clan Snow Raven')).toBeTrue();
@@ -71,7 +64,7 @@ describe('ERA-1 · factionHiresMercenaries — Clans do not hire; the HS-modeled
 });
 
 describe('ERA-1 · resolveSides — a non-hiring Clan enemy makes the mirror side-A-only', () => {
-    it('an Inner Sphere enemy still authors both sides (the D-133 provisional mirror — the NEGATIVE test)', () => {
+    it('an Inner Sphere enemy still authors both sides (the provisional mirror — the NEGATIVE test)', () => {
         const s = resolveSides(hs({ contract: { ...hs().contract, enemyFaction: 'Draconis Combine' } }));
         expect(s.b).toBeDefined();
         expect(s.b!.employer).toBe('Draconis Combine');
@@ -100,5 +93,40 @@ describe('ERA-1 · resolveSides — a non-hiring Clan enemy makes the mirror sid
         expect(s.a).toBe(a);
         expect(s.b).toBeUndefined();
         expect(opposingFaction(h, 'a')).toBe('Clan Ghost Bear');
+    });
+});
+
+describe('ORDER-15 (a) · factionHiresCommand / hirableSides — the hiring predicate keys on the command\u2019s AFFILIATION', () => {
+    it('a MERCENARY command (the default, null, and every older save) → the ERA-1 rule verbatim', () => {
+        for (const aff of [null, undefined, '', 'Mercenary']) {
+            expect(factionHiresCommand('Federated Suns', aff)).withContext(String(aff)).toBeTrue();
+            expect(factionHiresCommand('Clan Smoke Jaguar', aff)).withContext(String(aff)).toBeFalse();
+            expect(factionHiresCommand('Clan Sea Fox', aff)).withContext(String(aff)).toBeTrue();
+        }
+    });
+    it('a HOUSE command is hired by its OWN faction (the employer resolves to the same MUL key) and by employers that are no faction at all', () => {
+        expect(factionHiresCommand('Federated Suns — the district garrison command', 'Federated Suns')).toBeTrue();
+        expect(factionHiresCommand('Federated Suns', 'Federated Suns')).toBeTrue();
+        expect(factionHiresCommand('Local / planetary forces', 'Federated Suns')).toBeTrue();
+        expect(factionHiresCommand('Kathil Agricorp', 'Federated Suns')).toBeTrue(); // a corporation — no faction key
+        expect(factionHiresCommand('', 'Federated Suns')).toBeTrue();
+    });
+    it('a HOUSE command is NEVER hired by a foreign faction — a House, a Clan, a hiring Clan, the pirates', () => {
+        for (const emp of ['Draconis Combine', 'Combine', 'Clan Sea Fox', 'Clan Smoke Jaguar', 'Pirates', 'Capellan Confederation']) {
+            expect(factionHiresCommand(emp, 'Federated Suns')).withContext(emp).toBeFalse();
+        }
+    });
+    it('hirableSides: a merc command takes both sides; an FS command only the FS side; a Combine command only the Combine side; a Lyran command neither', () => {
+        const h = hs(); // employer FS · enemy Draconis Combine → sides a (FS) + b (the Combine mirror)
+        expect(hirableSides(h, 'Mercenary').map((x) => x.key)).toEqual(['a', 'b']);
+        expect(hirableSides(h, null).map((x) => x.key)).toEqual(['a', 'b']);
+        expect(hirableSides(h, 'Federated Suns').map((x) => x.key)).toEqual(['a']);
+        expect(hirableSides(h, 'Draconis Combine').map((x) => x.key)).toEqual(['b']);
+        expect(hirableSides(h, 'Lyran Commonwealth')).toEqual([]); // no side hires it → the offer board does not deal this hot spot to it
+    });
+    it('a generic employer (planetary) hires any House command; the mirror side against a House still does not', () => {
+        const h = hs({ employer: 'Local / planetary forces', contract: { ...hs().contract, enemyFaction: 'Draconis Combine' } });
+        expect(hirableSides(h, 'Federated Suns').map((x) => x.key)).toEqual(['a']);
+        expect(hirableSides(h, 'Draconis Combine').map((x) => x.key)).toEqual(['a', 'b']); // its own side (b) AND the planetary side (a)
     });
 });

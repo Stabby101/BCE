@@ -1,15 +1,3 @@
-/*
- * BCE campaign-pack — PERKS governance (DIRECTIVE-036). Pure TS, no Angular/DOM.
- *
- * Enforces SPA_GOVERNANCE (CamOps p.72, in pilot-abilities.ts) AS DATA: slots by the pilot's
- * skill rating, the combined point cap, and the force-wide SPA-pilot cap. Every refusal comes
- * back with the GATE NAMED (the HOTFIX-004 no-silent-no-op standard — disabled controls say why).
- * Display + print only this slice: SPAs never touch the record sheet; the table adjudicates.
- *
- * NOTE (recon, reported): canon's formation-rules variant (1 per 12) is STRICTER than standard
- * (1 per 4) — it does not "lift" anything. The lift the GM reaches for is variant 'off' (a table
- * call). The variant rides a localStorage knob until the D-038 Settings surface adopts it.
- */
 import { PILOT_ABILITIES, SPA_GOVERNANCE, type PilotAbility } from './pilot-abilities';
 import type { Pilot } from './pilot-generator';
 
@@ -17,13 +5,10 @@ export type SkillRating = 'green' | 'regular' | 'veteran' | 'elite';
 export type CapVariant = 'standard' | 'formation' | 'off';
 
 export const PERK_TUNABLES = {
-    /** Force-wide cap variant default; 'bce.spa.cap' in localStorage overrides (D-038 Settings adopts it). */
     capVariant: 'standard' as CapVariant,
     capStorageKey: 'bce.spa.cap',
 } as const;
 
-/** The pilot's skill rating, derived from the STORED skills (the D-020 canon table inverted:
- *  Elite 2/3 · Veteran 3/4 · Regular 4/5 · Green 5/6 — by combined TN, jitter straddles honestly). */
 export function ratingOf(gunnery: number, piloting: number): SkillRating {
     const tn = gunnery + piloting;
     if (tn <= 5) return 'elite';

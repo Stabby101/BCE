@@ -1,22 +1,3 @@
-/*
- * Cloudflare Pages Function — the edge router for ALL MekBay assets under /mekbay/* (DEPLOY-004 → 007).
- *
- * GOAL (DEPLOY-007): db.mekbay.com is a BUILD-TIME source only and is NEVER contacted by a live user. The
- * hosted web build resolves REMOTE_HOST to `<origin>/mekbay`, so every MekBay fetch lands here. We serve:
- *   1) SAME-ORIGIN STATIC (Pages output) — the per-era slices (/mekbay/slim/*) and the build-mirrored full
- *      catalog JSON (/mekbay/equipment2.json, quirks.json, factions.json, eras.json, units_sources.json —
- *      units.json is DEPLOY-012 R2-served, see below). A catch-all Function intercepts /mekbay/* BEFORE
- *      static-asset fallback, so these must be served explicitly via env.ASSETS (HOTFIX-006 learned this the hard way).
- *   2) R2 — the heavy tree: record-sheet SVGs (/mekbay/sheets/*) and unit fluff images (/mekbay/images/fluff/*),
- *      ~12k files / ~2 GB, served from a bound R2 bucket (binding name MEKBAY). Bind it in the Pages project:
- *      Settings → Functions → R2 bindings → Variable name `MEKBAY` → the bucket. Until it's bound + populated,
- *      these fall through to (3), so deploying this is SAFE before R2 exists.
- *   3) LEGACY LAST-RESORT — proxy db.mekbay.com. Once the mirror is complete this is NEVER hit at runtime
- *      (the DoD network trace proves zero db.mekbay.com requests); it remains only as a cold-start safety net.
- *
- * No licensed data lives in this file — it is a routing/caching rule (REF-001 clean). Deploy: place `functions/`
- * at the Pages project root; Pages auto-wires functions/mekbay/[[path]].js to /mekbay/*.
- */
 const UPSTREAM = 'https://db.mekbay.com';
 const R2_PREFIXES = ['sheets/', 'images/fluff/'];
 // DEPLOY-012 — top-level catalog JSON that OUTGREW the Pages 25 MiB per-file asset limit (units.json: 25.3 MiB on
@@ -32,7 +13,6 @@ export async function onRequest(context) {
     const url = new URL(request.url);
     const subpath = url.pathname.replace(/^\/mekbay\//, '');
 
-    // 1) SAME-ORIGIN STATIC — per-era slices + the mirrored full catalog JSON + the DIRECTIVE-127 MUL ilClan
     //    allow-list (mul-ilclan/, build-emitted from content-forge). Fall through to (3) if the asset is absent
     //    (a build where the mirror didn't emit it / SPA-fallback HTML) so a JSON surface never hard-breaks.
     if (subpath.startsWith('slim/') || subpath.startsWith('mul-ilclan/') || /^[^/]+\.json$/.test(subpath)) {

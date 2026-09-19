@@ -1,4 +1,3 @@
-# HOTFIX-009 (E) — Cloudflare Pages cache policy. Locks in always-fresh HTML + data and fast-forever hashed
 # assets so the stale-bundle class (faction data not loading / guest button missing until a manual cache
 # clear) cannot recur, even with the service worker gone.
 #
@@ -20,7 +19,6 @@
 /*.css
   Cache-Control: public, max-age=31536000, immutable
 
-# HOTFIX-031 — the PLAYER app is NEVER cached. It is the session-join surface a player scans into cold, session
 # after session, on a phone that may hold weeks of stale visits — so freshness beats bandwidth here. `no-store`
 # means the browser keeps NO copy at all (not even a revalidated one): every /player/ load fetches the current
 # index + the current hashed bundle from the origin, so a stale player bundle is impossible by construction, not
@@ -40,7 +38,6 @@
 /player/*.css
   Cache-Control: no-store
 
-# HOTFIX-032 — the self-destructing service worker must always be fetched fresh (never a cached copy) so a
 # stuck browser's update check picks it up and unregisters. no-store, both roots.
 /ngsw-worker.js
   Cache-Control: no-store

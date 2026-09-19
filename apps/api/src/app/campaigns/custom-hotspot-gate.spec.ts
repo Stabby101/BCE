@@ -1,7 +1,3 @@
-/*
- * DIRECTIVE-IMPORT-1 Part A — the guest-gate decision (pure). Pins that only a guest carrying custom hotspots,
- * with auth required, is refused; every other combination passes.
- */
 import { snapshotCustomHotspotCount, guestCustomHotspotRefused, gmOnlyRefused } from './custom-hotspot-gate';
 
 describe('custom-hotspot-gate', () => {
@@ -16,7 +12,6 @@ describe('custom-hotspot-gate', () => {
             expect(snapshotCustomHotspotCount('a string')).toBe(0);
             expect(snapshotCustomHotspotCount(undefined)).toBe(0);
         });
-        // ── GM-1 P2 — the gmOnly layout counts too (the smuggling bypass the panel caught) ──
         it('counts customHotSpots UNDER gmOnly (a GM-session snapshot), and BOTH layouts summed', () => {
             expect(snapshotCustomHotspotCount({ gmOnly: { customHotSpots: [{ id: 'a' }] } })).toBe(1);
             expect(snapshotCustomHotspotCount({ customHotSpots: [{ id: 'a' }], gmOnly: { customHotSpots: [{ id: 'b' }, { id: 'c' }] } })).toBe(3);
@@ -31,7 +26,7 @@ describe('custom-hotspot-gate', () => {
         });
     });
 
-    describe('gmOnlyRefused (GM-1 — the gmOnly entitlement belt)', () => {
+    describe('gmOnlyRefused (the gmOnly entitlement belt)', () => {
         const withGmOnly = { gmOnly: { hotSpotOffer: ['hs-1'] } };
         it('REFUSES a non-entitled account persisting a gmOnly-carrying snapshot (guest or gm)', () => {
             expect(gmOnlyRefused('guest', true, false, withGmOnly)).toBe(true);

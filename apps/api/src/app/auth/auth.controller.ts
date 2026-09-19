@@ -1,13 +1,3 @@
-/*
- * BCE multi-tenant (DEPLOY-002 P1) — the auth surface (all @Public: the login flow + status checks must
- * be reachable by anonymous/pending users; the OAuth routes are protected by passport's own guard).
- *   GET  /api/auth/google | /github            → start OAuth (redirect to the provider); GM-1c: `?returnTo=` rides as `state`
- *   GET  /api/auth/google/callback | /github/… → provider returns → upsert user → set session → redirect (GM-1c: to the
- *                                                validated returnTo — the join page with its query string — else the root)
- *   GET  /api/auth/me                          → the current user + status (or null)
- *   POST /api/auth/logout                      → clear the session cookie
- *   POST /api/auth/dev-login                   → TEST SEAM, flag-gated (BCE_ALLOW_DEV_LOGIN=1), prod-off
- */
 import { Body, Controller, Get, HttpException, HttpStatus, Logger, NotFoundException, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request, Response } from 'express';
@@ -19,8 +9,8 @@ import { Public, type AuthedRequest, type OAuthProfile, type User } from './auth
 import { extractToken } from './auth.guards';
 import { RecoverThrottleService } from './recover-throttle.service';
 import { setSessionCookie, clearSessionCookie } from './session-cookie';
-import { GitHubReturnGuard, GoogleReturnGuard } from './oauth-return.guard'; // GM-1c: the start guards carry returnTo as state
-import { frontendOrigins, oauthLanding } from './return-to'; // GM-1c: the open-redirect-gated landing
+import { GitHubReturnGuard, GoogleReturnGuard } from './oauth-return.guard';
+import { frontendOrigins, oauthLanding } from './return-to';
 
 @Public()
 @Controller('auth')
@@ -31,11 +21,11 @@ export class AuthController {
         private readonly throttle: RecoverThrottleService,
         private readonly users: UsersService, // LINK-1: retire (link) the upgraded guest + audit
         private readonly campaigns: CampaignsService, // LINK-1: re-own the guest's campaigns to the account
-        private readonly grants: EntitlementsService, // ODM-1: /me entitlements[]
+        private readonly grants: EntitlementsService,
     ) {}
 
     private setSession(res: Response, token: string): void {
-        setSessionCookie(res, token); // HARDEN-7 B5 — shared cookie definition (same as the refresh path)
+        setSessionCookie(res, token);
     }
 
     @Get('google')
@@ -64,11 +54,9 @@ export class AuthController {
         const profile = req.user as OAuthProfile; // set by the passport strategy's validate()
         const user = this.auth.resolveUser(profile, req.ip); // DEPLOY-003: audits login/register
         const token = this.establishSession(req, res, user); // LINK-1: carry a guest's data across (in place); sets the cookie + returns the JWT
-        // HOTFIX-040 Fix A — Bearer-first for OAuth: hand the SPA the token on the redirect FRAGMENT (never a
         // query param — a fragment isn't sent to the server, logs, or Referer). The SPA adopts + strips it before
         // the first /auth/me, so Google works even when the browser blocks the cross-site (3rd-party) cookie. The
         // cookie stays as the secondary path for browsers that allow it.
-        // GM-1c — land where the sign-in began: the `state` the provider echoed is the start route's `returnTo` (the
         // join page with its campaign + engine query string). It is re-validated HERE (state is attacker-writable —
         // same-site path or an allow-listed origin only); anything else lands on the root exactly as before.
         const state = (req.query as Record<string, unknown> | undefined)?.state;
@@ -104,17 +92,10 @@ export class AuthController {
         }
     }
 
-    /** The gated frontend (P4) reads this to decide its state:
-     *   - `authRequired` false → dev/LAN, no wall (the app is open, UNCHANGED).
-     *   - `authRequired` true + `user` null → the login wall; pending/rejected → those screens; approved → in.
-     *   - `devLoginAllowed` → show the flag-gated dev-login affordance (test only; James never sets it in prod).
-     *   - `token` → the caller's OWN session JWT, so the SPA can hand it to the socket handshake (auth.token →
-     *     the P2 ownership path). Null when unauthenticated. The httpOnly cookie still carries HTTP auth. */
     @Get('me')
     me(@Req() req: AuthedRequest, @Res({ passthrough: true }) res: Response): { user: User | null; authRequired: boolean; devLoginAllowed: boolean; allowGuest: boolean; enabledProviders: string[]; token: string | null; entitlements: string[] } {
         const token = extractToken(req);
         const user = this.auth.userFromToken(token);
-        // HARDEN-7 B5 — /me is the session-status poll (a @Public route the guard's refresh doesn't reach); slide
         // a valid, near-expiry session here too so a client that only polls /me still never hits the 7-day cliff.
         if (user && user.status === 'approved') {
             const exp = this.auth.tokenExpiryMs(token);
@@ -127,7 +108,7 @@ export class AuthController {
             allowGuest: AuthService.allowGuest(), // DEPLOY-009: the wall shows the "+ guest" lane only when enabled
             enabledProviders: AuthService.enabledOAuthProviders(), // LOGIN-1: the UI renders a button ONLY per configured provider
             token: user ? (token ?? null) : null,
-            entitlements: user ? this.grants.featuresFor(user.id) : [], // ODM-1 — additive; drives entitled-only surfaces (server still enforces)
+            entitlements: user ? this.grants.featuresFor(user.id) : [],
         };
     }
 
@@ -158,17 +139,12 @@ export class AuthController {
         const user = this.auth.recoverGuest(body?.code ?? '', ip);
         if (!user) throw new UnauthorizedException('invalid recovery code');
         this.throttle.reset(ip); // a legitimate recovery clears the IP's counters
-        // HOTFIX-017: return the token too (parity with guest/dev-login) so the client can store it and
         // authenticate Bearer-first — recovery must work on a strict browser that blocks the cross-site cookie.
         const token = this.auth.issueToken(user);
         this.setSession(res, token);
         return { user, token };
     }
 
-    /** HARDEN-7 B2 REGENERATE — a logged-in GUEST who lost (or never saved) its one-time recovery code mints a
-     *  fresh one. AUTHENTICATED + GUEST-ONLY (resolved from the session token, since this controller is @Public):
-     *  a non-guest / no session is rejected. Rate-limited per IP + audited like /recover. The old code is
-     *  invalidated the instant the new hash is stored; the plaintext is returned ONCE. Row-scoped (ownerId intact). */
     @Post('recovery/regenerate')
     regenerate(@Req() req: Request, @Res({ passthrough: true }) res: Response): { recoveryCode: string } {
         if (!AuthService.allowGuest()) throw new NotFoundException();
@@ -189,7 +165,7 @@ export class AuthController {
 
     @Post('logout')
     logout(@Res({ passthrough: true }) res: Response): { ok: true } {
-        clearSessionCookie(res); // HOTFIX-040 Fix B — clear with the SAME attributes it was set with, so the cross-site cookie actually drops
+        clearSessionCookie(res);
         return { ok: true };
     }
 

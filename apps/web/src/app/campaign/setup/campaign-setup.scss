@@ -15,7 +15,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    height: calc(100dvh - var(--bce-footer-h, 0px)); /* IMPORT-7 A — minus the reserved legal-footer space */ /* own the scroll (body is overflow:hidden) — matches the other wizard steps */
+    height: calc(100dvh - var(--bce-footer-h, 0px));/* own the scroll (body is overflow:hidden) — matches the other wizard steps */
     width: 100%;
     padding: 30px;
     color: var(--ink);
@@ -65,7 +65,6 @@ header { display: flex; justify-content: space-between; align-items: flex-end; g
 .lead { font-family: var(--type); font-size: 13.5px; color: var(--ink2); margin: 13px 0 8px; }
 .lead b { color: var(--ink); }
 
-/* ── Control groups (Game System, Campaign System) — the .gsys pattern relocated + generalised (D-108) ── */
 .cg { display: flex; align-items: stretch; gap: 10px; margin: 4px 0 12px; flex-wrap: wrap; }
 .cg.col { flex-direction: column; align-items: stretch; gap: 8px; }
 .cg-l { align-self: center; flex: 0 0 132px; font-family: var(--label); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink2); }
@@ -95,7 +94,6 @@ header { display: flex; justify-content: space-between; align-items: flex-end; g
 .hs-blurb { font-family: var(--type); font-size: 12.5px; line-height: 1.5; color: var(--ink); }
 .hs-book { font-family: var(--mono); font-size: 10.5px; color: var(--ink2); letter-spacing: .3px; }
 
-/* D-108b — the "era set by this campaign" chip (an era-locked campaign skips the Era step). */
 .era-lock { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; margin-top: 2px; border: 1.4px solid var(--stamp); color: var(--stamp); background: rgba(146, 48, 31, .06); font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; font-size: 11px; text-transform: uppercase; padding: 5px 11px; }
 .el-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--stamp); flex: 0 0 auto; }
 

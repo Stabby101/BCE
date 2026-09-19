@@ -1,13 +1,3 @@
-/*
- * BCE Personnel (DIRECTIVE-058, T-040 slice 1) — the impure support-personnel service.
- *
- * Owns the FORWARD-ONLY starting-support-roster roll: reads the fielded force size + resource tier off the
- * campaign state, calls the PURE generateStartingPersonnel, and stores the realized PersonnelState on the
- * campaign snapshot (DATA-002 — durable, travels with saves). Rolls ONCE (guard on a present roster) so a
- * fresh Begin AND an old save back-fill identically without a re-roll — exactly like ensureStartingInventory.
- * GM surface only (no personnel in the player config). Synchronous: the roster is generated purely from force
- * size × tier × seed (no catalog/network — unlike the inventory roll).
- */
 import { Injectable, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
@@ -52,7 +42,6 @@ export class PersonnelService {
         }
     }
 
-    // ── D-059 HIRING HALL ─────────────────────────────────────────────────────────────────────────────
     /** The refreshing personnel market — keyed by campaign MONTH. STABLE within a month (deterministic per
      *  seed+periodKey); rebuilds (clear-and-rebuild) when the clock crosses into a new month (forward-only-
      *  per-period). Returns true if it (re)built (the caller persists). Lazy: called on Barracks view + a
@@ -78,8 +67,6 @@ export class PersonnelService {
         if (!market) return false;
         const cand = market.pool.find((c) => c.id === candidateId);
         if (!cand) return false;
-        // HOTFIX-022 B — a no-force / blank-roster campaign has no support roster yet (personnel() === null), and the
-        // old `if (!pn) return false` made HIRE a silent no-op (D-029). Ensure/initialize a roster so the first hire
         // lands: ensureStartingPersonnel rolls the starting staff when a force exists, else fall back to an empty base.
         let pn = this.state.personnel();
         if (!pn) {
@@ -93,7 +80,7 @@ export class PersonnelService {
         this.state.setHiringMarket({ ...market, pool: market.pool.filter((c) => c.id !== candidateId) });
         if (signingBonus > 0) {
             this.state.setTreasury((this.state.treasury() ?? 0) - signingBonus);
-            this.state.logMoney(`Signing bonus — ${person.name}`, -signingBonus, null, 'admin'); // D-074
+            this.state.logMoney(`Signing bonus — ${person.name}`, -signingBonus, null, 'admin');
         }
         void this.store.persistCurrent();
         return true;
@@ -111,7 +98,7 @@ export class PersonnelService {
         const severance = Math.round(person.salary * PERSONNEL_TUNABLES.severanceMonths);
         if (severance > 0) {
             this.state.setTreasury((this.state.treasury() ?? 0) - severance);
-            this.state.logMoney(`Severance — ${person.name}`, -severance, null, 'admin'); // D-074
+            this.state.logMoney(`Severance — ${person.name}`, -severance, null, 'admin');
         }
         void this.store.persistCurrent();
         return true;

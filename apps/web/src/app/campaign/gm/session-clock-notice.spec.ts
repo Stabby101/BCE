@@ -1,12 +1,8 @@
-/*
- * GM-3 P0 — pins the TELL-THE-TABLE decision: a gmSession snapshot whose date differs from the device's acknowledged
- * date produces the notice; a plain campaign never does; the first sight is a silent ack; the same date is silence.
- */
 import { dateKey, sessionClockNotice, sessionClockPlayerText, sessionClockGmText } from './session-clock-notice';
 
 const d = (y: number, m: number, dd: number) => ({ y, m, d: dd });
 
-describe('sessionClockNotice (GM-3 P0 — tell the table)', () => {
+describe('sessionClockNotice (P0 — tell the table)', () => {
     it('a PLAIN campaign fans nothing new: no notice and no ack, whatever the date or the seen key', () => {
         expect(sessionClockNotice({ gmSession: false, currentDate: d(3151, 4, 1) }, null)).toEqual({ notice: null, ack: null });
         expect(sessionClockNotice({ currentDate: d(3151, 4, 1) }, '3151-3-1')).toEqual({ notice: null, ack: null });

@@ -1,10 +1,3 @@
-/*
- * BCE retool — shared exit confirm modal (DIRECTIVE-012, + save-aware step D-013).
- * Gates both dashboard exit controls (Exit to Main / Exit). Offers to save first —
- * Save As / Quick Save / Exit anyway / Cancel — without blocking the exit. Esc /
- * click-outside cancel. Field-dossier theme tokens (inherited from the dashboard
- * .theme-dossier host). The dashboard wires the outputs to the save store + navigation.
- */
 import { Component, ChangeDetectionStrategy, HostListener, input, output } from '@angular/core';
 
 @Component({
@@ -29,7 +22,7 @@ import { Component, ChangeDetectionStrategy, HostListener, input, output } from 
         </div>
     `,
     styles: `
-        .backdrop { position: fixed; inset: 0; z-index: 1100; background: rgba(15, 14, 9, .82); display: flex; align-items: center; justify-content: center; padding: 22px 22px calc(22px + var(--bce-footer-h, 0px)); } /* IMPORT-7 A — clear the legal footer */
+        .backdrop { position: fixed; inset: 0; z-index: 1100; background: rgba(15, 14, 9, .82); display: flex; align-items: center; justify-content: center; padding: 22px 22px calc(22px + var(--bce-footer-h, 0px)); }
         .modal { background: var(--paper); border: 2px solid var(--ink); width: 100%; max-width: 520px; }
         .mhead { font-family: var(--label); font-weight: 600; letter-spacing: 2px; text-transform: uppercase; font-size: 12px; color: var(--ink2); background: var(--panel); border-bottom: 2px solid var(--ink); padding: 8px 14px; }
         .mbody { padding: 16px 14px; }
@@ -45,8 +38,6 @@ import { Component, ChangeDetectionStrategy, HostListener, input, output } from 
 })
 export class ExitConfirmComponent {
     readonly actionLabel = input<string>('Exit');
-    /** D-053: the prompt headline — defaulted to the exit wording so the dashboard is byte-identical;
-     *  the cover's save-aware CREATE passes a new-campaign phrasing. */
     readonly question = input<string>('Are you sure you want to exit or navigate away?');
     readonly saveAs = output<void>();
     readonly quickSave = output<void>();

@@ -1,4 +1,3 @@
-/* INTEL tab (D-034) — rides the dashboard's .theme-dossier tokens; no raw palette. */
 :host { display: block; }
 
 .ph { font-family: var(--label); font-weight: 600; letter-spacing: 2.5px; font-size: 13px; text-transform: uppercase; border-bottom: 1.5px solid var(--ink); padding-bottom: 6px; margin: 0 0 12px; display: flex; align-items: baseline; gap: 14px; }
@@ -55,7 +54,7 @@
 .nb-edit { flex: 1 1 240px; display: flex; gap: 6px; align-items: center; }
 
 /* ── modals (dashboard cmodal conventions, component-scoped) ── */
-.cmodal { position: fixed; inset: 0; background: rgba(10, 8, 4, .55); display: flex; align-items: center; justify-content: center; padding: 20px 20px calc(20px + var(--bce-footer-h, 0px)); z-index: 60; } /* IMPORT-7 A — clear the legal footer */
+.cmodal { position: fixed; inset: 0; background: rgba(10, 8, 4, .55); display: flex; align-items: center; justify-content: center; padding: 20px 20px calc(20px + var(--bce-footer-h, 0px)); z-index: 60; }
 .cbox { background: var(--paper); border: 2px solid var(--ink); max-width: 480px; width: 100%; padding: 18px 20px; max-height: 86dvh; overflow-y: auto; }
 .cbox.wide { max-width: 640px; }
 .cmsg { font-family: var(--type); font-size: 13.5px; line-height: 1.55; color: var(--ink); margin: 10px 0 16px; }

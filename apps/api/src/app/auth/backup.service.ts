@@ -1,10 +1,3 @@
-/*
- * BCE ENGINE — DIRECTIVE-HARDEN-7 A1: the off-box DB export. `VACUUM INTO` writes a CONSISTENT single-file
- * snapshot of the whole host DB (all tables) to a temp file — never a raw byte-copy of the live file (which,
- * under WAL + concurrent writes, could be torn). The admin route streams that temp file and deletes it.
- * This is the one protection Railway's volume backups don't give: they live WITH the volume, so a volume
- * delete / account loss takes them too; an admin can pull an off-box copy here any time. AdminGuard-gated.
- */
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import type { DatabaseSync } from 'node:sqlite';
 import { tmpdir } from 'node:os';

@@ -1,13 +1,3 @@
-/*
- * BCE — DIRECTIVE-109: the Chaos Campaign "SP Activity Cost Table" (Draconis Reach §8) as EDITABLE DATA.
- * Support Points (SP) are the Hot Spots fork's single currency. These are the fact-numbers (not book prose);
- * every value is GM-override-ready here rather than hard-coded at the call sites. Amounts are whole SP.
- *
- * IP: mechanics/values are facts; this is our own extraction — no rulebook text. The tool requires the rulebook.
- * Scope note (D-109 ledger-first slice): CBT (BV) costing only. Alpha Strike PV costing (Purchase PV×40, etc.)
- * and Rearm/Heal/Train/SCA wiring are captured in the table for completeness but only Repair/Purchase/Hire are
- * seamed into spend sites this slice (D-110 wires the rest).
- */
 
 import type { OutcomeGate } from '../mission/mission-tree'; // type-only — no runtime dep
 
@@ -27,7 +17,6 @@ export const CHAOS_START = {
     contractScale: 1,
 } as const;
 
-/** Monthly economy (Draconis Reach §6). Maintenance = perScale × Contract Scale. Base Pay is D-110. */
 export const CHAOS_MONTHLY = {
     maintenancePerScale: 500,
 } as const;
@@ -40,11 +29,6 @@ export const CHAOS_COMBAT_PAY: Record<CombatPayTier, number> = {
     none: 0, // broke the contract, or no objectives + nothing crippled/destroyed
 };
 
-/**
- * D-110b — the ESTIMATED-salvage fraction of the OpFor BV faced, by outcome tier. Multiplied at resolve by the
- * sell economy (BV÷2) and the contract's negotiated Salvage % to estimate SP recovered from the field. An
- * estimate (labeled "(est.)" in the ledger) — accurate/GM-entered salvage is D-110c. GM-tunable here.
- */
 export const TIER_SALVAGE_FRACTION: Record<CombatPayTier, number> = {
     allObjectives: 0.5, // clean win — most of the field is yours to strip
     success: 0.35, // held the field
@@ -52,9 +36,6 @@ export const TIER_SALVAGE_FRACTION: Record<CombatPayTier, number> = {
     none: 0, // broke the contract / recovered nothing
 };
 
-/** Map the mission-resolve OutcomeGate (6 values) → the combat-pay tier (4 buckets, §7). DIRECTIVE-HARDEN-1:
- *  moved here from WarchestService (with the two pure fns below) so the book arithmetic is unit-testable;
- *  the service delegates — byte-identical. */
 export const COMBAT_TIER_BY_GATE: Record<OutcomeGate, CombatPayTier> = {
     FULL_SUCCESS: 'allObjectives', // all objectives (+bonus) → 750×scale
     SUCCESS: 'success', // primary + secondary → 500×scale
@@ -69,7 +50,6 @@ export function combatPayFor(tier: OutcomeGate, scale: number): number {
     return CHAOS_COMBAT_PAY[COMBAT_TIER_BY_GATE[tier] ?? 'none'] * scale;
 }
 
-/** D-110b — the ESTIMATED-salvage fraction of the OpFor BV for a resolved track's outcome tier. Pure. */
 export function salvageFractionFor(tier: OutcomeGate): number {
     return TIER_SALVAGE_FRACTION[COMBAT_TIER_BY_GATE[tier] ?? 'none'] ?? 0;
 }
@@ -90,9 +70,9 @@ export const CHAOS_SP_COSTS = {
         vehicleOrBattleArmor: 0.5, // combat vehicles & battle armor halve (round up)
     },
     // Procurement (CBT/BV this slice).
-    purchase: { bvMultiplier: 1 }, // Purchase unit = BV  (AS: PV × 40 — D-110)
-    sell: { bvDivisor: 2 }, // Sell unit = BV ÷ 2  (AS: PV × 20 — D-110)
-    rearm: { perTon: 10 }, // Rearm per ton of ammo = 10  (AS: 20; advanced ×10 — D-110)
+    purchase: { bvMultiplier: 1 },
+    sell: { bvDivisor: 2 },
+    rearm: { perTon: 10 },
     // Hiring (flat, per person).
     hire: {
         crew: 100, // non-named MechWarrior/crew (arrives Regular)

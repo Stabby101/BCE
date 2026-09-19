@@ -1,21 +1,3 @@
-/*
- * DEPLOY-005 (A) — build-time per-era catalog SLICES. From the full MekBay catalog, emit a tiny static
- * file per era containing only that era's era-legal UNITS (slim: the light fields force-gen + faction-select
- * need, NOT the 24MB of components) + the FACTIONS active in that era (with just this era's id-set). The
- * faction-select page + the force generator fetch ONLY the chosen era's slice (tens–low-hundreds of KB),
- * never the 24MB units.json. Served same-origin from /mekbay/slim/ on the Cloudflare edge (brotli +
- * long-cache); the full catalog stays lazy via the D-004 proxy for the market full-search.
- *
- * SLICE-1 (2026-09-01) amends "NOT the 24MB of components": a slice now carries the comp types a rendered
- * sheet DERIVES FROM — weapons (E/M/B/A) plus components (C) and ammunition (X) — with the id/p/l fields
- * those rules read, and a small {id: flags} side-car so eq-gated rules resolve without the full registry.
- * It is still not the full catalog: O/S/P stay out. See the SLICE_T block below for the reasoning.
- *
- * Output: public/mekbay/slim/index.json (the era index) + public/mekbay/slim/<eraId>.json (per era)
- *         + public/mekbay/slim/comp-flags.json (SLICE-1 component-flag side-car).
- * GITIGNORED (REF-001) — build-emitted from the proxied data, never committed. Graceful: if the source
- * fetch fails (offline build), it logs + no-ops (the client falls back to the full catalog).
- */
 import { mkdirSync, writeFileSync, statSync, readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,12 +13,10 @@ const MIRROR = join(ROOT, 'public', 'mekbay');
 // roster/battle DISPLAY fields (DEPLOY-006) — movement (walk/run/jump), the unit-icon/sprite ref, and the
 // record-sheet ref. The display adds are light (3 ints + two short strings); still NO 24MB comp[]: the record
 // sheet renders from the pre-rendered SVG fetched lazily from /mekbay/sheets/<ref> when a cell is opened.
-// DIRECTIVE-127 — the MUL Piece-Value overlay (content-forge/mul/ilclan/pv-lookup.json = {mulId: pv}, unit.id===MUL id).
 // Folds the authoritative (errata-current) MUL PV into the slim record so the per-era slices carry PV (the AS-card /
 // #113 blocker: slimUnit historically stripped `as`/`pv`). MUL first, then the catalog's own pv/as.PV as the fill.
 let MUL_PV = {};
 
-// SLICE-1 — the comp types a slice carries. WEAPON_T is the HOTFIX-008 set (the roster ARMS line);
 // SLICE_T adds C (components — heat sinks, jump jets, CASE) and X (ammunition). Rationale, measured:
 // every campaign after its FIRST session is slice-resident on every fork (ensureFullCatalog has no
 // resume caller), so a resumed sheet derived its heat sinks, its ammunition and its ODM strip yields
@@ -51,11 +31,11 @@ const SLICE_T = new Set(['E', 'M', 'B', 'A', 'C', 'X']);
 const slimUnit = (u, equip) => ({
     id: u.id, name: u.name, chassis: u.chassis, model: u.model, type: u.type, subtype: u.subtype,
     year: u.year, level: u.level, techRating: u.techRating, weightClass: u.weightClass, role: u.role,
-    techBase: u.techBase, // DIRECTIVE-063 (D): the market's tech-base (IS/Clan/All) filter reads this off the row
+    techBase: u.techBase,
     mixed: u.mixed, // REBASE-1 P1 (e): upstream split mixed-tech out of techBase into a separate `mixed: boolean`;
                     // carry it so slice-resident units keep pin-shape (market IS/Clan filter + chaos-repair clanOrMixed read it)
     tons: u.tons, bv: u.bv,
-    pv: MUL_PV[u.id] ?? u.pv ?? (u.as && u.as.PV), // DIRECTIVE-127 — folded PV (MUL authoritative, catalog fill)
+    pv: MUL_PV[u.id] ?? u.pv ?? (u.as && u.as.PV),
     walk: u.walk, run: u.run, jump: u.jump, icon: u.icon, sheets: u.sheets,
     // DEPLOY-006: crewSize so the ForceUnit mints crew[0] → the roster sheet thumbnail's pilot box is driven
     // from the campaign pilot (applyCrew); without it slim units get 0 crew and the box stays blank (regression).
@@ -70,9 +50,6 @@ const slimUnit = (u, equip) => ({
     // their ONLY sink source (heat-management.ts:125-129). Without these two, aero dissipation stays 0 and
     // unit-svg-aero has no pip fallback to hide it, so a "heat sinks fixed" change would have fixed only Meks.
     engineHS: u.engineHS, engineHSType: u.engineHSType,
-    // HOTFIX-008 + DIRECTIVE-057 + SLICE-1: the comps a rendered sheet derives from.
-    //   {t,n,q} — HOTFIX-008, the roster ARMS readout (armsLine groups by name×qty).
-    //   {at,rs}  — DIRECTIVE-057, the build-time equipment2 ammo join for the inventory ammo roll.
     //   {id}     — SLICE-1. THE LOAD-BEARING ONE: comp.eq is bound by id (data.service linkEquipment), and
     //              EVERY heat-sink / CASE / jump-jet rule in the vendored fork gates on comp.eq flags. Carrying
     //              C rows WITHOUT id fixes nothing (heat-management.ts:134 `if (!comp.eq) continue`) *and*
@@ -90,7 +67,6 @@ const slimUnit = (u, equip) => ({
     //              a divergence THIS change would have introduced, on the very rows it added to restore
     //              ammunition. All 10,519 catalog X rows carry it; the cost is ~3.4 KB brotli on the largest
     //              era. (This is a deliberate addition beyond the ruled +id,p,l shape, made because the
-    //              ruling predates the finding; it is flagged in the hand-back and is one line to revert.)
     // NOT carried: comp types O/S/P (see SLICE_T above).
     comp: (u.comp || [])
         .filter((c) => SLICE_T.has(c.t))
@@ -155,7 +131,6 @@ async function main() {
         console.error(`[slices] FATAL: catalog source unavailable (${e.message}). Refusing to ship a slice-less build — ensure mirror-catalog runs first (prerun) or set BCE_SLICE_SRC.`);
         process.exit(1);
     }
-    // DIRECTIVE-057: the equipment registry, for the build-time weapon→ammo join (at/rs).
     // NOTE (SLICE-1, 2026-09-01): this load is NO LONGER merely graceful. It was — a failure left equip={}
     // and weapon comps emitted without at/rs. Since SLICE-1 the same registry also feeds the comp-flag
     // side-car, and an empty registry now trips the FATAL guard below (0 resolved ids / missing heat-sink
@@ -169,20 +144,19 @@ async function main() {
     const eraArr = eras.eras || eras;
     const unitById = new Map(unitArr.map((u) => [u.id, u]));
 
-    // DIRECTIVE-127 — fold the MUL ilClan overlays (authored under content-forge/mul/ilclan/, committed source).
     // GRACEFUL: a build without the scrape leaves MUL_PV={} (slimUnit falls back to the catalog PV) and copies no
     // allow-list (the OpFor/Market gate is inert). PV overlay → slim `pv`; allow-list → served same-origin asset.
     const MULDIR = join(ROOT, '..', '..', 'content-forge', 'mul', 'ilclan');
     try {
         MUL_PV = JSON.parse(readFileSync(join(MULDIR, 'pv-lookup.json'), 'utf8'));
-        console.log(`[slices] DIRECTIVE-127: MUL PV overlay loaded — ${Object.keys(MUL_PV).length} unit ids`);
-    } catch (e) { console.warn(`[slices] DIRECTIVE-127: no MUL pv-lookup (${e.code || e.message}) — slim PV falls back to catalog`); }
+        console.log(`[slices] MUL PV overlay loaded — ${Object.keys(MUL_PV).length} unit ids`);
+    } catch (e) { console.warn(`[slices] no MUL pv-lookup (${e.code || e.message}) — slim PV falls back to catalog`); }
     try {
         const allow = readFileSync(join(MULDIR, 'allowlist.json'), 'utf8');
         mkdirSync(join(MIRROR, 'mul-ilclan'), { recursive: true });
         writeFileSync(join(MIRROR, 'mul-ilclan', 'allowlist.json'), allow);
-        console.log(`[slices] DIRECTIVE-127: MUL allow-list → public/mekbay/mul-ilclan/allowlist.json (${(allow.length / 1024).toFixed(1)} KB)`);
-    } catch (e) { console.warn(`[slices] DIRECTIVE-127: no MUL allowlist (${e.code || e.message}) — the OpFor/Market MUL gate stays inert`); }
+        console.log(`[slices] MUL allow-list → public/mekbay/mul-ilclan/allowlist.json (${(allow.length / 1024).toFixed(1)} KB)`);
+    } catch (e) { console.warn(`[slices] no MUL allowlist (${e.code || e.message}) — the OpFor/Market MUL gate stays inert`); }
 
     mkdirSync(OUT, { recursive: true });
     // the era index — tiny; the client loads it to resolve the wizard era → eraId.
@@ -298,8 +272,6 @@ async function main() {
     writeFileSync(cfFile, JSON.stringify(compFlags));
     console.log(`[slices] SLICE-1 comp-flags.json: ${flaggedIds} / ${nonWeaponIds.size} non-weapon comp ids carry flags (${withheld} had BV-affecting C3 flags withheld — the O order lifts that) · ${(statSync(cfFile).size / 1024).toFixed(1)} KB raw`);
 
-    // DIRECTIVE-065: the 'Mech/vehicle-RELEVANT catalog id set, derived from the equipment2.json discriminator
-    // (the deferred D-055 filter). Weapons need F_MEK/F_TANK_WEAPON; misc needs F_MEK/F_TANK_EQUIPMENT; ammo is
     // relevant unless it's INFANTRY (ammo.type) or BA (F_BATTLEARMOR / "BA …"). Shipped same-origin at
     // /mekbay/parts-relevant.json (build-generated like the slices); the shop + starting stock filter on it so
     // the in-system list excludes infantry small-arms, BA torpedo/inferno ammo, BA manipulators, etc. The
@@ -307,7 +279,6 @@ async function main() {
     const F = (e) => e.flags || [];
     // misc unit-type flags that mark an item as for OTHER unit types (exclude only when no mek/tank flag is present).
     const OTHER_TYPE = ['F_BA_EQUIPMENT', 'F_BA_WEAPON', 'F_INF_EQUIPMENT', 'F_INFANTRY', 'F_FIGHTER_EQUIPMENT', 'F_PROTOMEK_EQUIPMENT', 'F_DS_EQUIPMENT', 'F_SC_EQUIPMENT', 'F_WS_EQUIPMENT', 'F_SS_EQUIPMENT'];
-    // HOTFIX-014 — a real 'Mech/vehicle MOUNT flag (weapon or equipment). Anything without one that is infantry /
     // personal / BA is dropped, INCLUDING the MegaMek InfantryWeapon class (F_INFANTRY/F_INF_* + an `infantry`
     // sub-object). Belt-and-suspenders against dirty type data: a personal-arm NAME is also dropped unless it has a
     // mount flag (so 'Mech "Medium Rifle"/"Limb Club"-with-a-flag stay, but Whip/Pistol/Revolver/Man-Portable go).

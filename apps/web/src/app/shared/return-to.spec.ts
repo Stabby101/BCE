@@ -1,10 +1,6 @@
-/*
- * GM-3 P3 — pins the CLIENT return-to gate (the "Back to the table" open-redirect guard). The api's safeReturnTo has its own
- * 29-spec suite; this is the tighter same-origin `/player/`-only twin.
- */
 import { safeTablePath } from './return-to';
 
-describe('safeTablePath (GM-3 P3 — the client Back-to-the-table gate)', () => {
+describe('safeTablePath (P3 — the client Back-to-the-table gate)', () => {
     it('accepts a same-origin /player/ join path, query preserved, fragment dropped', () => {
         expect(safeTablePath('/player/?campaign=abc-123&engine=https%3A%2F%2Fapi%2Fapi')).toBe('/player/?campaign=abc-123&engine=https%3A%2F%2Fapi%2Fapi');
         expect(safeTablePath('/player/?campaign=x#bce_auth=stolen')).toBe('/player/?campaign=x');

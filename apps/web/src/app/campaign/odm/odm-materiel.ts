@@ -1,17 +1,9 @@
-/*
- * DIRECTIVE-ODM-13 — the MATERIEL math, pure + shared by the fork's walk (Phase 1) and bays (Phase 2:
- * donor-strip reuses THIS block — one tunable set, never forked constants, per the Phase-2 ruling).
- * Strip yields are CATALOG TRUTH: ammo tonnage = the wreck's real carried load (Unit.comp, t==='X',
- * q = tons) × a by-severity fraction; components = weapons + equipment minus DESTROYED crit names,
- * count-capped. Only the fraction and the cap are tunable interims (the WALK_TUNABLES precedent).
- */
 import type { UnitSummary as Unit } from '../../models/unit-summary.model';
 import type { ProtoInstance } from '../force/force-generator';
 import type { OdmStockBin } from '../new-campaign-state';
 import type { InventoryLine } from '../inventory/starting-inventory';
 import { binNameForAmmo, round1 } from './odm-stocks';
 
-// ── ODM-13 STRIP-YIELD TUNABLES — the ONE interim block (flagged; PM-dialable). ──
 export const ODM_STRIP_TUNABLES = {
     /** fraction of the wreck's carried ammo recoverable, by severity (INTERIM — PM-dialable). */
     ammoFraction: { G: 0.75, Y: 0.5, R: 0.25, B: 0.1 } as Record<string, number>,
@@ -20,14 +12,10 @@ export const ODM_STRIP_TUNABLES = {
 };
 
 export interface OdmStripYield {
-    ammo: { bin: string; tons: number; src?: string }[]; // src — ODM-17 P3 additive: the SOURCE comp label (the quarantine flag keys on it, not the bin)
-    parts: { label: string; count: number; id?: string; t?: string }[]; // id/t — ODM-17 P2 additive: the catalog internalName + comp class (pricing truth; older stored yields lack them)
+    ammo: { bin: string; tons: number; src?: string }[];
+    parts: { label: string; count: number; id?: string; t?: string }[];
 }
 
-/** What a STRIP takes off this machine (field walk AND bay donor-strip — the same physics).
- *  ODM-17 P2: `capOverride` lets the WALK kill the count cap (the field clock in HOURS is the real cap
- *  there — the cap IS what the hours afford); the bays' donor-strip keeps the tunable until its own
- *  hour-pricing directive. */
 export function odmStripYield(inst: ProtoInstance, unit: Unit | undefined, severity: string, capOverride?: number): OdmStripYield {
     const comp = unit?.comp ?? [];
     const frac = ODM_STRIP_TUNABLES.ammoFraction[severity] ?? 0.25;
@@ -55,18 +43,6 @@ export function odmStripYield(inst: ProtoInstance, unit: Unit | undefined, sever
     return { ammo: [...ammoMap.entries()].map(([bin, v]) => ({ bin, tons: v.tons, src: v.src })), parts };
 }
 
-/* ── DIRECTIVE-ODM-17 P2 — THE TRANSPORT QUESTION: tonnage + field hours, pure. ────────────────────
- * Tonnage truth = the equipment catalog (equipment2 stats.tonnage), resolved by the caller-supplied
- * lookup (name → tons; the walk builds it from DataService incl. aliases). NOTHING here invents a
- * weight: an unpriceable label prices 0 and is REPORTED by the caller, never guessed.
- * Field hours = the doctrine's own recovery table (dark_meridian_salvage_doctrine, Part III):
- *   weapons 2–8 h each · ammo 1–3 h/ton · heat sinks 1–2 h each · (actuators 3–6 h — INERT here:
- *   actuators never appear in Unit.comp, so BCE's strip vocabulary cannot take them; the row is
- *   carried for the record) · gyro 8–14 and engine 14–30 are MAC-7-ONLY and never field-priced.
- * The deterministic point inside each doctrine RANGE is a CC decision, flagged: weapons scale with
- * their own tonnage (clamp(2 + round(tons), 2, 8) — a 1 t laser ≈ 3 h, a 7 t AC ≈ 8 h), ammo takes
- * the mid 2 h/ton, sinks the mid 1.5 h, other equipment 2 h (the "basic electronics work" the field
- * table allows). PM-dialable in one block, the WALK_TUNABLES precedent. */
 export const ODM_FIELD_HOURS = {
     weaponBase: 2, weaponMax: 8,   // + round(tonnage), clamped — the doctrine's 2–8 range
     ammoPerTon: 2,                 // the 1–3 h/ton mid
@@ -74,9 +50,6 @@ export const ODM_FIELD_HOURS = {
     equipment: 2,                  // misc E-class electronics the field table allows
 } as const;
 
-/** MAC-7-only recovery (the doctrine's own capability column): a field walk cannot take these — they
- *  ride home ON the hulk (through a bay slot) or they are lost. Gyro/engine never appear in comp
- *  (the ODM-13 derivation finding); Jump Jets DO — "No jump jet service" is the field table's line. */
 export function mac7Only(label: string): boolean {
     return /jump jet|gyro|engine/i.test(label || '');
 }
@@ -121,17 +94,6 @@ export function yieldFieldHours(y: OdmStripYield, tonsOf: OdmPartTons): number {
     return Math.round(h * 10) / 10;
 }
 
-/* ── DIRECTIVE-ODM-17 P3 — GRADES AND THE LIFECYCLE, pure. ─────────────────────────────────────────
- * The doctrine's ledger (Part VI, source vocabulary): RAW STOCK (recovered, unassessed, cannot install)
- * → IN-SHOP (on the bench) → CACHED (assessed A/B/C, in storage) → INSTALLED / CONSUMED (immutable) —
- * plus BARTERED, the directive's ordered hook for ODM-11's black market (state exists; no UI). In BCE's
- * count model: RAW/A/B/C are the line's per-grade counts (armor_parts qty_grade_* schema); IN-SHOP is
- * the bench queue; INSTALLED/CONSUMED/BARTERED are ledger rows (campaignLog kind 'parts' — append-only
- * by construction, which IS the immutability). Grades: A = ready to install · B = minor wear, bench
- * inspection required · C = damaged, repair needed · RAW = unassessed (doctrine Part VI + armor_parts).
- * Bench pricing = the doctrine's OWN 1–4 h/item range ("Component bench test and assessment — MAC-7
- * only — 1-4 hrs per item"); the deterministic points inside the range are CC DECISIONS, flagged,
- * PM-dialable in one block (the WALK_TUNABLES precedent). */
 export const ODM_BENCH = {
     assessPerItem: 2.5,   // RAW → graded (the 1–4 mid-high: assessment is the thorough pass)
     inspectPerItem: 1.5,  // B → A (the 1–4 low: the wear is known, the check is targeted)
@@ -154,9 +116,6 @@ export function odmAmmoAssessFirst(sourceLabel: string): boolean {
     return /inferno|precision|narc/i.test(sourceLabel || '');
 }
 
-/** Merge ammo tonnage into a bins map (Ruling 2 — an unmatched class mints a FLOORLESS bin). Mutates `bins`.
- *  ODM-17 P3-d: an ASSESS-FIRST lot (by SOURCE label) lands QUARANTINED — outside `tons`, invisible to
- *  rearm, until a bench assessment clears it. */
 export function addAmmoToBins(bins: Record<string, OdmStockBin>, bin: string, tons: number, sourceLabel?: string): boolean {
     if (tons <= 0) return false;
     const cur = bins[bin] ?? { tons: 0, floorTons: null };
@@ -168,8 +127,6 @@ export function addAmmoToBins(bins: Record<string, OdmStockBin>, bin: string, to
     return true;
 }
 
-/** Merge a component into inventory lines (by exact label; new lines carry the provenance note). Mutates `lines`.
- *  ODM-17 P3-a: strip yields land as RAW STOCK — recovered, unassessed, uninstallable until benched. */
 export function addPartLine(lines: InventoryLine[], label: string, count: number, from: string): void {
     const idx = lines.findIndex((l) => l.category === 'component' && l.label === label);
     if (idx >= 0) {
@@ -180,9 +137,6 @@ export function addPartLine(lines: InventoryLine[], label: string, count: number
     }
 }
 
-/** ODM-13 Phase 2 (R3) — find the inventory component line satisfying a named replace-component.
- *  Tier 1: exact label. Tier 2 ("a compatible donor-stripped line"): case/whitespace-insensitive match.
- *  Returns the line index or -1. */
 export function findPartLine(lines: InventoryLine[], component: string): number {
     const exact = lines.findIndex((l) => l.category === 'component' && l.onHand > 0 && l.label === component);
     if (exact >= 0) return exact;
@@ -193,17 +147,12 @@ export function findPartLine(lines: InventoryLine[], component: string): number 
 
 const normLabel = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
 
-/** ODM-17 P3-b — how many INSTALLABLE units of a component the stores hold: grade A (ready) + grade C
- *  (installs with its parts-repair hours ledgered at the hold-release). B needs its bench inspection
- *  first and RAW cannot be installed until reclassified — neither counts (doctrine Part VI). */
 export function installableCount(lines: InventoryLine[], component: string): number {
     const want = normLabel(component);
     return lines.filter((l) => l.category === 'component' && normLabel(l.label) === want)
         .reduce((s, l) => { const g = effGrades(l); return s + g.a + g.c; }, 0);
 }
 
-/** ODM-17 P3-b — consume ONE installable part: A first, else C (the caller ledgers the C parts-repair,
- *  ODM_BENCH.repairPerItem). Mutates `lines` (a fully-emptied line is dropped). Returns the grade used. */
 export function consumeInstallable(lines: InventoryLine[], component: string): 'a' | 'c' | null {
     const want = normLabel(component);
     const pick = (grade: 'a' | 'c') => lines.findIndex((l) => l.category === 'component' && normLabel(l.label) === want && effGrades(l)[grade] > 0);
@@ -219,8 +168,6 @@ export function consumeInstallable(lines: InventoryLine[], component: string): '
     return grade;
 }
 
-/** ODM-17 P3-b — the held card's RECOURSE for a missing part, in doctrine terms: on the bench (with the
- *  live hours) · in RAW stock (bench it) · grade B (inspection needed) · or genuinely absent. */
 export function heldRecourse(component: string, lines: InventoryLine[], bench: { label: string; kind: string; hoursRemaining: number }[]): string {
     const want = normLabel(component);
     const onBench = bench.find((j) => j.kind !== 'ammo' && normLabel(j.label) === want);
@@ -234,8 +181,6 @@ export function heldRecourse(component: string, lines: InventoryLine[], bench: {
     return `awaiting ${component} (salvage one or strip a donor)`;
 }
 
-/** ODM-13 Phase 2 — the ammo RESTORED by a completed repair, computed from the DAMAGE STATE (game truth:
- *  each ammo crit slot is one ton; restored tons = consumed/totalAmmo per slot), routed to bins by class. */
 export function rearmNeeds(inst: ProtoInstance): { bin: string; tons: number }[] {
     const needs = new Map<string, number>();
     for (const c of (inst.damage?.crits ?? []) as Array<{ name?: string; originalName?: string; ammo?: string; totalAmmo?: number; consumed?: number }>) {

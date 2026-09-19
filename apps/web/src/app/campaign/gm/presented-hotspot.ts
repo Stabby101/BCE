@@ -1,18 +1,9 @@
-/*
- * GM-1 P2 — the PRESENTED HOTSPOT: the player-safe record a GM publishes to the table ("Present ▸").
- * PLAIN STRINGS ONLY, stamped GM-side (the forge.hotspot / HotSpotBrief precedent): the player device
- * renders from this record alone — no catalog lookup, no chaos-service import, and the GM's custom/forged
- * hotspots present exactly like authored ones. The field set is the D-124e Brief's (employer + rep pips +
- * system facts + transit + the op gist) plus the D-133 side pair (employer · role · vs) — and NOTHING
- * tactical: no objectives, tracks, salvage, complications, OpFor composition, or negotiation terms.
- * SideOffer.contract (full terms incl. steps) is deliberately NOT carried (the L6 leak surface).
- */
 import { resolveSides, opposingFaction, type CatalogHotSpot } from '../chaos/hotspots-catalog';
 import { resolved } from '../chaos/chaos-contract';
 
 export interface PresentedSide {
     key: 'a' | 'b';
-    title?: string;      // per-side identity when authored (IMPORT-5 Part E), else absent
+    title?: string;
     employer: string;    // who hires you (display)
     role: string;        // attacker | defender
     vs: string;          // the opposing faction's NAME only — "Force strength undisclosed" stays true
@@ -28,15 +19,14 @@ export interface PresentedHotspot {
     scale: number;
     employer: string;      // the top-level/side-A employer line
     employerDesc?: string;
-    op?: string;           // the gist: blurb ?? situation (the D-124e previewOp fallback)
+    op?: string;
     description?: string;  // the system profile's flavor description
-    systemRows: { label: string; value: string }[]; // facts only, nulls omitted (the D-124e sysRowsFor set)
+    systemRows: { label: string; value: string }[];
     transit: { jumpDays: number | null; rechargeHours: number | null; net: number; cover: number };
     sides: PresentedSide[];
     presentedAt: number;   // epoch ms — presentation order/recency on the player device
 }
 
-/** systemProfile → compact label/value rows, nulls omitted — the D-124e sysRowsFor set, verbatim fields. */
 function sysRows(h: CatalogHotSpot): { label: string; value: string }[] {
     const s = h.systemProfile; const out: { label: string; value: string }[] = [];
     const add = (label: string, v: unknown, suffix = ''): void => { if (v != null && v !== '') out.push({ label, value: `${v}${suffix}` }); };

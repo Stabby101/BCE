@@ -1,23 +1,3 @@
-/*
- * DIRECTIVE-ODM-18 Phase 3 — the GM-COMPOSED MISSION (pure module, engine-odm scope).
- *
- * THE SPLIT (§S-4, the presented-hotspot pattern verbatim): a composed mission lives in TWO places.
- *   OdmGmDraft   — GM truth. Lives under snapshot `gmOnly.gmMissionDrafts`, which the server DELETES for
- *                  every non-GM recipient (unparsed), so design notes never reach a player device.
- *   OdmGmMission — the PUBLISHED, player-safe record, DERIVED from the draft by publishRecord() and stored
- *                  TOP-LEVEL so the normal fan carries it. The derive is a field WHITELIST, never a spread:
- *                  a new GM-only draft field cannot leak by being forgotten.
- *
- * THE MERGE (§S-1, the ruled step one): a published mission projects to an OdmTreeNode carrying the explicit
- * `kind: 'gm-mission'`, and mergeGmMissions() hands the runtime the AUTHORED ∪ PUBLISHED node set. The
- * ODM-4 Part A delete rule in reconcileOdmTree is UNTOUCHED — it still strips every branch it cannot find a
- * node for; what changed is that a published mission now legitimately HAS a node. Authored nodes reconcile
- * byte-identically (the merge appends; it never rewrites an authored entry).
- *
- * §S-2 — a composed node carries the fields odmNodeDef() would have supplied from tree.json: resolveFlags
- * (the GM's checklist), opDays (the real time cost — a composed operation that costs zero days is a lie the
- * clock tells), and, through the node, the 4-tier picker and the odmOutcomes entry.
- */
 import type { ProtoInstance } from '../force/force-generator';
 import type { OdmDate, OdmTreeData, OdmTreeNode } from './odm-tree';
 
@@ -30,7 +10,7 @@ export interface OdmGmMission {
     brief: string;              // the GM's player-facing prose — the mission document for a composed op
     objectives: { primary: string; secondary: string; bonus: string };
     opDays: number;
-    opforForce: ProtoInstance[]; // fans by the ODM-9 ruling (units on a table are not intel)
+    opforForce: ProtoInstance[];
     opforBv: number;
     publishedAt: OdmDate;
 }

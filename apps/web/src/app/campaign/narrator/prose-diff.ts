@@ -1,10 +1,3 @@
-/*
- * BCE narrator — in-app prose word-diff for the D-045 refine change-log. Ports the bakeoff report's
- * LCS word-diff (narrator/bakeoff/report.mjs) into Angular form so the GM sees, in-app, exactly which
- * words the refine ADDED — prose only (DATA-003: the machine diff guarantees no number/name/objective/
- * fork drifted, so "what changed" is a bounded prose delta). The bakeoff harness itself is untouched
- * (D-045 scope) — this is the same algorithm reused, not a shared import.
- */
 export interface DiffToken {
     t: string;
     add: boolean;

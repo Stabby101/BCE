@@ -1,11 +1,3 @@
-/*
- * BCE — AAR tab (DIRECTIVE-034). The campaign's after-action archive: every resolved mission listed
- * newest-first (tier badge, contract/orders context, walk-pending flag); open → the classified document
- * rendered by the PURE aar-render module in the dossier treatment + PRINT (the D-025 isolation pattern).
- * The component only ASSEMBLES context (voices, pilots, bay history, NPC names) — building is pure.
- * On open it completes the persistent staff (D-025 casting): mints ONLY missing command/intelligence/
- * engineering voices (stored-not-rerolled — existing staff never re-cast), one persist when changed.
- */
 import { Component, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { ForgePackService } from '../mission/forge-pack.service';
@@ -48,7 +40,6 @@ export class AarTabComponent {
         return ac ? `${ac.employer.name} · ${ac.missionName}` : 'Current operations';
     });
 
-    // DIRECTIVE-119 — Hot Spots settles the post-battle at RESOLVE (no field walk), so a resolved HS mission reads
     // SETTLED, never the Traditional "WALK PENDING". Traditional is unchanged.
     protected readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots');
 
@@ -106,7 +97,6 @@ export class AarTabComponent {
         const r = br.resolution!;
         const npcNamesByFlag = this.npcNames(br);
         const tree = this.treeOf(br.branchId);
-        // D-039: reflect the GRADED matcher (the same the engine ran) so the AAR's "unlocked" line is true.
         const kids = tree.filter((c) => c.parentBranchId === br.branchId);
         const opened = new Set(selectUnlocks(kids.map((c) => ({ branchId: c.branchId, outcomeGate: c.outcomeGate })), r.outcomeTier).unlock);
         const unlocked = kids.filter((c) => opened.has(c.branchId)).map((c) => c.name);
@@ -132,13 +122,12 @@ export class AarTabComponent {
             salvageClause: this.clauseFor(br.branchId),
             npcNamesByFlag,
             unlocked,
-            isHotspots: this.isHotspots(), // DIRECTIVE-121 — render the HS SP settlement in place of the Classic walk sections
-            survival: !!this.state.packId(), // ODM-13 P3 — pack campaigns speak attrition, not payroll (Classic: packId null, byte-identical)
+            isHotspots: this.isHotspots(),
+            survival: !!this.state.packId(),
             refined: r.aar?.refined,
         };
     }
 
-    // ── D-038 REFINE (GM-triggered; OFF/toggle hides it) ──────────────────────────────────────────
     protected readonly canRefine = computed(() => this.narrator.mode() === 'local' && this.narrator.aarsOn() && !!this.doc());
     protected readonly refining = this.narrator.busy;
     protected readonly results = this.narrator.lastRun;
@@ -215,8 +204,6 @@ export class AarTabComponent {
         return offer?.salvage ? { pct: offer.salvage.pct, exchange: !!offer.salvage.exchange } : null;
     }
 
-    /** Complete the persistent staff for the AAR's three sections — mints ONLY missing families
-     *  (faction-fit, the D-025 mintVoice path); existing casting is never touched. Persists once. */
     private async ensureStaff(): Promise<void> {
         await this.pack.ensureLoaded();
         this.ready.update((v) => v + 1);

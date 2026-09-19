@@ -1,9 +1,3 @@
-/*
- * GM-3 P3 — the "◄ Back to the table" context. When the ROOT app is opened via the hand-off
- * (`/?campaign=<homeId>&engine=<engine>&returnTo=/player/?campaign=<sessionId>&engine=…`), the cover validates the
- * returnTo (client safeTablePath gate) and stashes it here; the dashboard header renders the control and navigates back to
- * the join link (campaign + engine intact) same-tab. Session-scoped, cleared once consumed by a navigation home.
- */
 import { Injectable, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })

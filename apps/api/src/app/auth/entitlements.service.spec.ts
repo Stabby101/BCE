@@ -1,13 +1,9 @@
-/*
- * DIRECTIVE-ODM-1 Phase 1 — pins the feature-grants store: idempotent grant/revoke, featuresFor ordering,
- * null-safety. Runs against a temp DB (BCE_DB_PATH), the same node:sqlite stack as production.
- */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { EntitlementsService } from './entitlements.service';
 
-describe('EntitlementsService (ODM-1)', () => {
+describe('EntitlementsService ', () => {
     let dir: string;
     let svc: EntitlementsService;
     const prev = process.env.BCE_DB_PATH;

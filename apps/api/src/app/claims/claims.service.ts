@@ -1,16 +1,8 @@
-/*
- * BCE ENGINE slice 2 (DIRECTIVE-042) — host-authoritative CLAIM state for the deployed 'Mechs.
- * Durable in SQLite (survives a client reconnect AND a host restart, ARCH-001/DATA-001/DATA-002),
- * keyed to (campaignId, engagementKey) — a NEW engagement is a new key, so its claim set starts
- * empty (claims "reset" per engagement). Stored in a DEDICATED claims table, NOT folded into the
- * CampaignSnapshot blob: keeps the snapshot version unchanged (no consolidation nudge) and avoids
- * racing the client's persistCurrent PUTs. Own DatabaseSync to the shared file — safe because
- * node:sqlite is synchronous (writes don't interleave on the single-threaded event loop).
- */
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { DatabaseSync } from 'node:sqlite';
-import { openDb } from '../open-db'; // HARDEN-7 A2 — shared durability-PRAGMA opener
+import { openDb } from '../open-db';
 import { dbPath } from '../db-path';
+import { SEAT_KEY } from './odm-seats';
 
 export interface Claim {
     instanceId: string;
@@ -25,7 +17,7 @@ export class ClaimsService implements OnModuleInit {
     private db!: DatabaseSync;
 
     onModuleInit(): void {
-        this.db = openDb(dbPath()); // HARDEN-7 A2 — shared opener (WAL + busy_timeout + synchronous=NORMAL, asserted)
+        this.db = openDb(dbPath());
         this.db.exec(
             `CREATE TABLE IF NOT EXISTS claims (
                 campaignId TEXT NOT NULL,
@@ -46,6 +38,20 @@ export class ClaimsService implements OnModuleInit {
             .prepare('SELECT instanceId, holderName, holderToken, at FROM claims WHERE campaignId = ? AND engagementKey = ? ORDER BY at ASC')
             .all(campaignId, engagementKey) as Record<string, unknown>[];
         return rows.map((r) => ({ instanceId: String(r['instanceId']), holderName: String(r['holderName'] ?? ''), holderToken: String(r['holderToken'] ?? ''), at: Number(r['at']) || 0 }));
+    }
+
+    seatHolders(campaignId: string): Claim[] {
+        const rows = this.db
+            .prepare('SELECT engagementKey, instanceId, holderName, holderToken, at FROM claims WHERE campaignId = ? ORDER BY at ASC')
+            .all(campaignId) as Record<string, unknown>[];
+        const latest = new Map<string, Claim>();
+        for (const r of rows) {
+            const c: Claim = { instanceId: String(r['instanceId']), holderName: String(r['holderName'] ?? ''), holderToken: String(r['holderToken'] ?? ''), at: Number(r['at']) || 0 };
+            if (c.holderToken) latest.set(c.instanceId, c); // ASC by `at` → the last write per unit wins
+            // of its `at` (every older claim stays on its own engagement's record, untouched); a later claim re-seats.
+            else if (String(r['engagementKey']) === SEAT_KEY) latest.delete(c.instanceId);
+        }
+        return [...latest.values()];
     }
 
     /** First-tap claim (upsert — re-claim overwrites the holder; multiple-per-holder allowed). */

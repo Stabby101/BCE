@@ -1,14 +1,3 @@
-/*
- * BCE retool — New Campaign step-3 support data.
- * DIRECTIVE-005 (scaffold) · DIRECTIVE-021 (placeholder formations RETIRED).
- *
- * The D-005 placeholder FORMATION rosters are gone — the real starting-command pick now flows
- * from the cited canon OOB (`formation-oob.ts`, era+faction filtered) + MAKE YOUR OWN. What
- * remains here is durable wiring still in use:
- *   - ARCH_NAMES / CUSTOM_UNIT — archetype labels + the make-your-own sentinel (faction.ts, dashboard.ts).
- *   - FACTION_DATA — the OFFLINE faction-LIST fallback (names + sub only) shown when the unit
- *     catalog (db.mekbay.com) is unreachable so the wizard still proceeds. NOT canon, NOT rosters.
- */
 export const CUSTOM_UNIT = '__custom__';
 
 export interface FactionGroup {

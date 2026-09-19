@@ -5,12 +5,6 @@ import { WarchestService } from './warchest.service';
 import { hireSP } from './chaos-sp-costs';
 import { PILOT_TUNABLES, type Pilot } from '../barracks/pilot-generator'; // name pools (data) — NOT the Traditional service
 
-/**
- * DIRECTIVE-112 — the Chaos Hiring tab, Hot Spots fork only. Clean-room: mints Pilots DIRECTLY and pays Support
- * Points via WarchestService.post() — it does NOT import or touch the Traditional personnel.service. Three tiers:
- * Green MechWarrior (free, G5/P6), Regular crew (100 SP, G4/P5), Named pilot (150 SP, G4/P5). Named pilots (the
- * improvement-eligible roster — that system is later) are capped at 4; non-named crew are unlimited.
- */
 type HireKind = 'green' | 'crew' | 'named';
 const NAMED_CAP = 4;
 

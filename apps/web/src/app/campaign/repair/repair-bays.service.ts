@@ -1,13 +1,3 @@
-/*
- * BCE — REPAIR & SALVAGE BAYS service (DIRECTIVE-033). The Angular seam around the pure bay math:
- * builds THE QUEUE from the live roster (walk-fed 'In repair' + cold-storage prizes + skirmish damage),
- * assigns/unassigns one occupant per bay snapshotting the CITED estimate, burns tech-hours per elapsed
- * campaign DAY through the D-022 clock (priority-weighted), and on completion CLEARS the damage envelope
- * (the D-030 round-trip in reverse), returns the unit to service (Active, or Reserve if its lance is
- * gone — captures have no lance so prizes land RESERVE with provenance intact), debits the treasury, and
- * logs + records bay history. B-tagged wrecks WRITE OFF (the D-029 delete path). All via persistCurrent;
- * the burn is the only mutation that does NOT persist (the clock's single advance-transaction owns that).
- */
 import { Injectable, computed, effect, inject, untracked } from '@angular/core';
 import { NewCampaignState, type CampaignStartDate } from '../new-campaign-state';
 import { DataService } from '../../services/data.service';
@@ -48,7 +38,6 @@ export class RepairBaysService {
     private readonly store = inject(CampaignSaveStore);
 
     constructor() {
-        // HOTFIX-024 — self-heal the D-029 "no silent vanish". A unit can only be repaired if it HAS mech damage
         // (the queue at line ~queue() and the new roster 'In repair' gate both filter on hasMechDamage). A unit
         // stranded 'In repair' with NO damage (a legacy save from before the gate, or any future non-gated path) is
         // neither deployable (mission BV excludes 'In repair') nor repairable (the queue skips it) — it vanishes from
@@ -72,10 +61,8 @@ export class RepairBaysService {
         });
     }
 
-    /** The 4 bays (defaults until first mutation; pre-D-033 saves render the defaults). */
     readonly bays = computed<Bay[]>(() => this.state.bays() ?? makeDefaultBays());
     readonly history = computed<BayHistoryEntry[]>(() => this.state.bayHistory() ?? []);
-    /** D-037: the stored tech-pool identity (null until ensureTechPool runs on first tab visit). */
     readonly techPool = computed<TechPool | null>(() => this.state.techPool());
 
     /** Generate the campaign's tech-pool identity ONCE (tier-keyed character; stored-not-rerolled).
@@ -218,7 +205,6 @@ export class RepairBaysService {
             }
             treasury -= cost;
             log.push({ date: today, text: `Repairs complete — ${label} restored to service (${bay.laborHours} h · −${cost.toLocaleString('en-US')} C-bills · Bay ${bay.name})`, kind: 'repair' });
-            // D-037: the itemized bill + gap-notes SURVIVE onto the record (the AAR joins them;
             // history reads like a shop record). Forward-only — older entries render honest absence.
             history.unshift({ date: today, bayId: bay.id, bayName: bay.name, instanceId: bay.occupantId, label, laborHours: bay.laborHours, cost, outcome: 'completed', bill: bay.bill, notes: bay.notes });
         }
@@ -231,7 +217,6 @@ export class RepairBaysService {
         this.state.setBayHistory(history);
     }
 
-    /** WRITE OFF a B-tagged wreck — the D-029 delete path + a dated log + history. Persists. */
     writeOff(instanceId: string): void {
         const force = this.state.startingForce() ?? [];
         const inst = force.find((i) => i.instanceId === instanceId);

@@ -1,17 +1,3 @@
-/*
- * BCE campaign-pack — CONTRACT MARKET generation (DIRECTIVE-017). Pure TS, no Angular/DOM.
- *
- * Ports CamOpsContractMarket.generateContract + the MissionSelector tables (CamOps 4th p.40)
- * + the offer-count / employer-selection rolls, 1-to-1 from reference/mekhq (GPLv3). Rolls use
- * an injectable RNG (defaults to Math.random) so generation is testable and so the caller can
- * generate ONCE at Begin and STORE every result (offers + raw clause rolls) — reload never rerolls.
- * Written to lift into apps/api at the engine phase (ARCH-002/003) with zero changes to the math.
- *
- * INTERIM flags (until the economy/personnel passes, T-018/T-022/T-024):
- *  - negotiation skill: no personnel yet -> caller passes a flagged interim (CamOps findNegotiationSkill = 0 w/o a negotiator);
- *  - offer floor of 1 at campaign start: a deliberate BCE cold-open deviation from RAW (never dead-end, D-014 precedent);
- *  - base pay: contractBase = perMechBase x forceCount (stand-in for Accountant.getContractBase()).
- */
 import {
     ContractTerms,
     MISSION_TYPES,
@@ -57,7 +43,6 @@ export interface ContractOffer {
     /** raw unmodified 2d6 per clause — STORED (the renegotiation/reroll hook). */
     rolls: { command: number; salvage: number; support: number; transport: number };
     pay: { total: number; monthly: number; base: number; multiplier: number };
-    // ── Lifecycle (D-022) — optional, migration-safe. OFFERED (market) → ACTIVE (accepted) → COMPLETED. ──
     status?: 'OFFERED' | 'ACTIVE' | 'COMPLETED';
     /** per-clause single-renegotiation marker (CamOps one attempt). */
     rerollsUsed?: { command?: boolean; salvage?: boolean; support?: boolean; transport?: boolean };
@@ -95,8 +80,6 @@ export interface GenerateParams {
     employers: EmployerEntry[];
     targets: TargetEntry[];
     employerMisses: string[];
-    /** D-102 A1 — faction→bordering-factions at this era (systems.json ownerByEra adjacency). Gates the TARGET
-     *  draw to a plausible opponent of the employer; absent ⇒ relax to the old any-non-employer behavior. */
     factionAdjacency?: Record<string, string[]>;
 }
 
@@ -291,7 +274,6 @@ export function generateMarket(p: GenerateParams, rng: () => number = Math.rando
         const total = Math.round(base * def.length * multiplier);
 
         // Target: Pirate Hunting -> a pirate; else a faction PLAUSIBLY OPPOSED to the employer at this era
-        // (D-102 A1 territory oracle), never-dead-end relaxing to any era-active non-employer if the plausible
         // pool is empty (sparse territory data / offline). Era is already respected (the pool is era-active).
         let target: string;
         if (mission === 'PIRATE_HUNTING') {

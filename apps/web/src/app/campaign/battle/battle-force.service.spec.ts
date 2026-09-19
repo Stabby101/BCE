@@ -1,23 +1,3 @@
-/*
- * BattleForceService.entryFor — ORDER-9 Commit 1, the FAST mutation-kill for the H20 fix.
- *
- * The H20 hang was a change-detection resurrection loop: entryFor re-created a terminal ('error'/'missing')
- * entry as 'pending' on every re-derivation, the sheet effect re-ensureSheet'd the 'pending' entry, the load
- * threw again → 'error' → 'pending' → … which prod's uncapped detectChangesInViewWhileDirty turned into a
- * permanent hang. The fix caches terminal entries exactly as 'ok'/'loading' were, so a re-derivation returns
- * the terminal entry and the effect can never re-drive a failed load; retrySheet() is the ONLY path back.
- *
- * This karma spec pins that decision at the SOURCE level in milliseconds — no `nx build web`, no puppeteer.
- * It is the fast twin of the E2E composition kills (h20-demo H20-1 in Hot Spots, verify-claimrecovery C13 in
- * Traditional), which prove the end-to-end "one broken sheet, not a hang" RENDER. `mutate.py m15` (entryFor
- * resurrects terminal entries) fails this spec directly under `nx test web`, so the slow rebuild+puppeteer
- * cycle is no longer the only mutation-kill for this behavior.
- *
- * entryFor early-returns on a cached terminal entry BEFORE touching any injected dependency, so the stubs
- * below are never invoked on the correct-code path; they exist only so construction succeeds and so the
- * MUTATED code fails CLEANLY (falls through to resolveUnit → 'missing') rather than throwing. The spec
- * reaches the private method/cache deliberately: it pins the exact shipped seam without a product refactor.
- */
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { BattleForceService, BattleEntry, Side } from './battle-force.service';

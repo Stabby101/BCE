@@ -1,15 +1,3 @@
-/*
- * HOTFIX-028 — the non-blocking "a new version is available" banner. Shown in BOTH shells (GM + player) when
- * the socket version handshake finds this bundle's baked commit older than the server's deployed commit (a
- * stale cached bundle). Tapping evicts SWs + CacheStorage and reloads → the newest bundle. Campaign-layer,
- * OnPush; renders nothing until ClaimRealtimeService.updateAvailable flips true (so it is invisible in the
- * normal case). A guarded single auto-reload may pre-empt it (see claim-realtime onServerVersion).
- *
- * TESTER-4 (1) — notify ONCE per new server version: a dismissal or a tap records the server version it answered
- * (localStorage `bce.update.seenVersion`), so the banner stays quiet across re-mounts, reconnects and polls until a
- * NEWER server version appears. (Live case: the web host lagged the api for a whole session — the old banner re-showed
- * on every reconnect and every hourly auto-reload landed on the same stale bundle.)
- */
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ClaimRealtimeService } from '../campaign/claims/claim-realtime.service';
 import { evictAndReload } from './app-reset';
@@ -30,7 +18,7 @@ const readSeen = (): string | null => { try { return localStorage.getItem(SEEN_K
         }
     `,
     styles: [`
-        .ub { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(14px + var(--bce-footer-h, 0px)); /* IMPORT-7 A — sits above the legal footer */ z-index:2147483000;
+        .ub { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(14px + var(--bce-footer-h, 0px));z-index:2147483000;
               display:flex; align-items:center; gap:12px; max-width:min(560px,94vw); box-sizing:border-box;
               padding:10px 12px 10px 16px; border-radius:12px; background:#12324a; border:1px solid #2e5d82;
               color:#eaf2f9; box-shadow:0 12px 40px rgba(0,0,0,.45);

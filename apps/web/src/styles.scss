@@ -103,11 +103,6 @@ body {
     touch-action: pan-x pan-y;
     margin: 0;
     padding: 0;
-    /* DIRECTIVE-IMPORT-7 Part A (REBASE-1 P1 c) — RESERVE the legal footer's space (COMPLIANCE-1: the bar must
-       stay visible, but must never overlay interactive controls). bce-legal-footer publishes its rendered height
-       (safe-area inset included) as --bce-footer-h on <html>; the body's content box shrinks by it, so the app
-       shell (height:100%) — and every in-app scroll region — ends above the bar. (box-sizing:border-box already
-       on this rule at the pin — BCE's edit also set it; not duplicated.) */
     padding-bottom: var(--bce-footer-h, 0px);
     width: 100%;
     height: 100%;
@@ -2993,14 +2988,6 @@ hr.divider {
     }
 }
 
-/* =========================================================================
-   BCE THEME TOKENS — T-015 swap seam (DIRECTIVE-008)
-   The campaign dashboard styles through these custom properties, never raw hex.
-   `.theme-dossier` is the default (and only) theme shipping now; add a sibling
-   `.theme-dark { --desk: …; }` later and swap the host class to retheme. The
-   New Campaign wizard still carries its own local palette — migrating it onto
-   these tokens is a later pass (do NOT retheme it here).
-   ========================================================================= */
 .theme-dossier {
     --desk: #17160f;
     --paper: #d8caa4;
@@ -3018,7 +3005,6 @@ hr.divider {
     --type: 'Special Elite', 'JetBrains Mono', monospace;
     --mono: 'JetBrains Mono', monospace;
 }
-/* D-025 — print isolation: when the mission package overlay is open, print ONLY it (clean paper). */
 @media print {
     body:has(bce-mission-package .pkg-overlay) * { visibility: hidden; }
     body:has(bce-mission-package .pkg-overlay) bce-mission-package,
@@ -3028,8 +3014,6 @@ hr.divider {
     }
     body:has(bce-mission-package .pkg-overlay) bce-mission-package .no-print { display: none !important; }
 }
-/* D-034 — the AAR document prints under the same isolation. Only the OVERLAY subtree goes visible
-   (the archive list behind it stays hidden — the component nests both). */
 @media print {
     body:has(bce-aar-tab .aar-overlay) * { visibility: hidden; }
     body:has(bce-aar-tab .aar-overlay) bce-aar-tab .aar-overlay,
@@ -3040,16 +3024,12 @@ hr.divider {
     body:has(bce-aar-tab .aar-overlay) bce-aar-tab .no-print { display: none !important; }
 }
 
-/* D-076 — GM per-mission OpFor arms-mix toggle (dashboard Operations board). Lives GLOBAL (keeps
-   dashboard.scss under its 20kB component-style budget — HF-019); mirrors the D-068 segmented toggle look. */
 .amx-gm { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; }
 .amx-gm .amx-lbl { font-family: var(--label); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink2); }
 .amx-gm .amx-b { font-family: var(--mono); font-size: 11px; background: var(--paper2); color: var(--ink); border: 1.4px solid var(--ink); padding: 4px 10px; min-height: 34px; cursor: pointer; }
 .amx-gm .amx-b.sel { background: var(--ink); color: var(--paper); }
 .amx-gm .amx-b:hover:not(.sel), .amx-gm .amx-b:focus-visible { background: var(--panel); outline: none; }
 
-/* D-077 — operational-tempo cue (dashboard Operations board). Global (keeps dashboard.scss under its 20kB
-   component-style budget — HF-019). Read-only escalation cue + a small GM reset/adjust. */
 .tempo-cue { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; font-family: var(--mono); font-size: 11px; }
 .tempo-cue .tempo-lbl { font-family: var(--label); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink2); }
 .tempo-cue .tempo-val { font-weight: 700; color: var(--ink); }
@@ -3060,19 +3040,7 @@ hr.divider {
 .tempo-cue .tempo-b { font-family: var(--mono); font-size: 11px; background: var(--paper2); color: var(--ink); border: 1.3px solid var(--ink); padding: 2px 8px; min-height: 30px; cursor: pointer; }
 .tempo-cue .tempo-b:hover, .tempo-cue .tempo-b:focus-visible { background: var(--ink); color: var(--paper); outline: none; }
 
-/* ═══ DIRECTIVE-HARDEN-4 Part 1 — shared modal-chrome styles, hoisted to ONE source. ═══
-   Scoped-global (the host-element prefix pierces emulated encapsulation and reaches child components:
-   bce-negotiate-modal / bce-hotspot-io inside bce-chaos-contracts) — the pattern precedent is the
-   bce-mission-package .no-print rules above. SAFE here because the .cc-* class family is used ONLY by
-   the chaos contracts tab + its two children (panel-verified). Do NOT hoist the dashboard's generic
-   .ph/.cbox/.cbtn chrome this way — a dozen nested components (flow/roster/save-dialog/pilot-detail/…)
-   reuse those class names with their own rules, and a scoped-global leaks into all of them
-   (HARDEN-4 adversarial-panel catch); the resolve child carries lockstep copies instead.
-   Declarations are VERBATIM from the component copies they replace; appearance is byte-identical by
-   the verify-h4-styles computed-style diff. Do not fork the .cc-* rules per-component again. */
 
-/* GM-2 P2a — every rule below also carries a `:where(.cc-scope)` twin (zero specificity — the tab's own cascade is untouched) so the
-   SAME modal mounts inside the GM panel's `.cc-scope` wrapper with its chrome intact (R0.4: elsewhere it renders naked). */
 /* — the Hot Spots contract chrome (chaos-contracts tab + its modal/io children) — */
 bce-chaos-contracts .cc-btn, :where(.cc-scope) .cc-btn { font-family:var(--label); font-weight:600; letter-spacing:1.5px; font-size:12px; text-transform:uppercase; border:1.6px solid var(--ink); background:var(--paper2, var(--paper)); color:var(--ink); padding:10px 16px; cursor:pointer; min-height:42px; }
 bce-chaos-contracts .cc-btn.small, :where(.cc-scope) .cc-btn.small { padding:7px 12px; min-height:34px; font-size:11px; }
@@ -3091,9 +3059,6 @@ bce-chaos-contracts .cc-econ b, :where(.cc-scope) .cc-econ b { font-family:var(-
 bce-chaos-contracts .cc-actions, :where(.cc-scope) .cc-actions { display:flex; gap:10px; }
 @media (max-width:640px) { bce-chaos-contracts .ct-row, :where(.cc-scope) .ct-row { grid-template-columns:1fr auto; } bce-chaos-contracts .ct-l, bce-chaos-contracts .ct-v, :where(.cc-scope) .ct-l, :where(.cc-scope) .ct-v { grid-column:1; } }
 
-/* DIRECTIVE-ODM-3 addendum C — in-app packet print. ACTIVE ONLY while body.odm-printing is set (the ODM
-   briefing surface sets it around window.print() and removes it after) — inert for Classic/HS always.
-   Everything hides; the rendered packet panel prints alone, full-width. */
 @media print {
     body.odm-printing * { visibility: hidden; }
     body.odm-printing bce-odm-briefing [data-testid='ob-doc'],
@@ -3115,10 +3080,5 @@ bce-chaos-contracts .cc-actions, :where(.cc-scope) .cc-actions { display:flex; g
     bce-odm-dashboard main.sheet, bce-odm-dashboard section.panel.active { height: auto !important; overflow: visible !important; }
 }
 
-/* ═══ ORDER-3 H17 — the READ-ONLY record sheet on a player device showing the RETAINED post-resolve view. Scoped-global on
-   purpose (the HARDEN-4 pattern): the player-sheet component's own `*` selector is emulation-scoped to ITS template and never
-   reaches the record sheet's SVG children, whose MekBay styles set pointer-events explicitly. Selector is the player sheet
-   host + the resolved class, so the GM app, Classic/HS and every non-resolved sheet are untouched. The fan gate
-   (BattleForceService.readOnly) is the witness on the server; this is the visible half. ═══ */
 bce-player-sheet .ps-main.resolved bce-battle-sheet, bce-player-sheet .ps-main.resolved bce-battle-sheet *,
 bce-player-sheet .ps-main.resolved bce-sheet-view, bce-player-sheet .ps-main.resolved bce-sheet-view * { pointer-events: none !important; }

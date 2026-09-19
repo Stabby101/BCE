@@ -1,15 +1,3 @@
-/*
- * DIRECTIVE-ODM-17 P2 — THE FLEET client. packs/odm/fleet.json is transport truth, INGESTED ONE-WAY from
- * the PM-authored canonical-lift master (ODM_FLEET_R1.json — TM p.239/209 · SO p.22/41-43/324 · TRO:3057R
- * via Sarna). Rulings carried: R1 Union cargo 74 t · R2 Leopard fuel 137 t · R3 THE LIFT ARC — the two
- * operational hulls are 350 t of bay tonnage short of a one-wave company lift, and that STAYS true (the
- * Grieving Star restoration + refit is the earned fix; render the shortfall, never patch it in data).
- * DOORS ARE DATA AND GATE (SO p.42: cargo moves only through a door): a 0-door cargo bay loads NOTHING
- * afield — the walk's cargo capacity counts DOORED holds only (the Union's 74 t is the only spaceborne
- * cargo path). Fighter bays stay data-no-gate (no aerospace in ODM content). The per-bay 150 t cubicle
- * tonnage is the CONVERSION basis of the lift budget (TM p.239), derived at render — never stored totals.
- * STATUS IS LIVE — pack defaults + the additive state overlay. Server-served, in-memory, C6-cleared.
- */
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -56,6 +44,8 @@ export class OdmFleetService {
 
     readonly fleet = signal<OdmVessel[] | null>(null);
     readonly opsData = signal<OdmFleetOps | null>(null);
+    /** P8 — a failed fetch is SAID, not swallowed: "fleet.json 403" / "fleet.json 0" (network) / "fleet.json empty". */
+    readonly loadError = signal<string | null>(null);
     private inflight: Promise<void> | null = null;
 
     constructor() {
@@ -65,13 +55,16 @@ export class OdmFleetService {
     ensureLoaded(): Promise<void> {
         if (this.fleet()) return Promise.resolve();
         if (this.inflight) return this.inflight;
+        this.loadError.set(null);
         this.inflight = firstValueFrom(this.http.get<OdmFleetFile>(`${this.base()}/pack/odm/file/fleet.json`, { withCredentials: true }))
-            .then((f) => { if (f?.vessels?.length) { this.fleet.set(f.vessels); this.opsData.set(f.opsData ?? null); } })
-            .catch(() => { /* honest nulls — the walk refuses to cap-check blind (it waits) */ })
+            .then((f) => { if (f?.vessels?.length) { this.fleet.set(f.vessels); this.opsData.set(f.opsData ?? null); } else this.loadError.set('fleet.json empty'); })
+            .catch((e: unknown) => { this.loadError.set(`fleet.json ${(e as { status?: number })?.status ?? 0}`); }) // honest nulls — the walk refuses to cap-check blind; P8: and SAYS why
             .then(() => { this.inflight = null; });
         return this.inflight;
     }
-    clear(): void { this.fleet.set(null); this.opsData.set(null); this.inflight = null; }
+    /** P8 — the walk's Retry: a fresh fetch after a failure (a no-op while loaded or in flight). */
+    retry(): Promise<void> { if (this.fleet() || this.inflight) return this.ensureLoaded(); this.loadError.set(null); return this.ensureLoaded(); }
+    clear(): void { this.fleet.set(null); this.opsData.set(null); this.loadError.set(null); this.inflight = null; }
 
     /** Vessels with the LIVE status applied (the overlay wins; empty overlay = pack truth). */
     readonly vessels = computed<OdmVessel[] | null>(() => {
@@ -88,12 +81,6 @@ export class OdmFleetService {
      *  Leopards' 0-door 34 t holds exist and load nothing afield (the Union's 74 t is the cargo path). */
     readonly cargoTons = computed<number | null>(() => this.vessels() ? this.operational().reduce((s, x) => s + dooredCargoTonsOf(x), 0) : null);
 
-    /** ODM-17 P2-e/f — THE LIFT BUDGET (ruling R3), derived AT RENDER from ships + the live roster —
-     *  never stored totals. TONNAGE-based (this superseded the count-based first cut): required = each
-     *  'Mech a 150 t cubicle + each vehicle its TM p.239 bay (light 50 t / heavy 100 t); available =
-     *  operational hulls' convertible bay tonnage ('Mech + fighter cubicles × 150 — scrapping every
-     *  fighter cubicle still leaves the fleet short today, which is the point). The master's authored
-     *  arithmetic (3,350 needed / 3,000 available / short 350; 3,900 restored) is the HARNESS pin. */
     readonly liftBudget = computed<{ requiredTons: number; availableTons: number; shortTons: number; waves: number; meks: number; lightVehicles: number; heavyVehicles: number; oversize: number } | null>(() => {
         const v = this.vessels();
         if (!v) return null;

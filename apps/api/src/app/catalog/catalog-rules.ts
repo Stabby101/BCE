@@ -1,8 +1,3 @@
-/*
- * BCE Inventory I (DIRECTIVE-055, T-037 slice 1) — PURE catalog RULES. No Nest/DB deps so it is
- * testable and shared by the service. Implements canon TechManual RULES (era legality + tech-base
- * gating + the formula-priced cost rule). Rules/facts, never copied data (REF-001).
- */
 
 export type Category = 'weapon' | 'ammo' | 'misc' | 'armor' | 'structure' | 'engine' | 'gyro' | 'cockpit' | 'actuator';
 export type TechBase = 'IS' | 'Clan' | 'All';

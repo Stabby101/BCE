@@ -1,8 +1,3 @@
-/*
- * DIRECTIVE-IMPORT-1 — privacy + takedown, at the CampaignsService seam (a real temp DB, deleted after).
- * Proves the non-negotiable: a custom hotspot in one owner's campaign never reaches another owner (owner-scoping
- * is authoritative), and the admin takedown removes a named custom hotspot from a campaign's snapshot.
- */
 import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -57,7 +52,6 @@ describe('custom-hotspot privacy + takedown (CampaignsService)', () => {
         expect(svc.removeCustomHotspot('no-such-campaign', 'hs-custom-0-0')).toBe(false);
     });
 
-    // ── GM-1 P2 — the takedown reaches the gmOnly layout (a GM session's chamber; the panel's dead-lever catch) ──
     it('admin takedown removes a custom hotspot stored UNDER gmOnly (a GM-session campaign)', () => {
         svc.upsert(rec('camp-GM', { gmSession: true, gmOnly: { customHotSpots: [{ id: 'hs-custom-9', title: 'Infringing', custom: true }] } }), ownerA);
         expect(svc.removeCustomHotspot('camp-GM', 'hs-custom-9')).toBe(true);

@@ -1,6 +1,4 @@
-// DIRECTIVE-BOUNDARY-1 Slice 1 — the boundary FENCE as a local ESLint flat-config plugin (there is no libs/, so
 // @nx/enforce-module-boundaries cannot fence intra-project folders; this is the behaviourally-equivalent mechanism).
-// Two rules give the HARDEN-1 advisory-with-teeth posture:
 //   no-new-cross-boundary   → reports a forbidden edge NOT in the baseline  → configured 'error' (fails nx lint)
 //   grandfathered-cross-boundary → reports a forbidden edge IN the baseline → configured 'warn'  (visible burn-down)
 // The baseline is generated (gen-baseline.mjs) with the SAME classify, so lint exits 0 today; a NEW forbidden edge
@@ -20,7 +18,7 @@ try {
 /** Build a rule that fires only for edges whose baselined-ness === `grandfatheredMode`. */
 function makeRule(grandfatheredMode) {
     return {
-        meta: { type: 'problem', docs: { description: 'BCE engine/gamesystem boundary fence (DIRECTIVE-BOUNDARY-1)' }, schema: [] },
+        meta: { type: 'problem', docs: { description: 'BCE engine/gamesystem boundary fence (1)' }, schema: [] },
         create(context) {
             const filename = context.filename ?? context.getFilename();
             const fromScope = classifyAbs(filename);

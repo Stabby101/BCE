@@ -1,11 +1,3 @@
-/*
- * BCE retool — terminal SHUTDOWN screen (DIRECTIVE-012). Reached via the dashboard's
- * EXIT control: powers the app SESSION down to an on-theme Host Operations Console
- * OFFLINE state (HOST/ENGINE OFFLINE, "safe to close", Relaunch → cover) and attempts
- * window.close() (honored only for script-opened windows; otherwise this screen stands).
- * The saved campaign is preserved — Relaunch + cover 02 LOAD resumes it. This does NOT
- * stop the dev server / host process (no server session exists yet). Theme tokens only.
- */
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { Router } from '@angular/router';
 

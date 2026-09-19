@@ -1,22 +1,3 @@
-/*
- * BCE campaign-pack — RNG STARTING-FORCE GENERATOR (DIRECTIVE-018, T-026). Pure TS, no Angular/DOM.
- *
- * The keystone generator: era + faction + resource-appropriate 'Mech makeup, lance -> regiment.
- * The SAME machinery later builds OpFor + allies (T-014/T-024 dual-use) — built as a foundation.
- *
- * Concepts modeled (cited) from the GPLv3 MekHQ harvest (reference/mekhq) Against-the-Bot
- * company generators — `universe/generators/battleMekWeightClassGenerators/AtB...` (the 2d6 ->
- * weight-class table) + `battleMekQualityGenerators/AtB...` (the 2d6 -> quality table) +
- * `companyGenerators/AbstractCompanyGenerator` (the +2/+1 rank modifier, command-lance best roll).
- * MekHQ's chassis SELECTION reaches MegaMek `ratgenerator` RAT DATA (NC-licensed, forbidden +
- * unavailable) — BCE replaces that one seam with a heuristic over MekBay's `faction.eras` catalog.
- * NO MekHQ/MegaMek data files are used; only the dice-table LOGIC is ported, cited.
- *
- * INTERIM (slice 1): commonality WEIGHTS are BCE-original heuristics over MekBay catalog fields,
- * all in FORCE_GEN_TUNABLES, behind a per-faction+era WEIGHTS SEAM (`resolveWeights`) that cited
- * canon/Sarna RAT data will replace wholesale (T-022/T-026). Rolls use an injectable RNG so the
- * caller generates ONCE at Begin and STORES the result (reload never rerolls). Lifts to apps/api.
- */
 
 import { RAT_WEIGHTS, RAT_TIER_WEIGHT, UNLISTED_DAMPING, type RatWeightTable } from './rat-weights';
 import type { CBTSerializedState } from '../../models/force-serialization';
@@ -34,7 +15,7 @@ export interface GenUnit {
     role: string;
     tons: number;
     bv: number;
-    unitType: 'mech' | 'vehicle'; // D-046 — combined arms: BattleMech vs combat vehicle (the TYPE dimension)
+    unitType: 'mech' | 'vehicle';
 }
 
 /** A generated unit, the minimal envelope the engine later mints into a real instance (T-017). */
@@ -45,40 +26,28 @@ export interface ProtoInstance {
     model: string;
     mulId: number;
     tons: number;
-    bv: number; // battle value — display + commander tiebreak (D-019)
-    // D-046 — combined arms. 'mech' (default; ABSENT = mech, no migration) | 'vehicle' (combat vehicle).
+    bv: number;
     // The motor-pool + OpFor-composition display key. Vehicle battle-damage triage/repair degrades
     // gracefully (the Mech-crit readers find none — no crash); full vehicle crit handling is a follow-up.
     unitType?: 'mech' | 'vehicle';
     condition: string;
-    // Force structure (D-019) — optional links assigned after the draw.
     lanceId?: string;
     isCommander?: boolean;
-    // Provenance (D-029) — how this unit joined the force; absent = 'generated' (no migration). 'captured' arrives D-030.
     provenance?: Provenance;
-    // Battle damage (D-030) — MekBay's serialized unit state (armor/internal/crit/ammo; heat stripped,
     // live-only). Optional + JSON-persisted with the instance (no version bump). Absent = pristine.
     damage?: CBTSerializedState;
-    // Triage tag (D-031) — set on RECOVER; the D-032 repair-bays queue feed. Severity G/Y/R/B.
     triage?: 'G' | 'Y' | 'R' | 'B';
-    // D-110d — abstract post-battle damage level for the Hot Spots tabletop recorder (Chaos Repair & Refit tab).
     // Same set as chaos-sp-costs RepairLevel; read DIRECTLY (no CBTSerializedState synthesis). Optional / migration-safe.
     chaosDamage?: 'armor' | 'structure' | 'crippled' | 'destroyed';
 }
 
-/** How a unit entered the force (D-029). Sell/delete events live in the campaign log, not here. */
 export interface Provenance {
-    origin: 'generated' | 'purchased' | 'gm-added' | 'captured' | 'hired-merc' | 'player-import'; // IMPORT-3 P2 hired merc · GM-1 P3 join-with-force
+    origin: 'generated' | 'purchased' | 'gm-added' | 'captured' | 'hired-merc' | 'player-import';
     acquiredDate?: { y: number; m: number; d: number };
-    /** GM-1 P3 — the importing player's anonId ('anon-…', NEVER a raw token: the snapshot fans to the room).
-     *  The durable ownership marker behind the pre-claimed board rows + the per-unit battle rule. */
     owner?: string;
-    /** GM-2 P1 — the identity a brought company carries: the HOME campaign it came from and WHICH home instance this
-     *  minted copy is. Written by the server mint (import-force.ts) from the join handshake; echoed onto the results
-     *  slip so "Apply to my campaign" can point a row back at the home unit. Absent on pre-P1 imports. */
     sourceCampaignId?: string;
     originInstanceId?: string;
-    homeReputation?: number; // GM-2 P2b — the company's home reputation at join (the phone + the GM broker negotiate against it)
+    homeReputation?: number;
 }
 
 export interface GeneratedForce {
@@ -99,7 +68,6 @@ export type ResourceTier = 'lean' | 'normal' | 'established';
 type WeightClass = 'Light' | 'Medium' | 'Heavy' | 'Assault';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TUNABLE CONSTANTS — one block; James tunes on live view. (The WEIGHTS SEAM below
 // lets cited per-faction+era RAT data override these wholesale later.)
 // ─────────────────────────────────────────────────────────────────────────────
 export const FORCE_GEN_TUNABLES = {
@@ -111,13 +79,7 @@ export const FORCE_GEN_TUNABLES = {
     resourceCount: { lean: [0.7, 0.95], normal: [0.85, 1.33], established: [1.05, 1.33] } as Record<ResourceTier, [number, number]>,
     /** Per-chassis duplicate cap (duplicates are canon — a Kurita company fields multiple Panthers). */
     dupCap: 3,
-    /** D-024: IndustrialMechs/civilian designs are excluded from combat draws (player + OpFor) by
-     *  default — the 1st Davion Guards fielding a LoggerMech is a bug. Flip true for future flavor
-     *  (a pirate band's armed MiningMech). The discriminator is the catalog subtype (.../Industrial Mek). */
     allowIndustrials: false,
-    /** Formation signature-'Mech seed cap (D-021): min(max, floor(pctOfForce × nominal size)) — a
-     *  lance gets 1, a company 3, so the player's force isn't wall-to-wall signatures. Merc seeding
-     *  (D-016/018) is NOT capped here — its ≤3 signatures pass through untouched. */
     signatureSeedCap: { max: 3, pctOfForce: 0.25 },
     /** Commander (first slot) weight-roll modifier — a heavier command 'Mech (AtB +2). */
     commanderWeightMod: 2,
@@ -135,12 +97,6 @@ export const FORCE_GEN_TUNABLES = {
     } as Record<ResourceTier, Record<string, number>>,
     /** recency skew: how strongly intro-year recency is favored (+) or penalized (-) per tier. */
     recencySkew: { lean: -1, normal: 0, established: 1 } as Record<ResourceTier, number>,
-    /** D-046 — per-era VEHICLE SHARE (the Mech:vehicle TYPE RATIO seam): the fraction of non-commander,
-     *  non-seed slots drawn as combat vehicles rather than 'Mechs. Armor-heavier in Star League + the
-     *  Clan-and-after combined-arms eras; thin in the Succession Wars 'Mech-cult. ★ HEURISTIC — cited
-     *  canon combined-arms type-ratios (T-022) replace these wholesale, same pattern as the RAT weights.
-     *  Keyed by intro-year window (the generator already carries `year`; eras map to year ranges). */
-    // D-088 — the canon SHARE of a COMBINED_ARMS force that is combat vehicles, by ERA (year-band). Common in the
     // Star League, thin in the 3025 'Mech-cult, common again Jihad+. Best-knowledge figures; tune live (★ HEURISTIC
     // — cross-check vs canon TO&E later). The FACTION modifier (below) multiplies this; the result clamps to the band.
     vehicleShareByYear: [
@@ -152,7 +108,6 @@ export const FORCE_GEN_TUNABLES = {
         { to: 3081, vehicleShare: 0.40 }, // Jihad (3067–3081) — armor-heavy doctrine
         { to: 9999, vehicleShare: 0.40 }, // Dark Age / ilClan (3081+)
     ] as { to: number; vehicleShare: number }[],
-    // D-088 — FACTION modifier on the era share (doctrine). Clans are 'Mech-centric (→ Clan-Invasion Clan ≈0.05);
     // periphery/pirates can't field 'Mechs at scale → armor-heavy; Houses/ComStar/merc are the baseline.
     vehicleFactionMod: { clan: 0.2, periphery: 1.5, baseline: 1.0 },
     vehicleShareClamp: [0, 0.6] as [number, number], // era × faction mod, clamped
@@ -177,11 +132,6 @@ export function ratResolveProbe(faction: string | null, year: number, catalogCha
     return t.entries.filter((e) => !catalogChassis.has(norm(e.chassis))).map((e) => e.chassis);
 }
 
-/** WEIGHTS SEAM (D-024) — per-faction+year commonality. Eligibility (faction.eras ∩ intro-year ∩
- *  combat-'Mech) still governs CAN-appear underneath; this governs HOW-OFTEN. A matched faction+year
- *  multiplies a listed chassis by its tier weight (staple 8 … rare 1) and an eligible-but-unlisted
- *  chassis by UNLISTED_DAMPING (0.35) — staples cluster, the long tail thins but never vanishes.
- *  Unmatched faction/era → ratMul = 1 (pure heuristic, unchanged). PM's rat-weights.ts is the payload. */
 export interface FactionEraWeights {
     levelWeights: Record<string, number>;
     techWeights: Record<string, number>;
@@ -200,9 +150,6 @@ export function resolveWeights(faction: string | null, year: number, tier: Resou
     return { ...base, ratMul: (chassis: string) => byChassis.get(norm(chassis)) ?? UNLISTED_DAMPING };
 }
 
-/** D-046 — the per-era vehicle share (TYPE RATIO seam). Heuristic now; cited canon ratios replace it (T-022). */
-/** D-088 — classify a faction name for the combined-arms modifier (pure, no faction data needed). Clans are
- *  'Clan …'; periphery/pirate states lean on armor; everything else (Houses/ComStar/merc) is baseline. */
 function vehicleFactionMod(factionCode: string | null | undefined): number {
     const m = FORCE_GEN_TUNABLES.vehicleFactionMod;
     const n = (factionCode ?? '').toLowerCase();
@@ -211,8 +158,6 @@ function vehicleFactionMod(factionCode: string | null | undefined): number {
     if (/\b(taurian|magistracy|canopus|outworlds|marian|circinus|aurigan|rim worlds|illyrian|lothian|oberon|tortuga|fronc|calderon|niops|new colony|hanseatic|umayyad|periphery|pirate|bandit|raider)\b/.test(n)) return m.periphery;
     return m.baseline;
 }
-/** D-088 — the era × faction combat-vehicle share (the SHARE of a combined-arms force that is vehicles). The
- *  era curve sets the shape; the faction modifier (Clan/periphery/baseline) multiplies; clamped to the band. */
 export function vehicleShareForYear(year: number, factionCode?: string | null): number {
     const band = FORCE_GEN_TUNABLES.vehicleShareByYear.find((b) => year <= b.to);
     const era = band ? band.vehicleShare : 0.25;
@@ -233,8 +178,6 @@ const levelKey = (u: GenUnit): string => {
 };
 const techKey = (u: GenUnit): string => (u.techRating?.[0] ?? 'E').toUpperCase();
 
-/** D-021 formation seed cap: min(max, floor(pctOfForce × nominal size)) for the chosen unit size.
- *  Nominal-based (deterministic) so the service can slice formation seeds before the RNG draw. */
 export function formationSeedCap(unitSizeId: string, clanBasis: boolean): number {
     const bands = clanBasis ? FORCE_GEN_TUNABLES.clanSizeBands : FORCE_GEN_TUNABLES.sizeBands;
     const nominal = bands[unitSizeId] ?? FORCE_GEN_TUNABLES.sizeBands['lance'];
@@ -272,7 +215,7 @@ function drawWeight(u: GenUnit, w: FactionEraWeights, minYear: number, maxYear: 
     const span = Math.max(1, maxYear - minYear);
     const r = (u.year - minYear) / span;
     const rec = w.recencySkew >= 0 ? 0.4 + 0.6 * r * w.recencySkew + 0.6 * (1 - Math.abs(w.recencySkew)) * r : 0.4 + 0.6 * (1 - r) * -w.recencySkew;
-    return lvl * tech * Math.max(0.1, rec) * w.ratMul(u.chassis); // D-024: RAT tier weight (1 when no table)
+    return lvl * tech * Math.max(0.1, rec) * w.ratMul(u.chassis);
 }
 
 function pickWeighted(cands: GenUnit[], weights: number[], rng: () => number): GenUnit {
@@ -305,17 +248,9 @@ export interface GenerateOpForParams {
     year: number; // campaign year (RAT window)
     eraId: number | null;
     tier: ResourceTier;
-    vehicleShare?: number; // D-076 — explicit vehicle fraction (seed-driven); overrides vehicleShareForYear(year) when set
+    vehicleShare?: number;
 }
 
-/**
- * Draw an OpFor force toward a BV TARGET (D-023) — same weight-class roll + heuristic draw as the
- * player force, but the stop condition is battle value, not a unit count. Accumulates until BV ≥ the
- * band floor (target×(1−tol)); on each pick it prefers candidates that keep the running total ≤ the
- * band ceiling (target×(1+tol)) so it lands IN the band, only overshooting (by the smallest unit
- * available) when nothing fits — so a tiny player force can't dead-end the draw. Era-legality is the
- * caller's pool guarantee. Reused dual-use machinery (T-014/T-024).
- */
 export function generateForceToBV(p: GenerateOpForParams, rng: () => number = Math.random): { instances: ProtoInstance[]; bvTotal: number; bvTarget: number } {
     const d6 = (): number => Math.floor(rng() * 6) + 1;
     const w = resolveWeights(p.factionCode, p.year, p.tier);
@@ -331,14 +266,12 @@ export function generateForceToBV(p: GenerateOpForParams, rng: () => number = Ma
         instances.push({ instanceId: `op-${instances.length + 1}-${Math.floor(rng() * 1e6)}`, unitRef: u.name, chassis: u.chassis, model: u.model, mulId: u.id, tons: u.tons, bv: u.bv, condition: 'Active', unitType: u.unitType });
         bvTotal += u.bv;
     };
-    // D-046/D-088: the per-call vehicle SHARE — a D-076 seed override wins, else the era × faction curve.
     const vShare = p.vehicleShare ?? vehicleShareForYear(p.year, p.factionCode);
     let guard = 0;
     const CAP = 300; // hard backstop (a regiment of light 'Mechs is ~150)
     while (bvTotal < lo && p.pool.length && guard < CAP) {
         guard++;
         const wc = rollWeightClass(d6, 0);
-        // D-046: roll the unit TYPE for this slot, then draw within it (fall back to the other type when
         // that type is empty/dup-capped — a 'Mech-only or vehicle-thin pool still completes the draw).
         const wantVehicle = rng() < vShare;
         const avail = p.pool.filter((u) => (used[u.chassis] ?? 0) < FORCE_GEN_TUNABLES.dupCap);
@@ -353,8 +286,6 @@ export function generateForceToBV(p: GenerateOpForParams, rng: () => number = Ma
         const weights = cands.map((u) => drawWeight(u, w, minYear, maxYear));
         mint(pickWeighted(cands, weights, rng));
     }
-    // D-088 — COMBINED_ARMS floor: when the pool fields vehicles (combined) but the era×faction share rolled
-    // NONE, guarantee ≥1 combat vehicle (the pool is already combat-only — D-085). Swap the best-fit 'Mech for a
     // combat vehicle that keeps BV IN THE ±tolerance BAND (the floor is a minimum; the share is the target, so
     // 3025 stays mostly 'Mechs + a token tank, never half-tanks). Strictly in-band; never adds recovery/engineering.
     const poolVeh = p.pool.filter((u) => u.unitType === 'vehicle');
@@ -402,13 +333,12 @@ export function generateForce(p: GenerateForceParams, rng: () => number = Math.r
     }
 
     // 2) Fill the remainder by AtB weight-class roll -> heuristic-weighted draw of that class.
-    const vShare = vehicleShareForYear(p.year); // D-046 — per-era combined-arms type ratio (player force; D-076 override is OpFor-only)
+    const vShare = vehicleShareForYear(p.year);
     let guard = 0;
     while (instances.length < count && p.pool.length && guard < count * 40) {
         guard++;
         const isCommander = instances.length === 0;
         const wc = rollWeightClass(d6, isCommander ? FORCE_GEN_TUNABLES.commanderWeightMod : 0);
-        // D-046: the commander rides a 'Mech; every other slot rolls the unit TYPE by the era's vehicle
         // share, then draws within it (fall back to the other type when empty/dup-capped).
         const wantVehicle = !isCommander && rng() < vShare;
         const avail = p.pool.filter((u) => (used[u.chassis] ?? 0) < FORCE_GEN_TUNABLES.dupCap);

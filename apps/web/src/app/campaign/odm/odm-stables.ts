@@ -1,23 +1,3 @@
-/*
- * DIRECTIVE-ODM-15b — THE STABLES, pure module. The PM ruling: the duplicated identities in the pack
- * roster are REAL — pilots who upgraded and kept the old hull. One Pilot record per PERSON; the
- * secondary hull mints UNMANNED (a spare machine in the roster pull-down). The engine's 1:1
- * pilot-per-seat mint was the bug, not the names.
- *
- * Identity = authored full name + callsign (the D-024 kin rule deliberately shares SURNAMES, so a
- * surname is never an identity). Primary selection rails, in order:
- *   1. the pack's `pilotPrimary: false` marker (marks SECONDARY seats; absent = primary);
- *   2. condition — prefer the ACTIVE ride over salvage/cold (covers Elara; NOT Aldous, whose hulls
- *      are both active — his marker is load-bearing, verified at ingest);
- *   3. still ambiguous → STOP: never mint (or fold onto) the same person twice by guess.
- *
- * THE FOLD (migration, forward-only) is deliberately LOSSLESS so the ruling's report-if-lossy clause
- * never fires: numerics take MAX (the ruling's rule — SUM was considered and rejected: a same-mission
- * double-deploy of both hulls would double-count), perks take UNION, status takes the worst case
- * (KIA > Injured > Active — dead stays dead), and anything on the folded record that differs
- * (a diverged bio, gmNotes, unequal skills) is APPENDED to gmNotes under a fold marker rather than
- * dropped. Nothing authored or GM-written is ever lost.
- */
 import type { Pilot } from '../barracks/pilot-generator';
 
 export interface StableSeatInfo {
@@ -80,12 +60,6 @@ export function foldPilots(primary: Pilot, secondary: Pilot): Pilot {
     };
 }
 
-/* ── ODM ROSTER SKILL RECONCILIATION (James's live-barracks order, 2026-08-28) — forward-only and
- * TRIPLE-BOUNDED so it can never stomp earned progression: an authored skill edit applies ONLY where the
- * persisted pilot (a) matches the seat's authored identity, (b) has missionCount 0, and (c) still carries
- * the EXACT pre-edit pair. Anything outside the triple match is left alone (and reported once). All eight
- * edited/promoted seats ride the table; the four promotion rows are was==now identity confirmations that
- * can never change state (their counterparts in other campaigns are rolled people, not the seat's identity). */
 export const ROSTER_SKILL_RECONCILIATIONS: { name: string; callsign: string | null; was: [number, number]; now: [number, number] }[] = [
     { name: 'Pier Augusto Valentini', callsign: 'Archivist', was: [2, 3], now: [3, 3] },
     { name: 'Rhiannon Ashvale-Price', callsign: 'Anchor', was: [2, 3], now: [3, 3] },

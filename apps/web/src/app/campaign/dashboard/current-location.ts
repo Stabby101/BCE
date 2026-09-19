@@ -1,8 +1,3 @@
-/*
- * BCE — the Overview CURRENT-LOCATION line + the minimal GM location setter (DIRECTIVE-079 — Star Map Phase 1:
- * system · owner(era) · derived locale descriptor; the full map / jump-travel UI is D-081). Extracted verbatim
- * from the dashboard god file by DIRECTIVE-HARDEN-2 (pure move — markup, styles, and logic byte-identical).
- */
 import { Component, ChangeDetectionStrategy, computed, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
@@ -38,7 +33,7 @@ import { StarSystemsService } from '../star/star-systems.service';
 export class CurrentLocationComponent {
     private readonly state = inject(NewCampaignState);
     private readonly store = inject(CampaignSaveStore);
-    private readonly star = inject(StarSystemsService); // D-079 — Star Map systems (lazy chunk)
+    private readonly star = inject(StarSystemsService);
 
     protected readonly currentLocationId = computed(() => this.state.currentLocation());
     protected readonly locationSystem = computed(() => { this.star.ready(); return this.star.byId(this.state.currentLocation()); });

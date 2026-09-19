@@ -12,12 +12,11 @@
         <div class="step"><div><b>STEP</b> 04 / 04</div><div><b>FIELD</b> ASSETS</div></div>
     </header>
 
-    <!-- DIRECTIVE-068 — Quick Mission arms-mix toggle: flows into the force-generator pool (and the OpFor). -->
     @if (quickMission()) {
         <div class="ph">Arms mix <small>— the one-shot force composition</small></div>
         <div class="sizes">
             <button type="button" class="sz amx" data-amx="combined" [class.sel]="armsMix() === 'combined'" [attr.aria-pressed]="armsMix() === 'combined'" (click)="setArmsMix('combined')">
-                <div class="szn">Combined Arms</div><div class="szc">’Mechs + vehicles</div><div class="szk">D-046 mix</div>
+                <div class="szn">Combined Arms</div><div class="szc">’Mechs + vehicles</div><div class="szk">mix</div>
             </button>
             <button type="button" class="sz amx" data-amx="mechs" [class.sel]="armsMix() === 'mechs'" [attr.aria-pressed]="armsMix() === 'mechs'" (click)="setArmsMix('mechs')">
                 <div class="szn">’Mechs only</div><div class="szc">no vehicles</div><div class="szk">pure ’Mech force</div>

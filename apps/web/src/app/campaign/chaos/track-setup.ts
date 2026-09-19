@@ -1,24 +1,10 @@
-/*
- * BCE — DIRECTIVE-117: Hot Spots TRACK setup data. A Chaos "track" is a lean five-part scenario sheet, not a
- * military order; this file supplies the GAME SETUP / role / Track End / salvage-policy text for the HS-only TRACK
- * render (mission-package + player-briefing). ALL text is OUR OWN words — the general mechanics of the twelve
- * standard track templates (§18's eleven + the arena Duel), summarised for BCE. Structure/format reuse is
- * sanctioned (Content boundary); NO rulebook prose, scenario names, or book objective names are shipped. The data
- * is GM-editable and additive: it only decorates the render, it never touches the MissionSpec or the engine.
- *
- * Source of the mechanics (paraphrased, not quoted): DRACONIS-REACH-MECHANICS.md §18. IMPORT-8 Part C (James's
- * ruling 2026-08-19, amending IP-001): the templates' MECHANICS ship at full depth — TEMPLATE_OBJECTIVES carries
- * each template's specific typed objective set with the book's per-objective VP, named and phrased BY US for what
- * each mechanic is; TEMPLATE_DEEP_RULES carries the procedural rules. The book's descriptive PROSE remains never
- * shipped. TRACK_VP stays as the render fallback for authored/preset lists without their own VP.
- */
 import type { MissionTypeId } from '../contract/contract-terms';
 import type { MissionSeed } from '../mission/forge-types';
 
 export type TrackTemplateKey =
     | 'assault' | 'breakthrough' | 'defend' | 'flank' | 'meeting'
     | 'objective-raid' | 'pursuit' | 'pushback' | 'recon' | 'retreat' | 'strike'
-    | 'duel-arena'; // IMPORT-8 Part C — §18 #12 (the arena duel) joins the universal library. KEY deliberately ≠ 'duel':
+    | 'duel-arena';
                     // three authored DR tracks carry templateId "Duel" that has ALWAYS aliased to 'meeting' (their bespoke
                     // duel rules are authored specialRules on a meeting base) — capturing that alias would silently re-base
                     // shipped content. 'Duel Arena' resolves here; authored "Duel" stays byte-identical. // DECISION
@@ -43,8 +29,6 @@ export interface TrackTemplate {
     /** Track End condition (turn limit / no-'Mechs). Per-template; falls back to DEFAULT_TRACK_END shape. */
     trackEndText: string;
     salvagePolicy: SalvagePolicy;
-    /** DIRECTIVE-124 — the template's STANDARD special rules (our words), the canonical layer a premade hotspot's
-     *  authored `specialRules` adds to WITHOUT restating. Absent = no distinct standard rule for this template. */
     standardRules?: string[];
 }
 
@@ -175,7 +159,6 @@ export const TRACK_TEMPLATES: Record<TrackTemplateKey, TrackTemplate> = {
         trackEndText: DEFAULT_TRACK_END,
         salvagePolicy: 'pool-draft',
     },
-    // IMPORT-8 Part C — §18 #12: the arena duel (a formal one-on-one bout, not a field engagement).
     'duel-arena': {
         name: 'Duel',
         attackerRole: 'CHALLENGER', defenderRole: 'CHALLENGER',
@@ -187,7 +170,6 @@ export const TRACK_TEMPLATES: Record<TrackTemplateKey, TrackTemplate> = {
     },
 };
 
-// ── IMPORT-8 Part C — the §18 per-template objective sets: TYPED objectives with the book's per-objective VP,
 //    in OUR OWN words (mechanics only — names describe what the mechanic IS; no book objective names, no book prose).
 //    `side` drives the resolve role filter (singleSidedResolve); the track sheet lists BOTH sides, book-style. ──
 export interface TrackTemplateObjective {
@@ -284,9 +266,6 @@ export const TEMPLATE_OBJECTIVES: Record<TrackTemplateKey, TrackTemplateObjectiv
     ],
 };
 
-/** IMPORT-8 Part C — the deepened PROCEDURAL rules per template (our words), rendered on UNIVERSAL §18 picks via the
- *  seed's trackSheet.specialRules. Kept SEPARATE from TEMPLATE_STANDARD_RULES (the D-124 layer authored hotspots
- *  render) so every authored hotspot brief stays byte-identical. */
 export const TEMPLATE_DEEP_RULES: Record<TrackTemplateKey, string[]> = {
     assault: ['The attacker fields no minefields and no assets that immobilise (the garrison is dug in; the assault comes in clean).'],
     breakthrough: ['Exit scoring: an attacking unit that leaves by the defender\'s edge is out of the fight but counts toward the exit objective; leaving by any other edge is simply a withdrawal.'],
@@ -313,8 +292,6 @@ export const TEMPLATE_DEEP_RULES: Record<TrackTemplateKey, string[]> = {
     ],
 };
 
-/** DIRECTIVE-124 — the STANDARD special rules per template (our words), the canonical layer a premade hotspot's
- *  authored `specialRules` ADDS to without restating (#4). Rendered on the brief before the hotspot-specific rule. */
 export const TEMPLATE_STANDARD_RULES: Partial<Record<TrackTemplateKey, string[]>> = {
     'objective-raid': ['Component-carry: a raider reaching an objective structure seizes a component and must carry it off its own home edge to score.'],
     recon: ['Scanning: end movement within close line-of-sight of an enemy unit to identify ("scan") it and complete recon objectives.'],
@@ -339,7 +316,6 @@ export function templateKeyFor(templateId: string): TrackTemplateKey | undefined
     };
     return alias[t];
 }
-/** DIRECTIVE-124 — the STANDARD special rules for an authored templateId (empty if unknown — e.g. a bespoke 'Duel'). */
 export function standardRulesForTemplate(templateId: string): string[] {
     const key = templateKeyFor(templateId);
     return (key && TEMPLATE_STANDARD_RULES[key]) || [];
@@ -374,10 +350,6 @@ export function trackArchetypeFor(family: MissionTypeId | string | null | undefi
     return { ...t, playerSide: pick.playerSide, templateKey: pick.template };
 }
 
-/** IMPORT-6 Part E — the archetype for a BOUND spec: a persisted `forge.trackTemplate` that names a template OTHER than
- *  the contract type's default (a §18 universal pick — IMPORT-3 — played on a contract of a different type) wins, with
- *  the player side that template's representative family plays; otherwise exactly `trackArchetypeFor(family)` (value-
- *  identical for every pre-IMPORT-6 spec, whose stamp IS the family default). Never throws; unknown keys → the family. */
 export function trackArchetypeForSpec(templateKey: string | null | undefined, family: MissionTypeId | string | null | undefined, playerRole?: TrackSide | null): TrackArchetype {
     const base = trackArchetypeFor(family);
     const key = templateKey ? templateKeyFor(templateKey) : undefined;
@@ -391,8 +363,6 @@ export function trackArchetypeForSpec(templateKey: string | null | undefined, fa
     return playerRole === 'attacker' || playerRole === 'defender' ? { ...arch, playerSide: playerRole } : arch;
 }
 
-/** IMPORT-6 Part E — the standard Track End for an authored templateId (a custom track left it blank): the named
- *  template's own line (Defend ends turn 6, Recon turn 8, …) else the universal default. */
 export function templateTrackEnd(templateId: string | null | undefined): string {
     const key = templateId ? templateKeyFor(templateId) : undefined;
     return (key && TRACK_TEMPLATES[key]?.trackEndText) || DEFAULT_TRACK_END;
@@ -408,29 +378,17 @@ export function opposingRoleLabel(a: TrackArchetype): string {
     return a.playerSide === 'attacker' ? `DEFENDER (${a.defenderRole})` : `ATTACKER (${a.attackerRole})`;
 }
 
-// ── DIRECTIVE-IMPORT-3 — the §18 templates as a universal, pickable track library ──────────────────────
-/** Each §18 template → a representative mission FAMILY (drives OpFor sizing + the generated flavour; the OpFor
- *  still scales to the active contract, exactly like a D-116 preset). GM-editable. */
 const TEMPLATE_KEY_FAMILY: Record<TrackTemplateKey, MissionTypeId> = {
     assault: 'PLANETARY_ASSAULT', breakthrough: 'EXTRACTION_RAID', defend: 'GARRISON_DUTY',
     flank: 'DIVERSIONARY_RAID', meeting: 'SECURITY_DUTY', 'objective-raid': 'OBJECTIVE_RAID',
     pursuit: 'PIRATE_HUNTING', pushback: 'RELIEF_DUTY', recon: 'RECON_RAID',
     retreat: 'RECON_RAID', strike: 'GUERRILLA_WARFARE',
-    'duel-arena': 'RIOT_DUTY', // IMPORT-8 — a small stand-up family (attacker side); the bout itself is 1v1 by rule
+    'duel-arena': 'RIOT_DUTY',
 };
 /** The pickable universal library — the 11 §18 templates as `{ key, name }` for the play-time track picker. */
 export const UNIVERSAL_TRACK_LIBRARY: readonly { key: TrackTemplateKey; name: string }[] =
     (Object.keys(TRACK_TEMPLATES) as TrackTemplateKey[]).map((key) => ({ key, name: TRACK_TEMPLATES[key].name }));
 
-/** IMPORT-3 — synthesize a FORKLESS MissionSeed from a §18 universal template so the GM can pick a library track
- *  at play time. Mirrors synthSeedFromPreset: forks/decisionPoints/voiceSlots empty (the OpFor sizes to the
- *  contract; no board children). The template supplies the setup/role/track-end context.
- *  IMPORT-8 Part C (James's ruling 2026-08-19, amending IP-001): the seed carries the template's FULL MECHANICAL
- *  objective set (TEMPLATE_OBJECTIVES — typed, per-objective book VP, side-tagged, OUR OWN names and words) and the
- *  deepened procedural rules (TEMPLATE_DEEP_RULES → trackSheet.specialRules). MECHANICS ship; the book's descriptive
- *  PROSE never does — no book objective names, no book sentences (that remains the GM's own private import path).
- *  trackSheet.playerRole = the template's family side, so the resolve role filter matches the rendered side.
- *  seedId 'preset-tpl-<key>' so ForgePackService.seedById resolves it back at render (the pack never rolls it). */
 export function synthSeedFromTemplate(key: TrackTemplateKey): MissionSeed {
     const t = TRACK_TEMPLATES[key];
     const objs = TEMPLATE_OBJECTIVES[key] ?? [];

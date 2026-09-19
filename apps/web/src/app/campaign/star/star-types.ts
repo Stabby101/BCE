@@ -1,8 +1,3 @@
-/*
- * BCE — Star Map Phase 1 (DIRECTIVE-079) types. OUR lean system record, distilled from the btplanets witness
- * (REF-001) by tools/build-systems.mjs. socio/factories/terrain are OPTIONAL — absent in Phase 1 (no witness
- * data); localeAttrs are DERIVED deterministically (owner + neighbor-adjacency + connectivity).
- */
 export type Settlement = 'capital' | 'industrial' | 'agrarian' | 'port' | 'frontier';
 export type RegionRole = 'interior' | 'border' | 'contested';
 

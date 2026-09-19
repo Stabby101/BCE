@@ -1,10 +1,3 @@
-/*
- * FORKED FROM campaign/personnel/support-personnel.ts @ 02c88a1 — DIRECTIVE-ODM-13 Phase 3 (a DRIFT SURFACE).
- * The SURVIVAL barracks roster: the STAFFING summary (6:1 have-vs-need) + the named roster stay; the monthly
- * PAYROLL block, the per-person salary column, and the dismiss control are GONE — nobody is paid and nobody
- * can be replaced, so nobody is dismissed. Render-only (DATA-003): reads the stored PersonnelState.
- * NB: comments AND strings here reach the served GM bundle — never name pack content (the odm2 leak-net).
- */
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { BAND_LABEL, ROLE_LABEL, ROLE_SKILL, type SupportPerson, type SupportRole } from '../personnel/starting-personnel';
@@ -31,7 +24,6 @@ const ROLE_ORDER: SupportRole[] = ['mek_tech', 'astech', 'doctor', 'medic', 'adm
                 }
             </div>
 
-            <!-- ODM-13 P3 — the survival muster line: these people are the company. -->
             <div class="muster" data-kind="muster">
                 <b>{{ activeCount() }}</b> on the active muster · every name on this roster is irreplaceable — no replacements arrive on this world
             </div>

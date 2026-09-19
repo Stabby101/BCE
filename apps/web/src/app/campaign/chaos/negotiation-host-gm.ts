@@ -1,7 +1,3 @@
-/*
- * GM-2 P2b — the GM-side NegotiationHost: the real MissionTreeService for the primary's tree calls, and the GM's
- * broker sign path (the map under gmOnly + persist — exactly what P2a's accept did inline).
- */
 import { inject } from '@angular/core';
 import { MissionTreeService } from '../mission/mission-tree.service';
 import { NewCampaignState } from '../new-campaign-state';

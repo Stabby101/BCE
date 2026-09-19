@@ -1,13 +1,3 @@
-/*
- * BCE retool — Unit Roster, production-data cell (DIRECTIVE-010, supersedes D-009's
- * hand-feel cell). Each cell: MekBay <unit-icon> sprite far-left + designation + a
- * compact lowered condition dropdown (left column), and a live Classic record-sheet
- * thumbnail (right pane) rendered off a real ForceUnit with a sample damage state.
- * Click the thumbnail to explode it to a read-only full sheet. Sprites + sheets are
- * REAL (sprites copied locally; catalog + sheet SVGs stream from db.mekbay.com).
- * Condition state is local; the Fleet section reflects the resource tier. MekBay
- * components are reused unedited.
- */
 import { Component, ChangeDetectionStrategy, computed, signal, inject, effect, untracked, isDevMode, output, type Signal, ApplicationRef, EnvironmentInjector } from '@angular/core';
 import { BceUnitSpriteComponent } from '../../sprite/unit-sprite';
 import { NewCampaignState } from '../../new-campaign-state';
@@ -23,7 +13,7 @@ import { buildNextLance, pruneLance, STRUCTURE_TUNABLES } from '../../force/forc
 import { WarchestService } from '../../chaos/warchest.service'; // PD3 P4 — the RELEASE ledger line (HS only)
 import { releaseFromForce } from '../../chaos/hs-release'; // PD3 P4 — the pure release transform
 import { categoryCounts, forceReadiness } from '../../force/deployed';
-import { hasMechDamage } from '../../repair/repair-bays'; // HOTFIX-024 — gate 'In repair' on the SAME predicate the bays queue filters on
+import { hasMechDamage } from '../../repair/repair-bays';
 import { hsDamagedCount } from '../../battle/hs-damage'; // PD3 P1 — the HS REPAIR badge counts DAMAGED units (HS never sets 'In repair')
 import { InViewDirective } from './in-view.directive';
 import { SheetViewComponent } from './sheet-view';
@@ -54,17 +44,16 @@ interface Vessel {
 })
 export class RosterComponent {
     private readonly state = inject(NewCampaignState);
-    private readonly appRef = inject(ApplicationRef); // D-083 — AS print needs the app injector for dynamic cards
+    private readonly appRef = inject(ApplicationRef);
     private readonly envInjector = inject(EnvironmentInjector);
     private readonly forceService = inject(RosterForceService);
     private readonly store = inject(CampaignSaveStore);
     private readonly pilotService = inject(PilotService);
-    protected readonly sheetRev = inject(SheetRevService); // D-084 — per-card dirty bits (template reads rev(id))
+    protected readonly sheetRev = inject(SheetRevService);
 
     protected readonly conditions = CONDITIONS;
     protected readonly ready = this.forceService.ready;
     protected readonly dataError = this.forceService.dataError;
-    // D-069 (B): a Quick Mission is a one-shot with no roster management — every unit is simply DEPLOYED, so
     // the per-cell condition + lance dropdowns are dropped (the pilot control + sheet stay). Campaign keeps them.
     protected readonly quickMission = this.state.quickMission;
 
@@ -72,7 +61,6 @@ export class RosterComponent {
     protected readonly syncedId = signal<string | null>(null);
     private persistTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // D-084 — the DMG line, PER CARD: one memoized computed per instanceId that depends ONLY on that card's
     // dirty bit (sheetRev.rev(id)). A flip re-derives just that card's damage line once; sibling cards return
     // their cached value (no recompute). The fu is read UNTRACKED so a flip — not a roster-wide change — is the
     // sole trigger. (Replaces the coarse global `crewRev` thumbnail nudge, which re-cloned the whole roster.)
@@ -82,7 +70,7 @@ export class RosterComponent {
         if (!sig) {
             sig = computed(() => {
                 this.sheetRev.rev(id); // the ONLY dependency — this card's dirty bit
-                if (isDevMode()) console.debug('[D-084] dmg-recompute', id); // proof seam: one line per flipped card
+                if (isDevMode()) console.debug('[] dmg-recompute', id); // proof seam: one line per flipped card
                 return this.damageLine(untracked(() => this.forceService.entries()[id]?.fu ?? null));
             });
             this.dmgCache.set(id, sig);
@@ -90,16 +78,10 @@ export class RosterComponent {
         return sig();
     }
 
-    // ── D-027 lance management + active-mission cell ──
     protected readonly reserveKey = '__reserve__';
-    /** D-029 — the unit-acquisition (market) overlay, opened from the roster header / empty state. */
     protected readonly marketOpen = signal(false);
-    /** DIRECTIVE-PD3 P4 — the roster asks the dashboard to land on a tab by id (HS: "Sell ▸" → the Market's sell; the Acquire
-     *  button → the HS market instead of the Traditional C-bill overlay, which wrote a treasury D-110b keeps null). */
     readonly navigate = output<string>();
     private readonly warchest = inject(WarchestService);
-    /** PD3 P4 (PD3-1) — RELEASE, two taps (arm → confirm within 5 s): 0 SP, any condition, ledgered, pilot to spares, commander
-     *  re-designated, lance pruned (hs-release.ts, the Traditional remove() shape). HS only; Traditional keeps the overlay's Sell/Strike. */
     protected readonly releaseArm = signal<string | null>(null);
     private releaseTimer: ReturnType<typeof setTimeout> | null = null;
     protected release(instanceId: string): void {
@@ -119,7 +101,6 @@ export class RosterComponent {
         if (r.structure !== (this.state.forceStructure() ?? null)) this.state.setForceStructure(r.structure);
         void this.store.persistCurrent();
     }
-    /** PD3 P4 (PD3-5) — RENAME on the roster row: ✎ → an inline input → save (pilot.service.rename, the D-070 path) → persist. */
     protected readonly renamingId = signal<string | null>(null);
     protected readonly renameDraft = signal('');
     protected startRename(pilotId: string): void {
@@ -141,33 +122,27 @@ export class RosterComponent {
     // Explode modal.
     protected readonly explodedFu = signal<CBTForceUnit | null>(null);
     protected readonly explodedTitle = signal<string>('');
-    protected readonly explodedAbilities = signal<string[]>([]); // D-070 (E): the exploded sheet's SPA overlay
+    protected readonly explodedAbilities = signal<string[]>([]);
 
     constructor() {
         void this.forceService.build();
-        // D-070: a pilot edit (skills/name from the detail overlay, or a grant) must move the LIVE record sheet,
         // not just the cell — re-push crew onto the ForceUnits whenever the pilot roster changes, then re-clone
         // the thumbnails (the proven 40ms paint tick). untracked so the effect depends ONLY on pilots(), not on
         // whatever reapplyAllCrew reads (no feedback loop; reapplyAllCrew never writes state.pilots()).
         effect(() => {
             this.state.pilots(); // the trigger: any pilot mutation (skills, name, perks, assignment)
             untracked(() => {
-                // D-084: re-drive crew, then flip ONLY the cards whose crew actually changed (per-card,
                 // not the whole roster). reapplyAllCrew returns the changed instanceIds; each bump coalesces.
                 for (const id of this.forceService.reapplyAllCrew()) this.sheetRev.bump(id);
             });
         });
     }
 
-    /** The generated campaign force (D-018 proto-instances). */
     protected readonly force = computed(() => this.state.startingForce() ?? []);
-    /** IMPORT-7 Part B — Fleet & Transport (DropShips/fuel/jump-passage) is a Traditional resource-tier mechanic; hidden under
-     *  Hot Spots (no fuel model in the DR book — transport is the negotiated SP term + the brief's transit line). */
     protected readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots');
     /** Build-your-own (or no force) → clean empty-roster state once data is ready. */
     protected readonly isEmpty = computed(() => this.ready() && this.force().length === 0);
 
-    /** Formation context (D-021) — "<formation> · <faction>" header tag, or null. */
     protected readonly formationContext = computed(() => {
         const f = this.state.formation();
         if (!f) return null;
@@ -177,7 +152,6 @@ export class RosterComponent {
 
     protected readonly structure = computed(() => this.state.forceStructure());
 
-    /** Roster grouped into lance/Star sections (per the structure) + a RESERVE section (D-019). */
     protected readonly sections = computed(() => {
         const force = this.force();
         const structure = this.structure();
@@ -190,7 +164,6 @@ export class RosterComponent {
             if (p.assignedInstanceId) pilotByInstance.set(p.assignedInstanceId, p);
         }
 
-        // D-046 — 'Mechs flow into lance/Star sections; combat vehicles surface in the MOTOR POOL (the
         // ODM hangar concept). A 'Mech lance is sized by its 'Mechs; vehicles are organic support below.
         const isVeh = (i: ProtoInstance): boolean => i.unitType === 'vehicle';
         const byLance = new Map<string, ProtoInstance[]>();
@@ -222,7 +195,7 @@ export class RosterComponent {
         const entry = entries[inst.instanceId] ?? { status: 'pending' as const };
         const unit = entry.unit ?? null;
         const pilot = pilotByInstance.get(inst.instanceId) ?? null;
-        const arms = this.armsLine(unit); // HOTFIX-002 vitals (from the eager catalog Unit)
+        const arms = this.armsLine(unit);
         return {
             id: inst.instanceId,
             name: unit?.chassis ?? inst.chassis,
@@ -236,21 +209,16 @@ export class RosterComponent {
             cond: inst.condition as Condition,
             lanceId: inst.lanceId ?? this.reserveKey,
             commander: !!inst.isCommander,
-            // HOTFIX-024 — has any MECH damage? Gates the 'In repair' condition option (an undamaged unit can't be
             // repaired → it would strand in neither the bays nor the deployable pool). Same predicate as the queue.
             hasDamage: hasMechDamage(inst.damage),
-            vehicle: inst.unitType === 'vehicle', // D-046 — combined-arms type flag (motor-pool grouping + chip)
-            // ── VITALS readout (HOTFIX-002): MOVE / BV / ARMS from the catalog; DMG from the live fu ──
-            // D-046: vehicles show cruise/flank (no jump); 'Mechs show walk/run/jump.
+            vehicle: inst.unitType === 'vehicle',
             move: unit ? (inst.unitType === 'vehicle' ? `${unit.walk} / ${unit.run}` : `${unit.walk} / ${unit.run} / ${unit.jump}`) : '—',
-            // D-070: skill-adjusted BV — base unit BV × the canon G/P multiplier (BVCalculatorUtil, the same
             // BV2.0 table the record sheet uses). Unmanned/default → base BV (a 4/5 pilot multiplier is 1.0).
             bv: unit
                 ? (pilot ? BVCalculatorUtil.calculateAdjustedBV(unit, unit.bv, pilot.gunnery, pilot.piloting) : unit.bv).toLocaleString('en-US')
                 : inst.bv ? inst.bv.toLocaleString('en-US') : '—',
             arms,
             armsLong: arms.length > 34, // the SCALE step — step the font down one notch for long loadouts
-            // D-084: the DMG line is no longer derived eagerly here (that re-derived the WHOLE roster on any
             // damage change). It is pulled per-card via dmgLine(u.id) — a flip of this card's bit re-reads it alone.
             // ── PILOT BLOCK (display ≠ control): name / callsign chip / G·P chip; the ▾ reuses pilotOptions ──
             pilotId: pilot?.pilotId ?? '',
@@ -258,18 +226,14 @@ export class RosterComponent {
             callsign: pilot?.callsign ?? '',
             pilotGp: pilot ? `G${pilot.gunnery} · P${pilot.piloting}` : '',
             kin: pilot?.note ? 'kin' : '', // extension-ready: WIA / ★ favorite chips land beside this (T-030)
-            perkCount: pilot?.perks?.length ?? 0, // D-036: the ability chip (★N)
-            // D-070 (E): the pilot's SPA display names → the record-sheet overlay ("Abilities: Sniper · …").
-            // D-084: returned with a STABLE reference (memoized on the pilot+perks signature) so a roster re-derive
+            perkCount: pilot?.perks?.length ?? 0,
             // (e.g. a condition change) does NOT change the [abilities] input on every sheet → only the card whose
             // bit actually flipped re-clones. A fresh `.map()` here re-cloned the whole roster on any list change.
             pilotAbilities: this.pilotAbilitiesFor(inst.instanceId, pilot),
-            // ★ CAPTURED chip (D-034 ride-along) — provenance 'captured' (D-031 prizes), the chip row built for it.
             captured: inst.provenance?.origin === 'captured',
         };
     }
 
-    // D-084 — stable per-card SPA-name arrays: same reference unless the pilot or their perks change, so a roster
     // re-derive doesn't churn the sheet-view [abilities] input (which would re-clone every thumbnail).
     private readonly abilCache = new Map<string, { sig: string; arr: string[] }>();
     private pilotAbilitiesFor(id: string, pilot: Pilot | null | undefined): string[] {
@@ -286,7 +250,6 @@ export class RosterComponent {
         return p.callsign ? `${p.name} "${p.callsign}"` : p.name;
     }
 
-    // ── Cell vitals (HOTFIX-002) — pure derivation from EXISTING data; no new state, no persistence ──
     private readonly mekLocs = ['HD', 'CT', 'RT', 'LT', 'RA', 'LA', 'RL', 'LL'];
     private readonly rearLocs = new Set(['CT', 'RT', 'LT']);
 
@@ -331,15 +294,12 @@ export class RosterComponent {
         return parts.join(' · ');
     }
 
-    /** Pull-down options — every LIVING pilot, best-skills first, spares flagged. D-036: the dead
-     *  never crew again — KIA pilots are filtered out (the service hard-guards the same line). */
     protected readonly pilotOptions = computed(() =>
         [...(this.state.pilots() ?? [])]
             .filter((p) => p.status !== 'KIA')
             .sort((a, b) => a.gunnery - b.gunnery || a.piloting - b.piloting || a.name.localeCompare(b.name))
             .map((p) => ({ id: p.pilotId, label: `${this.pilotName(p)} · ${p.gunnery}/${p.piloting}${p.assignedInstanceId ? '' : ' — spare'}` })),
     );
-    /** D-036: the pilot detail explode (the roster pilot block's name opens it). */
     protected readonly detailPilot = signal<string | null>(null);
     /** Pilots exist for this campaign (drives whether the pull-down renders). */
     protected readonly hasPilots = computed(() => (this.state.pilots()?.length ?? 0) > 0);
@@ -352,7 +312,6 @@ export class RosterComponent {
             const current = (this.state.pilots() ?? []).find((p) => p.assignedInstanceId === instanceId);
             if (current) this.pilotService.assign(current.pilotId, null);
         }
-        // D-084: re-drive the live SVGs off the new crew, then flip ONLY the affected card's dirty bit (the
         // returned changed-id; the bump coalesces + awaits the svg paint). No whole-roster re-clone.
         for (const cid of this.forceService.reapplyAllCrew()) this.sheetRev.bump(cid);
         this.schedulePersist();             // in-place persist (no new autosave), debounced
@@ -365,12 +324,10 @@ export class RosterComponent {
 
     protected setCondition(id: string, cond: string): void {
         const force = this.state.startingForce() ?? [];
-        // HOTFIX-024 — defense in depth behind the disabled <option>: never set an UNDAMAGED unit 'In repair'
         // (it would vanish from the bays AND the mission pool). Damaged units are unaffected (every option stays).
         if (cond === 'In repair' && !hasMechDamage(force.find((i) => i.instanceId === id)?.damage)) return;
-        // Update the proto-instance (single source of truth) + persist IN PLACE (debounced; D-019).
         this.state.setStartingForce(force.map((i) => (i.instanceId === id ? { ...i, condition: cond } : i)));
-        this.sheetRev.bump(id); // D-084: condition rides the same per-card bit → only this cell re-reads
+        this.sheetRev.bump(id);
         this.syncedId.set(id);
         this.schedulePersist();
         setTimeout(() => {
@@ -426,16 +383,12 @@ export class RosterComponent {
     // ── ACTIVE MISSION cell (a DATA-003 view of the stored MissionSpec + clock; both variants) ──
     protected readonly counts = computed(() => categoryCounts(this.force()));
     protected readonly readiness = computed(() => forceReadiness(this.force()));
-    /** DIRECTIVE-PD3 P1 (PD3-12) — the header's REPAIR figure. Traditional = forceReadiness().repair (condition 'In repair',
-     *  set by the field walk). Hot Spots never sets that condition (D-121 settles at resolve without one), so it read 0 over a
-     *  damaged force; HS counts the ONE damage truth instead (hs-damage.ts) — the same number the rail's Repair stop shows. */
     protected readonly repairBadge = computed(() => this.isHotspots() ? hsDamagedCount(this.force()) : this.readiness().repair);
 
     private daysBetween(a: { y: number; m: number; d: number }, b: { y: number; m: number; d: number }): number {
         return Math.round((Date.UTC(b.y, b.m, b.d) - Date.UTC(a.y, a.m, a.d)) / 86400000);
     }
 
-    /** The active operation, derived from the stored MissionSpec (+ the D-026 branch name + clock). Null = idle. */
     protected readonly activeMission = computed(() => {
         const spec = this.state.missionSpec();
         if (!spec) return null;
@@ -469,16 +422,13 @@ export class RosterComponent {
     protected explode(vm: { fu: CBTForceUnit | null; name: string; variant: string; pilotAbilities?: string[] }): void {
         if (!vm.fu) return;
         this.explodedTitle.set(`${vm.name} ${vm.variant}`.trim());
-        this.explodedAbilities.set(vm.pilotAbilities ?? []); // D-070 (E): carry the SPA overlay into the modal
+        this.explodedAbilities.set(vm.pilotAbilities ?? []);
         this.explodedFu.set(vm.fu);
     }
     protected closeModal(): void {
         this.explodedFu.set(null);
     }
 
-    // D-071 (B): print every record sheet in a lance/Star (or Reserve/Motor Pool), one sheet per page. Ensure
-    // each unit's sheet is loaded first (the D-006 lazy ensureSheet — off-screen cells haven't streamed yet),
-    // then compose each with its D-070 pilot box + SPAs and print the batch. Read-only; no state change.
     protected readonly printingLance = signal<string | null>(null);
     protected async printLance(sec: { id: string; units: { id: string; pilotAbilities: string[] }[] }): Promise<void> {
         if (this.printingLance()) return;
@@ -497,7 +447,7 @@ export class RosterComponent {
             const items = sec.units
                 .map((u) => ({ fu: m[u.id]?.fu ?? null, abilities: u.pilotAbilities }))
                 .filter((it) => !!it.fu && !!it.fu.svg());
-            printSheets(items, { gameSystem: this.state.gameSystem(), appRef: this.appRef, environmentInjector: this.envInjector }); // D-083: AS routes to the card print; CBT byte-identical
+            printSheets(items, { gameSystem: this.state.gameSystem(), appRef: this.appRef, environmentInjector: this.envInjector });
         } finally {
             this.printingLance.set(null);
         }

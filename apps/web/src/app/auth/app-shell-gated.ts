@@ -91,8 +91,6 @@ import { clearBootFallback } from '../shared/boot-fallback';
                 </div></div>
             }
             @default {
-                <!-- HOTFIX-025: the floating account chip was removed (it overlapped the mission-package action bar +
-                     roster controls). Sign out + Admin now live unobtrusively on the cover/home — see CoverComponent. -->
                 <router-outlet />
             }
         }
@@ -133,8 +131,6 @@ import { clearBootFallback } from '../shared/boot-fallback';
             border-radius:9px; padding:11px 12px; font-size:15px; }
         .bg-input:focus { outline:none; border-color:#3d6ea5; }
         .bg-link { background:none; border:none; color:#7f8a96; font-size:13px; cursor:pointer; margin-top:12px; text-decoration:underline; }
-        /* HOTFIX-025: the floating account chip (.bg-acct*) + its HF-019 portrait media query were removed — it
-           overlapped the mission-package action bar + roster controls. Sign out / Admin moved to the cover. */
     `],
 })
 export class AppShellGated {
@@ -160,7 +156,6 @@ export class AppShellGated {
     constructor() {
         // DEPLOY-003: keep the admin chip's pending badge fresh once an admin is in.
         effect(() => { if (this.auth.isAdmin()) void this.auth.refreshPending(); });
-        // HOTFIX-028 — the GM shell painted (even at the wall): dismiss the index.html boot-watchdog fallback.
         afterNextRender(() => clearBootFallback());
     }
 
@@ -214,7 +209,6 @@ export class AppShellGated {
         finally { this.busy.set(false); }
     }
     protected async doLogout(): Promise<void> {
-        // HOTFIX-025: the guest confirm + logout + hard-return now live in AuthService.signOut() (shared with the
         // cover account line). Behaviour is identical — HF-016 guest confirm intact, then the wall returns.
         if (this.busy()) return;
         this.busy.set(true);

@@ -1,9 +1,3 @@
-/*
- * GM-1 P4 — pins the side-label mapping law + the insecure-origin SHA-256 fallback.
- *  · sideLabelsOf: a/b are the WIRE sides (a=BLUFOR=the signing company, b=OPFOR) — side-INDEPENDENT on a
- *    signed contract (the panel's inverted-label catch: signing the authored side 'b' must NOT flip them).
- *  · sha256HexFallback: FIPS 180-4 vectors + agreement with crypto.subtle (the server's anonId format).
- */
 import { sideLabelsOf, anonIdWeb, sha256HexFallback } from './side-labels';
 import { signal } from '@angular/core';
 import type { PresentedHotspot } from './presented-hotspot';
@@ -16,7 +10,7 @@ const stateOf = (gm: boolean, contract: Partial<ChaosContract> | null, presented
     presentedHotspot: signal(presented as PresentedHotspot | null),
 });
 
-describe('sideLabelsOf (GM-1 P4 — the mapping law)', () => {
+describe('sideLabelsOf (P4 — the mapping law)', () => {
     it('is null outside a gmSession, and null with nothing signed or presented', () => {
         expect(sideLabelsOf(stateOf(false, { side: 'a', employer: 'FS' }, null))).toBeNull();
         expect(sideLabelsOf(stateOf(true, null, null))).toBeNull();
@@ -36,7 +30,7 @@ describe('sideLabelsOf (GM-1 P4 — the mapping law)', () => {
     });
 });
 
-describe('sha256HexFallback + anonIdWeb (GM-1 P4 — the insecure-origin fallback)', () => {
+describe('sha256HexFallback + anonIdWeb (P4 — the insecure-origin fallback)', () => {
     const enc = (s: string) => new TextEncoder().encode(s);
     it('matches the FIPS 180-4 vectors', () => {
         expect(sha256HexFallback(enc('abc'))).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
@@ -55,7 +49,7 @@ describe('sha256HexFallback + anonIdWeb (GM-1 P4 — the insecure-origin fallbac
     });
 });
 
-describe('sideLabelsOf — GM-2 P2a: the player device holds only the player-safe summary (H14)', () => {
+describe('sideLabelsOf — P2a: the player device holds only the player-safe summary (H14)', () => {
     it('yields the SAME labels from contractSummary alone as from the full contract', () => {
         const full = stateOf(true, { side: 'b', employer: 'Draconis Combine', sideRole: 'defender', enemyFaction: 'Federated Suns' }, null);
         const summaryOnly = { ...stateOf(true, null, null), contractSummary: signal({ side: 'b', employer: 'Draconis Combine', sideRole: 'defender', enemyFaction: 'Federated Suns' } as unknown as ContractSummary) };

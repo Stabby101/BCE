@@ -1,11 +1,3 @@
-/*
- * BCE LOCAL NARRATOR — the Angular adapter (DIRECTIVE-038). OFF / LOCAL only (CLOUD defers to the
- * engine phase; no key handling here). Settings + cumulative tallies persist in localStorage (app-
- * scoped, survives across campaigns + reloads). The refine pipeline is the law: REFINE → cleanProse →
- * THE MACHINE DIFF (the gate) → on survival, VALIDATE lint → accept; any drift / server-down / timeout
- * rejects that section to template with a NAMED gate (failure honesty). The sidecar (:8081) owns
- * llama-server's life; setMode drives load/unload; heartbeat() keeps it alive while the app is open.
- */
 import { Injectable, signal } from '@angular/core';
 import { buildRefine, buildValidate, buildVoiceRewrite, buildCoherence, cleanProse, type ChatBody } from './narrator-prompts';
 import { diffLocked, noInventedNumbers, numbersIn } from './machine-diff';
@@ -14,7 +6,7 @@ import type { CoherenceVerdict, NarratorMode, NarratorStats, RefineResult, Refin
 const K = {
     mode: 'bce.narrator.mode', endpoint: 'bce.narrator.endpoint', briefings: 'bce.narrator.briefings',
     aars: 'bce.narrator.aars', cumulative: 'bce.narrator.cumulative', cap: 'bce.spa.cap',
-    model: 'bce.narrator.model', // D-040: the chosen model id (overrides the registry default; persisted)
+    model: 'bce.narrator.model',
 };
 const DEFAULT_ENDPOINT = 'http://127.0.0.1:8081';
 
@@ -30,8 +22,7 @@ export class NarratorService {
     readonly endpoint = signal<string>(lsGet(K.endpoint, DEFAULT_ENDPOINT));
     readonly briefingsOn = signal<boolean>(lsGet(K.briefings, '1') === '1');
     readonly aarsOn = signal<boolean>(lsGet(K.aars, '1') === '1');
-    readonly capVariant = signal<string>(lsGet(K.cap, 'standard')); // the D-036 SPA knob, migrated here
-    /** D-040 — the chosen model id ('' = the sidecar's registry default). Persisted; drives /load swaps. */
+    readonly capVariant = signal<string>(lsGet(K.cap, 'standard'));
     readonly activeModel = signal<string>(lsGet(K.model, ''));
     readonly cumulative = signal<Cumulative>(this.loadCumulative());
     /** Live, last refine pass's per-section results (for the package/AAR result UI). */
@@ -56,7 +47,6 @@ export class NarratorService {
     setBriefings(on: boolean): void { this.briefingsOn.set(on); lsSet(K.briefings, on ? '1' : '0'); }
     setAars(on: boolean): void { this.aarsOn.set(on); lsSet(K.aars, on ? '1' : '0'); }
     setCapVariant(v: string): void { this.capVariant.set(v); lsSet(K.cap, v); }
-    /** D-040 — pick a model: persist the id + (if LOCAL) tell the sidecar to swap llama-server now. */
     setModel(id: string): void {
         this.activeModel.set(id); lsSet(K.model, id);
         if (this.mode() === 'local') void this.load();
@@ -74,8 +64,6 @@ export class NarratorService {
         if (this.mode() === 'local') void this.load();
     }
 
-    /** Lifecycle (the sidecar owns llama-server). D-040: /load carries the chosen model id so the sidecar
-     *  swaps to it (or loads the registry default when none chosen). Fire-and-forget — failures non-fatal. */
     async load(): Promise<void> {
         const id = this.activeModel();
         try { await this.hit('/load', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(id ? { id } : {}) }); } catch { /* sidecar offline */ }
@@ -141,14 +129,12 @@ export class NarratorService {
                 try {
                     const out = await this.chat(buildRefine(target, voiceFor(target.roleFamily), register), 120000);
                     runRefine++; pTok += out.usage.prompt_tokens || 0; cTok += out.usage.completion_tokens || 0;
-                    // D-045: parse the STRUCTURED {text} return (drops any CoT/scaffolding the model emits
                     // outside the JSON — the §2/AAR leak fix), then cleanProse as a belt-and-braces final pass.
                     let refined = cleanProse(this.refinedText(out.text));
                     // TEST SEAM (forceDrift): localStorage 'bce.narrator.forceDrift'==='1' appends a FABRICATED
                     // figure so the §2/AAR noInventedNumbers guard MUST reject — proves the auto-reject path.
                     if (refined && this.driftForced()) refined = this.injectDrift(refined);
                     const diff = diffLocked(target.names, target.text, refined);
-                    // D-045 — §2/AAR voice-path SYMMETRY: reject INVENTED figures too (allowed = this section's
                     // own numbers; per-section scope). Closes the DATA-003 hole where §2/AAR shipped fabricated
                     // figures (a hallucinated "3h40m" deadline) that diffLocked never checked for.
                     const inv = noInventedNumbers(refined, numbersIn(target.text));
@@ -178,13 +164,6 @@ export class NarratorService {
         return results;
     }
 
-    /**
-     * D-043 — the WHOLE-MISSION pass. Two calls over the full assembled package:
-     *   Job 1 (voice rewrite) → mission-aware sidebar boxes, each guarded by noInventedNumbers
-     *     (a box that states a figure not in the package is REJECTED to its stub — DATA-003);
-     *   Job 2 (coherence verdict) → an advisory {reads, flags} the GM panel renders.
-     * The caller stores the accepted voices + the verdict on the spec. OFF/REROLL handled by the caller.
-     */
     async refineWholeMission(pkg: string, boxes: VoiceBoxTarget[], register: string, lockedManifest: string[]): Promise<WholeMissionResult> {
         this.busy.set(true);
         const t0 = performance.now();
@@ -236,9 +215,6 @@ export class NarratorService {
         const a = c.indexOf('{'), b = c.lastIndexOf('}');
         return a >= 0 && b > a ? c.slice(a, b + 1) : c;
     }
-    /** D-045 — pull the polished prose from the §2/AAR structured return {text} (anything outside the
-     *  JSON — chain-of-thought, the LOCKED-VALUES scaffolding — is dropped). Falls back to the raw reply
-     *  if the model ignored the schema (cleanProse then strips what it can — belt-and-braces). */
     private refinedText(s: string): string {
         try { const j = JSON.parse(this.extractJson(s)); if (j && typeof j.text === 'string') return j.text; } catch { /* not JSON → raw */ }
         return s || '';
@@ -265,8 +241,6 @@ export class NarratorService {
     }
 
     private driftForced(): boolean { try { return localStorage.getItem('bce.narrator.forceDrift') === '1'; } catch { return false; } }
-    /** Test seam (D-045): append a FABRICATED figure absent from the section so the §2/AAR
-     *  noInventedNumbers guard MUST reject it to template — proves the new guard bites (voice-path symmetry). */
     private injectDrift(refined: string): string {
         return (refined || '') + ' (intel revised — an estimated 87654 additional hostiles massing; unconfirmed).';
     }

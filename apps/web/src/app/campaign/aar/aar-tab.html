@@ -70,11 +70,6 @@
             @for (s of d.sections; track s.id) {
                 <h2>{{ s.title }}</h2>
                 @if (s.author) {
-                    <!-- S61 (2026-09-12): the persona's standing rules are NARRATOR STYLE instructions (the D-035 refine
-                         contract), not player-facing flavour — they fed the byline as visible document text and leaked into
-                         the rendered/printed AAR (a Traditional/HS + ODM leak; the template is SHARED). The byline now shows
-                         the officer's name and role only; `s.author.rules` stays on AarVoiceRef and reaches the AI PROMPT
-                         via NarratorService.refine → voiceCard(speechRules), never the DOM. -->
                     <div class="byline">Prepared by <b>{{ s.author.name }}</b> — {{ s.author.roleFamily }}@if (s.refined) { <span class="refined-tag no-print">✦ refined</span> }</div>
                 } @else {
                     <div class="byline unsigned">UNSIGNED — no staff officer on record for this section</div>

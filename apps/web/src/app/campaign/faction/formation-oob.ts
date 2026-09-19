@@ -1,23 +1,3 @@
-/*
- * BCE campaign-pack — FACTION ORDER OF BATTLE, slice 1 (T-024: noteworthy canon formations).
- *
- * The player commands a lance/company WITHIN one of these formations (or MAKE YOUR OWN).
- * NOT exhaustive — Houses fielded hundreds of regiments; this carries only the NOTEWORTHY
- * canon commands (James's design), each with the "hidden" data of its era: signature
- * 'Mechs + notable pilots. The same records later drive OpFor/ally generation (T-024
- * dual-use). Replaces the D-005 placeholder formations in faction-data.ts.
- *
- * PROVENANCE / COPYRIGHT (T-022 posture): blurbs are ORIGINAL short summaries written for
- * BCE; rosters/years are game facts, cited (Sarna). Notable-pilot G/P left null where not
- * verifiable from a citable table (the merc-commands.ts precedent) — backfill from Field
- * Manuals later. Slice 1 = 3 formations per Great House, ~3025-leaning (where players
- * play), a few spanning later eras via foundedYear gating.
- *
- * Wiring (CC): formations filter by faction `match[]` (loose, resolve-probe) AND era:
- * visible iff foundedYear ≤ campaign start date (null = always) and disbandedYear is
- * null or ≥ start date. signatureMechs[].chassis resolve against the unit catalog
- * (resolve-probe misses) and SEED generation via the D-018 merc-seed mechanism.
- */
 
 export interface SignatureMech {
     chassis: string; // catalog-resolvable chassis name (loose-match)
@@ -32,13 +12,11 @@ export interface NotablePilot {
     note?: string;
 }
 
-/** DIRECTIVE-061: a formation's canon paint scheme — hex colors REDRAWN as our own swatch (color bands +
- *  optional pattern), never a copy of the Camospecs/UCC art. Sampled-exact at curation; cited in `source`. */
 export interface PaintScheme {
     primary: string; // hex
     secondary?: string;
     accent?: string;
-    pattern?: 'solid' | 'split' | 'bands' | 'checker' | 'stripe' | 'dazzle'; // how our swatch lays the colors out (dazzle = disruptive/blotchy camo, D-068 Clan tomans)
+    pattern?: 'solid' | 'split' | 'bands' | 'checker' | 'stripe' | 'dazzle';
     note?: string;
     source?: string;
 }
@@ -59,7 +37,6 @@ export interface FormationRecord {
     /** T-024 faction-tied logistics seam (economy tuning later, T-022). */
     logistics: 'house-mic' | 'merc-market';
     sources: string[];
-    // DIRECTIVE-061 — the right-side visual. `paint` drives a REDRAWN swatch (our color bands); `crest` is a
     // unit insignia MIRRORED to our own infra (/images/formations/<id>.png) — the runtime app NEVER hotlinks
     // Sarna/unitcolorcompendium/Camospecs (the db.mekbay.com lesson). Both optional → the UI falls back to the
     // faction crest + heraldry colors so every command always shows something.
@@ -69,7 +46,6 @@ export interface FormationRecord {
 }
 
 export const FORMATION_OOB: FormationRecord[] = [
-    // --- Draconis Combine (DCMS) --- DIRECTIVE-061: enriched to 5 with paint + crest (UCC-MANIFEST-draconis-combine.md)
     { name: '1st Sword of Light', aliases: ['First Sword of Light', 'Sword of Light'],
       faction: ['Draconis Combine', 'House Kurita'], foundedYear: null, disbandedYear: null,
       role: 'Elite prestige regiment',
@@ -121,7 +97,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       logistics: 'house-mic',
       sources: ['https://www.sarna.net/wiki/Proserpina_Hussars'] },
 
-    // --- Federated Suns (AFFS) --- DIRECTIVE-061: enriched to 5 with paint + crest (UCC-MANIFEST-federated-suns.md)
     { name: '1st Davion Guards', aliases: ['1st Davion Guards RCT'],
       faction: ['Federated Suns', 'House Davion'], foundedYear: null, disbandedYear: null,
       role: 'Elite — First Prince’s own',
@@ -189,7 +164,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/federated-suns-robinson-rangers-1st-3rd.png',
       crestSource: 'unitcolorcompendium.com (Robinson Rangers; vectorized by Viereth) — mirrored, credited (T-022)' },
 
-    // --- Lyran Commonwealth (LCAF) --- DIRECTIVE-061: enriched to 5 with paint + crest (UCC-MANIFEST-lyran-commonwealth.md)
     { name: '1st Royal Guards', aliases: ['1st Royal Guards RCT', 'Royal Guards'],
       faction: ['Lyran Commonwealth', 'Lyran Alliance', 'House Steiner'], foundedYear: null, disbandedYear: null,
       role: 'Elite — Tharkad’s own',
@@ -247,7 +221,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/lyran-commonwealth-donegal-guards-1st-17th.png',
       crestSource: 'unitcolorcompendium.com (Donegal Guards, 1st–17th) — vectorized by Viereth — mirrored, credited (T-022)' },
 
-    // --- Free Worlds League (FWLM) --- DIRECTIVE-061/062: enriched to 5 with paint + crest (UCC-MANIFEST-free-worlds-league.md)
     { name: '1st Atrean Dragoons', aliases: ['Atrean Dragoons', 'Atrean Dragoons, 1st-15th'],
       faction: ['Free Worlds League', 'House Marik'], foundedYear: null, disbandedYear: null,
       role: 'Senior line regiment',
@@ -314,7 +287,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/free-worlds-league-free-worlds-guards-1st-8th.png',
       crestSource: 'unitcolorcompendium.com (vectorized by Viereth) — mirrored, non-commercial, credited (T-022)' },
 
-    // --- Capellan Confederation (CCAF) --- DIRECTIVE-061: enriched to 5 with paint + crest (UCC-MANIFEST-capellan-confederation.md)
     { name: 'Warrior House Imarra', aliases: ['House Imarra'],
       faction: ['Capellan Confederation', 'House Liao'], foundedYear: null, disbandedYear: null,
       role: 'Elite — Warrior House',
@@ -377,7 +349,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/capellan-confederation-red-lancers.png',
       crestSource: 'unitcolorcompendium.com (Red Lancers) — insignia vectorized by Viereth (artistic licence, fan-made — not canonized); mirrored, non-commercial, credited (T-022)' },
 
-    // --- Clan Wolf (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-wolf.md)
     { name: 'Alpha Galaxy', aliases: [],
       faction: ['Clan Wolf', 'Clan Wolf-in-Exile'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -434,7 +405,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/clan-wolf-epsilon-galaxy.png',
       crestSource: 'unitcolorcompendium.com (vectorized by Chaosmaster) — mirrored, non-commercial, credited (T-022)' },
 
-    // --- Clan Jade Falcon (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-jade-falcon.md)
     { name: 'Turkina Keshik', aliases: [],
       faction: ['Clan Jade Falcon'], foundedYear: null, disbandedYear: null,
       role: 'Elite — Khan’s command Keshik',
@@ -501,7 +471,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/clan-jade-falcon-omega-galaxy.png',
       crestSource: 'UCC (insignia vectorized by Savage Baron) — mirrored, credited' },
 
-    // --- Clan Ghost Bear (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-ghost-bear.md)
     { name: 'Alpha Galaxy', aliases: [],
       faction: ['Clan Ghost Bear', 'Rasalhague Dominion', 'Free Rasalhague Republic'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -558,7 +527,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/clan-ghost-bear-ourse-keshik.png',
       crestSource: 'unitcolorcompendium.com (insignia by Sarna.net) — mirrored, credited' },
 
-    // --- Clan Smoke Jaguar (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-smoke-jaguars.md)
     { name: 'Alpha Galaxy', aliases: [],
       faction: ['Clan Smoke Jaguar'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -625,7 +593,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/clan-smoke-jaguars-shroud-keshik.png',
       crestSource: 'UCC (insignia fan-made by Horus, not canonized) — mirrored, credited' },
 
-    // --- Clan Nova Cat (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-nova-cat.md)
     { name: 'Alpha Galaxy', aliases: [],
       faction: ['Clan Nova Cat'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -692,7 +659,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/clan-nova-cat-vision-keshik.png',
       crestSource: 'UCC (insignia fan-made by Horus, not canonized) — mirrored, credited' },
 
-    // --- Clan Steel Viper (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-steel-viper.md)
     { name: 'Alpha Galaxy', aliases: [],
       faction: ['Clan Steel Viper'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -747,7 +713,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       sources: ['http://www.sarna.net/wiki/Triasch_Keshik_(Clan_Steel_Viper)'],
       paint: { primary: '#3a3822', secondary: '#37271e', accent: '#24230c', pattern: 'stripe', note: 'Dull green and brown striped camouflage. Insignia: a striking steel viper (unit) over the Galaxy’s black disc + coiled viper.', source: 'FM: Warden Clans plate 8 (Battle Cobra); unitcolorcompendium.com (Triasch Keshik)' } },
 
-    // --- Clan Hell’s Horses (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-hells-horses.md)
     { name: 'Alpha Galaxy', aliases: [],
       faction: ['Clan Hell’s Horses'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -814,7 +779,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/clan-hells-horses-alpha-keshik.png',
       crestSource: 'UCC (insignia by Unknown Artist/Sarna.net, repainted by Odanan) — mirrored, credited' },
 
-    // --- Clan Diamond Shark (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-diamond-shark.md)
     { name: 'Alpha Galaxy', aliases: ['Clan Sea Fox', 'Deathstrike Galaxy'],
       faction: ['Clan Diamond Shark', 'Clan Sea Fox'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -881,7 +845,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/clan-diamond-shark-lambda-spina-galaxy.png',
       crestSource: 'unitcolorcompendium.com (Sarna insignia; mech repainted by jjm1) — mirrored, credited' },
 
-    // --- Clan Snow Raven (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-snow-raven.md)
     { name: 'Alpha Galaxy', aliases: [],
       faction: ['Clan Snow Raven'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -948,7 +911,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/clan-snow-raven-corvus-keshik.png',
       crestSource: 'unitcolorcompendium.com (insignia fan-made by Horus, not canonized) — mirrored, credited' },
 
-    // --- Clan Star Adder (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-star-adder.md)
     { name: 'Alpha Galaxy', aliases: ['Alpha Galaxy (Clan Star Adder)'],
       faction: ['Clan Star Adder'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -1015,7 +977,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/clan-star-adder-command-keshik.png',
       crestSource: 'unitcolorcompendium.com (insignia by Unknown Artist/Sarna.net) — mirrored, credited' },
 
-    // --- Clan Cloud Cobra (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-cloud-cobra.md)
     { name: 'Alpha Galaxy', aliases: [],
       faction: ['Clan Cloud Cobra'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -1072,7 +1033,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/clan-cloud-cobra-cobra-keshiks.png',
       crestSource: 'unitcolorcompendium.com (paint canonized by Insane Kangaroo; repaint by Flamestalker) — mirrored, non-commercial, credited (T-022)' },
 
-    // --- Clan Coyote (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-coyote.md)
     { name: 'Alpha Galaxy', aliases: [],
       faction: ['Clan Coyote'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -1127,7 +1087,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       sources: ['http://www.sarna.net/wiki/Silver_Keshik_(Clan_Coyote)'],
       paint: { primary: '#899fbd', secondary: '#b4b4b4', accent: '#a01818', pattern: 'solid', note: 'Blue and silver with a red trim (CBT Miniatures Rules p.29). Hex authored from the Clan’s standard blue/silver swatch — UCC supplied no palette image for this command.', source: 'CBT Miniatures Rules p.29; unitcolorcompendium.com (Silver Keshik)' } },
 
-    // --- Clan Goliath Scorpion (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-goliath-scoprion.md)
     { name: 'Alpha Galaxy', aliases: [],
       faction: ['Clan Goliath Scorpion', 'Escorpión Imperio'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -1182,7 +1141,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       sources: ['http://www.sarna.net/wiki/Spotlight_On:_Crimson_Seeker_Star'],
       paint: { primary: '#7a1414', accent: '#bea54b', pattern: 'solid', note: 'No UCC palette captured — crimson/gold inferred from the command’s name + Clan identity colors; not swatch-sampled.', source: 'Spotlight On: Crimson Seeker Star; unitcolorcompendium.com (Crimson Seeker Star — no palette image)' } },
 
-    // --- Clan Fire Mandrill (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-fire-mandrill.md)
     { name: 'Kindraa Sainze', aliases: ['Sainze'],
       faction: ['Clan Fire Mandrill'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Kindraa',
@@ -1239,7 +1197,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/clan-fire-mandrill-kindraa-kline.png',
       crestSource: 'unitcolorcompendium.com (insignia, Unknown Artist/Sarna.net; mech repainted by Flamestalker) — mirrored, credited' },
 
-    // --- Clan Ice Hellion (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-ice-hellion.md)
     { name: 'Alpha Galaxy', aliases: [],
       faction: ['Clan Ice Hellion'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -1296,7 +1253,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/clan-ice-hellion-zeta-prime-galaxy.png',
       crestSource: 'unitcolorcompendium.com (insignia, Unknown Artist/Sarna.net) — mirrored, credited' },
 
-    // --- Clan Blood Spirit (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-blood-spirit.md)
     { name: 'Alpha Galaxy', aliases: [],
       faction: ['Clan Blood Spirit'], foundedYear: null, disbandedYear: null,
       role: 'Front-line — premier Galaxy',
@@ -1363,7 +1319,6 @@ export const FORMATION_OOB: FormationRecord[] = [
       crest: '/images/formations/clan-blood-spirit-blood-guard-keshik.png',
       crestSource: 'UCC (insignia vectorized) — mirrored, credited' },
 
-    // --- Clan Burrock (Clan touman) --- DIRECTIVE-068 (UCC-MANIFEST-clan-burrock.md)
     { name: 'Alpha Galaxy', aliases: [],
       faction: ['Clan Burrock'], foundedYear: null, disbandedYear: 3059,
       role: 'Front-line — premier Galaxy',

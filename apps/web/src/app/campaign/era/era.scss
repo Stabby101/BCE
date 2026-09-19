@@ -15,7 +15,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    height: calc(100dvh - var(--bce-footer-h, 0px)); /* IMPORT-7 A — minus the reserved legal-footer space */ /* HOTFIX-001: own the scroll (body is overflow:hidden) — was min-height, which let the page grow past the viewport and clip */
+    height: calc(100dvh - var(--bce-footer-h, 0px));
     width: 100%;
     padding: 30px;
     color: var(--ink);
@@ -26,7 +26,7 @@
         repeating-linear-gradient(0deg, transparent 0 38px, rgba(0, 0, 0, .18) 38px 39px);
     overflow-x: hidden;
     overflow-y: auto;
-    box-sizing: border-box; /* HOTFIX-001: height:100dvh includes padding (matches the dashboard host) */
+    box-sizing: border-box;
 }
 
 * { box-sizing: border-box; }
@@ -121,7 +121,6 @@ footer { display: flex; justify-content: space-between; align-items: center; bor
     .meta { text-align: left; }
 }
 
-/* ── DIRECTIVE-108 — the game-system control moved to the Campaign Setup card (campaign/setup). ── */
 
 /* ── Narrow phone: one column so era cards never clip ── */
 @media (max-width: 460px) {

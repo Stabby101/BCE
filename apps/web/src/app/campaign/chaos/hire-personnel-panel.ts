@@ -1,17 +1,10 @@
-/*
- * DIRECTIVE-IMPORT-3 Part 2 — the "Special personnel — for hire" panel, mounted at the deploy / track-setup step
- * (§17.1 track prep 3/4). Book order: hire happens BEFORE the battle. Each hire debits Support Points through the
- * Warchest ledger (non-silent → the D-139 toast), mints the merc's named pilot + 'Mech onto the deployed roster,
- * and is charged PER TRACK by default (or ONCE per contract when oneTimeHire). Can't-afford is blocked. HS-only,
- * additive; the merc renders on the deploy cell + pilot card like any pilot (D-125). Player brief stays read-only.
- */
 import { Component, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { WarchestService } from './warchest.service';
 import { CampaignSaveStore } from '../campaign-save-store';
 import { MissionTreeService } from '../mission/mission-tree.service';
 import { HotSpotsCatalogService, type HotSpotHireable } from './hotspots-catalog';
-import { mercHireCharge, canAffordHire, buildMercInstance, buildMercPilot, hiredWithYouRows } from './hire-personnel'; // IMPORT-6 FOLLOWUPS — hiredWithYouRows (results-only stamp)
+import { mercHireCharge, canAffordHire, buildMercInstance, buildMercPilot, hiredWithYouRows } from './hire-personnel';
 
 @Component({
     selector: 'bce-hire-personnel',
@@ -80,12 +73,12 @@ export class HirePersonnelComponent {
         this.state.setStartingForce([...(this.state.startingForce() ?? []), inst]);
         this.state.setPilots([...(this.state.pilots() ?? []), pilot]);
         if (charge > 0) {
-            this.warchest.post(`Hired ${h.name}`, charge, 0); // positive = spend; non-silent → D-139 toast
+            this.warchest.post(`Hired ${h.name}`, charge, 0);
             if (h.oneTimeHire) this.state.addContractHiredKey(h.name);
         }
         this.state.addHiredMerc({ key: h.name, name: h.name, instanceId: inst.instanceId, pilotId: pilot.pilotId, charged: charge, oneTimeHire: !!h.oneTimeHire, branchId: this.tree.activeBranch()?.branchId ?? null, role: h.role });
         this.msg.set(charge > 0 ? `Hired ${h.name} · −${charge} SP` : `Fielded ${h.name} (already paid this contract)`);
-        this.stampHiredWithYou(); // IMPORT-6 FOLLOWUPS — RESULTS ONLY onto the persisted spec (players see who is fielding with them)
+        this.stampHiredWithYou();
         void this.store.persistCurrent();
     }
 
@@ -100,13 +93,10 @@ export class HirePersonnelComponent {
         }
         this.state.removeHiredMerc(m.instanceId);
         this.msg.set(`Released ${h.name}${m.charged > 0 ? ' · +' + m.charged + ' SP' : ''}`);
-        this.stampHiredWithYou(); // IMPORT-6 FOLLOWUPS — keep the persisted-spec results line in step
+        this.stampHiredWithYou();
         void this.store.persistCurrent();
     }
 
-    /** IMPORT-6 FOLLOWUPS — RESULTS ONLY: stamp the special personnel actually FIELDED (from the hire lifecycle records, never
-     *  the offer list) onto the CURRENT mission spec's forge.hiredWithYou, so the player brief renders them from the persisted
-     *  record (the same setMissionSpec spread-patch seam claims-panel / mission-package use). Key absent when none. */
     private stampHiredWithYou(): void {
         const spec = this.state.missionSpec();
         if (!spec?.forge) return;

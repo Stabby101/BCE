@@ -1,12 +1,3 @@
-/*
- * BCE Inventory I (DIRECTIVE-055, T-037 slice 1) — the read-only CATALOG REST surface.
- *   GET /api/catalog?era=YYYY&category=...&techBase=IS|Clan|All   → era-legal, filtered rows
- *   GET /api/catalog/stats                                        → row counts (total/source/category)
- *   GET /api/catalog/:id/cost?tons=&rating=                       → flat or formula-scaled cost
- *   GET /api/catalog/:id                                          → one row
- * Read-only by design — the frontend never writes the catalog (DATA-002). Static routes are declared
- * before ':id' so they win the match.
- */
 import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
 import { CatalogService } from './catalog.service';
 import { Public } from '../auth/auth.types';

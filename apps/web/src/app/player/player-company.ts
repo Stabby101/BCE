@@ -1,17 +1,9 @@
-/*
- * ODM-18 P1 — the PLAYER COMPANY CONSOLE: the Ghosts run by many hands, mastered by one. Joined player
- * devices see the company's state (snapshot-fed cards + the ruling-2 projection for the pack-401-walled
- * surfaces) and run its day-to-day through the INTENT spine — every verb passes through the GM's device,
- * applies there via the GM's own services, and leaves a named audit line (the log renders here too:
- * honesty is symmetric). WHAT THIS SURFACE NEVER CARRIES (pinned by the harness): clock advance · resolve ·
- * field walk · the Quartermaster depot (no steppers — the bench view is the QUEUE SLICE only) · write-off.
- * GM-absent intents are denied honestly ("the GM is not connected") — delivery before effect.
- */
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NewCampaignState } from '../campaign/new-campaign-state';
 import { CampaignSaveStore } from '../campaign/campaign-save-store';
 import { ClaimRealtimeService } from '../campaign/claims/claim-realtime.service';
+import type { OdmSeatRequest } from '../campaign/odm/odm-ledger';
 import { engagementKeyOf } from '../campaign/claims/engagement-key';
 import { canDeploy, deployBlocker } from '../campaign/force/deployed';
 import { TRADE_LABEL } from '../campaign/odm/odm-trades';
@@ -30,6 +22,9 @@ import { TRADE_LABEL } from '../campaign/odm/odm-trades';
                 <div class="co-note">This campaign has no company console.</div>
             } @else {
                 @if (lastNote(); as n) { <div class="co-deny" data-testid="pc-note">{{ n }}</div> }
+                @if (!holdsAnySeat()) {
+                    <div class="co-ro" data-testid="pc-readonly">You hold no seat, so the company is <b>read-only</b> here. Claim your unit at the table (the roster) and it is yours to edit.</div>
+                }
 
                 <!-- ── STATE CARDS (snapshot-fed + the projection) ── -->
                 <div class="co-cards" data-testid="pc-cards">
@@ -92,9 +87,17 @@ import { TRADE_LABEL } from '../campaign/odm/odm-trades';
                 <section class="co-sec" data-testid="pc-roster">
                     <div class="co-h">Unit roster</div>
                     @for (u of force(); track u.instanceId) {
-                        <div class="co-unit">
+                        @let seat = seatOf(u.instanceId);
+                        <div class="co-unit" [class.mine]="seat?.mine" [attr.data-instance]="u.instanceId" data-testid="pc-unit">
                             <span class="co-un">{{ u.chassis }} {{ u.model }}</span>
                             <span class="co-cond" [attr.data-c]="u.condition">{{ u.condition }}</span>
+                            @if (seat?.mine) { <span class="co-seat mine" data-testid="pc-seat-mine">your seat</span> }
+                            @else if (seat) { <span class="co-seat" data-testid="pc-seat-holder">held by {{ seat.holderName || 'a player' }}</span> }
+                            @else { <span class="co-seat open" data-testid="pc-seat-open">unclaimed — GM only</span> }
+                          @if (!seat?.mine) {
+                            <span class="dim" data-testid="pc-crew-ro">crew: {{ crewLine(u.instanceId) }}</span>
+                            @if (bayOf(u.instanceId); as bid) { <span class="dim">in {{ bid }}</span> }
+                          } @else {
                             @if (deployBlock(u.instanceId, u.condition); as blk) {
                                 <span class="dim" data-testid="pc-deploy-blocked">{{ blk }}</span>
                             } @else {
@@ -117,8 +120,25 @@ import { TRADE_LABEL } from '../campaign/odm/odm-trades';
                                 </select>
                             }
                             @if (bayOf(u.instanceId); as bid) { <span class="dim">in {{ bid }}</span> }
-                            @if (u.condition === 'Cold storage') {
+                            <div class="co-edit" data-testid="pc-seat-edit">
+                                @if (pilotNameOf(u.instanceId); as pn) {
+                                    <div class="co-edrow"><input #nm class="co-in" [value]="pn" maxlength="60" aria-label="Pilot name" data-testid="pc-rename-input" />
+                                        <button type="button" class="co-btn" (click)="renamePilot(u.instanceId, nm.value)" data-testid="pc-rename">rename pilot</button></div>
+                                }
+                                <div class="co-edrow"><input #nt class="co-in" [value]="noteOf(u.instanceId)" maxlength="500" placeholder="a note on this seat" aria-label="Seat note" data-testid="pc-note-input" />
+                                    <button type="button" class="co-btn" (click)="seatNote(u.instanceId, nt.value)" data-testid="pc-note-save">save note</button></div>
+                                <div class="co-edrow"><select #rk class="co-sel" aria-label="Request kind" data-testid="pc-request-kind"><option value="repair">repair</option><option value="loadout">loadout</option></select>
+                                    <input #rq class="co-in" maxlength="300" placeholder="what do you need from the GM?" aria-label="Request" data-testid="pc-request-input" />
+                                    <button type="button" class="co-btn" (click)="seatRequest(u.instanceId, rk.value, rq.value); rq.value = ''" data-testid="pc-request-send">request</button></div>
+                            </div>
+                          }
+                            <!-- the two-key donor strip is a COMPANY request: any device that holds a seat may raise it -->
+                            @if (u.condition === 'Cold storage' && holdsAnySeat()) {
                                 <button type="button" class="co-btn warn" (click)="stripRequest(u.instanceId)" data-testid="pc-strip-request">request donor strip</button>
+                            }
+                            @if (!seat?.mine && noteOf(u.instanceId); as n) { <div class="co-sub2 dim" data-testid="pc-note-text">note: {{ n }}</div> }
+                            @for (r of requestsOf(u.instanceId); track r.id) {
+                                <div class="co-sub2 dim" data-testid="pc-request-row" [attr.data-status]="r.status">{{ r.kind }} request — “{{ r.text }}” · {{ r.by }} · <b>{{ r.status }}</b></div>
                             }
                         </div>
                     }
@@ -131,15 +151,19 @@ import { TRADE_LABEL } from '../campaign/odm/odm-trades';
                         <div class="co-row">
                             <b>{{ b.name }}</b> <span class="dim">{{ b.type ?? 'GENERAL' }}</span> ·
                             @if (b.occupantId) {
-                                {{ labelOf(b.occupantId) }}
+                                {{ labelOf(b.occupantId) }} <span class="dim">prio {{ b.jobPriority ?? '—' }}</span>
+                              @if (holdsAnySeat()) {
                                 <select class="co-sel" (change)="bayPriority(b.id, $any($event.target).value); $any($event.target).value = ''" data-testid="pc-bay-priority" aria-label="Priority">
                                     <option value="">prio {{ b.jobPriority ?? '—' }}</option>
                                     <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
                                 </select>
                                 <button type="button" class="co-btn" (click)="bayUnassign(b.id)" data-testid="pc-bay-clear">clear</button>
+                              }
                             } @else {
                                 <span class="dim">empty</span>
+                              @if (holdsAnySeat()) {
                                 <button type="button" class="co-btn" (click)="bayType(b.id, (b.type ?? 'GENERAL') === 'GENERAL' ? 'SALVAGE' : 'GENERAL')" data-testid="pc-bay-type">→ {{ (b.type ?? 'GENERAL') === 'GENERAL' ? 'SALVAGE' : 'GENERAL' }}</button>
+                              }
                             }
                         </div>
                     }
@@ -149,12 +173,12 @@ import { TRADE_LABEL } from '../campaign/odm/odm-trades';
                     }
                     @for (r of rawLines(); track r.label) {
                         <div class="co-row">{{ r.label }} — {{ r.raw }} RAW awaiting assessment
-                            <button type="button" class="co-btn" (click)="benchAssess(r.label, r.raw)" data-testid="pc-bench-assess">assess ×{{ r.raw }} → A</button>
+                            @if (holdsAnySeat()) { <button type="button" class="co-btn" (click)="benchAssess(r.label, r.raw)" data-testid="pc-bench-assess">assess ×{{ r.raw }} → A</button> }
                         </div>
                     }
                     @for (q of quarantined(); track q.bin) {
                         <div class="co-row">{{ q.bin }} — {{ q.tons }} t quarantined
-                            <button type="button" class="co-btn" (click)="benchAmmoClear(q.bin)" data-testid="pc-bench-ammo">bench-clear</button>
+                            @if (holdsAnySeat()) { <button type="button" class="co-btn" (click)="benchAmmoClear(q.bin)" data-testid="pc-bench-ammo">bench-clear</button> }
                         </div>
                     }
                 </section>
@@ -169,9 +193,6 @@ import { TRADE_LABEL } from '../campaign/odm/odm-trades';
     `,
     styles: [`
         :host { display:block; height:calc(100dvh - var(--bce-footer-h, 0px)); background:#0c0f13; color:#e7edf3; font:14px/1.45 system-ui,Segoe UI,Roboto,sans-serif;
-                /* GM-1d-c — THIS host is the page's scroll container (the GM-1d roster / GM-1d-b join fix, same lock): the shared
-                   stylesheet locks the document (body overflow:hidden), so an in-flow min-height console taller than the window
-                   could not be scrolled by touch or wheel on ANY device. Ends above the reserved legal footer. */
                 overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; }
         .co { max-width: 720px; margin: 0 auto; padding: 16px 14px 40px; }
         .co-head { display:flex; align-items:baseline; gap:12px; margin-bottom:14px; }
@@ -202,6 +223,16 @@ import { TRADE_LABEL } from '../campaign/odm/odm-trades';
         .co-btn.warn { border-color:#a5483d; color:#f2c4bc; }
         .co-sel { background:#0c0f13; border:1px solid #2a3340; color:#cdd8e3; border-radius:7px; padding:3px 6px; font-size:12.5px; max-width:180px; }
         .dim { color:#7f8a96; }
+        .co-ro { border:1px solid #3a4656; background:#141a21; color:#cdd8e3; border-radius:8px; padding:9px 12px; margin-bottom:10px; font-size:13px; }
+        .co-unit.mine { border-left:3px solid #3d6ea5; padding-left:9px; }
+        .co-seat { font-size:11px; border:1px solid #2a3340; border-radius:999px; padding:1px 8px; color:#9fb2c4; }
+        .co-seat.mine { border-color:#3d6ea5; color:#9fc4ea; font-weight:700; }
+        .co-seat.open { color:#7f8a96; font-style:italic; }
+        .co-edit { flex:1 1 100%; display:flex; flex-direction:column; gap:6px; margin-top:4px; }
+        .co-edrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+        .co-in { flex:1 1 160px; min-width:0; background:#0c0f13; border:1px solid #2a3340; color:#e7edf3; border-radius:7px; padding:6px 8px; font-size:13px; }
+        .co-edit .co-btn { padding:6px 12px; min-height:34px; }
+        .co-sub2 { flex:1 1 100%; font-size:12.5px; }
     `],
 })
 export class PlayerCompanyComponent {
@@ -224,12 +255,27 @@ export class PlayerCompanyComponent {
     protected readonly bays = computed(() => this.state.bays() ?? []);
     protected readonly bench = computed(() => this.state.odmBench() ?? []);
     protected readonly lastNote = signal<string | null>(null);
+    // presentation only — the server's seatDecision refuses whatever the markup would not have offered.
+    private readonly seatMap = computed(() => new Map(this.rt.seats().map((s) => [s.instanceId, s])));
+    protected seatOf(instanceId: string): { holderName: string; mine: boolean } | null { return this.seatMap().get(instanceId) ?? null; }
+    protected readonly holdsAnySeat = computed(() => this.rt.seats().some((s) => s.mine));
+    /** the LIVING pilot riding this seat (null = empty seat, or the fallen — their names are the memorial) */
+    protected pilotNameOf(instanceId: string): string | null {
+        const p = (this.state.pilots() ?? []).find((x) => x.assignedInstanceId === instanceId);
+        return p && p.status !== 'KIA' ? p.name : null;
+    }
+    protected crewLine(instanceId: string): string {
+        const p = (this.state.pilots() ?? []).find((x) => x.assignedInstanceId === instanceId);
+        return p ? (p.callsign && p.callsign !== p.name ? `${p.callsign} · ${p.name}` : p.name) : '—';
+    }
+    protected noteOf(instanceId: string): string { return this.state.odmSeatNotes()[instanceId] ?? ''; }
+    protected requestsOf(instanceId: string): OdmSeatRequest[] { return this.state.odmSeatRequests().filter((r) => r.instanceId === instanceId).slice(-3).reverse(); }
 
     constructor() {
         effect(() => {
             const id = this.store.campaignId();
             const key = engagementKeyOf(this.state.missionTree());
-            if (id) { this.rt.ensure(id, key); this.rt.joinLobby(); } // the intent identity binds here (D-048 ordering)
+            if (id) { this.rt.ensure(id, key); this.rt.joinLobby(); }
         });
     }
 
@@ -264,8 +310,6 @@ export class PlayerCompanyComponent {
     }
     protected readonly sparePilots = computed(() => (this.state.pilots() ?? []).filter((p) => !p.assignedInstanceId && p.status !== 'KIA'));
     protected canDeployU(condition: string): boolean { return canDeploy(condition); }
-    /** TESTER-ODM-1 #2 — the SAME gate the GM checkbox uses: condition AND crew. Returns the honest reason
-     *  to show in the button's place, or null when the machine may take the field. */
     protected deployBlock(instanceId: string, condition: string): string | null {
         return deployBlocker(condition, !!this.crewOf(instanceId));
     }
@@ -304,4 +348,7 @@ export class PlayerCompanyComponent {
     protected benchAssess(label: string, n: number): void { void this.send('bench-assess', { label, outcome: { a: n, b: 0, c: 0 } }); }
     protected benchAmmoClear(bin: string): void { void this.send('bench-ammo-clear', { bin }); }
     protected stripRequest(instanceId: string): void { void this.send('donor-strip-request', { instanceId }); }
+    protected renamePilot(instanceId: string, name: string): void { const n = name.trim(); if (n && n !== this.pilotNameOf(instanceId)) void this.send('rename-pilot', { instanceId, name: n }); }
+    protected seatNote(instanceId: string, text: string): void { const t = text.trim(); if (t !== this.noteOf(instanceId)) void this.send('seat-note', { instanceId, text: t }); }
+    protected seatRequest(instanceId: string, kind: string, text: string): void { const t = text.trim(); if (t) void this.send('seat-request', { instanceId, kind: kind === 'loadout' ? 'loadout' : 'repair', text: t }); }
 }

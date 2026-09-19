@@ -1,4 +1,3 @@
-// DIRECTIVE-BOUNDARY-1 Slice 1 — generate the fence BASELINE: every EXISTING forbidden cross-boundary import edge
 // (between two scoped files) as of today. Run: `node apps/web/boundary/gen-baseline.mjs`. The plugin grandfathers
 // exactly these (→ warn) and ERRORs anything new. Regenerating should be a burn-down (edges removed), never additions.
 // NON-PRODUCTION tooling. Run from repo root (C:/BCE).

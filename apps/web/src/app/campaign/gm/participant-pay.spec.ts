@@ -1,7 +1,3 @@
-/*
- * GM-2 P2a — the per-participant pay, pinned: EQUAL to the primary's formulas for the same inputs (combatPayFor + the
- * D-110b estimate), 0 salvage on 'None'/'Exchange', the map/companies join, and the empty-map fallback (undefined).
- */
 import { participantPay, slipPayFor } from './participant-pay';
 import { combatPayFor, salvageFractionFor } from '../chaos/chaos-sp-costs';
 import { resolved, type ChaosContract } from '../chaos/chaos-contract';
@@ -19,7 +15,7 @@ describe('participantPay — the primary\'s formulas, verbatim', () => {
             expect(participantPay(contract(scale, 3), tier, 5000).combatPay).toBe(combatPayFor(tier, scale));
         }
     });
-    it('salvage = round((opforBv − claimed) × the tier fraction × 0.5 × the contract\'s salvage %) — the D-110b estimate', () => {
+    it('salvage = round((opforBv − claimed) × the tier fraction × 0.5 × the contract\'s salvage %) — the estimate', () => {
         const c = contract(2, 3);
         const pct = resolved(c.steps).salvage as number;
         expect(typeof pct).toBe('number'); expect(pct).toBeGreaterThan(0); // the fixture must carry a numeric %
@@ -58,7 +54,7 @@ describe('slipPayFor — the map/companies join + the empty-map fallback', () =>
     });
 });
 
-describe('participantPay — GM-2 P2b: base pay per track (S22) · the signing settlement (S23) · completion', () => {
+describe('participantPay — P2b: base pay per track (S22) · the signing settlement (S23) · completion', () => {
     const signed = { ...contract(2, 3), repSpent: 1, transportSp: 420 };
     it('ONE month of the contract\'s own Base Pay per track = round(500 × scale × basePay% / 100) — the monthly-tick formula', () => {
         const pct = resolved(signed.steps).basePay;
@@ -83,7 +79,7 @@ describe('participantPay — GM-2 P2b: base pay per track (S22) · the signing s
     });
 });
 
-describe('slipPayFor — GM-3 P1 (the session contract)', () => {
+describe('slipPayFor — P1 (the session contract)', () => {
     const signed = { id: 'pc-x', type: 'garrison', scale: 2, intensity: 2, steps: { basePay: 4, command: 2, salvage: 6, support: 3, transport: 3 }, status: 'active' as const, acceptedDate: null, tracksDone: 0, repSpent: 1, transportSp: 420, signedBy: 'player' as const, repSettled: false };
     it('at COMPLETION every SIGNED participant gets the +1 — one with no rows on the last track gets a completion-only entry (no track pay, the signing settlement if owed, +1) — closes S27', () => {
         const map = { 'home-a': signed, 'home-b': { ...signed, repSettled: true }, 'home-c': signed };

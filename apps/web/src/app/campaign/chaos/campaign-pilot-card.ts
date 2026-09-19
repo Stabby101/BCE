@@ -1,15 +1,9 @@
-/*
- * DIRECTIVE-125 — the Campaign Pilot Card (Hot Spots fork; Draconis Reach p.159). A per-named-pilot SP progression
- * card: Gunnery/Piloting/AS-Skill/BV/Handicap/Wounds/careerSP + the four SP-priced ladders (buy-next, disabled below
- * cost), a wound track + Heal, and the Formation-Commander / Command-Abilities block. Every purchase is a Warchest
- * debit via CampaignPilotService. HS-only (the host gates on campaignSystem()==='hotspots'); OnPush.
- */
 import { Component, ChangeDetectionStrategy, computed, signal, inject, input, effect, untracked } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { NewCampaignState } from '../new-campaign-state';
 import { DataService } from '../../services/data.service';
 import { CampaignPilotService } from './campaign-pilot.service';
-import { PilotService } from '../barracks/pilot.service'; // PD3 P4 — the D-070 rename path
+import { PilotService } from '../barracks/pilot.service';
 import { CampaignSaveStore } from '../campaign-save-store'; // PD3 P4 — persist after a rename
 import { BVCalculatorUtil } from '../../utils/bv-calculator.util';
 import { PILOT_ABILITIES } from '../barracks/pilot-abilities';
@@ -26,7 +20,6 @@ import { initCampaignPilot, gunneryLadder, pilotingLadder, edgeLadder, abilityLa
             <div class="cpc-h">
                 <div class="cpc-tag">CAMPAIGN PILOT CARD</div>
                 @if (renaming()) {
-                    <!-- PD3 P4 (PD3-5) — the card's name is EDITABLE (pilot.service.rename, the D-070 path); the overlay's "edit" link stays -->
                     <div class="cpc-name"><input class="cpc-name-in" [value]="nameDraft()" (input)="nameDraft.set($any($event.target).value)" (keydown.enter)="saveRename()" (keydown.escape)="renaming.set(false)" maxlength="40" aria-label="Pilot name" data-testid="cpc-rename-input" /> <button type="button" class="cpc-ren save" (click)="saveRename()" data-testid="cpc-rename-save" aria-label="Save name">✓</button> <button type="button" class="cpc-ren" (click)="renaming.set(false)" aria-label="Cancel rename">✕</button></div>
                 } @else {
                     <div class="cpc-name">{{ p.name }}@if (p.callsign) { <span class="cpc-cs">“{{ p.callsign }}”</span> } <span class="cpc-type">{{ c.type }}</span> @if (p.status !== 'KIA') { <button type="button" class="cpc-ren" (click)="startRename()" data-testid="cpc-rename" aria-label="Rename pilot" title="Rename pilot">✎</button> }</div>
@@ -143,7 +136,6 @@ export class CampaignPilotCardComponent {
     private readonly state = inject(NewCampaignState);
     private readonly data = inject(DataService);
     protected readonly svc = inject(CampaignPilotService);
-    // PD3 P4 (PD3-5) — the rename affordance ON the card (the D-070 rename path; KIA names are the memorial and stay fixed)
     private readonly pilots = inject(PilotService);
     private readonly store = inject(CampaignSaveStore);
     protected readonly renaming = signal(false);

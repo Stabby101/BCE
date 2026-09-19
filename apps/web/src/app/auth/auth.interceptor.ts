@@ -11,6 +11,7 @@
  * (bce.engine.url) / relative /api only and passes everything else through untouched.
  */
 import type { HttpInterceptorFn } from '@angular/common/http';
+import { gmDeviceId } from '../campaign/claims/gm-device';
 
 const SESSION_TOKEN_KEY = 'bce.auth.token';
 const ENGINE_URL_KEY = 'bce.engine.url';
@@ -34,7 +35,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(
         req.clone({
             withCredentials: true,
-            setHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+            // (and a request without it — a cached bundle). Harmless on reads and on non-ODM rows.
+            setHeaders: { ...(token ? { Authorization: `Bearer ${token}` } : {}), 'x-bce-device': gmDeviceId() },
         }),
     );
 };

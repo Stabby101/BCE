@@ -1,8 +1,3 @@
-/*
- * BCE — the canonical era list. Single source of truth: the Era step (era.ts) AND the Campaign Setup card's
- * era-locked Hot Spot campaigns (setup/chaos-campaigns.ts) both resolve against THIS list — no parallel copy.
- * (DIRECTIVE-108b — extracted out of era.ts so an era-locked campaign can seed the era + skip the Era step.)
- */
 import type { CampaignEra } from '../new-campaign-state';
 
 export type SigilKey = 'star' | 'tower' | 'fist' | 'sword' | 'cloud' | 'wreath';

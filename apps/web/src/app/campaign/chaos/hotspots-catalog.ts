@@ -1,19 +1,9 @@
-/*
- * DIRECTIVE-124 — Premade Hot Spots catalog. Hot Spots run on PM-authored, hand-written hotspots (a fixed contract +
- * a 1–3 track branching tree + a per-track OpFor spec the RNG sizes at play) — the Forge is Traditional-only now.
- * Content is LITERAL (fixed worlds — no slot-fill). Each Track → a preset MissionSeed (WITH forks, unlike the empty-
- * fork D-116 user preset) whose forks chain the tree by nextSeedId; the loader AGGREGATES EVERY hotspot PACK (a
- * manifest of forge-data/hotspots-*.json, each pack's _meta carrying era + region its hotspots inherit) plus any
- * per-campaign CUSTOM hotspots, and `hotSpotCatalog(era, region?)` filters to the campaign's era + area of space.
- * The authored content also rides onto MissionForge.hotspot at bind so BOTH the GM deploy brief and the player tablet
- * render the ONE authored brief from the persisted record alone (DATA-003 — no catalog access player-side).
- */
 import { Injectable, inject, signal } from '@angular/core';
 import type { MissionSeed, SeedFork } from '../mission/forge-types';
 import type { MissionTypeId } from '../contract/contract-terms';
 import { NewCampaignState } from '../new-campaign-state';
-import { hsFactionToMulFaction } from './mul-allowlist.service'; // D-133 — resolve a (possibly prefixed) employer string → a combat/MUL faction (pure fn; new-campaign-state imports HotSpot type-only → no runtime cycle)
-import { CHAOS_CONTRACT_TYPES } from './chaos-contract-steps'; // HARDEN-2 — hotspotTypeId maps a hotspot's free-text type → a contract-type id
+import { hsFactionToMulFaction } from './mul-allowlist.service';
+import { CHAOS_CONTRACT_TYPES } from './chaos-contract-steps';
 
 // ── The authored data contract (matches content-forge/hotspots-*.json). Literal content; all fields optional-additive. ──
 export type ObjectiveKind = 'primary' | 'secondary' | 'bonus';
@@ -23,14 +13,13 @@ export interface HotSpotSystemProfile {
     climate?: string; surfaceWaterPct?: number; rechargeStation?: string; hpgClass?: string;
     highestNativeLife?: string; population?: number; populationYear?: number; socioIndustrial?: string;
     landmasses?: string[]; capitalCity?: string;
-    description?: string; // IMPORT-5 Part F — a free-text planet / hot-spot prose description (renders as a paragraph)
+    description?: string;
 }
 export interface HotSpotObjective { text: string; vp: number; kind?: ObjectiveKind; side?: 'both' | 'attacker' | 'defender'; }
 export interface HotSpotFork { outcomeGate: string; nextTrackId: string | null; trigger: string; consequence: string; threat: string; }
 export interface HotSpotTrack {
     id: string; name: string; templateId: string; root?: boolean;
     situation: string; deployment: string;
-    // D-137 — the side-A player's tactical role ON THIS TRACK (flips between tracks: attack on a raid, defend on a
     // screen). Optional: absent → the engine infers it from the first attacker/defender-tagged objective (the author
     // lists the player's objective first). Phase-3 content can state it explicitly.
     playerRole?: 'attacker' | 'defender';
@@ -45,7 +34,6 @@ export interface HotSpotContractTerms {
     enemyFaction: string;
     constraints?: string; additionalRequirements?: string; bonus?: string;
 }
-// ── DIRECTIVE-133 — two-sided contracts (Phase 1): a hot spot offers TWO opposing contracts; you pick a side, and the
 //    OpFor is the OTHER side's faction. Authored `HotSpot.sides` win; else one is synthesized (best-effort, tagged). ──
 export interface SideOffer {
     key: 'a' | 'b';
@@ -55,17 +43,12 @@ export interface SideOffer {
     contract: HotSpotContractTerms;
     blurb?: string;
     synthesized?: boolean; // a provisional opposing side (no authored contract yet)
-    // IMPORT-5 Part E — per-side IDENTITY: in a true opposed pair each employer frames the SAME op differently
     // (its own name/type/briefing/employer-desc). All optional + additive — absent → the render falls back to the
     // shared top-level HotSpot value, so the 23 authored two-sided packs (which carry none of these) are unchanged.
     title?: string; type?: string; situation?: string; employerDesc?: string;
 }
 export interface HotSpotComplication { roll: string; effect: string; }
 export interface HotSpotNamedCharacter { name: string; role: string; chassis?: string; skill?: string; rule?: string; npcId?: string; } // npcId — HSFORGE-1 P2: the forge's cast record (antagonist continuity); render never reads it
-/** DIRECTIVE-IMPORT-3 Part 2 — a unique named mercenary a hot spot offers FOR HIRE (Support Points), fielded for
- *  a track (§17.1 track-prep step 3/4). Data-driven cost: `spCost` charged PER TRACK fielded by default, or ONCE
- *  for the whole contract when `oneTimeHire` is set. `bv`/`model` optional (else resolved from the catalog by
- *  chassis, else advisory 0). Distinct from the narrative `namedCharacters` (which are story colour, not hireable). */
 export interface HotSpotHireable {
     name: string; role: string;
     gunnery: number; piloting: number;
@@ -82,15 +65,15 @@ export interface HotSpotMissionBrief {
 }
 export interface HotSpot {
     id: string; title: string; world: string; employer: string; employerDesc?: string; type: string;
-    blurb?: string; // D-124e — an optional 1-2 sentence teaser for the offer-preview "The op" gist (else `situation`)
+    blurb?: string;
     systemProfile: HotSpotSystemProfile; situation: string;
     contract: HotSpotContractTerms; missionBrief: HotSpotMissionBrief; tracks: HotSpotTrack[];
-    era?: string; region?: string | null; // D-124 — optional per-hotspot override of the pack _meta
-    custom?: boolean; // D-124 — a user-authored hotspot (persisted per-campaign), else a premade pack hotspot
-    capstone?: boolean; // D-124c — an endgame-only "end boss" hotspot: excluded from normal deals + the negotiate draw
-    sides?: { a: SideOffer; b?: SideOffer }; // D-133 — authored opposing pair (optional; absent → synthesized from the legacy fields). ERA-1: `b` optional — a single-sided forged hot spot carries its authored side A only
-    singleSided?: boolean; // IMPORT-5 Part C — the GM built this as a SINGLE offer: resolveSides returns ONLY side A (no synthesized B). ERA-1: also inferred/forged when the enemy is a Clan that does not hire mercenaries
-    hireable?: HotSpotHireable[]; // IMPORT-3 P2 — unique named mercs this hot spot offers for hire (Support Points)
+    era?: string; region?: string | null;
+    custom?: boolean;
+    capstone?: boolean;
+    sides?: { a: SideOffer; b?: SideOffer };
+    singleSided?: boolean;
+    hireable?: HotSpotHireable[];
     forged?: boolean; // HSFORGE-1 — INTERNAL provenance flag (debugging/support): minted by the Hot Spots Forge. No consumer branches on it (the zero-special-case rule).
     systemId?: string; // HSFORGE-1 (C16) — the star-map systemId the world was drawn from (id-join, never name-join; the future travel seam #169)
 }
@@ -106,36 +89,26 @@ export interface HotSpotBrief {
     id: string; title: string; world: string; employer: string; employerDesc?: string; type: string;
     systemProfile: HotSpotSystemProfile; situation: string;
     trackName: string; trackTemplate: string; trackSituation: string; deployment: string;
-    playerRole?: 'attacker' | 'defender'; // D-137 — the track's authored side-A role (see HotSpotTrack.playerRole)
+    playerRole?: 'attacker' | 'defender';
     objectives: { text: string; vp: number; kind: ObjectiveKind; side?: string }[];
     specialRules?: string; templateRules?: string; trackEnd: string; salvagePolicy: string;
     contractVictory: string; tally?: string | null; behindScenes?: string;
     complications: HotSpotComplication[]; namedCharacters?: HotSpotNamedCharacter[]; purchaseOptions?: string;
-    hireable?: HotSpotHireable[]; // IMPORT-3 P2 — rides onto forge.hotspot so the deploy area (+ player brief) sees the for-hire personnel
+    hireable?: HotSpotHireable[];
     constraints?: string; additionalRequirements?: string; bonus?: string;
-    // IMPORT-6 Part B — the hot spot was built SINGLE-SIDED (no authored opposition): the resolve lists every authored
     // objective in ONE column and tiers on the VP share (singleSidedResolve). Emitted only when true, so the 23 authored
-    // two-sided packs + every forged hot spot (sides mandatory) are byte-identical → the D-134/137 two-sided path is untouched.
     singleSided?: boolean;
-    // IMPORT-7 Part D — display honesty for scale-dependent authored requirements: the Track Scale the CONTENT was written at
-    // (hotspot.contract.scale, shared by both sides) and the Scale the GM actually SIGNED at (D-129/D-136 scale freedom is
     // unchanged — stamped at bind from the active contract). The package/brief render "Authored at Scale N · signed at Scale M"
-    // instead of a bare authored assertion that contradicts the contract. Both optional (pre-IMPORT-7 specs lack them).
     authoredScale?: number;
     signedScale?: number;
 }
 
-/** DIRECTIVE-124 — the hotspot PACK manifest. Adding content = drop a `hotspots-*.json` into forge-data + one line
- *  here (mirror-synced by tools/copy-forge-content.mjs). Hinterlands, general-per-era packs, etc. drop in the same way. */
 const PACK_LOADERS: readonly (() => Promise<unknown>)[] = [
     () => import('../mission/forge-data/hotspots-draconis-march.json'),
-    // DIRECTIVE-CLI-1 — the Clan Invasion pack (era 'clan-invasion', region 'invasion-corridor'): ten side-A-only
     // contracts against the invading Clans. Clears the HSFORGE-1 top-up floor (8) so a 3050 corridor board deals authored.
     () => import('../mission/forge-data/hotspots-clan-invasion.json'),
-    // DIRECTIVE-HIN-1 — the Hinterlands pack (era 'ilclan', region 'hinterlands'): nine side-A-only contracts against the remnant
     // Clans of the collapsed Falcon OZ + one two-sided Lyran-vs-League pair (Bolan). Region-strict: never co-deals with the March.
     () => import('../mission/forge-data/hotspots-hinterlands.json'),
-    // DIRECTIVE-135 — the endgame CAPSTONE pool (capstone:true). Loaded into the chamber but held OUT of normal deals
     // by the offer-pool filter; surfaced only behind the "Begin the Reckoning" finale gate (chaos-contracts-tab).
     () => import('../mission/forge-data/hotspots-draconis-march-capstones.json'),
 ];
@@ -152,7 +125,6 @@ const familyFor = (templateId: string): MissionTypeId => TEMPLATE_FAMILY[templat
 /** The seed id for an authored track: 'preset-<hotspotId>-<trackId>' (e.g. preset-hs-drm-01-t2a). */
 export const hotspotSeedId = (hotspotId: string, trackId: string): string => `preset-${hotspotId}-${trackId}`;
 
-// ── DIRECTIVE-133 — resolve a hot spot into its two opposing SideOffers. ──
 /** The DR track templates whose root role is DEFENDER (else the root is an attacker). */
 const DEFENDER_TEMPLATES = new Set(['Defend', 'Retreat', 'Hold']);
 const rootRole = (h: HotSpot): 'attacker' | 'defender' => {
@@ -160,8 +132,6 @@ const rootRole = (h: HotSpot): 'attacker' | 'defender' => {
     return root && DEFENDER_TEMPLATES.has(root.templateId) ? 'defender' : 'attacker';
 };
 const opposite = (r: 'attacker' | 'defender'): 'attacker' | 'defender' => (r === 'defender' ? 'attacker' : 'defender');
-/** D-133 — the label used when an employer string doesn't map to a combat/MUL faction (feeds the existing IS-union
- *  OpFor fallback in generateOpFor when this side becomes the OpFor). */
 export const GENERIC_EMPLOYER_FACTION = 'Local / planetary forces';
 /** The employer side's combat FACTION: the employer mapped to a combat/MUL faction (handles the prefixed
  *  "Federated Suns — …" employer strings via hsFactionToMulFaction's contains pass), else a generic label.
@@ -170,33 +140,41 @@ export const GENERIC_EMPLOYER_FACTION = 'Local / planetary forces';
  *  "provisional" tag on the synthesized side is the honest best-effort. Real authored sides land in Phase 3. */
 const employerFaction = (h: HotSpot): string => hsFactionToMulFaction(h.employer) ?? GENERIC_EMPLOYER_FACTION;
 
-/** ERA-1 (ruling 2, 2026-09-02) — does this faction HIRE mercenaries? Clans do not; the exception is the Hot Spots-
- *  modeled trading Clans (Sea Fox, Raven Alliance — exactly the Clans with a MUL allowlist, D-127), which have authored
- *  precedent as employers (hs-drm-02). A faction that does not hire never gets a mercenary offer authored FOR it: a
- *  non-hiring Clan enemy makes the hot spot side-A-only. The Clan test mirrors D-102's `isClan` (`/clan/i`). */
 export function factionHiresMercenaries(name: string | null | undefined): boolean {
     const n = (name ?? '').trim();
     if (!n) return true;
     return !/clan/i.test(n) || hsFactionToMulFaction(n) != null;
 }
 
-/** ERA-1 (ruling 4) — the chamber predicate `hotSpotCatalog` filters on, extracted pure so a spec can pin it:
- *  a CUSTOM hot spot always lists (IMPORT-2 Part A); else the era must match EXACTLY (a null query era passes all —
- *  the id-resolution pool) and the region must match unless the hot spot (region-null = general) or the query
- *  (null = era-wide) has none. STRICT by design: a 3050 campaign is never silently dealt another era's content. */
+export function factionHiresCommand(employer: string | null | undefined, affiliation: string | null | undefined): boolean {
+    const own = (affiliation ?? '').trim();
+    if (!own || own === 'Mercenary') return factionHiresMercenaries(employer);
+    const emp = (employer ?? '').trim();
+    const key = hsFactionToMulFaction(emp);
+    if (key != null) return key === own;      // a mapped faction: only the command's own
+    return !/clan/i.test(emp);                // an unmapped CLAN is still a faction (a non-hiring one); anything else is a generic employer
+}
+
+/** ORDER-15 (a) — the sides of a hot spot THIS command may take: each side whose employer/faction hires it. A hot spot with no
+ *  such side is not dealt to the command (the offer board filters on this). For a mercenary command this is `resolveSides`
+ *  verbatim (both sides, as today). */
+export function hirableSides(h: CatalogHotSpot, affiliation: string | null | undefined): SideOffer[] {
+    const s = resolveSides(h);
+    const all = s.b ? [s.a, s.b] : [s.a];
+    const own = (affiliation ?? '').trim();
+    if (!own || own === 'Mercenary') return all;
+    return all.filter((side) => factionHiresCommand(side.faction, own));
+}
+
 export function inChamber(h: { custom?: boolean; era: string; region: string | null }, era?: string | null, region?: string | null): boolean {
     return !!h.custom || ((!era || h.era === era) && (!region || !h.region || h.region === region));
 }
 
-/** DIRECTIVE-133 — the two opposing SideOffers for a hot spot. Authored `h.sides` are honored verbatim; else side A
- *  is the authored/legacy side and side B is a PROVISIONAL opposing contract (terms mirrored — only the enemy flips;
- *  real per-side terms are Phase 3). */
 export function resolveSides(h: CatalogHotSpot): { a: SideOffer; b?: SideOffer } {
     if (h.sides) return h.sides;
     const aRole = rootRole(h);
     const aFaction = employerFaction(h);
     const a: SideOffer = { key: 'a', role: aRole, employer: h.employer, faction: aFaction, contract: h.contract, blurb: h.blurb };
-    // IMPORT-5 Part C — the GM built this as a SINGLE offer: exactly ONE side, no synthesized opponent. Only fires on the
     // explicit flag; a flag-less legacy/authored hotspot still synthesizes a provisional B below (byte-unchanged).
     // ERA-1 (ruling 2) — ALSO single-sided when the enemy is a Clan that does not hire mercenaries: the mirror would
     // otherwise author "fight for Clan X", which no mercenary is ever offered. Authored `sides` (above) stay verbatim.
@@ -209,19 +187,11 @@ export function resolveSides(h: CatalogHotSpot): { a: SideOffer; b?: SideOffer }
     };
     return { a, b };
 }
-/** DIRECTIVE-133 — the OpFor faction for the picked `side` = the OTHER side's faction. For a SINGLE-sided hot spot
- *  (no side B) the OpFor is side A's own authored enemyFaction. (An unknown/generic string falls through to the
- *  existing IS-union OpFor fallback in generateOpFor.) */
 export function opposingFaction(h: CatalogHotSpot, side: 'a' | 'b'): string {
     const s = resolveSides(h);
     return side === 'a' ? (s.b?.faction ?? s.a.contract.enemyFaction) : s.a.faction;
 }
 
-/** DIRECTIVE-IMPORT-5 (Part C backfill) — a CUSTOM hot spot authored BEFORE the two-sided toggle carries no `sides`
- *  and no `singleSided` flag; by construction it IS single-sided (there was no toggle to make it two-sided). Stamp
- *  it so resolveSides returns one side instead of synthesizing a phantom opponent. Fires ONLY on custom + no sides +
- *  no flag; a premade/AUTHORED pack (custom !== true) is NEVER touched, so its provisional-B synthesis is preserved.
- *  Pure + idempotent (applied at catalog ingest, so no persisted-data migration is required). */
 export function backfillSingleSided<T extends { custom?: boolean; sides?: unknown; singleSided?: boolean }>(h: T): T {
     return h.custom && !h.sides && h.singleSided === undefined ? { ...h, singleSided: true } : h;
 }
@@ -232,12 +202,6 @@ export function objectiveKind(o: HotSpotObjective, index: number): ObjectiveKind
     return o.kind ?? (index === 0 ? 'primary' : index === 1 ? 'secondary' : 'bonus');
 }
 
-/**
- * DIRECTIVE-124 — synthesize a MissionSeed from an authored hotspot track (extends the D-116 synthSeedFromPreset
- * shape). Unlike the user preset, this BUILDS forks[] from track.forks (each → nextSeedId = the linked track's seed)
- * so the existing fork/gate tree branches the authored tree; carries the OpFor arms + bvRatio for sizing; and maps
- * objectives INTO the primary/secondary/bonus slots BY KIND so the existing computeTier fires (D-039, no engine change).
- */
 export function seedFromHotspotTrack(hotspot: HotSpot, track: HotSpotTrack): MissionSeed {
     const nameOf = (id: string | null): string => (id ? hotspot.tracks.find((t) => t.id === id)?.name ?? 'Next operation' : 'Contract closes');
     // A nextTrackId:null fork ENDS the tree (the contract auto-completes at intensity) — don't mint a child for it
@@ -275,12 +239,10 @@ export function seedFromHotspotTrack(hotspot: HotSpot, track: HotSpotTrack): Mis
         armsMix: track.opfor.armsMix,
         vehicleShare: track.opfor.vehicleShare,
         bvRatio: track.opfor.bvRatio ?? 1.0,
-        opforFaction: track.opfor.faction, // D-124 — per-track OpFor faction override (else the contract enemy)
+        opforFaction: track.opfor.faction,
     };
 }
 
-/** D-124 — map a hotspot's free-text `type` onto a ChaosContractType id (label + missionType; bvRatio rides the
- *  track). Pure; moved here from the contracts tab by DIRECTIVE-HARDEN-2 (used by the negotiate + accept paths). */
 export function hotspotTypeId(h: HotSpot): string {
     const t = (h.type || '').toLowerCase();
     const pick = /raid/.test(t) ? 'raid' : /invasion|assault/.test(t) ? 'invasion' : /pirate/.test(t) ? 'pirate-hunt'
@@ -295,15 +257,15 @@ export function hotspotBriefFor(hotspot: HotSpot, track: HotSpotTrack): HotSpotB
         id: hotspot.id, title: hotspot.title, world: hotspot.world, employer: hotspot.employer, employerDesc: hotspot.employerDesc, type: hotspot.type,
         systemProfile: hotspot.systemProfile, situation: hotspot.situation,
         trackName: track.name, trackTemplate: track.templateId, trackSituation: track.situation, deployment: track.deployment,
-        playerRole: track.playerRole, // D-137 — per-track role rides onto spec.forge.hotspot for the two-sided resolve
+        playerRole: track.playerRole,
         objectives: (track.objectives ?? []).map((o, i) => ({ text: o.text, vp: o.vp, kind: objectiveKind(o, i), side: o.side })),
         specialRules: track.specialRules, trackEnd: track.trackEnd, salvagePolicy: track.salvagePolicy,
         contractVictory: hotspot.missionBrief.contractVictory, tally: hotspot.missionBrief.tally, behindScenes: hotspot.missionBrief.behindScenes,
         complications: hotspot.missionBrief.complications ?? [], namedCharacters: hotspot.missionBrief.namedCharacters, purchaseOptions: hotspot.missionBrief.purchaseOptions,
-        hireable: hotspot.hireable, // IMPORT-3 P2 — carry the for-hire personnel onto the brief (deploy area + player-safe)
+        hireable: hotspot.hireable,
         constraints: hotspot.contract.constraints, additionalRequirements: hotspot.contract.additionalRequirements, bonus: hotspot.contract.bonus,
-        ...(hotspot.singleSided && !hotspot.sides ? { singleSided: true } : {}), // IMPORT-6 Part B — one-column resolve for a single-sided custom (key absent otherwise; authored `sides` win, as in resolveSides)
-        ...(hotspot.contract?.scale ? { authoredScale: hotspot.contract.scale } : {}), // IMPORT-7 Part D — the Track Scale the content was authored at (provenance)
+        ...(hotspot.singleSided && !hotspot.sides ? { singleSided: true } : {}),
+        ...(hotspot.contract?.scale ? { authoredScale: hotspot.contract.scale } : {}),
     };
 }
 
@@ -345,10 +307,6 @@ export class HotSpotsCatalogService {
         return [...this.premade(), ...custom, ...forged];
     }
 
-    /** The catalog filtered to the campaign's era + region (region null on a pack = general, offered anywhere in-era;
-     *  a null query region shows all in-era). Reactive over the premade + custom signals.
-     *  IMPORT-2 Part A — a user's OWN `custom:true` hot spots ALWAYS list for them, regardless of era/region: the
-     *  builder stamps no era (defaults to 'general'), so an era filter would silently hide the GM's own creation. */
     hotSpotCatalog(era?: string | null, region?: string | null): CatalogHotSpot[] {
         void this.ensureLoaded();
         return this.all().filter((h) => inChamber(h, era, region)); // ERA-1 — the predicate is pure + spec-pinned (hotspots-catalog.spec)
@@ -371,8 +329,6 @@ export class HotSpotsCatalogService {
         return hotspotSeedId(hotspot.id, root.id);
     }
 
-    /** D-129 — the authored DR template id for a 'preset-<hotspotId>-<trackId>' seed id (the flow node's track-type
-     *  label). undefined for a non-preset / unknown id (Traditional fork seeds never resolve here). */
     templateForSeedId(seedId: string | undefined): string | undefined {
         return seedId ? this.trackBySeedId(seedId)?.track.templateId : undefined;
     }

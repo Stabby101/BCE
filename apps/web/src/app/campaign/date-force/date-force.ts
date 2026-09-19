@@ -1,13 +1,7 @@
-/*
- * BCE retool — New Campaign, step 2: start date + force archetype. DIRECTIVE-004.
- * Reads the era fixed in step 1 (read-only banner), clamps the calendar to the
- * era's [from,to] years, gates force archetypes by era overlap, requires a date
- * and an archetype, then writes both to the wizard state and advances to step 3.
- */
 import { Component, ChangeDetectionStrategy, computed, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NewCampaignState, type CampaignStartDate } from '../new-campaign-state';
-import { CHAOS_CAMPAIGNS } from '../setup/chaos-campaigns'; // D-108b — era-lock-aware Back routing
+import { CHAOS_CAMPAIGNS } from '../setup/chaos-campaigns';
 
 interface Archetype {
     code: string;
@@ -17,7 +11,6 @@ interface Archetype {
     to: number; // 9999 = present
 }
 
-// BCE-defined first-pass archetypes (Decisions, D-004). Window = availability years.
 const ARCH: Archetype[] = [
     { code: 'MERC', name: 'Mercenary', desc: 'Independent command, contracts for coin.', from: 2005, to: 9999 },
     { code: 'HOUSE', name: 'House Regular', desc: "A Great House's standing army.", from: 2005, to: 9999 },
@@ -148,7 +141,6 @@ export class DateForceComponent {
     protected readonly canProceed = computed(() => !!this.selectedDate() && !!this.selectedArch());
 
     protected back(): void {
-        // D-108b — an era-locked Hot Spot campaign seeded its era on the Setup card and SKIPPED the Era step;
         // Back must return to Setup, NOT the Era step (which the user never saw and where they could override
         // the lock, persisting a hotSpotCampaign/era mismatch). Traditional / generic Hot Spots retrace to Era.
         const c = this.state.campaignSystem() === 'hotspots'

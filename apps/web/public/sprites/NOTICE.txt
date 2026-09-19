@@ -1,4 +1,4 @@
-BCE — Game data attribution (DIRECTIVE-COMPLIANCE-1 Part C)
+BCE — Game data attribution (1 Part C)
 
 The unit data, record sheets, unit sprites/artwork, and related assets served from this directory (and
 BCE's sprites/ directory) are derived from the MegaMek Data Repository

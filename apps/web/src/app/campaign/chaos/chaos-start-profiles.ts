@@ -1,11 +1,3 @@
-/*
- * BCE — DIRECTIVE-113: the Chaos Campaign "Start Profiles" — a Hot Spots merc command's opening budget as
- * EDITABLE DATA (Draconis Reach §2/§3). A start is a force built to a BV budget + a Warchest + a Scale + named
- * pilots; those numbers vary by book/GM, so they live here (not hard-coded in the creation component). The
- * `custom` sentinel lets the player set forceBV/warchestSP/scale/unitCap/pilots freely (defaults from `merc`).
- *
- * IP: our own values + labels + blurbs — no book text or book unit-lists. GM-editable; add other books' presets.
- */
 export interface StartProfile {
     id: string;
     label: string;

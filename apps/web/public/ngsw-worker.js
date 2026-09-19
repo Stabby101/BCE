@@ -1,16 +1,3 @@
-/*
- * HOTFIX-032 — SELF-DESTRUCTING service worker.
- *
- * Some early testers registered the vendored MekBay Angular service worker (ngsw-worker.js). The current app
- * registers NO service worker (HOTFIX-009 dropped it), but an ALREADY-registered ngsw keeps controlling those
- * browsers and serving a stale cached app shell — reloads don't help (a SW controls the tab until every tab is
- * closed), which is exactly the "works in incognito, stuck in my normal browser" symptom.
- *
- * This file REPLACES ngsw-worker.js at the same URL. When a stuck browser runs its periodic SW update check and
- * fetches this, it installs a NEW (byte-different) worker that immediately: purges every cache, unregisters
- * itself, and reloads all controlled tabs — leaving the browser clean, service-worker-free, and on the current
- * no-store bundle. Fresh visitors never fetch this (they have no SW to update), so it is inert for them.
- */
 self.addEventListener('install', function () {
     // Take over immediately rather than waiting for the old worker's controlled pages to close.
     self.skipWaiting();

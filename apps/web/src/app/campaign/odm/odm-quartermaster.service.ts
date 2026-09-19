@@ -1,21 +1,3 @@
-/*
- * DIRECTIVE-ODM-13 Phase 1 — the QUARTERMASTER seam (Rulings 1 + 3e). ODM-only, run from the fork
- * dashboard constructor (every ODM campaign renders through the fork, so this IS the ODM hydrate seam —
- * zero shared-code touch; Classic/HS hydrate byte-untouched).
- *
- * SEED (order-5 ruling, 2026-08-28 — supersedes the Ruling-3e roll-then-drop): the depot seeds from the
- * AUTHORED pack file packs/odm/inventory.json (the captured D-056 deterministic roll for James's campaign
- * + the PM overlay); the shared D-056 roller NEVER runs under the pack. Classic's roll is byte-untouched
- * — this call site is fork-owned. The Ruling-3e ammo filter stays as a belt (the authored file ships
- * none; the bins are the authored magazine). A failed fetch seeds nothing — no fallback roll, retry on a
- * later load. ASYMMETRY WITH THE MIGRATION IS DELIBERATE: an EXISTING campaign's persisted ammo lines
- * are the player's materiel → CONVERTED, and its depot reconciles BOUNDED (see the table below).
- *
- * MIGRATION (Ruling 1): one-shot + idempotent + marker (OdmStocks.invAmmoMigrated) — existing inventory
- * ammunition lines convert to the matching bin tonnage (Ruling 2: unmatched classes mint floorless bins),
- * the lines are removed, tonnage is conserved, and the campaign log states what happened. Runs only for
- * packId campaigns by construction; migrates-as-if-588 discipline.
- */
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -25,13 +7,6 @@ import type { InventoryLine } from '../inventory/starting-inventory';
 import { odmStartingStocks, binNameForAmmo, round1 } from './odm-stocks';
 import { effGrades } from './odm-materiel';
 
-/* ── THE AUTHORED-DEPOT RECONCILIATION TABLE (PM order + ruling, 2026-08-28) — the OLD deterministic-roll
- * values (captured from the seed "Tarrant's Ghosts|2767|28") → the authored overlay. Forward-only and
- * BOUNDED per line: an edit applies ONLY where the persisted line still equals the OLD rolled value with
- * zero recorded consumption (grades pure-A at that count); play-touched lines are left alone and logged
- * once. The generic engine line is the special case: it REPLACES with four rated lines only if untouched
- * — otherwise it is left for James to settle by hand, logged. New lines add only where the label is
- * absent (a play-minted line of the same name is never merged over). */
 const DEPOT_EDITS: { label: string; old: number; now: number }[] = [
     { label: 'Double Heat Sink', old: 49, now: 10 },
     { label: 'Lower Arm Actuator', old: 23, now: 6 },
@@ -63,9 +38,7 @@ export class OdmQuartermasterService {
         let changed = false;
 
         // ── THE AUTHORED DEPOT (2026-08-28 ruling) — packs/odm/inventory.json seeds the fork's stores;
-        //    the shared D-056 roll NEVER runs under the pack (a rolled depot was Forge-shaped all along;
         //    Classic's roll is byte-untouched — this call site is fork-owned). The pack file is the
-        //    captured deterministic roll + the PM overlay; the P3 forward-fill grades it all A. The
         //    Ruling-3e ammo filter stays as a belt (the authored file ships none). ──
         if (!this.state.inventory()) {
             const f = await this.fetchDepot();
@@ -81,7 +54,6 @@ export class OdmQuartermasterService {
             // fetch failed / empty → NO fallback roll: the depot seeds on a later load; nothing rolled, nothing invented
         }
 
-        // ── Ruling 1 — the one-shot ammo→bins migration for pre-ODM-13 campaigns ──
         const inv = this.state.inventory();
         const stocks = this.state.odmStocks() ?? odmStartingStocks(); // a null-stocks campaign materializes the authored seed on write
         const ammoLines = (inv?.lines ?? []).filter((l) => l.category === 'ammunition');
@@ -89,7 +61,7 @@ export class OdmQuartermasterService {
             const bins = { ...stocks.bins };
             let moved = 0;
             for (const l of ammoLines) {
-                if (l.unit !== 'tons' || l.onHand <= 0) continue; // ammo lines are tonnage by construction (D-056)
+                if (l.unit !== 'tons' || l.onHand <= 0) continue;
                 const name = binNameForAmmo(l.label);
                 bins[name] = bins[name] ? { ...bins[name], tons: round1(bins[name].tons + l.onHand) } : { tons: round1(l.onHand), floorTons: null };
                 moved = round1(moved + l.onHand);
@@ -100,12 +72,10 @@ export class OdmQuartermasterService {
             this.state.setCampaignLog([...(this.state.campaignLog() ?? []), { date: today, text: `Quartermaster reconciliation — ammunition consolidated to magazine (${moved} t across ${ammoLines.length} line${ammoLines.length === 1 ? '' : 's'})`, kind: 'admin' as const }]);
             changed = true;
         } else if (!stocks.invAmmoMigrated && this.state.odmStocks()) {
-            // stocks were materialized pre-ODM-13 (an ODM-11 GM adjust) and no ammo lines exist → mark done.
             this.state.odmStocks.set({ ...stocks, invAmmoMigrated: true });
             changed = true;
         }
 
-        // ── ODM-17 P3-a — GRADES, forward-only: any component line without grades becomes ALL-A
         //    (everything a pre-P3 save held — and everything the depot seeds — was installable before
         //    grades existed; the doctrine's "depot stock is A"). Strips land RAW from here on. An
         //    identity fill, not a tonnage move — silent by design, idempotent by absence-trigger. ──
@@ -136,7 +106,6 @@ export class OdmQuartermasterService {
                         applied.push(`${e.label} ${e.old} → ${e.now}`);
                     } else left.push(`${e.label} left at ${lines[i].onHand} (play-touched)`);
                 }
-                // the generic engine line → four rated lines, ONLY if untouched; otherwise James settles by hand
                 const ei = lines.findIndex((l) => l.category === 'component' && l.label === DEPOT_ENGINE_OLD.label);
                 if (ei >= 0) {
                     const rated = DEPOT_ENGINE_RATED.map(packOf).filter((p): p is InventoryLine => !!p);

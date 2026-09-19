@@ -1,26 +1,3 @@
-/*
- * BCE — DIRECTIVE-COMPLIANCE-1 Part B: the persistent legal/attribution footer. Mounted at the ROOT of BOTH
- * bundles (AppShellGated for the GM/web app, AppShell for the player app) so the compliance notice shows on
- * EVERY route, every session — Microsoft's Game Content Usage Rules require it "front and center on a regular
- * and consistent basis". Additive + non-blocking: the bar is fixed at the bottom with pointer-events:none on
- * the container (only the links accept clicks). The full notices live on /legal (LegalPageComponent).
- *
- * DIRECTIVE-IMPORT-7 Part A — the bar must NEVER OVERLAY interactive controls (it covered the cover's sign-in row and
- * list tails on iPad) but must ALSO never be fully hidden (GCUR). Two mechanisms:
- *   1. RESERVED SPACE — the footer measures its own rendered height (ResizeObserver, safe-area inset included) and
- *      publishes it as the CSS variable `--bce-footer-h` on <html>; styles.scss gives <body> that much bottom padding
- *      and the fixed overlays (modals, the update banner) sit above it, so nothing interactive ever lands under it.
- *   2. COLLAPSE-TO-CHIP — on narrow screens (≤ 720px) the footer rests as a slim persistent "Legal & Attribution" chip;
- *      tapping expands the full notice in place, tapping again collapses it. The chip and the /legal link are always
- *      visible; there is no dismiss-to-nothing. Wide screens keep the thin full-text bar.
- *
- * DIRECTIVE-COMPLIANCE-3 — conspicuousness (the owner could not FIND the notice): contrast raised to a legible
- * ratio + a border-top so the bar reads as application chrome, and a new INLINE mode ([inline]="true") that
- * renders the SAME notice (same component, same wording — the text must not drift) in-flow inside a surface's
- * own panel footer (the console's HOST/ENGINE/Reset block, the dashboards' footer). While ANY inline instance
- * is mounted, the root FIXED bar suppresses itself (display:none — it stays in the DOM so the --bce-footer-h
- * reserve machinery keeps publishing an honest 0) so the notice never doubles on one screen.
- */
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, effect, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -61,7 +38,6 @@ const inlineMounts = signal(0);
         .lf a { pointer-events:auto; color:#aecdf0; text-decoration:none; }
         .lf a:hover, .lf a:focus-visible { text-decoration:underline; outline:none; }
         .lf-legal { pointer-events:auto; flex:0 0 auto; font-weight:700; color:#d7e3f2; white-space:nowrap; }
-        /* IMPORT-7 Part A — narrow screens: a slim persistent CHIP (tap = expand/collapse the notice); never absent. */
         .lf.narrow { justify-content:flex-end; align-items:center; gap:8px; padding:4px 12px calc(4px + env(safe-area-inset-bottom, 0px)); }
         .lf.narrow.expanded { flex-direction:column; align-items:stretch; padding-top:8px; }
         .lf.narrow.expanded .lf-txt { text-align:left; padding:0 2px 6px; }

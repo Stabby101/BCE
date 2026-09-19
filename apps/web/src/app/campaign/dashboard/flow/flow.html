@@ -1,6 +1,4 @@
 @if (variant() === 'rail') {
-    <!-- DIRECTIVE-119 P2 — the Hot Spots top-of-sheet PROCESS RAIL: the mission lifecycle as a spine, locked-until-earned
-         (blocked = ahead of the earned frontier = non-navigating; done/pending = at/behind = clickable, back-free). -->
     <nav class="prail" aria-label="Campaign process rail" #prail>
         @for (s of hsRail(); track s.key) {
             <button type="button" class="pr-step st-{{ s.status }}" [class.is-next]="s.key === hsRailNext()"
@@ -13,7 +11,6 @@
             @if (!$last) { <span class="pr-sep" aria-hidden="true">›</span> }
         }
     </nav>
-    <!-- PD3 P3 (PD3-10) — the current phase in words, always on screen (the strip may be scrolled off it) -->
     @if (railPhase(); as ph) { <div class="pr-phase" data-testid="pr-phase" [attr.data-step]="ph.key">PHASE: <b>{{ ph.name }}</b> — {{ ph.next }}</div> }
 } @else {
 @if (isEmpty()) {
@@ -81,8 +78,6 @@
                 @switch (n.state) {
                     @case ('RESOLVED') {
                         <div class="fd-tier t-{{ n.resolution?.outcomeTier }}">{{ n.resolution?.outcomeTier }}</div>
-                        <!-- IMPORT-6 FOLLOWUPS — a Hot Spots track resolved under a VP model: the AUTHORED objectives with the marks the
-                             GM set (snapshotted at resolve, resolution.aar.objectiveMarks). Legacy / Traditional → the trio below, unchanged. -->
                         @if (n.resolution?.aar?.objectiveMarks?.length) {
                             <div class="fd-sec">Objective outcome</div>
                             <ul class="fd-ans">
@@ -100,8 +95,6 @@
                         }
                         @if (n.resolution?.notes) { <div class="fd-sec">Notes</div><p class="fd-p">{{ n.resolution?.notes }}</p> }
                         <div class="fd-date">Resolved {{ dateText(n.resolution?.resolvedDate) }}</div>
-                        <!-- DIRECTIVE-122 — the per-mission ITERATION LEDGER pop-out (Hot Spots-only; Traditional never
-                             sets resolution.ledger). Renders the stored snapshot verbatim — no re-derive. -->
                         @if (isHotspots() && n.resolution?.ledger; as L) {
                             <details class="fd-ledger">
                                 <summary>Iteration ledger<span class="fdl-win">@if (L.dateFrom) { {{ L.dateFrom }}@if (L.dateTo && L.dateTo !== L.dateFrom) {  → {{ L.dateTo }} } }</span></summary>
@@ -163,18 +156,11 @@
     }
 }
 
-<!-- DIRECTIVE-073 — the CURRENT mission's STATE MACHINE + GATES (dev/diagnostic). READ-ONLY reflection of the
-     real lifecycle state; sits BELOW the campaign flow above (which is unchanged). Updates live as the mission
-     advances (deploy → claims → AAR → repair & salvage → infirmary → outcome). -->
-<!-- DIRECTIVE-120 — the advisory gate window duplicates the D-119 top-of-sheet Process Rail under Hot Spots, so hide
-     it there (the HS Contracts embed shows the TREE only). Traditional keeps it in its Flow tab (unchanged). -->
 @if (!isHotspots()) {
 <section class="gateflow">
     <div class="fl-head"><div class="ph">Mission state &amp; gates <span class="gf-tag">dev · live</span></div></div>
     @if (missionStage(); as ms) {
         <p class="note">The current mission's lifecycle — what's resolved and what's gating completion. <b>{{ ms.label }}</b></p>
-        <!-- DIRECTIVE-115 — advisory clickable rail: each step jumps to where it's done; the next actionable step is
-             flagged "do this next". Navigation only — you can still open any tab and edit. -->
         <div class="gf-track">
             @for (g of ms.nodes; track g.key) {
                 <button type="button" class="gf-node st-{{ g.status }}" [class.is-next]="g.key === nextGate()?.key"

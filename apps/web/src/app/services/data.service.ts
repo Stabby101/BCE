@@ -164,11 +164,9 @@ export class DataService {
     // sets isDataReady but NOT this — so the era-gated path (faction-select + force-gen) runs on a tiny slice
     // while the full catalog loads in the background (kicked at boot via app.ts -> initialize()).
     readonly isFullLoaded = signal(false);
-    // HOTFIX-011: bumped whenever the working catalog changes (slice index, a slice swap, or the full load) so
     // non-signal reads (getFactions()/getEras()) re-drive dependent computeds even when isDataReady stays true.
     readonly catalogVersion = signal(0);
     private sliceIndexLoaded = false;
-    // HOTFIX-011: the era whose slice is CURRENTLY the resident working set (only one at a time). A different
     // era resident -> swap; currentSliceEra is the truth (slicesLoaded merely accumulates ever-loaded ids).
     private currentSliceEra: number | null = null;
     private readonly slicesLoaded = new Set<number>();
@@ -678,7 +676,7 @@ export class DataService {
             if (!Array.isArray(idx) || !idx.length) return false;
             this.erasCatalog.hydrateSliceIndex(idx);
             this.sliceIndexLoaded = true;
-            this.catalogVersion.update((v) => v + 1); // HOTFIX-011: eras populated -> re-drive eraId
+            this.catalogVersion.update((v) => v + 1);
             return true;
         } catch { return false; }
     }
@@ -689,7 +687,6 @@ export class DataService {
      *  (dev w/o slices, or a slice fetch error). NEVER overrides an already-loaded full catalog (a superset). */
     async ensureSlice(eraId: number): Promise<boolean> {
         if (this.isFullLoaded()) return true;
-        // HOTFIX-011: resident iff THIS era's slice is the one currently in the working set. A different era's
         // slice resident -> fall through and SWAP (otherwise faction-select runs against the wrong era's set).
         if (this.currentSliceEra === eraId && this.isDataReady()) return true;
         try {
@@ -701,9 +698,9 @@ export class DataService {
             this.unitsCatalog.hydrateSlice(slice.units);
             this.factionsCatalog.hydrateSlice(slice.factions);
             this.slicesLoaded.add(eraId);
-            this.currentSliceEra = eraId; // HOTFIX-011: this era's slice is now the resident working set
+            this.currentSliceEra = eraId;
             this.isDataReady.set(true);
-            this.catalogVersion.update((v) => v + 1); // HOTFIX-011: working faction/unit set swapped -> re-drive computeds
+            this.catalogVersion.update((v) => v + 1);
             return true;
         } catch { return false; }
     }
@@ -720,7 +717,17 @@ export class DataService {
         return this.equipmentCatalog.compEquipment(internalName);
     }
 
-    public async initialize(): Promise<void> {
+    // BCE-EDIT (P8, 2026-09-18): ONE initialize() in flight at a time. The ODM dashboard's roster kicks the full catalog and the
+    // field walk's ensureFullCatalog() kicked it AGAIN within the same second (two "Initializing data service..." lines in the
+    // P8 probe) — two concurrent IndexedDB catalog initializations racing over the same stores. A concurrent caller now joins
+    // the running one instead of starting a second; every caller already awaits or voids the promise, so nothing observes a change.
+    private initInflight: Promise<void> | null = null;
+    public initialize(): Promise<void> {
+        if (this.initInflight) return this.initInflight;
+        this.initInflight = this.initializeOnce().finally(() => { this.initInflight = null; });
+        return this.initInflight;
+    }
+    private async initializeOnce(): Promise<void> {
         this.isDataReady.set(false);
         this.logger.info('Initializing data service...');
         await this.dbService.waitForDbReady();
@@ -734,12 +741,11 @@ export class DataService {
             this.applyPublicTagsToUnits();
             this.isDataReady.set(true);
             this.isFullLoaded.set(true); // BCE-EDIT (REBASE-1 P1 c, DEPLOY-005): the full catalog is now resident
-            this.catalogVersion.update((v) => v + 1); // HOTFIX-011: full catalog covers every era -> re-drive computeds
+            this.catalogVersion.update((v) => v + 1);
         } catch (error) {
             this.logger.error(`Failed to initialize data: ${this.describeError(error)}`);
             // Check if we have any data loaded despite the error (the pin's isDataReady predicate: units+equipment).
             const hasData = this.getUnits().length > 0 && this.getEquipmentRegistry().size > 0;
-            // BCE-EDIT (REBASE-1 P1 c, DEPLOY-005/HOTFIX-012 parity): isFullLoaded requires ALL non-optional
             // stores present — units + equipment + quirks + factions + eras (only units_sources + sourcebooks
             // are optional). A slice fakes units/factions/eras but NEVER populates quirks or the full equipment
             // registry, so gating isFullLoaded on the narrower hasData would open the market/full-search gate

@@ -181,7 +181,6 @@
                                 <span class="uname">{{ f.name }}@if (f.broaderEra) { <span class="ube" title="fielded in a nearby era">±</span> }</span>
                                 <span class="umeta">{{ f.role }}</span>
                             </span>
-                            <!-- D-061: right-side visual — mirrored unit crest (else the faction crest) + a REDRAWN paint swatch -->
                             <span class="uviz" aria-hidden="true">
                                 <img class="ucrest" [src]="f.crest || selectedFactionImg()" [attr.data-faction-crest]="selectedFactionImg()" (error)="onCrestError($event)" alt="" loading="lazy" />
                                 <span class="uswatch" [style.background]="swatchBg(f)" [title]="paintTip(f)"></span>

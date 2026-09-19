@@ -1,14 +1,3 @@
-/*
- * FORKED FROM campaign/inventory/inventory-tab.ts @ 02c88a1 — DIRECTIVE-ODM-13 Phase 3 (a DRIFT SURFACE).
- * THE QUARTERMASTER'S LEDGER — the survival inventory. What Classic renders as a store-and-ledger surface
- * (the monthly projection, the parts trade, per-line disposal-for-cash) is GONE here (Ruling 3c): the company holds STOCK, and
- * stock only ever arrives from the field. What stays: the owned lines by category (armor + components — ammo
- * is ALWAYS magazine bins, Ruling 1/2), the catalog provenance join, and the GM on-hand adjust (fork-owned —
- * Classic's stepper routes through its trade service; this one writes campaign state directly). Added: a
- * read-only STOCKS summary (the ODM-11 gauges live on Overview) and the DONOR STOCK list (COLD hulks — the
- * strip control itself lives at the Repair Bays, ONE place only).
- * NB: comments AND strings here reach the served GM bundle — never name pack content (the odm2 leak-net).
- */
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NewCampaignState, type CampaignStartDate } from '../new-campaign-state';
 import { CatalogClientService } from '../catalog/catalog-client.service';
@@ -16,8 +5,8 @@ import { statusOf, type CatalogItem, type InventoryCategory, type InventoryLine,
 import { CampaignSaveStore } from '../campaign-save-store';
 import { OdmRepairBaysService } from './odm-repair-bays.service';
 import { fuelPct, fuelState, opsRemaining, binBreach, round1 } from './odm-stocks';
-import { effGrades, ODM_BENCH } from './odm-materiel'; // ODM-17 P3 — grades and the lifecycle
-import { OdmSupportService, type OdmSupportRow } from './odm-support.service'; // ODM-17 P4-d — the support register
+import { effGrades, ODM_BENCH } from './odm-materiel';
+import { OdmSupportService, type OdmSupportRow } from './odm-support.service';
 
 interface CategoryView {
     key: InventoryCategory;
@@ -45,13 +34,11 @@ const lineKey = (l: InventoryLine): string => `${l.catalogId ?? 'null'}|${l.cate
         } @else {
             <div class="inv-meta">Rolled {{ inv()!.generatedAt }} · tier <b>{{ inv()!.tier }}</b> · {{ inv()!.lines.length }} lines @if (!reachable()) {<span class="off">· catalog offline (citations hidden)</span>}</div>
 
-            <!-- ODM-13 P3 — the read-only STOCKS summary; the full gauges (and the GM adjust) live on Overview. -->
             @if (stocks(); as s) {
                 <div class="stocks" data-testid="odm-qm-stocks">
                     <div class="led-head">Stocks <span class="sub">fuel + magazine — full gauges on the Overview tab</span></div>
                     <div class="led-row"><span class="led-l">Fuel</span><span class="led-v" [class.warn]="fState(s) === 'amber'" [class.crit]="fState(s) === 'red'">{{ r1(s.fuelTons) }} t ({{ fPct(s) }}%) · ≈{{ opsLeft(s) }} operations in the tanks</span></div>
                     <div class="led-row"><span class="led-l">Magazine</span><span class="led-v" [class.crit]="breached().length > 0">{{ r1(magazineTons()) }} t across {{ binCount() }} bins@if (breached().length) { · BREACH: {{ breached().join(', ') }} }</span></div>
-                    <!-- ODM-17 P3-d — ASSESS-FIRST lots sit OUTSIDE the usable pool until benched (doctrine Part V). -->
                     @if (quarantined().length) {
                         <div class="led-row"><span class="led-l">Quarantine</span><span class="led-v warn" data-testid="odm-qm-quarantine">
                             @for (q of quarantined(); track q.name) { <span class="qlot">{{ q.tons }} t {{ q.name }} — unusable by rearm <button type="button" class="bch" (click)="clearQuarantine(q.name)">Bench-clear ({{ qHours(q.tons) }} h)</button></span> }
@@ -120,7 +107,6 @@ const lineKey = (l: InventoryLine): string => `${l.catalogId ?? 'null'}|${l.cate
                                     @for (line of cat.lines; track line.label) {
                                         <tr>
                                             <td class="l">{{ line.label }}</td>
-                                            <!-- D-066 pattern, fork-owned: ON HAND adjust writes state directly (clamp ≥0, persist). -->
                                             <td class="n onhand">
                                                 <span class="oh-ed">
                                                     <button type="button" class="adj" (click)="adjustOnHand(line, -1)" [disabled]="line.onHand <= 0" aria-label="decrease on hand">−</button>
@@ -129,7 +115,6 @@ const lineKey = (l: InventoryLine): string => `${l.catalogId ?? 'null'}|${l.cate
                                                 </span>
                                                 <span class="u">{{ line.unit }}</span>
                                             </td>
-                                            <!-- ODM-17 P3-a/b — the A/B/C/RAW ledger + the bench actions (1–4 h/item, MAC-7). -->
                                             @if (cat.key === 'component') {
                                                 <td class="grades" [attr.data-testid]="'odm-grades-' + line.label">
                                                     <span class="gch ga">A {{ g(line).a }}</span><span class="gch gb">B {{ g(line).b }}</span><span class="gch gc">C {{ g(line).c }}</span><span class="gch graw">RAW {{ g(line).raw }}</span>
@@ -162,8 +147,6 @@ const lineKey = (l: InventoryLine): string => `${l.catalogId ?? 'null'}|${l.cate
                 </section>
             }
 
-            <!-- ODM-13 P3 — DONOR STOCK (Ruling 4): cold hulks ARE stores-on-legs. Read-only here; the strip
-                 control lives at the Repair Bays (one place only — it settles held jobs on the spot). -->
             <section class="inv-cat donors" data-testid="odm-qm-donors">
                 <div class="cat-head static">
                     <span class="cat-title">Donor Stock — cold hulks</span>
@@ -188,7 +171,6 @@ const lineKey = (l: InventoryLine): string => `${l.catalogId ?? 'null'}|${l.cate
                 }
             </section>
 
-            <!-- ODM-17 P3-b — THE BENCH (the doctrine's IN-SHOP): items out of the stores while the hours burn. -->
             <section class="inv-cat" data-testid="odm-qm-bench">
                 <div class="cat-head static">
                     <span class="cat-title">The Bench — IN-SHOP</span>
@@ -209,8 +191,6 @@ const lineKey = (l: InventoryLine): string => `${l.catalogId ?? 'null'}|${l.cate
                 }
             </section>
 
-            <!-- ODM-17 P4-d — THE SUPPORT REGISTER (battlefield assets; the wrecker's coupling moves the
-                 FIELD pool live). Floors breach in ODM-11 style; deploy/expend are the GM's steppers. -->
             <section class="inv-cat" data-testid="odm-qm-assets">
                 <div class="cat-head static">
                     <span class="cat-title">Battlefield Assets — the support register</span>
@@ -244,8 +224,6 @@ const lineKey = (l: InventoryLine): string => `${l.catalogId ?? 'null'}|${l.cate
                 }
             </section>
 
-            <!-- ODM-17 P4-d — WHAT CANNOT BE SALVAGED (doctrine Part VI, as data — the walk's physics already
-                 excludes gyro/engine/JJ; this is the doctrine's own reasoning on the record). -->
             @if (unsalvageable().length) {
                 <section class="inv-cat" data-testid="odm-qm-unsalvageable">
                     <div class="cat-head static"><span class="cat-title">What Cannot Be Salvaged</span><span class="cat-roll">doctrine — not worth recovering under any standard condition</span></div>
@@ -255,7 +233,6 @@ const lineKey = (l: InventoryLine): string => `${l.catalogId ?? 'null'}|${l.cate
                 </section>
             }
 
-            <!-- ODM-17 P3-c — THE PARTS LEDGER (append-only = immutable; the record IS the authority). -->
             <section class="inv-cat" data-testid="odm-qm-ledger">
                 <div class="cat-head static">
                     <span class="cat-title">Parts Ledger</span>
@@ -324,7 +301,6 @@ const lineKey = (l: InventoryLine): string => `${l.catalogId ?? 'null'}|${l.cate
         .chip.sev-Y { background: var(--warn, #c79a23); color: #1c1402; }
         .chip.sev-R { background: #c2622a; }
         .chip.sev-B { background: #5a1d1d; }
-        /* ODM-13 P3 — the read-only stocks strip (the ledger frame, repurposed for materiel) */
         .stocks { border: 1.4px solid var(--ink); background: var(--panel); padding: 8px 12px; margin-bottom: 14px; }
         .led-head { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; font-size: 11px; color: var(--ink2); margin-bottom: 6px; }
         .led-head .sub { font-family: var(--type); font-weight: 400; letter-spacing: normal; text-transform: none; font-size: 11px; margin-left: 6px; }
@@ -333,7 +309,6 @@ const lineKey = (l: InventoryLine): string => `${l.catalogId ?? 'null'}|${l.cate
         .led-v { font-family: var(--mono); color: var(--ink); }
         .led-v.warn { color: var(--warn, #c79a23); }
         .led-v.crit { color: #c2622a; }
-        /* D-066 — GM-adjustable ON HAND (stepper + inline number) */
         td.onhand { white-space: nowrap; }
         .oh-ed { display: inline-flex; align-items: center; gap: 2px; }
         .oh-ed .adj { font-family: var(--mono); font-size: 13px; line-height: 1; width: 22px; height: 26px; border: 1.2px solid var(--ink2); background: var(--paper2); color: var(--ink); cursor: pointer; padding: 0; }
@@ -341,7 +316,6 @@ const lineKey = (l: InventoryLine): string => `${l.catalogId ?? 'null'}|${l.cate
         .oh-ed .adj:disabled { opacity: .4; cursor: not-allowed; }
         .oh-in { width: 46px; height: 26px; box-sizing: border-box; text-align: right; font-family: var(--mono); font-size: 12px; border: 1.2px solid var(--ink); background: var(--paper2); color: var(--ink); padding: 0 4px; -moz-appearance: textfield; }
         .oh-in::-webkit-outer-spin-button, .oh-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        /* ODM-17 P3 — grade chips + bench controls + quarantine */
         td.grades { font-family: var(--mono); font-size: 11px; white-space: normal; }
         .gch { display: inline-block; border: 1.2px solid var(--ink2); border-radius: 2px; padding: 1px 5px; margin-right: 4px; font-weight: 700; font-size: 10px; }
         .gch.ga { border-color: var(--ok, #3a7d44); color: var(--ok, #3a7d44); }
@@ -355,7 +329,6 @@ const lineKey = (l: InventoryLine): string => `${l.catalogId ?? 'null'}|${l.cate
         .asx { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; }
         .oh-in.gx { width: 36px; }
         .qlot { display: inline-flex; align-items: center; gap: 6px; margin-right: 10px; }
-        /* ODM-17 P4-d — the support register */
         .lostb { color: #c2622a; }
         td.breachtxt b { color: #c2622a; }
     `],
@@ -385,7 +358,6 @@ export class OdmInventoryTabComponent {
     private readonly provMap = signal<Record<string, string>>({});
     private readonly collapsed = signal<Set<string>>(this.loadCollapsed());
 
-    // ── ODM-17 P3 — grades, the bench, quarantine, the ledger ──
     protected readonly g = effGrades;
     protected readonly BENCH = ODM_BENCH;
     protected readonly bench = this.state.odmBench;
@@ -413,7 +385,6 @@ export class OdmInventoryTabComponent {
     protected benchKind(k: string): string { return ({ assess: 'Assessment (RAW → graded)', inspect: 'Inspection (B → A)', repair: 'Parts-repair (C → A)', ammo: 'Quarantine clearance' } as Record<string, string>)[k] ?? k; }
     protected ld(d: CampaignStartDate): string { return `${d.y}-${String(d.m + 1).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`; }
 
-    // ── ODM-17 P4-d — the support register (service-owned rows; the steppers persist the overlay) ──
     private readonly support = inject(OdmSupportService);
     protected readonly supportRows = this.support.rows;
     protected readonly unsalvageable = this.support.unsalvageable;
@@ -460,7 +431,7 @@ export class OdmInventoryTabComponent {
     protected readonly drawerCount = computed(() => this.drawer().reduce((n, g) => n + g.items.length, 0));
 
     constructor() {
-        void this.support.ensureLoaded(); // ODM-17 P4-d — the register renders here
+        void this.support.ensureLoaded();
         // Catalog provenance join (display-only; the catalog is read-only host data, not campaign state).
         const year = this.state.currentDate()?.y ?? this.state.startDate()?.y;
         void this.catalog.list({ era: year ?? undefined }).then((rows) => {
@@ -469,7 +440,6 @@ export class OdmInventoryTabComponent {
             this.provMap.set(m);
             this.catalogRows.set(rows ?? []); // QM-1 — the same rows, kept for the drawer
         });
-        // QM-1 — the build-time 'Mech/vehicle-relevant id set. Absent → nothing is excluded (HOTFIX-014's
         // precedent): over-filtering a completeness feature into silence is worse than a little noise.
         void fetch('/mekbay/parts-relevant.json')
             .then((r) => (r.ok ? r.json() : null))
@@ -490,7 +460,6 @@ export class OdmInventoryTabComponent {
         const next = Math.max(0, Math.round(qty));
         if (next === line.onHand) return;
         const key = lineKey(line);
-        // ODM-17 P3 — GM fiat keeps the grades honest on component lines: additions land as A (depot
         // stock is A); removals drain A → RAW → B → C (never below zero; grades always sum to onHand).
         const apply = (l: InventoryLine): InventoryLine => {
             if (l.category !== 'component') return { ...l, onHand: next };

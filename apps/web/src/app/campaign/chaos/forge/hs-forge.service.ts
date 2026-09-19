@@ -178,7 +178,6 @@ export class HsForgeService {
         const world = pickWorld(candidates, era, (s, e) => this.star.ownerAt(s, e), districtForSettlement, rng);
         if (!world) return { hotspot: {} as HotSpot, errors: [region ? `no candidate worlds in region '${region.id}' at era ${era.wizardEraId}` : 'no candidate worlds at era'] };
 
-        // 2. CONFLICT PAIR (D-102 oracle + archetype whitelist; world-local preference — soft, wave)
         const localFactions = new Set(this.star.systemsInRange(world.system.id, LOCAL_PAIR_RADIUS_LY)
             .map((s) => this.star.ownerAt(s, era.wizardEraId)).filter((o): o is string => !!o));
         const pairCtx: PairCtx = { era, adjacency: this.star.factionAdjacency(era.wizardEraId), factionOk, mulOk, isClanFaction: (n) => /clan/i.test(n), localFactions, hiresMercs: factionHiresMercenaries, rng }; // ERA-1 — Clans don't hire
@@ -232,7 +231,6 @@ export class HsForgeService {
         });
 
         // 6. DRESSING (title/synopsis/type string/brief/antagonists)
-        // Title anti-repeat (James's wave ruling): no reuse — exact or distinctive-word — within the
         // generation window. Window = the prune cap's recent set (the same bound that keeps the
         // theater's memory); deterministic GIVEN state, like the antagonist-continuity reads.
         const recentTitles = new Set((this.state.forgedHotSpots() ?? []).slice(-PRUNE_KEEP_RECENT).map((h) => h.title).filter((t): t is string => !!t));
@@ -257,7 +255,6 @@ export class HsForgeService {
         // Donor-prose slots (CLEAN-gate fixes): EMPLOYER = the PROSE-SAFE employer name (the headline
         // card string reads broken mid-sentence); TARGET_FACTION = the display noun for the special
         // classes (sameFaction would name the shared faction as its own enemy; bare 'Mercenary'/'Pirates'
-        // is broken English). The D-100 doubled-article collapse absorbs donor prose's own 'the'.
         const donorTarget = pair.sameFaction ? rivalDisplay(pair.archetype.combatFactionRule).the
             : /^(pirates?|mercenar)/i.test(pair.b.faction) ? factionDisplay(pair.b.faction).the : pair.b.faction;
         const slots: SlotContext = {
@@ -317,13 +314,6 @@ export class HsForgeService {
         return { hotspot, errors };
     }
 
-    /** The side-B named antagonist (+ a side-A employer contact) from the npc-marquee pool, with
-     *  P2 REGION-SCOPED RECURRENCE (the §6 design, the D-096 pattern at the forge layer): a commander
-     *  cast in a prior forged hotspot of the SAME theater RETURNS — unless the players BEAT them
-     *  (any FULL_SUCCESS/SUCCESS outcome on a contract signed against that hotspot; derived from the
-     *  existing outcome ledger via the 'cc-<n>-<hotspotId>' contract-id convention — zero new state).
-     *  A recurring commander must still FIT the new opposing faction (the assignNpc affinity rule);
-     *  era-only campaigns (region null) form their own theater. */
     private castAntagonists(oppFaction: string, oppOrg: string, ownFaction: string, ownOrg: string, regionId: string | null, era: EraCtx, rng: () => number): HotSpotNamedCharacter[] {
         const out: HotSpotNamedCharacter[] = [];
         const cmdId = this.recurringCommander(oppFaction, regionId)
@@ -336,17 +326,6 @@ export class HsForgeService {
         return out;
     }
 
-    /** The most recent SURVIVING opposing commander of the theater (deterministic: state-ordered).
-     *  P2 review fixes: (a) 'beaten' retires the PERSON, not the record — recurrence stamps one npcId
-     *  across many offers, and un-signed offers can never be beaten, so a per-record check let a beaten
-     *  commander return via any sibling record; the beaten-set unions the D-096 campaign-level
-     *  opforCommanderNpcId too (the two cast systems agree on who's finished). (b) Only FULL_SUCCESS
-     *  retires — the §6 design ('did not resolve FULL_SUCCESS'): an ordinary SUCCESS means the commander
-     *  lost the field, not the war — they come back. (c) The affinity fit mirrors assignNpc's ACTUAL
-     *  rule (neutral merc/periphery records fit anyone; 'periphery/pirate' splits; 'clan' matches any
-     *  clan-* affinity) — the strict intersect made recurrence a silent no-op for non-house factions.
-     *  // DECISION: the beaten memory horizon = the outcome ledger's rolling cap (~3 contracts) — the
-     *  deliberate price of the zero-new-state ruling; a long-beaten commander MAY eventually return. */
     private recurringCommander(oppFaction: string, regionId: string | null): string | null {
         const ledger = this.state.outcomeLedger() ?? [];
         const priors = (this.state.forgedHotSpots() ?? []).filter((h) => (h.region ?? null) === regionId);

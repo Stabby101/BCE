@@ -1,22 +1,8 @@
-/*
- * BCE campaign-pack — MISSION SPEC + generator core (DIRECTIVE-023, T-014 Layer-1). Pure TS, no Angular/DOM.
- *
- * DATA-003: the MissionSpec IS the record — every objective, the OpFor list, terrain, terms, reward
- * and window are computed/stored here; the briefing PROSE is only a VIEW rendered from it (nothing is
- * ever parsed back out of text). That is what makes AI genuinely optional (T-014 NONE/LOCAL/CLOUD):
- * the narrator ADAPTER seam below is declared but THIS slice ships NONE mode = pack templates only.
- *
- * The type→template table maps the CamOps Missions Table contract types (CamOps 4th pp.40–43 mission
- * descriptions INFORM the objective/deployment/victory shapes; REF-001: cited, not binding — divergences
- * are deliberate) to playable content. OpFor is stood up by the D-018 force generator (the caller passes
- * the band-drawn proto-instances in); sizing tunables are PM-original interim, flagged for the cited
- * CamOps force-sizing pass. PROD-001: plain + playable on real terrain beats elaborate.
- */
 import type { MissionTypeId, CommandRights } from '../contract/contract-terms';
 import type { ContractOffer } from '../contract/contract-market';
 import type { ProtoInstance } from '../force/force-generator';
 import type { TheaterSheet, CommsPlan } from './theater';
-import type { SeedComplication } from './forge-types'; // D-110e — rolled track complications ride the forge
+import type { SeedComplication } from './forge-types';
 
 export type MissionPosture = 'attack' | 'defend' | 'raid' | 'pursuit';
 
@@ -35,8 +21,7 @@ interface MissionTemplate {
 // PM-original interim (flagged) until the cited CamOps force-sizing pass (T-022).
 export const MISSION_TUNABLES = {
     bvRatioBase: 1.0,
-    bvTolerance: 0.2, // DIRECTIVE-068 — ± band half-width tightened from 0.25 → 0.20 (campaign + quick mission)
-    // D-102 A4 — hard ceiling on the FINAL OpFor BV target as a multiple of the player's FIELDABLE BV, applied
+    bvTolerance: 0.2,
     // AFTER perType × (1+escalation drift). Stops the compounding "2 lances vs 1" balloon (a hard fight, not hopeless).
     bvHardCap: 1.5,
     perTypeBvRatio: {
@@ -53,7 +38,6 @@ export const MISSION_TUNABLES = {
         RECON_RAID: 0.6,
         EXTRACTION_RAID: 0.7,
     } as Record<MissionTypeId, number>,
-    // D-077 — outcome-feedback escalation tempo. The generator drifts the next bvTarget by the active thread's
     // clamped escalation level (a winning chain heightens the enemy response; a loss eases it). ON TOP of the
     // ratios above (which are unchanged). OpFor BV still lands in ±bvTolerance around the drifted target.
     escalation: {
@@ -165,23 +149,18 @@ export interface MissionClauses {
     transportPct: number;
 }
 
-/** Forge binding (D-025) — the chosen seed + the values rolled/filled ONCE (reload-identical). The
- *  seed prose loads from the pack by seedId and renders over these (DATA-003). NPC/staff assignments
- *  are campaign-level (they recur) and ride NewCampaignState, referenced here by the seed's flags. */
 export interface MissionForge {
     seedId: string;
     register: string;
-    generic?: boolean; // true = no seed matched → the D-023 template path renders, flagged generic
+    generic?: boolean;
     rolledSpecifics: Record<string, number>;
     slots: { EMPLOYER: string; TARGET_FACTION: string; WORLD: string; DISTRICT: string; YEAR: string; FORCE_SIZE: string; PRIOR_TIER?: string; PRIOR_WORLD?: string };
     npcFlags: string[]; // tie-in flags this seed references (the npcId lives on the campaign assignment)
-    branchLead?: string; // D-026 — the parent fork's trigger, fed as the briefing situation lead
-    continuityLead?: string; // D-096 — engine-composed recurring-NPC callback (verbatim PM lines), prepended like branchLead
-    systemId?: string; // D-080 — the real Star Map system this mission localized to (rolled once; reload-identical)
-    // D-110e — Command-Rights-scaled extra complications rolled at generation (HS-only; deterministic by mission
+    branchLead?: string;
+    continuityLead?: string;
+    systemId?: string;
     // id, stable on reload). Merged with the seed's own complications in the §2.4 render. Absent for Traditional.
     rolledComplications?: SeedComplication[];
-    // D-117 — Hot Spots TRACK render ingredients, slot-filled at BIND so the PLAYER briefing can render the book
     // track layout from the persisted record alone (DATA-003 — no seed/pack access needed player-side). All optional,
     // HS-only, forward-only; Traditional and pre-117 specs never carry them and degrade gracefully (sections skipped).
     trackTemplate?: string; // resolved track template key (see chaos/track-setup.ts)
@@ -189,28 +168,21 @@ export interface MissionForge {
     situationLead?: string; // the 1-2 sentence italic situation blurb, slot-filled
     trackComplications?: { name: string; text: string; effect: string }[]; // seed + rolled, merged + slot-filled
     objectiveVp?: { primary?: number; secondary?: number; bonus?: number }; // optional per-objective VP (wins over TRACK_VP fallback)
-    // DIRECTIVE-124 — the AUTHORED premade-hotspot render payload (literal, no slot-fill). Stamped at bind when the
     // seed is a preset hotspot; persisted so the GM deploy brief AND the player tablet render the ONE authored brief
     // from the record. Its presence SUPPRESSES the Forge FRAGORD/WARNORD (the single-brief flag). Absent otherwise.
     hotspot?: import('../chaos/hotspots-catalog').HotSpotBrief;
-    // DIRECTIVE-IMPORT-6 Part B/C — the FULL authored objective list (text + VP + kind + side) of a Hot Spots track that
-    // is NOT a catalog hotspot track (a D-116 preset played via the picker). Stamped at bind from seed.trackObjectives;
     // persisted so the resolve modal + the GM/player track sheets list every objective from the record alone. Absent for
     // Traditional, §18 universal picks (generic slots by design — IP-001), and catalog tracks (they carry `hotspot`).
     trackObjectives?: { text: string; vp: number; kind: 'primary' | 'secondary' | 'bonus'; side?: 'both' | 'attacker' | 'defender' }[];
-    // DIRECTIVE-IMPORT-6 Part C/E — a preset track's authored TRACK-SHEET overrides (deployment / special rules / track end
     // / salvage policy / your role), persisted so the GM + player track sheets print the GM's words over the template
     // archetype's, and the single-sided resolve filters by the authored role. Absent for every non-preset track.
     trackSheet?: { deployment?: string; specialRules?: string; trackEnd?: string; salvagePolicy?: string; playerRole?: 'attacker' | 'defender' };
-    // IMPORT-6 FOLLOWUPS — RESULTS ONLY: the special personnel actually HIRED and fielded for THIS track (name · role ·
     // 'Mech · G/P), stamped at hire/release and at bind (a contract-long hire survives into the next track). Never the
     // OFFER list (HotSpotBrief.hireable stays GM-side); no cost/one-time data. Absent when none are fielded (Traditional
     // never sets it — hiredMercs is written only by the HS deploy hire panel).
     hiredWithYou?: { name: string; role: string; chassis?: string; model?: string; gunnery: number; piloting: number }[];
 }
 
-/** D-099 — the appended travel/insertion timer for a mission, computed from the unit's current system to the
- *  localized target ({WORLD}) via systems.json coords. hasTravel=false ⇒ no map/location → operation-only (migration-safe). */
 export interface MissionTravel {
     jumps: number;           // ceil(LY / jumpLy)
     jumpTransitDays: number; // jumps × per-jump recharge
@@ -234,8 +206,6 @@ export interface MissionSpec {
     opforForce: ProtoInstance[];
     opforBv: number;
     playerBv: number;
-    /** GM-2 P3-fold — set by D-130's Build/Edit OpFor save (and the P4 side-B seed): the GM chose this OpFor by hand, so
-     *  the empty-field witness (a spec sized against the 1-BV floor) no longer applies. Absent on every generated spec. */
     opforManual?: boolean;
     terrain: { biome: string; note: string };
     deployment: { player: string; opfor: string };
@@ -243,25 +213,19 @@ export interface MissionSpec {
     clauses: MissionClauses;
     reward: { total: number; monthly: number };
     window: { deployByDays: number; engagementDays: number; note: string };
-    // D-099 — planetside operation length (seed.operationDays ?? type engagementDays) + the appended travel timer
     // (current location → localized target). The FRAGORD §6 clock + WARNORD read these; the AAR advances by travel.totalDays.
     operationDays?: number;
     travel?: MissionTravel;
     seed: number;
-    forge?: MissionForge; // D-025 — seed binding (absent = pure D-023 template)
-    // D-035 — §2.1 theater sheet + Appendix B comms plan, rolled ONCE at generation and STORED
-    // (stored-not-rerolled). Optional: pre-D-035 specs lack them; the renderer degrades gracefully.
+    forge?: MissionForge;
     theater?: TheaterSheet;
     comms?: CommsPlan;
-    // D-038 — narrator-refined section prose (machine-diff-verified), keyed by section id. Optional;
     // stored-not-rerolled (REROLL/regenerate builds a fresh spec → cleared); render prefers refined.
     refined?: Record<string, { text: string; verified: boolean }>;
-    // D-043 narrator v2 — the whole-mission pass. refinedVoices = mission-aware staff-voice boxes
     // (keyed by voice family, machine-diff-guarded); coherence = the advisory GM verdict (display-only).
     // Both optional, stored-not-rerolled (cleared on REROLL/regenerate), OFF renders neither.
     refinedVoices?: Record<string, { text: string; verified: boolean }>;
     coherence?: { reads: 'clean' | 'flags'; flags: { where: string; issue: string }[]; model: string };
-    // D-045 — refine transparency (all optional, no version bump; logic untouched). refinedAt/model
     // feed the top-level ✦ REFINED stamp; refineLog is the GM change-log (prose-only before→after per
     // section, incl machine-diff-REJECTED boxes shown honestly as "kept template").
     refinedAt?: number;
@@ -323,10 +287,6 @@ const fmtBv = (n: number): string => n.toLocaleString('en-US');
 const supportText = (c: MissionClauses): string =>
     c.supportKind === 'straight' ? `${c.supportPct}% straight` : c.supportKind === 'battle-loss' ? `${c.supportPct}% battle-loss` : 'none';
 
-/** IMPORT-7 Part C (bonus) — the D-085 voice de-dup for the templated situation lead: the employer is named ONCE (the
- *  sentence subject); its later {employer} slot becomes a pronoun in the right grammatical position, and {target}
- *  (unknown to the NONE narrator) becomes "the enemy" instead of vanishing ("…retained the command to recon dispositions
- *  for Hot Spots Command" → "…engaged the command to recon enemy dispositions on its behalf"). Pure over the lead text. */
 export function leadSentence(lead: string): string {
     return lead
         .replace(/a besieged \{employer\} garrison/g, 'one of its besieged garrisons')

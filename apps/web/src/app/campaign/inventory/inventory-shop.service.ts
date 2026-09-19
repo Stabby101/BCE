@@ -1,13 +1,3 @@
-/*
- * BCE Inventory III (DIRECTIVE-064, refined by DIRECTIVE-065) — the impure parts-shop service.
- *
- * Owns the shop seam on the Inventory tab. IN-SYSTEM (D-065): the era-legal D-055 catalog → the build-time
- * 'Mech-relevant filter (parts-relevant.json) → the availability-TN rotation → CAPPED to a believable local
- * stock (30–50, common-weighted, scaled to the market rating). OUT-OF-SYSTEM (D-065): not a browse — a
- * SEARCH → a sourcing ROLL (may fail) → on success a paid ORDER that delivers in a few months on the clock.
- * Determinism: the in-system roll + the out-of-system roll are pure per (seed, period); orders persist
- * (DATA-002). GM surface; treasury/ledger via the existing path.
- */
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CatalogClientService } from '../catalog/catalog-client.service';
@@ -88,7 +78,6 @@ export class InventoryShopService {
 
     /** In-system stock for the current cycle — relevant, capped, common-weighted (deterministic per seed+period). */
     readonly inSystem = computed<ShopEntry[]>(() => buildInSystemStock(this.rows(), this.year(), this.seed(), this.periodKey(), { playerClan: this.playerClan(), relevantIds: this.relevantIds(), rating: this.rating() }));
-    /** In-system grouped into collapsible categories (D-065). */
     readonly inSystemByCategory = computed<ShopCategoryView[]>(() => {
         const groups: Record<ShopCategory, ShopEntry[]> = { weapon: [], ammo: [], armor: [], structure: [], component: [] };
         for (const e of this.inSystem()) groups[shopCategoryOf(e.item)].push(e);
@@ -105,7 +94,7 @@ export class InventoryShopService {
         const treasury = this.state.treasury() ?? 0;
         if (price > treasury) return false;
         this.state.setTreasury(treasury - price);
-        this.state.logMoney(`Parts shop — ${entry.item.name}`, -price, null, 'purchase'); // D-074
+        this.state.logMoney(`Parts shop — ${entry.item.name}`, -price, null, 'purchase');
         this.mergeInventoryLine(entry.item.id, entry.item.name, toInvCategory(entry.item.category), 1, 'Purchased — shop (in-system)');
         void this.store.persistCurrent();
         return true;
@@ -131,7 +120,7 @@ export class InventoryShopService {
         const treasury = this.state.treasury() ?? 0;
         if (price > treasury) return { sourced: true, roll, tn, affordable: false, ordered: false };
         this.state.setTreasury(treasury - price);
-        this.state.logMoney(`Out-of-system order — ${item.name}`, -price, null, 'purchase'); // D-074
+        this.state.logMoney(`Out-of-system order — ${item.name}`, -price, null, 'purchase');
         const category = toInvCategory(item.category);
         const now = this.state.currentDate() ?? this.state.startDate() ?? { y: 3025, m: 0, d: 1 };
         const order: ShopOrder = {
@@ -165,15 +154,12 @@ export class InventoryShopService {
         if (!inv || line.onHand <= 0) return false;
         const resale = Math.round(this.priceForLine(line) * MARKET_TUNABLES.resaleRatio);
         this.state.setTreasury((this.state.treasury() ?? 0) + resale);
-        this.state.logMoney(`Sold — ${line.label}`, resale, null, 'sale'); // D-074
+        this.state.logMoney(`Sold — ${line.label}`, resale, null, 'sale');
         const key = lineKey(line);
         this.state.setInventory({ ...inv, lines: inv.lines.map((l) => (lineKey(l) === key ? { ...l, onHand: Math.max(0, l.onHand - 1) } : l)) });
         void this.store.persistCurrent();
         return true;
     }
-    /** D-066 GM on-hand override — set an owned line's on-hand (clamp ≥0, integer) + persist. The status (vs floor)
-     *  and the category rollup recompute reactively (the inventory signal mutates). The line is kept at 0, never
-     *  silently dropped mid-edit. */
     setLineOnHand(line: InventoryLine, qty: number): void {
         const inv = this.state.inventory();
         if (!inv) return;

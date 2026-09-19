@@ -1,17 +1,3 @@
-/*
- * BCE campaign-pack — CAMPAIGN CLOCK (DIRECTIVE-022). Pure TS, no Angular/DOM.
- *
- * The minimal campaign clock: a current date that GM-style controls advance, plus an ORDERED
- * SUBSCRIBER REGISTRY that fires on each month boundary an advance crosses. Modeled on ODM's
- * proven time-advance pattern (a prior private BCE prototype: "Time
- * advance + subscriber pattern — advance + subscribers in a single transaction + GM quick-action
- * buttons") — CONCEPTS ONLY, cited. ODM's snapshot slots / advance-preview / notifications /
- * auto-events (prototype extras) are deliberately OUT of this slice (the seam is the point).
- *
- * Date math is JS-Date-backed (month-length + leap years correct). A boundary is the 1st of a
- * month; CamOps issues contract offers on the 1st, so the contract subscribers key off boundaries.
- * Everything here is deterministic + testable; the caller stores the resulting date (reload-stable).
- */
 
 /** {y, m(0-11), d} — structurally the wizard's CampaignStartDate. */
 export interface CampaignDate {
@@ -54,8 +40,6 @@ export function addSpan(d: CampaignDate, span: SpanId): CampaignDate {
     return fromJs(new Date(d.y, d.m + 1, Math.min(d.d, lastDay)));
 }
 
-/** D-099 — advance a date by an arbitrary N calendar days (month/year rollover via JS Date). The mission AAR
- *  uses this for a transit+operation jump that the day/week/month spans can't express. */
 export function addDays(d: CampaignDate, n: number): CampaignDate {
     return fromJs(new Date(d.y, d.m, d.d + Math.round(n)));
 }
@@ -66,17 +50,10 @@ export function compareDate(a: CampaignDate, b: CampaignDate): number {
     return key(a) - key(b);
 }
 
-/**
- * Whole elapsed days from `from` to `to` (calendar-correct, month-length/leap-year aware via JS Date).
- * 0 if `to` is not after `from`. The repair burn (DIRECTIVE-033) uses this to convert any span advance
- * — day/week/month (28-31 days) — into real elapsed days of tech labour, independent of month boundaries.
- */
 export function daysBetween(from: CampaignDate, to: CampaignDate): number {
     const ms = Date.UTC(to.y, to.m, to.d) - Date.UTC(from.y, from.m, from.d);
     return ms <= 0 ? 0 : Math.round(ms / 86_400_000);
 }
-/** DIRECTIVE-PD3 P3 (S54) — the 1-based campaign WEEK (week 1 = the start date's week): the header's "WK" figure, derived from the
- *  ONE clock exactly as the autosave's "Day N" is (campaignDay = daysBetween + 1). Before P3 the header carried a literal "1". */
 export function campaignWeek(start: CampaignDate | null | undefined, current: CampaignDate | null | undefined): number {
     if (!start || !current) return 1;
     return Math.floor(daysBetween(start, current) / 7) + 1;

@@ -1,12 +1,3 @@
-/*
- * BCE Personnel (DIRECTIVE-059, T-040 slice 2) — the Hiring Hall Barracks sub-surface (GM surface).
- *
- * The MekHQ personnel market realized as a Barracks section: a candidate pool (deterministic per campaign month)
- * weighted to common roles + skewed to ≤ the command's average (seasoned hands rare + a signing bonus). HIRE →
- * PersonnelService.hire (joins the roster, debits the bonus; the shared personnel() signal makes the D-058
- * staffing/payroll + the inventory ledger recompute LIVE). The pool refreshes when the clock crosses a month.
- * Role-agnostic shell so combat-pilot hiring (D-059b) slots in later.
- */
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
@@ -21,7 +12,6 @@ import { BAND_LABEL, ROLE_LABEL, type ExperienceBand, type SupportRole } from '.
         @if (market(); as m) {
             <div class="ph flat" style="margin-top:24px">Hiring Hall <span class="scaf">{{ m.pool.length }} available · refreshes monthly</span></div>
             <p class="hh-note">The personnel market for {{ m.periodKey }}. Seasoned hands are scarce and ask a signing bonus — the pool skews to your command's average.</p>
-            <!-- HOTFIX-023 (1): a visible confirmation cue — a hire updates count/staffing/payroll but the new name sits in a COLLAPSED role group, so the action otherwise looks like nothing happened (D-029: no invisible success). -->
             @if (lastHired(); as h) {
                 <p class="hh-hired" role="status">✓ Hired <b>{{ h.name }}</b> — {{ roleLabel(h.role) }}. Joined the Support Personnel roster above (open the {{ roleLabel(h.role) }} group to see them).</p>
             }
@@ -42,7 +32,6 @@ import { BAND_LABEL, ROLE_LABEL, type ExperienceBand, type SupportRole } from '.
                 </div>
             }
         } @else {
-            <!-- HOTFIX-023 (2): never a blank tab — a named reason if the market did not roll (D-029 no-silent-empty). -->
             <div class="ph flat" style="margin-top:24px">Hiring Hall</div>
             <p class="hh-note thin">Hiring Hall unavailable — no personnel market rolled for this period (it refreshes monthly; advance the clock to roll a fresh pool).</p>
         }
@@ -72,7 +61,6 @@ export class HiringHallComponent {
     private readonly svc = inject(PersonnelService);
     private readonly store = inject(CampaignSaveStore);
     protected readonly market = this.state.hiringMarket;
-    /** HOTFIX-023 (1) — the most recent hire, surfaced as a visible cue so a successful hire is never invisible. */
     protected readonly lastHired = signal<{ name: string; role: SupportRole } | null>(null);
 
     constructor() {

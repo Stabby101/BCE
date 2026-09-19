@@ -14,13 +14,11 @@ import type { HotSpotFork, HotSpotObjective, HotSpotTrack } from '../hotspots-ca
 import type { ObjectiveLibrary, ObjectiveSet, ObjectiveSpec } from './hs-forge-data';
 import { pick, rngInt } from './hs-forge-rng';
 
-/** TrackTemplateKey → the AUTHORED templateId vocabulary (the pack style consumed by templateKeyFor /
- *  TEMPLATE_FAMILY / the D-129 flow labels — byte-compatible with the shipped packs). */
 export const AUTHORED_TEMPLATE_ID: Record<TrackTemplateKey, string> = {
     assault: 'Assault', breakthrough: 'Breakthrough', defend: 'Defend', flank: 'Flank',
     meeting: 'Meeting Engagement', 'objective-raid': 'Objective Raid', pursuit: 'Pursuit',
     pushback: 'Pushback', recon: 'Recon', retreat: 'Retreat', strike: 'Strike',
-    'duel-arena': 'Duel Arena', // IMPORT-8 — the §18 #12 arena template (authored "Duel" still aliases to meeting; the forge never rolls duel-arena — no FAMILY_TRACK entry maps to it)
+    'duel-arena': 'Duel Arena',
 };
 
 /** Root template for a donor family — ruling D8: a clan-register CADRE donor plays as a Duel
@@ -96,7 +94,6 @@ export function objectivesFromSet(set: ObjectiveSet, settlement: string, templat
     for (const s of set.sites ?? []) fills[s] = siteNoun(settlement, rng, taken);
     const sub = (t: string): string => t.replace(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (m, k) => (k in fills ? fills[k] : m));
     // Mirrored objectives (identical RAW text on both sides — the symmetric meeting sets) share ONE
-    // rolled VP: the same feat must not print two different values across the D-134 columns.
     const vpByRaw = new Map<string, number>();
     const mk = (o: ObjectiveSpec, side: 'attacker' | 'defender' | 'both'): HotSpotObjective => {
         let vp = vpByRaw.get(o.kind + '|' + o.text);
@@ -128,7 +125,7 @@ export interface TrackBuildCtx {
     settlement: string;
     depth: number;               // main-path length == contract intensity (C6)
     scale: number;               // contract scale — bakes the param conventions (R×2, T+1, unit clamp)
-    sideBFaction: string;        // per-track opfor.faction (side-A convention — D-133 flips via ac.target)
+    sideBFaction: string;
     armsMix: 'MECH_ONLY' | 'COMBINED_ARMS';
     vehicleShare?: number;
     baseBvRatio: number;
@@ -246,7 +243,7 @@ function planToTrack(p: TrackPlan, ctx: TrackBuildCtx): HotSpotTrack {
         id: p.id, name: p.name, templateId: p.templateId, ...(p.root ? { root: true } : {}),
         situation,
         deployment: [`${t.setupText} Attacker: ${t.attackerText} Defender: ${t.defenderText}`, ...conventions].join(' '),
-        playerRole: p.role, // explicit per track (C8) — never left to the D-137 inference
+        playerRole: p.role,
         objectives: resolved.objectives,
         trackEnd: t.trackEndText,
         salvagePolicy: salvageSentence(t.salvagePolicy),

@@ -1,15 +1,9 @@
-/*
- * FORKED FROM campaign/repair/repair-bays.component.ts @ dd1a717 — DIRECTIVE-ODM-13 Phase 2 (a DRIFT SURFACE).
- * The SURVIVAL bays surface: no C-bill anything (no cost column, no treasury header, no over-treasury warn);
- * the R3 HELD state renders on the bay card naming the missing component; the queue carries a parts-availability
- * advisory; COLD hulks offer DONOR-STRIP (confirmed — it is irreversible). Styles shared from the Classic sheet.
- */
 import { Component, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
 import { ForgePackService } from '../mission/forge-pack.service';
 import { OdmRepairBaysService, type QueueKind, type BayView } from './odm-repair-bays.service';
-import { OdmContactsService } from './odm-contacts.service'; // ODM-12b B1 — the bays speak with the authored registry
+import { OdmContactsService } from './odm-contacts.service';
 import { remainingHours, jobSummary, type BayHistoryEntry } from '../repair/repair-bays';
 import { formatDate } from '../clock/campaign-clock';
 
@@ -18,7 +12,7 @@ import { formatDate } from '../clock/campaign-clock';
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './odm-repair-bays.component.html',
-    styleUrls: ['../repair/repair-bays.component.scss' /* SHARED */, './odm-repair-bays.component.scss' /* ODM-17 P1 fork additions */],
+    styleUrls: ['../repair/repair-bays.component.scss' /* SHARED */, './odm-repair-bays.component.scss'],
 })
 export class OdmRepairBaysComponent {
     private readonly svc = inject(OdmRepairBaysService);
@@ -33,15 +27,11 @@ export class OdmRepairBaysComponent {
     protected readonly freeBays = this.svc.freeBays;
     protected readonly perDayHours = this.svc.perDayHours;
     protected readonly donors = this.svc.donors;
-    // ODM-17 P1 — the authored facility header + the derived commit ledger (tierLabel died with the
     // rolled pool: the tier never keyed anything honest in this fork).
     protected readonly shop = this.svc.shopFile;
-    /** TESTER-ODM-1 #6 — the DERIVED per-pool hours (support-register couplings applied), the same number
-     *  the field walk and the bay burn consume. */
     protected poolHours(id: string): number { return this.svc.poolHoursOf(id); }
     protected readonly committed = this.svc.committedHours;
-    protected heldLine(bay: BayView): string { return this.svc.heldLineFor(bay); } // ODM-17 P3-b — recourse per part
-    // ── ODM-17 P4 — the ladder, the cycle, the bay conversions (all service-owned; this renders) ──
+    protected heldLine(bay: BayView): string { return this.svc.heldLineFor(bay); }
     protected readonly maintDue = this.svc.maintenanceDue;
     protected readonly salvageBayOk = this.svc.salvageBayOperational;
     protected jobPri(bay: BayView): number { return this.svc.jobPriorityOf(bay); }
@@ -53,19 +43,10 @@ export class OdmRepairBaysComponent {
     constructor() {
         if (this.svc.ensureTechPool()) void this.store.persistCurrent();
         if (!this.pack.isLoaded()) void this.pack.ensureLoaded().then(() => this.ready.update((v) => v + 1));
-        // ODM-12b B1 — the registry supplies the armorer's name (in-memory, entitlement-gated, null-tolerant).
         void this.contacts.ensureLoaded().then(() => this.ready.update((v) => v + 1));
-        // ODM-13 P2 — a tab visit re-attempts held jobs (supply may have arrived via the walk).
         this.svc.settleAttempt(this.svc.bays());
     }
 
-    // (ODM-17 P1: the rolled techPool read is GONE — persisted rolled pools in legacy saves are inert residue.)
-    /* ODM-12b B1 — THE LIVE BUG: this read the ROLLED voice-cast via staffVoices, so any campaign made
-     * before the AAR fix (which stopped the minting but not the reading) still rendered "Chief armorer:
-     * Granny Oszka" from personas persisted on disk. The bays belong to the AUTHORED registry — in its
-     * own words, "the pumps, the bins, and the bays are HERS" — so they read the contact registry, and
-     * this fork no longer touches staffVoices at all (the persisted field goes inert under a pack: no
-     * migration, no wire change, D-0b holds). */
     protected readonly armorer = computed(() => {
         this.ready();
         return this.contacts.bySlot('engineering')?.name ?? null;
@@ -83,7 +64,7 @@ export class OdmRepairBaysComponent {
     protected readonly exploded = signal<Set<string>>(new Set());
     protected readonly assigning = signal<string | null>(null);
     protected readonly confirmWO = signal<string | null>(null);
-    protected readonly confirmDonor = signal<string | null>(null); // ODM-13 P2 — donor-strip confirm (irreversible)
+    protected readonly confirmDonor = signal<string | null>(null);
     protected readonly showHistory = signal(false);
 
     protected readonly KIND_LABEL: Record<QueueKind, string> = { repair: 'Recovered', prize: 'Hulk', skirmish: 'Skirmish' };

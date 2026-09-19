@@ -1,4 +1,3 @@
-<!-- FORKED FROM campaign/mission/mission-package.html @ 6cc5dae - DIRECTIVE-ODM-1 Phase 1 (a DRIFT SURFACE). Strips: every HS (hotspotBrief/track-sheet) branch - ODM renders the Traditional dossier; the odm briefing-cycle format is a content wave. -->
 @if (vm(); as v) {
 <div class="pkg-overlay" (click)="onClose()">
   <div class="pkg-actions no-print">
@@ -8,10 +7,6 @@
     @if (coherence()) {
       <button type="button" class="pa-btn coh" [class.on]="cohOpen()" (click)="toggleCoh(); $event.stopPropagation()" title="Show / hide the GM coherence read (Esc dismisses)">⚖ Coherence</button>
     }
-    <!-- DIRECTIVE-101: WARNORD / FRAGORD are INDEPENDENT (either, or both) — the print path prints whatever is shown.
-         DIRECTIVE-124: a premade hotspot renders the ONE authored brief, so the Forge format toggles are hidden.
-         DIRECTIVE-IMPORT-6 Part E: ANY Hot Spots track renders the TRACK sheet only — the toggles are Traditional-only. -->
-    <!-- ODM-1 FORK: HS block STRIPPED -->
     <button type="button" class="pa-btn" (click)="onPrint(); $event.stopPropagation()">⎙ Print</button>
     <button type="button" class="pa-btn close" (click)="onClose(); $event.stopPropagation()">✕ Close</button>
   </div>
@@ -24,7 +19,6 @@
       }
     </div>
   }
-  <!-- D-043 — the GM-only COHERENCE verdict (advisory; the narrator reasons, the GM decides) -->
   @if (coherence(); as cv) { @if (cohOpen()) {
     <div class="coherence-panel no-print" [class.clean]="cv.reads === 'clean'" [class.flagged]="cv.reads === 'flags'" (click)="$event.stopPropagation()">
       <div class="coh-h">⚖ COHERENCE READ — GM ONLY <span class="coh-model">{{ cv.model }}</span>
@@ -57,17 +51,6 @@
     </div>
   } }
 
-  <!-- DIRECTIVE-124 — the AUTHORED premade-hotspot brief. The ONE brief (same source drives the player tablet);
-       renders instead of the Forge FRAGORD/WARNORD, which are suppressed below when a hotspot is bound. -->
-  <!-- ODM-1 FORK: HS block STRIPPED -->
 
-  <!-- DIRECTIVE-101 — FRAGORD: the condensed ~3-page order, a RENDER over the same vm (no prose/content change).
-       When both are on it prints first as the quick-reference card, then the full WARNORD on a fresh page.
-       DIRECTIVE-124 — suppressed for a premade hotspot (the authored article above is the ONE brief). -->
-  <!-- DIRECTIVE-IMPORT-6 Part E — under Hot Spots the TRACK sheet ALWAYS renders (trackOnly), whatever the FRAGORD toggle
-       says; Traditional (trackOnly false) reduces to today's `showFragord() && !hotspotBrief()` exactly. -->
-  <!-- ODM-1 FORK: HS block STRIPPED -->
-  <!-- DIRECTIVE-IMPORT-6 Part E — the Traditional WARNORD dossier never renders under Hot Spots (trackOnly); Traditional unchanged. -->
-  <!-- ODM-1 FORK: HS block STRIPPED -->
 </div>
 }

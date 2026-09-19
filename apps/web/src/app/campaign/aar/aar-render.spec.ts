@@ -1,9 +1,3 @@
-/*
- * IMPORT-6 FOLLOWUPS — the AAR consumes the resolve MODEL's outcome. Pins that a Hot Spots resolution carrying
- * `aar.objectiveMarks` (snapshotted at resolve from twoSidedResolve / singleSidedResolve) renders the AUTHORED objectives
- * with the GM's real MET marks + VP + the book grade, and that a resolution WITHOUT marks (Traditional / legacy) renders the
- * legacy Primary/Secondary/Bonus trio byte-identically to before.
- */
 import { buildAarDocument, type AarContext } from './aar-render';
 import type { MissionBranch } from '../mission/mission-tree';
 
@@ -17,7 +11,7 @@ const branch = (over: Partial<MissionBranch['resolution']>): MissionBranch => ({
     resolution: { outcomeTier: 'SUCCESS', answers: { primary: true, secondary: true, bonus: false, compromised: false }, ...over } as MissionBranch['resolution'],
 });
 
-describe('buildAarDocument — IMPORT-6 FOLLOWUPS objective marks + book grade', () => {
+describe('buildAarDocument — FOLLOWUPS objective marks + book grade', () => {
     it('renders the AUTHORED objectives with the GM marks + VP (single-sided), the VP tally + grade, and the HS tier line grade', () => {
         const d = buildAarDocument(branch({
             outcomeTier: 'SUCCESS',

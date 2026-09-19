@@ -1,11 +1,3 @@
-/*
- * BCE retool — SAMPLE force for the Unit Roster (DIRECTIVE-010, supersedes D-009's
- * hand-feel data). Each entry names a REAL catalog chassis (resolved from DataService
- * → db.mekbay.com) so MekBay renders real sprites + a real Classic record sheet, plus
- * a sample battle-damage profile so the sheet shows live damage. NOT the real campaign
- * force — binding to the assembled force is the engine/state phase. Pilots are campaign
- * flavour (not in the catalog).
- */
 export const CONDITIONS = ['Active', 'Deployed', 'Reserve', 'Cold storage', 'In repair'] as const;
 export type Condition = (typeof CONDITIONS)[number];
 

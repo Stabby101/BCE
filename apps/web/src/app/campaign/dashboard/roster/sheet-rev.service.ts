@@ -1,15 +1,3 @@
-/*
- * BCE — DIRECTIVE-084: per-card dirty bits.
- *
- * A damage / crew / condition DIFF to ONE unit's sheet flips ONLY that card's revision; a roster cell
- * derives its DMG line + thumbnail off `rev(its instanceId)`, so a flip pulls just that card's current
- * state once — sibling cells never recompute. There is NO polling anywhere: the flip IS the trigger,
- * repeating on each diff through the unit's life (replaces the coarse whole-roster `crewRev` nudge).
- *
- * Bumps are COALESCED per id: a burst of diffs for the same card within ~40 ms collapses to ONE re-read
- * (and the defer doubles as the proven D-020 tick — it lets the live SVG paint settle before the thumbnail
- * re-clones). Card-type-agnostic: keyed by instanceId, independent of CBT vs Alpha-Strike rendering.
- */
 import { Injectable, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })

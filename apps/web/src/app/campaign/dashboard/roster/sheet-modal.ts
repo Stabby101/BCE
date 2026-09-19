@@ -1,9 +1,3 @@
-/*
- * BCE retool — explode modal for the Classic record sheet (DIRECTIVE-010).
- * Full-size READ-ONLY view of the same MekBay-rendered damaged sheet (via sheet-view).
- * Closes on ✕, Esc, and click-outside. No edit affordances. Field-dossier theme tokens
- * (inherited from the dashboard .theme-dossier host).
- */
 import { Component, ChangeDetectionStrategy, HostListener, input, output, inject, ApplicationRef, EnvironmentInjector } from '@angular/core';
 import type { CBTForceUnit } from '../../../models/cbt-force-unit.model';
 import { SheetViewComponent } from './sheet-view';
@@ -21,7 +15,6 @@ import { NewCampaignState } from '../../new-campaign-state';
                 <div class="mhead">
                     <span class="mt">{{ title() }} <span class="ro">read-only · Classic record sheet</span></span>
                     <div class="macts">
-                        <!-- D-071 (A): print the currently-shown composed sheet (MekBay SVG + the D-070 pilot box + SPAs) -->
                         <button type="button" class="pr" (click)="print()" aria-label="Print this record sheet">⎙ Print</button>
                         <button type="button" class="x" (click)="close.emit()" aria-label="Close">&#10005;</button>
                     </div>
@@ -34,8 +27,7 @@ import { NewCampaignState } from '../../new-campaign-state';
         </div>
     `,
     styles: `
-        /* HOTFIX-019: above the gated GM account pill (z-index 9000) so the exploded sheet's ✕ + ⎙ print are never covered. */
-        .backdrop { position: fixed; inset: 0; z-index: 10000; background: rgba(15, 14, 9, .82); display: flex; align-items: center; justify-content: center; padding: 22px 22px calc(22px + var(--bce-footer-h, 0px)); } /* IMPORT-7 A — clear the legal footer */
+        .backdrop { position: fixed; inset: 0; z-index: 10000; background: rgba(15, 14, 9, .82); display: flex; align-items: center; justify-content: center; padding: 22px 22px calc(22px + var(--bce-footer-h, 0px)); }
         .modal { background: var(--paper); border: 2px solid var(--ink); width: 100%; max-width: 720px; max-height: 92vh; display: flex; flex-direction: column; }
         .mhead { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 2px solid var(--ink); padding: 9px 14px; }
         .mt { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; font-size: 14px; color: var(--ink); }
@@ -55,7 +47,7 @@ export class SheetModalComponent {
     private readonly envInjector = inject(EnvironmentInjector);
     readonly fu = input<CBTForceUnit | null>(null);
     readonly title = input<string>('');
-    readonly abilities = input<string[]>([]); // D-070 (E): the SPA overlay, forwarded to the cloned sheet
+    readonly abilities = input<string[]>([]);
     readonly close = output<void>();
 
     @HostListener('document:keydown.escape')
@@ -67,8 +59,6 @@ export class SheetModalComponent {
         if ((e.target as HTMLElement).classList.contains('backdrop')) this.close.emit();
     }
 
-    /** D-071 (A): print THIS sheet — composed full-page (pilot box + SPAs), no app chrome. D-083: AS routes
-     *  to the alpha-strike-card print; CBT (default) is byte-identical. */
     print(): void {
         printSheets([{ fu: this.fu(), abilities: this.abilities() }], { gameSystem: this.state.gameSystem(), appRef: this.appRef, environmentInjector: this.envInjector });
     }

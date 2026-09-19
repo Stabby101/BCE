@@ -1,10 +1,5 @@
-/*
- * FORKED FROM campaign/battle/battle-view.ts @ 1ab399b — DIRECTIVE-ODM-9 Part C (a DRIFT SURFACE).
- * Divergences: the OPFOR empty-state copy (Classic's advice is wrong in ODM; DOCTRINE §7b) + the ODM-10
- * header chip naming the ACTIVE OPERATION (the ODM-9 verify promised the Force Preview names it).
- */
 import { Component, ChangeDetectionStrategy, computed, inject } from '@angular/core';
-import { NewCampaignState } from '../new-campaign-state'; // ODM-10 — the operation-name chip reads the carrier
+import { NewCampaignState } from '../new-campaign-state';
 import { BattleForceService, type Side } from '../battle/battle-force.service';
 import { BattleSheetComponent } from '../battle/battle-sheet';
 import { InViewDirective } from '../dashboard/roster/in-view.directive';
@@ -20,7 +15,7 @@ import { InViewDirective } from '../dashboard/roster/in-view.directive';
 })
 export class OdmBattleViewComponent {
     private readonly svc = inject(BattleForceService);
-    private readonly state = inject(NewCampaignState); // ODM-10
+    private readonly state = inject(NewCampaignState);
     protected readonly blufor = this.svc.bluforEntries;
     protected readonly opfor = this.svc.opforEntries;
     protected readonly hasMission = this.svc.hasMission;
@@ -28,10 +23,7 @@ export class OdmBattleViewComponent {
     protected readonly dataError = this.svc.dataError;
     protected readonly nothingDeployed = computed(() => this.ready() && this.blufor().length === 0 && this.opfor().length === 0);
     protected readonly skirmish = computed(() => this.ready() && !this.hasMission() && this.blufor().length > 0);
-    /** ODM-10 — the header names the operation (the ODM-9 carrier's typeName = the authored title). */
     protected readonly operationName = computed(() => this.state.missionSpec()?.typeName ?? null);
-    /** ODM-18 P3 — is the ACTIVE operation GM-composed? The empty-OpFor copy sends the reader to an OPFOR
-     *  packet tab; for a composed operation there is no packet and no tab, so that line would be a lie. */
     protected readonly isComposed = computed(() => {
         const id = this.state.odmActiveNodeId();
         return !!id && this.state.odmGmMissions().some((m) => m.id === id);

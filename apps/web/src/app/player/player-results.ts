@@ -1,28 +1,11 @@
-/*
- * GM-1 P3 — the RESULTS SLIP on the player device: the take-home record from the last resolve. MY units = my own
- * claim rows (holderToken match — the same identity the sheet uses; other players' claims arrive anonymized, mine
- * keeps my token). Salvage is honestly the TEAM share — no per-player split exists in the book model, and the copy says so.
- *
- * DIRECTIVE-GM-2 P1 — APPLY TO MY CAMPAIGN (supersedes the v1 "results go home by EXPORT" ruling): the device already
- * holds the slip AND the player's own auth, so the write is not cross-account — the player applies the slip to their
- * OWN home campaign, on their OWN token, through the existing campaign store (GET the record, transform it with the
- * pure apply-slip.ts, PUT it back). No server-side cross-tenant write, no new trust boundary.
- *   · the home campaign is the `sourceCampaignId` the mint preserved on MY rows (the identity cut);
- *   · Apply is offered only when that campaign LOADS on this device's token (owner-scoped) — a slip from someone
- *     else's company, or a stale latch, reads "not this device's home campaign" and the control is disabled;
- *   · idempotent by the home campaign's appliedSlips[] (the GM-minted slipId): a second tap is a no-op with a message;
- *   · a pre-P1 slip (no slipId / no origin ids) says so instead of pretending.
- * Honest copy: pay lands by your own terms when you signed a contract (P2), else the team share; your pilots' career SP lands on them (P3).
- */
 import { Component, ChangeDetectionStrategy, computed, effect, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../campaign/new-campaign-state';
 import { ClaimRealtimeService } from '../campaign/claims/claim-realtime.service';
 import { CampaignSaveStore } from '../campaign/campaign-save-store';
 import { applySlipToSnapshot } from '../campaign/gm/apply-slip';
 import type { SlipUnitRow } from '../campaign/gm/results-slip';
-import { anonIdWeb } from '../campaign/gm/side-labels'; // GM-3 P1 (S27) — my company's home key off the imports I own
+import { anonIdWeb } from '../campaign/gm/side-labels';
 
-// GM-1 P3 (panel finding) — the LATCH: live claims reset when the GM generates the NEXT track, which
 // would empty "my units" on a slip the player hasn't copied yet (the whole point is apply-at-home-later).
 // So the device LATCHES its matched instanceIds per slip (localStorage) the moment they match, and mine()
 // is latched ∪ live — the take-home record survives the claims context moving on.
@@ -43,10 +26,8 @@ type ApplyState = 'idle' | 'checking' | 'ready' | 'busy' | 'applied' | 'legacy' 
                 </div>
                 @if (s.sessionName || s.hotspotTitle) { <div class="prs-sess">{{ s.sessionName ?? 'GM session' }}@if (s.hotspotTitle) { &middot; {{ s.hotspotTitle }} }</div> }
                 @if (odm()) {
-                    <!-- ORDER-3 H16 — an ODM table: the slip carries NO pay fields (absent, not 0) and no home to apply to — the company IS the record -->
                     <div class="prs-team" data-testid="prs-odm-note">ODM &mdash; the company record holds the outcome; this is your unit's end-state.</div>
                 } @else if (traditional()) {
-                    <!-- ORDER-7 H21 — a plain Traditional lobby: the settlement is C-bills (not the Hot Spots SP economy), so no SP pay line and no Apply — your unit's end-state is below -->
                     <div class="prs-team" data-testid="prs-trad-note">Team result &mdash; the C-bill settlement happens at the table; this is your unit's end-state.</div>
                 } @else if (ownPay(); as op) {
                     <div class="prs-team" data-testid="prs-pay-own">Your contract: {{ op.combatPay }} SP combat pay &middot; {{ op.salvageSp }} SP salvage@if (op.basePaySp) { &middot; {{ op.basePaySp }} SP base pay <span class="prs-dim">(one month, paid per track)</span> }@if (op.transportSp) { &middot; &minus;{{ op.transportSp }} SP transport }@if (op.repDelta) { &middot; Rep {{ op.repDelta > 0 ? '+' : '' }}{{ op.repDelta }} } <span class="prs-dim">(paid by your own terms — the team share was {{ s.combatPay }} + {{ s.salvageSp }})</span></div>
@@ -66,14 +47,10 @@ type ApplyState = 'idle' | 'checking' | 'ready' | 'busy' | 'applied' | 'legacy' 
                         }
                     </div>
                 }
-                <!-- GM-3 P1 (S27) — a COMPLETION-ONLY entry (signed, no rows on the last track): the +1 still comes home -->
                 @if (!mine().length && ownPay()) { <p class="prs-note" data-testid="prs-completion-only">No units of yours on this track &mdash; your contract completed with it: the entry above is the completion settlement.</p> }
                 @if (odm()) {
-                    <!-- ORDER-3 H16 — no Apply on an ODM slip: absent, not disabled -->
                 } @else if (traditional()) {
-                    <!-- ORDER-7 H21 — no Apply on a plain Traditional slip: absent, not disabled (the apply-at-home model is Hot Spots' SP Warchest) -->
                 } @else if (mine().length || ownPay()) {
-                    <!-- GM-2 P1 — APPLY TO MY CAMPAIGN -->
                     <div class="prs-apply" [attr.data-state]="applyState()" data-testid="prs-apply-state">
                         @switch (applyState()) {
                             @case ('checking') { <div class="prs-note">Checking your home campaign…</div> }
@@ -117,7 +94,6 @@ type ApplyState = 'idle' | 'checking' | 'ready' | 'busy' | 'applied' | 'legacy' 
         .prs-fate { font-size:12px; color:#9fb2c4; }
         .prs-note { font-size:11.5px; opacity:.7; margin:10px 0 0; line-height:1.5; }
         .prs-err { color:#e7a86b; opacity:1; }
-        /* GM-2 P1 — the Apply control */
         .prs-apply { margin-top:12px; }
         .prs-btn { width:100%; padding:12px 14px; border-radius:9px; border:1px solid #3d6ea5; background:#13243a; color:#bcd6f2; font-size:15px; font-weight:700; letter-spacing:.03em; cursor:pointer; }
         .prs-btn:disabled { opacity:.55; cursor:not-allowed; }
@@ -127,25 +103,17 @@ type ApplyState = 'idle' | 'checking' | 'ready' | 'busy' | 'applied' | 'legacy' 
 export class ResultsSlipComponent {
     private readonly state = inject(NewCampaignState);
     protected readonly rt = inject(ClaimRealtimeService);
-    private readonly store = inject(CampaignSaveStore); // GM-2 P1 — the home campaign, on this device's own token
+    private readonly store = inject(CampaignSaveStore);
     protected readonly slip = this.state.resultsSlip;
-    /** ORDER-3 H16 — packId-gated: an ODM table's slip (no pay, no Apply, the honest one-liner). */
     protected readonly odm = computed(() => this.state.packId() === 'odm');
-    /** ORDER-7 H21 — a plain TRADITIONAL slip: the settlement is C-bills, so the slip carries NO team SP figures (and never a
-     *  per-participant `pay`). Keyed off the slip's own shape (no SP pay of any kind, and not an ODM table) so it never
-     *  depends on campaignSystem hydration timing. Its render is the end-state + an honest team line, with NO Apply (the
-     *  apply-at-home model is Hot Spots' SP Warchest — there is nowhere for a C-bill settlement to land). */
     protected readonly traditional = computed(() => { const s = this.slip(); return !this.odm() && !!s && s.combatPay == null && s.salvageSp == null && !s.pay; });
 
     private readonly latched = signal<{ branchId: string; ids: string[] }>((() => {
         try { const raw = localStorage.getItem(LATCH_KEY); const v = raw ? JSON.parse(raw) as { branchId?: string; ids?: string[] } : null; return { branchId: v?.branchId ?? '', ids: Array.isArray(v?.ids) ? v.ids : [] }; } catch { return { branchId: '', ids: [] }; }
     })());
 
-    // ── GM-2 P1 — Apply to my campaign ──
     protected readonly applyState = signal<ApplyState>('idle');
-    /** GM-2 P2a — this company's OWN figure on the slip (present only when it signed its own contract this session). */
     protected readonly ownPay = computed(() => { const s = this.slip(); const key = this.homeKey(); return key && s?.pay ? s.pay[key] ?? null : null; });
-    // GM-3 P1 (S27) — the home campaign this device's COMPANY came from, read off the imports it owns (provenance.owner ↔ my
     // token's anonId): the key for a COMPLETION-ONLY slip entry (signed, no rows on the last track — the +1 still lands).
     private readonly myAnon = signal<string | null>(null);
     private readonly anonFill = effect(() => { const t = this.rt.token(); void anonIdWeb(t).then((a) => this.myAnon.set(a)); });
@@ -170,10 +138,9 @@ export class ResultsSlipComponent {
             this.latched.set({ branchId: s.branchId, ids });
             try { localStorage.setItem(LATCH_KEY, JSON.stringify({ branchId: s.branchId, ids })); } catch { /* session-only latch */ }
         });
-        // GM-2 P1 — decide whether Apply is offered: the home campaign my rows point at must load on MY token
         effect(() => {
             const s = this.slip(); const rows = this.mine();
-            if (!s || this.odm() || this.traditional() || (!rows.length && !this.ownPay())) { this.checkedKey = ''; this.applyState.set('idle'); return; } // GM-3 P1 — a completion-only entry offers Apply with no rows · ORDER-3 H16 — never on an ODM table · ORDER-7 H21 — never on a plain Traditional slip
+            if (!s || this.odm() || this.traditional() || (!rows.length && !this.ownPay())) { this.checkedKey = ''; this.applyState.set('idle'); return; }
             const src = this.homeKey();
             const key = `${s.slipId ?? ''}|${src ?? ''}`;
             if (key === this.checkedKey) return;
@@ -183,8 +150,6 @@ export class ResultsSlipComponent {
         });
     }
 
-    /** My rows: the slip's units whose claim row I hold (own claims keep my real token — HARDEN-5b),
-     *  UNION the latched set (survives the claims reset when the next track generates). */
     protected readonly mine = computed(() => {
         const s = this.slip();
         if (!s) return [];
@@ -216,7 +181,7 @@ export class ResultsSlipComponent {
         try {
             const rec = await this.store.get(src); // a FRESH read — the home campaign may have moved since the check
             if (!rec) { this.applyState.set('foreign'); return; }
-            const r = applySlipToSnapshot(rec.snapshot as never, s, rows, src); // GM-3 P1 — the hint carries a completion-only entry home
+            const r = applySlipToSnapshot(rec.snapshot as never, s, rows, src);
             if (!r.ok) {
                 if (r.reason === 'already-applied') { this.applyMsg.set('Already applied — nothing more to do.'); this.applyState.set('applied'); return; }
                 if (r.reason === 'not-hotspots') { this.applyState.set('not-hotspots'); return; }
@@ -224,7 +189,6 @@ export class ResultsSlipComponent {
                 this.applyState.set('error'); return;
             }
             await this.store.put({ ...rec, snapshot: r.snapshot as never, savedAt: Date.now() });
-            // PD3 P1 (PD3-12) — say how many came home HURT ("N damaged — record or repair"), never a silent "updated"
             this.applyMsg.set(`${r.matched.length} unit${r.matched.length === 1 ? '' : 's'} updated${r.damaged.length ? ` (${r.damaged.length} damaged — record or repair at home)` : ''}${r.removed.length ? `, ${r.removed.length} struck off` : ''}${r.unmatched.length ? `, ${r.unmatched.length} not found` : ''} · ${r.sp >= 0 ? '+' : ''}${r.sp} SP (${r.byTerms ? "by your contract's terms" : 'team share'})${r.repDelta ? ` · Rep ${r.repDelta > 0 ? '+' : ''}${r.repDelta}` : ''}${r.pilotSp ? ` · ${r.pilotSp} SP to your pilots' careers` : ''} · ledger: ${r.ledgerEvent}`);
             this.applyState.set('applied');
         } catch (e) {

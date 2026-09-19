@@ -1,4 +1,3 @@
-// DIRECTIVE-BOUNDARY-1 Slice 1 — shared scope classification, used by BOTH the ESLint rule (plugin.mjs) and the
 // baseline generator (gen-baseline.mjs). Because they classify identically, the generated baseline is complete by
 // construction → `nx lint` exits 0 today (every existing forbidden edge is grandfathered). NON-PRODUCTION (config).
 import { readFileSync } from 'node:fs';

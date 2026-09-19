@@ -35,7 +35,6 @@ export class FactionsCatalogService extends CatalogBaseService<MULFactions | Raw
     }
 
     // BCE-EDIT (REBASE-1 P1 c, SLICE-1 re-home ruling #2): replace the working faction set with a per-era
-    // slice's active factions (DEPLOY-005 / HOTFIX-011 — the era-gated faction-select runs on this until the
     // full catalog lands). Same hydrate path (sorts, era-membership sets, name/id maps) as a full load.
     public hydrateSlice(factions: readonly MULFaction[]): void {
         this.hydrate({ factions: factions as MULFaction[] } as MULFactions);

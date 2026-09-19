@@ -1,14 +1,3 @@
-/*
- * BCE retool — New Campaign, step 3: faction & starting unit. DIRECTIVE-014.
- * The FACTION list (LEFT) is now MekBay's ERA-GATED factions (faction.eras[era]
- * non-empty), scoped by the step-2 archetype -> group, grouped for play (majors
- * bucketed by affinity, long tail collapsible), each card decorated with a cited
- * blurb + colors from faction-flavor.ts when matched. The starting-unit column
- * (RIGHT) is unchanged: placeholder formations (bridged from faction-data.ts) or
- * make-your-own. Data streams via the same DataService the roster kicks; on
- * catalog failure we fall back to the placeholder faction list so the wizard
- * still proceeds. Writes faction + unit to the wizard state, advances to step 4.
- */
 import { Component, ChangeDetectionStrategy, computed, signal, inject, effect, Injector } from '@angular/core';
 import { Router } from '@angular/router';
 import { NewCampaignState } from '../new-campaign-state';
@@ -52,14 +41,11 @@ export class FactionComponent {
     });
     protected readonly eraShort = computed(() => this.era()?.name ?? '—');
 
-    /** Wizard era -> MekBay era id (only once data is ready). HOTFIX-011: re-drives on a catalog/slice swap. */
     protected readonly eraId = computed(() => {
         this.data.catalogVersion();
         return this.ready() ? resolveMekbayEraId(this.era(), this.data.getEras()) : null;
     });
 
-    /** The grouped, era-gated, archetype-scoped pick. HOTFIX-011: catalogVersion() makes it recompute when
-     *  the resident slice swaps (getFactions() is a plain read; isDataReady stays true across a slice swap). */
     protected readonly pick = computed<FactionPick>(() => {
         this.data.catalogVersion();
         if (!this.ready()) return EMPTY_PICK;
@@ -73,16 +59,12 @@ export class FactionComponent {
         const c = this.state.force();
         return c ? FACTION_DATA[c] ?? [] : [];
     });
-    /** HOTFIX-011: show the placeholder list when the catalog FAILED (dataError) OR loaded-but-yielded-zero
-     *  factions (empty-success) — never an empty column. (buildFactionPick already era-relaxes when it can;
-     *  this covers a total catalog failure where getFactions() is empty.) */
     protected readonly showFallback = computed(() => this.dataError() || (this.ready() && this.pick().count === 0));
 
     protected readonly selectedFaction = signal<string | null>(null);
     protected readonly selectedUnit = signal<string | null>(null);
     protected readonly expanded = signal<Record<string, boolean>>({}); // per-section overflow toggles
 
-    // ── Merc command identity (D-016, MERC path) ──
     protected readonly isMerc = computed(() => this.state.force() === 'MERC');
     protected readonly mercCommands = MERC_COMMANDS;
     protected readonly ratings = MERC_RATINGS;
@@ -128,7 +110,6 @@ export class FactionComponent {
                         this.selectedUnit.set(CUSTOM_UNIT);
                     }
                 } else if (this.showFallback()) {
-                    // HOTFIX-011: empty-success / catalog-failure → default-select the first placeholder faction
                     // so the column is never empty and Proceed can enable.
                     const fb = this.fallbackGroups();
                     const name = (prev ? fb.find((f) => f.name === prev)?.name : undefined) ?? fb[0]?.name ?? null;
@@ -140,9 +121,9 @@ export class FactionComponent {
                 const misses = flavorMisses(this.data.getFactions(), code, this.eraId());
                 const total = p.count;
                 if (misses.length) {
-                    console.warn(`[D-014 flavor] ${total - misses.length}/${total} matched in ${this.eraShort()}; ${misses.length} fallback (no flavor): ${misses.join(', ')}`);
+                    console.warn(`[flavor] ${total - misses.length}/${total} matched in ${this.eraShort()}; ${misses.length} fallback (no flavor): ${misses.join(', ')}`);
                 } else {
-                    console.info(`[D-014 flavor] ${total}/${total} factions matched a flavor record in ${this.eraShort()}`);
+                    console.info(`[flavor] ${total}/${total} factions matched a flavor record in ${this.eraShort()}`);
                 }
             }
         }, { injector: this.injector });
@@ -158,7 +139,6 @@ export class FactionComponent {
         try {
             if (await this.data.ensureSliceIndex()) {
                 const eraId = resolveMekbayEraId(this.era(), this.data.getEras());
-                // HOTFIX-011: load (or SWITCH to) THIS era's slice — do NOT early-return on isDataReady, which
                 // may reflect a DIFFERENT era's resident slice (the stale-slice empty-column bug). ensureSlice
                 // now reloads when the resident era differs.
                 if (eraId != null && (await this.data.ensureSlice(eraId))) return;
@@ -186,13 +166,11 @@ export class FactionComponent {
     /** Campaign start year (step-2) — gates the OOB formation list. */
     protected readonly startYear = computed(() => this.state.startDate()?.y ?? this.state.era()?.from ?? 3025);
 
-    /** Canon OOB formations for the selected faction — up to 5, era-preferred, never strands (D-021/D-061). */
     protected readonly formations = computed<FormationPick[]>(() => {
         const fac = this.selectedFaction();
         return fac ? formationsFor(fac, this.startYear()) : [];
     });
 
-    // ── DIRECTIVE-061: the per-command right-side visual (crest + redrawn paint swatch) + fallbacks ──
     /** The selected faction's catalog view (for the faction-crest + heraldry-colour fallbacks). */
     private readonly selectedFactionView = computed(() => {
         const name = this.selectedFaction();
@@ -256,9 +234,8 @@ export class FactionComponent {
         this.expanded.update((m) => ({ ...m, [group]: !m[group] }));
     }
 
-    // ── Merc command setup (D-016) ──
     private initMerc(): void {
-        this.market.warm(); // background-load the catalog so the Begin-time market gen is fast (D-017)
+        this.market.warm();
         const prevName = this.state.commandName();
         const prevRating = this.state.rating();
         if (prevName) {
@@ -325,7 +302,6 @@ export class FactionComponent {
         if (!fac || !unit) return;
         this.state.setFaction(fac);
         this.state.setUnit(unit);
-        // D-021: a chosen formation seeds generation + frames the campaign; its logistics value
         // rides the existing logisticsProfile display seam. MAKE YOUR OWN clears both (un-seeded).
         const f = this.selectedFormation();
         if (f && unit !== CUSTOM_UNIT) {

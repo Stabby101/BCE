@@ -1,8 +1,3 @@
-/*
- * DIRECTIVE-IMPORT-3 Part 2 — hireable special personnel: the PURE logic (charge decision, afford guard, and the
- * ProtoInstance / Pilot mint). Kept dep-free (type-only imports) so the SP-cost + afford rules are unit-testable
- * in isolation; the panel component wires these to the Warchest + roster. HS-only, additive.
- */
 import type { HotSpotHireable } from './hotspots-catalog';
 import type { ProtoInstance } from '../force/force-generator';
 import type { Pilot } from '../barracks/pilot-generator';
@@ -18,13 +13,9 @@ export interface HiredMerc {
     charged: number;          // SP actually debited at hire (0 = a free one-time re-field)
     oneTimeHire: boolean;
     branchId: string | null;  // the track (mission branch) it was hired for (per-track lifecycle)
-    role?: string;            // IMPORT-6 FOLLOWUPS — the hireable's role (display; rides onto the player brief's "fielded" line)
+    role?: string;
 }
 
-/** IMPORT-6 FOLLOWUPS — a RESULTS-ONLY view of the special personnel actually HIRED and fielded: the row shape stamped
- *  onto MissionForge.hiredWithYou (persisted with the spec → the player brief renders it from the record). Built from
- *  the hire lifecycle records + the minted unit/pilot — NEVER from the offer list (HotSpotBrief.hireable stays GM-side;
- *  no spCost / oneTimeHire / edge here). Pure. */
 export interface HiredWithYou { name: string; role: string; chassis?: string; model?: string; gunnery: number; piloting: number; }
 export function hiredWithYouRows(
     hired: readonly HiredMerc[] | null | undefined,
@@ -43,9 +34,6 @@ export function hiredWithYouRows(
     });
 }
 
-/** IMPORT-3 P2 — the SP charge to FIELD a hireable: `spCost` per track, EXCEPT a `oneTimeHire` already paid for
- *  this contract → 0 (fielded free thereafter). Pure + data-driven (the exact spCost is author/book data, so
- *  per-track-vs-per-contract is a flag, never hard-coded). */
 export function mercHireCharge(h: HotSpotHireable, alreadyPaidKeys: readonly string[]): number {
     if (h.oneTimeHire && alreadyPaidKeys.includes(h.name)) return 0;
     return Math.max(0, Math.round(h.spCost || 0));
@@ -81,8 +69,6 @@ export function buildMercInstance(h: HotSpotHireable, unit?: ResolvedMercUnit): 
     };
 }
 
-/** Mint the merc's NAMED pilot, linked to the instance, with a campaign card (Edge from the hireable). Named so
- *  it renders on the pilot card + deploy cell like any pilot, and shares combat-pay at resolve (D-125). */
 export function buildMercPilot(h: HotSpotHireable, instanceId: string): Pilot {
     const pilot: Pilot = {
         pilotId: uid('mercp'),

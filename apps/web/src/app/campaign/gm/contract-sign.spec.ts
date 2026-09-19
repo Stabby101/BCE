@@ -1,7 +1,3 @@
-/*
- * GM-2 P2b — the GM-side belts a phone-signed contract must pass, pinned: the hot spot, the Command lock, the Scale
- * range, the rep budget against the company's OWN home reputation, and the no-primary refusal.
- */
 import { signRefusal } from './contract-sign.service';
 import { repBudgetFor } from '../chaos/chaos-contract-steps';
 import type { ChaosContract } from '../chaos/chaos-contract';
@@ -9,7 +5,7 @@ import type { ChaosContract } from '../chaos/chaos-contract';
 const primary: ChaosContract = { id: 'cc-1', type: 'garrison', scale: 2, intensity: 2, status: 'active', acceptedDate: null, tracksDone: 0, hotspotId: 'hs-1', steps: { basePay: 2, command: 1, salvage: 2, support: 1, transport: 2 } };
 const signed = (over: Partial<ChaosContract> = {}): ChaosContract => ({ ...primary, id: 'pc-home-a-hs-1', steps: { ...primary.steps, basePay: 3 }, repSpent: 1, transportSp: 420, ...over });
 
-describe('signRefusal (GM-2 P2b — the GM device\'s belts on a phone-signed contract)', () => {
+describe('signRefusal (P2b — the GM device\'s belts on a phone-signed contract)', () => {
     it('a contract on the session\'s hot spot, Command untouched, within the company\'s rep budget → written', () => {
         expect(signRefusal(signed(), primary, 4)).toBeNull();
     });
@@ -34,8 +30,8 @@ describe('signRefusal — P2b-fix: the PATH check against the authored seed', ()
         expect(signRefusal(forged, primary, 4, seed)).toContain('below the chain');
     });
     it('a landing no chain reaches (a dash row; a column moved down outside a sacrifice) is refused', () => {
-        expect(signRefusal(signed({ steps: { ...primary.steps, basePay: 3, transport: 9 }, repSpent: 4 }), primary, 4, seed)).toContain('off the D-128 chain');
-        expect(signRefusal(signed({ steps: { ...primary.steps, basePay: 0 }, repSpent: 0 }), primary, 4, seed)).toContain('off the D-128 chain'); // Base Pay down TWO rows with every other column at its seed: no pair of sacrifices lands there
+        expect(signRefusal(signed({ steps: { ...primary.steps, basePay: 3, transport: 9 }, repSpent: 4 }), primary, 4, seed)).toContain('off the chain');
+        expect(signRefusal(signed({ steps: { ...primary.steps, basePay: 0 }, repSpent: 0 }), primary, 4, seed)).toContain('off the chain'); // Base Pay down TWO rows with every other column at its seed: no pair of sacrifices lands there
     });
     it('a spend ABOVE the minimal cost is tolerated (the budget belt still bounds it); an unknown hot spot refuses', () => {
         expect(signRefusal(signed({ repSpent: 2 }), primary, 4, seed)).toBeNull();

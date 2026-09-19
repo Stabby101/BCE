@@ -1,11 +1,3 @@
-/*
- * BCE — HSFORGE-1: the EMIT-TIME VALIDATOR (design §8.1). Every generated HotSpot passes this gate or
- * is rerolled on the next RNG substream; N failures fail LOUD in the orchestrator. Pure (no Angular).
- * Checks: structure (C1/C7) · contract math (C5/C6/C13, asserted against BOTH sides) · two-sided
- * completeness incl. the Part E shared-field rule (C3/C8) · faction legality via injected predicates
- * (C4) · era vocabulary (C2) · prose: slot residue (C11), the TWO-PLANET class (D-090/D-098/D-100 —
- * canon-world names ≠ the chosen world), player-safety on pre-sign fields (C12), profile sanity (C17).
- */
 import { stepValue, CHAOS_CONTRACT_TYPES, type ContractColumn } from '../chaos-contract-steps';
 import { hotspotTypeId, factionHiresMercenaries, type HotSpot, type HotSpotContractTerms, type SideOffer } from '../hotspots-catalog'; // ERA-1 — factionHiresMercenaries / SideOffer
 
@@ -98,7 +90,6 @@ export function validateForged(h: HotSpot, ctx: ValidateCtx): string[] {
     const ct = CHAOS_CONTRACT_TYPES.find((x) => x.id === typeId);
     if (!ct) err(`type '${h.type}' maps to no ChaosContractType`);
     else if (h.contract.intensity < ct.intensityRange[0] || h.contract.intensity > ct.intensityRange[1]) {
-        // C6 (post-IMPORT-6): negotiation signs the AUTHORED intensity verbatim (authoredIntensity) — there is no clamp any
         // more. This stays an EMIT-TIME forge invariant: the type string the forge chose must be the one whose range contains
         // the intensity it rolled (and that intensity must equal the main-path depth — the next check).
         err(`intensity ${h.contract.intensity} outside '${typeId}' range [${ct.intensityRange}] — a forged hot spot must sign inside its mapped type's range AND at main-path depth ${ctx.expectedDepth} (C6)`);
@@ -119,7 +110,7 @@ export function validateForged(h: HotSpot, ctx: ValidateCtx): string[] {
             if (o.side === 'attacker' || o.side === 'both') atk++;
             if (o.side === 'defender' || o.side === 'both') def++;
         }
-        if (!atk || !def) err(`track ${t.id}: both VP columns must be non-empty (attacker ${atk} / defender ${def}) — D-134 renders two columns`);
+        if (!atk || !def) err(`track ${t.id}: both VP columns must be non-empty (attacker ${atk} / defender ${def}) — renders two columns`);
     }
 
     // ── faction legality (C4) ──
@@ -181,7 +172,7 @@ export function validateForged(h: HotSpot, ctx: ValidateCtx): string[] {
         over(`track ${t.id} name`, t.name, 30);
         over(`track ${t.id} situation`, t.situation, 1100);
         over(`track ${t.id} deployment`, t.deployment, 960);
-        over(`track ${t.id} trackEnd`, t.trackEnd, 131); // v1.0.1 (James 2026-07-18): +1 over the shared defend template's 129-ch string — margin, not a shared-string edit
+        over(`track ${t.id} trackEnd`, t.trackEnd, 131);
         over(`track ${t.id} salvagePolicy`, t.salvagePolicy, 150);
         over(`track ${t.id} specialRules`, t.specialRules, 390);
         for (const [i, o] of (t.objectives ?? []).entries()) over(`track ${t.id} objective[${i}]`, o.text, 200);

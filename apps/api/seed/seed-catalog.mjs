@@ -1,19 +1,3 @@
-/*
- * BCE Inventory I (DIRECTIVE-055, T-037 slice 1) — the reproducible CATALOG SEED (build-time).
- *
- * Run:  node apps/api/seed/seed-catalog.mjs   (re-runnable from a clean DB — it DELETEs + re-INSERTs).
- *
- * Two-source merge into one SQLite table `component_catalog` (in the api's .data/campaigns.db):
- *   SOURCE (A) — MekBay's equipment registry (db.mekbay.com/equipment2.json), the machine-readable
- *     WITNESS for the open-ended hundreds of weapon|ammo|misc. We read the canon FACTS (cost, tonnage,
- *     crit, tech base/rating, intro/extinct/reintro years) and re-express them in the BCE schema,
- *     CITED to TechManual (each entry's own rulesRefs page). Armor is NOT taken from here — Source (B)
- *     owns armor (formula-priced). REF-001: equipment2.json is a witness, cached to .seed-cache/ for
- *     offline re-runs, NEVER committed.
- *   SOURCE (B) — the BCE-authored structural components (armor/structure/engine/gyro/cockpit/actuator).
- *
- * DATA-002: this runs at SEED/BUILD time. The api runtime never fetches — it reads the baked SQLite.
- */
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

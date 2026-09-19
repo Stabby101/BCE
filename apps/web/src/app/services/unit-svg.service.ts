@@ -66,9 +66,7 @@ export class UnitSvgService {
         });
         // Data effect
         effect(() => {
-            // BCE-EDIT (REBASE-1 P4 / H22): a throw in this vendored render effect wedges zoneless CD for the unit's
             // effect graph and strands the sheet on "Loading…" (no Retry). Contain it so one bad render can never hang a
-            // sheet host — the H20 "a sheet host can never hang" invariant, extended to render-time faults. main owns H22.
             try { this.updateAllDisplays(); } catch (e) { this.logger.error('unit-svg render effect (updateAllDisplays) threw: ' + e); }
             this.version(); // Track version to force a repaint
         });
@@ -629,10 +627,8 @@ export class UnitSvgService {
     protected updateHeatDisplay(heat: HeatProfile) {
         const svg = this.unit.svg();
         if (!svg) return;
-        // BCE-EDIT (REBASE-1 P4 / H22): guard undefined heat. A Mek OpFor sheet opened after a Hot Spots resolve
         // re-ran this effect with an undefined heat → `heat.next` threw inside the vendored render effect, wedging
         // zoneless CD and stranding the sheet on "Loading…" with no Retry. Pristine heat is {current:0} → this guard
-        // only no-ops the genuinely-absent case. (main owns H22; this is the vendored guard applied on the branch.)
         if (!heat) return;
 
         const heatScale = svg.getElementById('heatScale') as SVGGElement | null;

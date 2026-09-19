@@ -1,33 +1,12 @@
-/*
- * BCE campaign-pack — DEPLOYED-SET accessor (DIRECTIVE-027). Pure TS, no Angular/DOM.
- *
- * The ONE source of truth for "what is deployed", derived from the per-instance condition (the
- * roster dropdown today; the formal deploy-binding slice swaps the SOURCE without changing this
- * signature). This is the future PLAYER-VIEW forcepack feed: at the LAN/roles slice (T-012/T-016,
- * ROLE-002) a logged-in player's MekBay consumes deployedSet() verbatim — keep it one function,
- * one condition constant. Category split is ready — 'Mechs today; armor/infantry/aero return zero
- * until those unit types exist.
- */
 import type { ProtoInstance } from './force-generator';
 
 /** The condition value meaning "on the active operation" (matches CONDITIONS in roster/sample-force). */
 export const DEPLOYED_CONDITION = 'Deployed';
 
-/** The deployed set — the future player-view forcepack. Single source of truth.
- *  HF-020: a Quick Mission is deployed-only by contract (D-069) — every unit is on the field — so passing
- *  `quickMission=true` returns the WHOLE force, a belt-and-suspenders so a stray Reserve can never strand a
- *  one-shot's BLUFOR. Campaigns (default false) stay honest: only condition==='Deployed' counts. */
-/** ODM-18 P1 (ruling 5 — extraction is LAW, duplicated guards drift): conditions a unit can be deployed
- *  FROM. The ONE source for deploy-roster's checkbox gate AND the intent adapter's set-deploy guard —
- *  'In repair' / 'Cold storage' can never take the field, from ANY caller. */
 export const DEPLOY_ELIGIBLE: ReadonlySet<string> = new Set(['Active', 'Reserve', 'Deployed']);
 export function canDeploy(condition: string | undefined | null): boolean {
     return DEPLOY_ELIGIBLE.has(condition ?? '');
 }
-/** TESTER-ODM-1 #2 — THE FULL deploy gate, condition AND crew, in one place. The condition test alone let
- *  an UNPILOTED machine onto the field silently, and ODM-18's shared deploy intent made that reachable by
- *  players too. Returns null when the unit may take the field, else the honest reason to show in its place
- *  ('In repair' / 'Cold storage' / 'no crew') — every caller renders the same words. */
 export function deployBlocker(condition: string | undefined | null, hasCrew: boolean): string | null {
     if (!canDeploy(condition)) return condition || 'unavailable';
     return hasCrew ? null : 'no crew';

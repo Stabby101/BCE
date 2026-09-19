@@ -34,13 +34,13 @@ import { PackController } from '../pack/pack.controller';
         }),
         CampaignsModule, // DEPLOY-010: AdminController reads the total campaign count for /stats
     ],
-    controllers: [AuthController, AdminController, PackController], // ODM-1: entitled pack serving (AuthModule owns entitlement wiring)
+    controllers: [AuthController, AdminController, PackController],
     providers: [
         UsersService,
-        EntitlementsService, // ODM-1: feature grants
+        EntitlementsService,
         AuthService,
         RecoverThrottleService, // DEPLOY-009: per-IP limiter for POST /auth/recover (enumeration defense)
-        BackupService, // HARDEN-7 A1: the AdminController /admin/export off-box DB snapshot
+        BackupService,
         PresenceService, // DEPLOY-010: live online-user presence (the gateway updates it)
         ApprovedGmGuard,
         AdminGuard,

@@ -1,10 +1,3 @@
-/*
- * BCE — HSFORGE-1: the conflict-pair generator. Pure (no Angular): archetype draw + a plausible
- * opposed state pair via the D-102 oracle (isPlausibleMatchup over the era's factionAdjacency).
- * Same-faction archetypes (merc-vs-merc, clan-internal) bypass the oracle by explicit whitelist —
- * both have authored precedent (hs-drm-15, hs-drm-02). Non-state archetypes keep the STATE pair as
- * the combat factions and put the archetype in the employer STRINGS (the DR pack's own pattern).
- */
 import { isPlausibleMatchup } from '../../contract/faction-matchup';
 import type { EmployerArchetype } from './hs-forge-data';
 import type { EraCtx } from './hs-forge-worlds';
@@ -27,11 +20,6 @@ export interface PairCtx {
     factionOk: (name: string) => boolean;     // resolvable in the unit catalog (getFactionByName) w/ a non-empty era pool
     mulOk: (name: string) => boolean;         // ilClan: hsFactionToMulFaction non-null (inert true off-ilClan)
     isClanFaction: (name: string) => boolean; // owner is a Clan (gates the clan-internal archetype)
-    /** WORLD-LOCAL adjacency (the P2 FOLLOWUPS refinement, wave-shipped): factions owning ≥1 system
-     *  near the CHOSEN world at the era. When provided, opponents are preferred from this set before
-     *  the faction-level relax — a Draconis March offer stops drawing the Taurian Concordat just
-     *  because FS borders TC somewhere ELSE. Soft: an empty intersection falls back to the full
-     *  faction-level list (never a dead-end — the D-102 relax discipline). */
     localFactions?: ReadonlySet<string>;
     /** ERA-1 (ruling 2) — does this faction HIRE mercenaries (hotspots-catalog `factionHiresMercenaries`)? A faction
      *  that does not (an Invasion Clan) is never side A / the employer's flavor faction; on a world it HOLDS the
@@ -93,10 +81,6 @@ export function pickConflictPair(owner: string, archetypes: readonly EmployerArc
     }
 }
 
-/** Combat-legal opponents plausibly opposed to `owner` at the era: the D-102 oracle over the real
- *  adjacency + Pirates always eligible (raiders cross any border). WORLD-LOCAL preference: when the
- *  ctx carries the chosen world's local-faction set, opponents actually present NEAR the world win
- *  over far-border matchups; empty intersection → the full faction-level list (soft, never dead-ends). */
 export function plausibleOpponents(owner: string, ctx: PairCtx): string[] {
     const matchCtx = { adjacency: ctx.adjacency, year: ctx.era.year };
     const borders = (ctx.adjacency[owner] ?? []).filter((t) => combatOk(ctx, t) && isPlausibleMatchup(owner, t, matchCtx));

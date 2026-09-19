@@ -1,7 +1,6 @@
 <div class="roster-head">
     <span class="ph">Unit roster</span>
     @if (formationContext(); as fc) { <span class="formctx">{{ fc }}</span> }
-    <!-- PD3 P4 (PD3-1) — in Hot Spots the button lands on the HS MARKET (SP); the Traditional C-bill overlay stays Traditional-only -->
     @if (isHotspots()) {
         <button type="button" class="acq-open" (click)="navigate.emit('chaos-market')" data-testid="ru-market">+ Market ▸</button>
     } @else {
@@ -15,11 +14,9 @@
     } @else if (!ready()) {
         <span class="ph-note">loading unit data + sheets from db.mekbay.com…</span>
     }
-    <!-- DIRECTIVE-COMPLIANCE-1 Part C — data-source credit alongside the served unit data (CC BY-NC-SA 4.0). -->
     <span class="ph-note ph-datacredit">Unit data &copy; The MegaMek Team — CC BY-NC-SA 4.0</span>
 </p>
 
-<!-- ACTIVE MISSION cell (D-027) — the deployed set's dashboard face, above the lances -->
 @if (activeMission(); as m) {
     <div class="missioncell">
         <div class="mc-main">
@@ -53,8 +50,6 @@
                 <div class="ct"><span class="n">{{ c.deployed }}<small>/{{ c.total }}</small></span><span class="t">{{ c.label }}</span></div>
             }
         </div>
-        <!-- PD3 P1 (PD3-12) — the REPAIR badge must OUTLIVE the mission: resolveBranch clears the spec, the active cell goes,
-             and the count that matters most (right after a played track) vanished with it. HS only; Traditional idle byte-identical. -->
         @if (isHotspots()) {
             <div class="mc-bar"><span>REPAIR <span data-testid="mc-repair">{{ repairBadge() }}</span></span><span class="mc-hint">@if (repairBadge()) { damaged units — Repair &amp; Infirmary on the rail } @else { the force is battle-ready }</span></div>
         }
@@ -85,7 +80,6 @@
                     @for (r of reserveUnits(); track r.id) { <option [value]="r.id">{{ r.name }}</option> }
                 </select>
             }
-            <!-- D-071 (B): print every record sheet in this group, one per page (ensures all sheets load first) -->
             <button type="button" class="lprint" [disabled]="printingLance() === sec.id" (click)="printLance(sec)" [attr.aria-label]="'Print every record sheet in ' + sec.name">{{ printingLance() === sec.id ? 'Loading…' : '⎙ Print' }}</button>
         </div>
         <div class="grid">
@@ -118,11 +112,8 @@
                             <!-- PILOT BLOCK (display ≠ control): name / callsign chip / G·P chip + a ▾ change control -->
                             @if (hasPilots() || u.captured) {
                                 <div class="pilot" [class.empty]="!u.pilotId">
-                                    <!-- HOTFIX-002.2: line 1 (pmain) = NAME (flex:1, ~12ch floor) + skills + ▾ — these always hold
-                                         line 1; the flavor chips (callsign/kin) WRAP to line 2 before the name is crushed. -->
                                     <div class="pmain">
                                         @if (u.pilotId && renamingId() === u.pilotId) {
-                                            <!-- PD3 P4 (PD3-5) — the row RENAME: an inline input, save/cancel; persists through pilot.service.rename -->
                                             <input class="pname-in" [value]="renameDraft()" (input)="renameDraft.set($any($event.target).value)" (keydown.enter)="saveRename()" (keydown.escape)="cancelRename()" maxlength="40" aria-label="Pilot name" data-testid="ru-rename-input" />
                                             <button type="button" class="pren save" (click)="saveRename()" data-testid="ru-rename-save" aria-label="Save name">✓</button>
                                             <button type="button" class="pren" (click)="cancelRename()" aria-label="Cancel rename">✕</button>
@@ -133,7 +124,6 @@
                                         } @else {
                                             <span class="pname">&mdash; no pilot assigned &mdash;</span>
                                         }
-                                        <!-- the ▾ reuses the D-020 assignment list — an opacity:0 select over the chevron (no select text) -->
                                         <span class="chg">
                                             <span class="chev" aria-hidden="true">▾</span>
                                             <select class="chgsel" (change)="reassignPilot(u.id, $any($event.target).value)" [attr.aria-label]="u.name + ' — change pilot'">
@@ -156,16 +146,11 @@
                                     }
                                 </div>
                             }
-                            <!-- CONTROL ROW: condition + lance — labeled, reserved chevron space, ellipsis, ≥40px targets.
-                                 D-069 (B): dropped for a Quick Mission — a one-shot force is simply deployed, no roster
-                                 management (the pilot control above + the sheet stay). Campaign roster keeps them. -->
                             @if (!quickMission()) {
                                 <div class="ctrls">
                                     <div class="ctl" [class.deployed]="u.cond === 'Deployed'" [class.synced]="syncedId() === u.id">
                                         <label>Condition @if (syncedId() === u.id) { <span class="sok">✓</span> }</label>
                                         <select class="csel" (change)="setCondition(u.id, $any($event.target).value)" [attr.aria-label]="u.name + ' condition'">
-                                            <!-- HOTFIX-024 — 'In repair' is greyed out for an undamaged unit (nothing to repair → it would
-                                                 strand: invisible in the bays + excluded from the mission pool). Stays selectable for damaged units. -->
                                             @for (c of conditions; track c) { <option [value]="c" [selected]="c === u.cond" [disabled]="c === 'In repair' && !u.hasDamage && c !== u.cond">{{ c }}</option> }
                                         </select>
                                     </div>
@@ -176,7 +161,6 @@
                                             <option [value]="reserveKey" [selected]="u.lanceId === reserveKey">Reserve</option>
                                         </select>
                                     </div>
-                                    <!-- PD3 P4 (PD3-1) — HS only: Sell ▸ lands on the Market's sell (repair-first, SP); RELEASE is 0 SP, any condition -->
                                     @if (isHotspots()) {
                                         <div class="ctl ru-acts">
                                             <label>Leave the roster</label>
@@ -215,9 +199,6 @@
 <button type="button" class="newlance" (click)="newLance()" aria-label="Create a new empty lance">+ new lance</button>
 }
 
-<!-- DIRECTIVE-IMPORT-7 Part B — Fleet & Transport (named DropShips, fuel bars, the jump-passage tier card) is a Traditional
-     resource-tier mechanic; the Draconis Reach book has NO fuel model (transport = the negotiated SP term + transit time, which the
-     HS brief keeps as its transit line). Traditional byte-unchanged (the @if is the only edit). -->
 @if (!isHotspots()) {
 <div class="cat">
     <div class="cathead"><span>Fleet &amp; transport</span><span class="cnt">{{ fleetCount() }}</span></div>

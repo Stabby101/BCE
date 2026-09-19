@@ -1,19 +1,3 @@
-/*
- * REBASE-1 P1 (e) — the gen-slices SHAPE CHECK. Runs in prerun AFTER gen-slices: validate that every emitted
- * per-era slim unit conforms to the PIN's UnitSummary shape, and FAIL the build on a fork-shape slice.
- *
- * WHY: the slices are witness-derived, build-emitted, gitignored (REF-001). The SLICE-1 render harness can pass
- * on a stale/fork-shape slice the runtime tolerates but that is subtly wrong — the exact "plausible result, no
- * witness" class this repo keeps paying for. The re-baseline changed the unit shape upstream; this asserts the
- * generator caught up. Discriminators (source of truth in the pin types, cited):
- *   techBase ∈ {'Inner Sphere','Clan'}          — tech.model.ts:7  (upstream DROPPED 'Mixed'; mixed-tech is `mixed`)
- *   level    ∈ ComponentTechLevel NAME strings   — entity/types/tech.ts:231 (fork used numeric 0-3)
- *   mixed    is boolean                           — unit-summary.model.ts:175 (new pin field; slimUnit must carry it)
- *   pv       is number | undefined                — unit-summary.model.ts:240 (DIRECTIVE-127 fold)
- *   comp[].t ∈ the UnitComponent type union       — unit-summary.model.ts:97
- * GRACEFUL: no slice dir / no slices (an offline build where gen-slices no-op'd) → nothing to validate → exit 0,
- * matching gen-slices' own graceful no-op. Mutation-killed: `node scripts/verify-slice-shape.mjs --selftest`.
- */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';

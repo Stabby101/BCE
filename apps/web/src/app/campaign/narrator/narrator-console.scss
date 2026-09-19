@@ -1,5 +1,3 @@
-/* Footer console strip (D-038) — one slim dossier line in the existing footer deadspace; height-safe
-   (no stolen content height). Mode OFF renders nothing (host collapses). Theme tokens only. */
 :host { display: contents; }
 
 .ncon {

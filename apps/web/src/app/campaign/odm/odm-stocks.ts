@@ -1,11 +1,3 @@
-/*
- * DIRECTIVE-ODM-11 — the SURVIVAL economy, pure module: the authored stock seeds + the display derivations.
- * A merc economy models cash flow; a survival economy models attrition — stock − consumption = operations
- * remaining, and you cannot earn your way out. EVERY NUMBER HERE COMES FROM THE AUTHORED PACK LEDGER (§5 of
- * its packet) — nothing is invented, per the directive. NB: comments AND strings here reach the served GM
- * bundle — never name pack content (ops, worlds, people; the odm2 dist leak-net greps for it).
- * v1 is DISPLAY + GM manual adjust only (R2: no auto-consumption; R1: below-floor WARNS, never gates BEGIN).
- */
 import type { OdmStocks } from '../new-campaign-state';
 
 /** The authored seed — the pack ledger at campaign start. Bin insertion order is the render order.
@@ -29,14 +21,11 @@ export function odmStartingStocks(): OdmStocks {
             'Arrow IV': { tons: 0, floorTons: null },
             'Inferno': { tons: 0, floorTons: null },
         },
-        exposure: 'LOW', // ODM-11 Part B — GM-set; a fresh, undiscovered company starts quiet
-        invAmmoMigrated: true, // ODM-13 Ruling 1 — new campaigns are born reconciled (ammo is bins, never inventory)
+        exposure: 'LOW',
+        invAmmoMigrated: true,
     };
 }
 
-/** ODM-13 Ruling 2 (extensible bins) — resolve a free-text ammo label (a D-056 inventory line label OR a
- *  catalog comp display name) to its BIN name. The authored floored set maps by class; anything else becomes
- *  its own floorless bin ("found materiel") named by the cleaned class text. Ammo is ALWAYS bins. */
 export function binNameForAmmo(label: string): string {
     const s = (label || '').replace(/\bammo\b/gi, ' ').replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim();
     if (/\bLRM\b/i.test(s) && !/streak|extended|enhanced|torpedo/i.test(s)) return 'LRM';

@@ -1,9 +1,3 @@
-/*
- * BCE retool — LOAD browser (DIRECTIVE-013). Cover option 02 opens this: a list of ALL
- * saved campaigns (name · summary · savedAt, newest first). Pick one to load; per-entry
- * Delete (with confirm) so autosaves don't accumulate. Esc / click-out cancel. Theme
- * tokens (inherited from the cover .theme-dossier host). MekBay components unedited.
- */
 import { Component, ChangeDetectionStrategy, HostListener, inject, output, signal } from '@angular/core';
 import { CampaignSaveStore, campaignProgress, type SaveRecord } from '../campaign/campaign-save-store';
 
@@ -57,7 +51,7 @@ import { CampaignSaveStore, campaignProgress, type SaveRecord } from '../campaig
         .nm { font-family: var(--label); font-weight: 600; letter-spacing: .5px; font-size: 14px; text-transform: uppercase; }
         .sum { font-family: var(--mono); font-size: 11px; color: var(--stamp); }
         .pick:hover .sum, .pick:focus-visible .sum { color: var(--paper); }
-        .prog { font-family: var(--label); font-weight: 700; letter-spacing: .5px; font-size: 11.5px; color: var(--ink); } /* D-053: specific "where am I" — Day N · M missions */
+        .prog { font-family: var(--label); font-weight: 700; letter-spacing: .5px; font-size: 11.5px; color: var(--ink); }
         .pick:hover .prog, .pick:focus-visible .prog { color: var(--paper); }
         .when { font-family: var(--mono); font-size: 10px; color: var(--ink2); }
         .pick:hover .when, .pick:focus-visible .when { color: var(--paper); }
@@ -94,8 +88,6 @@ export class LoadBrowserComponent {
         await this.refresh();
     }
 
-    /** D-053: the specific progress label (Day N · M missions), derived from the record's own snapshot
-     *  — so existing autosaves get it with no migration. */
     protected progress(s: SaveRecord): string {
         return s.snapshot ? campaignProgress(s.snapshot) : '';
     }

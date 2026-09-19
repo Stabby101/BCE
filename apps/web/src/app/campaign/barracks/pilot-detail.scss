@@ -1,7 +1,6 @@
-/* Pilot detail (D-036) — dossier-theme tokens; the same overlay conventions as the walk/intel. */
 :host { display: contents; }
 
-.pd-overlay { position: fixed; inset: 0; z-index: 70; background: rgba(10, 8, 4, .6); display: flex; align-items: center; justify-content: center; padding: 18px 18px calc(18px + var(--bce-footer-h, 0px)); } /* IMPORT-7 A — clear the legal footer */
+.pd-overlay { position: fixed; inset: 0; z-index: 70; background: rgba(10, 8, 4, .6); display: flex; align-items: center; justify-content: center; padding: 18px 18px calc(18px + var(--bce-footer-h, 0px)); }
 .pd { background: var(--paper); border: 2px solid var(--ink); max-width: 720px; width: 100%; max-height: 92dvh; overflow-y: auto; padding: 16px 20px 20px; }
 .pd-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 10px; }
 .pd-id { display: flex; flex-direction: column; gap: 3px; }
@@ -9,7 +8,6 @@
 .pd-call { font-family: var(--mono); font-size: 13px; color: var(--stamp); margin-left: 8px; }
 .pd-skill { font-family: var(--mono); font-size: 12px; color: var(--ink2); }
 .pd-rating { font-size: 9px; letter-spacing: 1px; border: 1px solid currentColor; padding: 1px 6px; margin-left: 8px; }
-/* D-070 — inline identity editor (name + G/P) */
 .pd-editid { margin-left: 10px; }
 .pd-name-in { font-family: var(--stencil); font-size: 20px; letter-spacing: .5px; background: var(--paper2); border: 1.4px solid var(--ink2); color: var(--ink); padding: 2px 6px; max-width: 360px; width: 100%; }
 .pd-skill-edit { font-family: var(--mono); font-size: 12px; color: var(--ink2); margin-top: 4px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
@@ -39,9 +37,6 @@
 .pd-kv .k { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 9.5px; text-transform: uppercase; color: var(--ink2); display: block; }
 .pd-kv .vv { font-family: var(--mono); font-size: 12.5px; color: var(--ink); }
 
-/* DIRECTIVE-ODM-25 — the editable posting row. INERT outside ODM: the markup is behind canPost(), so no
-   element in a Traditional or Hot Spots campaign ever carries these classes. A full-width, ordinary select
-   with a real target — the whole finding this fixes was a control that existed and could not be operated. */
 .pd-postrow { margin-top: 8px; }
 .pd-postrow .k { font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 9.5px; text-transform: uppercase; color: var(--ink2); display: block; margin-bottom: 3px; }
 .pd-postsel { width: 100%; box-sizing: border-box; font-family: var(--mono); font-size: 12px; background: var(--paper2); border: 1.3px solid var(--ink2); color: var(--ink); padding: 8px 10px; min-height: 38px; cursor: pointer; }
@@ -66,7 +61,7 @@
 .g-gate { font-family: var(--mono); font-size: 9.5px; color: var(--warn); font-style: italic; margin-top: 2px; }
 .g-gate.held { color: var(--ok); font-style: normal; letter-spacing: 1px; }
 
-.cmodal { position: fixed; inset: 0; background: rgba(10, 8, 4, .55); display: flex; align-items: center; justify-content: center; padding: 20px 20px calc(20px + var(--bce-footer-h, 0px)); z-index: 80; } /* IMPORT-7 A — clear the legal footer */
+.cmodal { position: fixed; inset: 0; background: rgba(10, 8, 4, .55); display: flex; align-items: center; justify-content: center; padding: 20px 20px calc(20px + var(--bce-footer-h, 0px)); z-index: 80; }
 .cbox { background: var(--paper); border: 2px solid var(--ink); max-width: 460px; width: 100%; padding: 18px 20px; }
 .cmsg { font-family: var(--type); font-size: 13px; line-height: 1.55; color: var(--ink); margin: 8px 0 14px; }
 .cbtns { display: flex; justify-content: flex-end; gap: 10px; }

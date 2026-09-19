@@ -1,4 +1,3 @@
-// BCE — DIRECTIVE-HARDEN-1 Part A: the apps/web ESLint gate (flat config, eslint 9 + angular-eslint 21).
 //
 // POSTURE (first pass, advisory-with-teeth): recommended rulesets; every rule with PRE-EXISTING violations at
 // gate-creation (2026-07-06: 649 findings, 146/533 files) is demoted to 'warn' — the grandfathered backlog,
@@ -13,7 +12,7 @@ import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import angular from 'angular-eslint';
 import prettier from 'eslint-config-prettier';
-import bceBoundary from './boundary/plugin.mjs'; // DIRECTIVE-BOUNDARY-1 Slice 1 — the engine/gamesystem boundary fence
+import bceBoundary from './boundary/plugin.mjs';
 
 const tsExtends = [eslint.configs.recommended, ...tseslint.configs.recommended, ...angular.configs.tsRecommended, prettier];
 
@@ -68,7 +67,6 @@ export default tseslint.config(
             '@angular-eslint/template/eqeqeq': 'warn', // [38] grandfathered — template == vs ===; audit in a HARDEN pass
         },
     },
-    // DIRECTIVE-BOUNDARY-1 Slice 1 — the engine/gamesystem boundary fence (advisory-with-teeth). Existing forbidden
     // edges (baseline.json) → warn; any NEW cross-boundary import → error that fails `nx lint`. See BOUNDARY-MAP.md §4.
     {
         files: ['src/app/**/*.ts'],

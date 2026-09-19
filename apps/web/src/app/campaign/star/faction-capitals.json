@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "provenance": "DIRECTIVE-079 — OUR faction tag -> capital systemId. Absent/missing -> Terra.",
+    "provenance": "OUR faction tag -> capital systemId. Absent/missing -> Terra.",
     "fallback": "terra"
   },
   "capitals": {

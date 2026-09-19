@@ -1,15 +1,3 @@
-/*
- * BCE Inventory II (DIRECTIVE-056, T-037 slice 2) — the GM Inventory tab.
- *
- * Reads the snapshot `inventory` (rolled once at Begin / back-filled on load by InventoryService) and
- * renders it by category — collapsible sections, per-row on-hand / floor / status chip / notes. Status
- * is recomputed at render via the pure statusOf (no stored status to drift). Joins /api/catalog for
- * provenance on catalog-sourced rows (components/armor). GM surface only (a dashboard child — absent
- * from the player bundle). Collapsed state is UI-only (localStorage), never campaign state.
- *
- * SEAMS (build NOTHING this slice): a per-row Δ-since-last-cycle slot (D-059) and a buy/sell control
- * mount (D-057) are marked in the template as comments — no dead buttons.
- */
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { computeLedger } from '../economy-ledger';
@@ -40,7 +28,6 @@ const SEV: Record<InventoryStatus, string> = { GOOD: 'sev-G', LOW: 'sev-Y', CRIT
         } @else {
             <div class="inv-meta">Rolled {{ inv()!.generatedAt }} · tier <b>{{ inv()!.tier }}</b> · {{ inv()!.lines.length }} lines @if (!reachable()) {<span class="off">· catalog offline (citations hidden)</span>}</div>
 
-            <!-- LEDGER (D-058) — the monthly economy projection; the in-the-black reflects PERSONNEL PAYROLL (T-037) -->
             <div class="ledger" data-testid="treasury-ledger">
                 <div class="led-head">Monthly ledger <span class="sub">projected recurring economy</span></div>
                 <div class="led-row"><span class="led-l">Treasury</span><span class="led-v">{{ money(ledger().treasury) }} C-bills</span></div>
@@ -55,9 +42,6 @@ const SEV: Record<InventoryStatus, string> = { GOOD: 'sev-G', LOW: 'sev-Y', CRIT
                 </div>
             </div>
 
-            <!-- DIRECTIVE-064/065 SHOP. IN-SYSTEM = the relevant, capped, common-weighted local stock (collapsible
-                 by category, scrollable). OUT-OF-SYSTEM = a search → sourcing roll → a paid order that delivers on
-                 the clock at +surcharge. GM surface (the Inventory tab is GM-only). -->
             <section class="shop">
                 <div class="shop-head">
                     <span class="shop-title">Parts Shop Market ({{ source() === 'out-of-system' ? 'Out-of-System' : 'In-System' }})</span>
@@ -153,7 +137,6 @@ const SEV: Record<InventoryStatus, string> = { GOOD: 'sev-G', LOW: 'sev-Y', CRIT
                                     @for (line of cat.lines; track line.label) {
                                         <tr>
                                             <td class="l">{{ line.label }}</td>
-                                            <!-- D-066: ON HAND is GM-adjustable — stepper + inline number → setLineOnHand (clamp ≥0, persist; status/rollup recompute live). -->
                                             <td class="n onhand">
                                                 <span class="oh-ed">
                                                     <button type="button" class="adj" (click)="adjustOnHand(line, -1)" [disabled]="line.onHand <= 0" aria-label="decrease on hand">−</button>
@@ -163,13 +146,11 @@ const SEV: Record<InventoryStatus, string> = { GOOD: 'sev-G', LOW: 'sev-Y', CRIT
                                                 <span class="u">{{ line.unit }}</span>
                                             </td>
                                             <td class="n dim">{{ line.floor }}</td>
-                                            <!-- D-059 seam: a Δ-since-last-cycle indicator mounts here (no consumption yet → no diff). -->
                                             <td><span class="chip" [class]="sevClass(line)">{{ statusOf(line) }}</span></td>
                                             <td class="notes">
                                                 {{ line.notes }}
                                                 @if (provenance(line.catalogId); as p) { <span class="prov" [attr.title]="p">· {{ p }}</span> }
                                             </td>
-                                            <!-- DIRECTIVE-064: per-line SELL at the resale fraction (50%). -->
                                             <td class="n act"><button type="button" class="shopbtn sell" [disabled]="line.onHand <= 0" (click)="sell(line)" [title]="'Sell 1 at 50% resale (+' + money(resale(line)) + ' C-bills)'">Sell</button></td>
                                         </tr>
                                     }
@@ -182,7 +163,6 @@ const SEV: Record<InventoryStatus, string> = { GOOD: 'sev-G', LOW: 'sev-Y', CRIT
         }
     `,
     styles: [`
-        /* D-066: stack as a flex column so the shop can be ordered LAST (owned stock leads); children stretch full-width. */
         :host { display: flex; flex-direction: column; }
         .ph { font-family: var(--label); font-weight: 600; letter-spacing: 2.5px; font-size: 13px; text-transform: uppercase; border-bottom: 1.5px solid var(--ink); padding-bottom: 6px; margin: 0 0 12px; }
         .ph .sub { font-family: var(--type); font-weight: 400; letter-spacing: normal; text-transform: none; font-size: 12px; color: var(--ink2); margin-left: 8px; }
@@ -223,8 +203,7 @@ const SEV: Record<InventoryStatus, string> = { GOOD: 'sev-G', LOW: 'sev-Y', CRIT
         .led-row.net { border-top: 1px solid var(--ink2); margin-top: 4px; padding-top: 6px; font-weight: 600; }
         .led-row.net.black .led-v { color: var(--ok, #3a7d44); font-family: var(--label); letter-spacing: .5px; }
         .led-row.net.red .led-v { color: #c2622a; font-family: var(--label); letter-spacing: .5px; }
-        /* DIRECTIVE-064 — the parts SHOP */
-        .shop { order: 1; border: 1.4px solid var(--ink); background: var(--paper); margin-bottom: 14px; padding: 10px 12px; } /* D-066: shop renders LAST */
+        .shop { order: 1; border: 1.4px solid var(--ink); background: var(--paper); margin-bottom: 14px; padding: 10px 12px; }
         .shop-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
         .shop-title { font-family: var(--label); font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; font-size: 12px; color: var(--ink); }
         .shop-src { display: flex; gap: 5px; }
@@ -245,7 +224,6 @@ const SEV: Record<InventoryStatus, string> = { GOOD: 'sev-G', LOW: 'sev-Y', CRIT
         .shopbtn.req { border-color: var(--stamp); color: var(--stamp); }
         .shopbtn.req:hover:not(:disabled) { background: var(--stamp); color: var(--paper); }
         .shopbtn:disabled { opacity: .4; cursor: not-allowed; }
-        /* DIRECTIVE-065 — collapsible + bounded-scroll shop, the out-of-system request + in-transit orders */
         .shop-scroll { max-height: 360px; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); }
         .shop-cat { border-bottom: 1px solid var(--line); }
         .shop-cat:last-child { border-bottom: none; }
@@ -258,7 +236,6 @@ const SEV: Record<InventoryStatus, string> = { GOOD: 'sev-G', LOW: 'sev-Y', CRIT
         .order-row:last-child { border-bottom: none; }
         .order-row .o-name { color: var(--ink); font-weight: 600; }
         .order-row .o-meta { color: var(--ink2); text-align: right; }
-        /* D-066 — GM-adjustable ON HAND (stepper + inline number) */
         td.onhand { white-space: nowrap; }
         .oh-ed { display: inline-flex; align-items: center; gap: 2px; }
         .oh-ed .adj { font-family: var(--mono); font-size: 13px; line-height: 1; width: 22px; height: 26px; border: 1.2px solid var(--ink2); background: var(--paper2); color: var(--ink); cursor: pointer; padding: 0; }
@@ -277,7 +254,6 @@ export class InventoryTabComponent {
     protected readonly reachable = this.catalog.reachable;
     protected readonly statusOf = statusOf;
 
-    // ── DIRECTIVE-064/065 SHOP — in-system local stock (capped/collapsible) + out-of-system request + per-line sell ──
     protected readonly source = signal<'in-system' | 'out-of-system'>('in-system');
     protected readonly shopSearch = signal('');   // in-system filter
     protected readonly oosQuery = signal('');      // out-of-system search
@@ -317,7 +293,6 @@ export class InventoryTabComponent {
     protected orderWhen(o: { deliver: { y: number; m: number; d: number } }): string { return `${o.deliver.y}-${String(o.deliver.m + 1).padStart(2, '0')}-${String(o.deliver.d).padStart(2, '0')}`; }
     protected sell(line: InventoryLine): void { this.shop.sellLine(line); }
     protected resale(line: InventoryLine): number { return this.shop.resaleValue(line); }
-    // D-066: GM on-hand override — set/step an owned line's on-hand (clamp ≥0, persist; status + rollup recompute live).
     protected setOnHand(line: InventoryLine, raw: string): void { const n = Number(raw); if (Number.isFinite(n)) this.shop.setLineOnHand(line, n); }
     protected adjustOnHand(line: InventoryLine, delta: number): void { this.shop.setLineOnHand(line, line.onHand + delta); }
 
@@ -335,11 +310,10 @@ export class InventoryTabComponent {
         return [
             { key: 'ammunition' as const, title: 'Ammunition', rollup: `${tons(ammo)} tons · ${ammo.length} lines`, lines: ammo },
             { key: 'armor' as const, title: 'Armor', rollup: `${tons(armor)} tons · ${armor.length} lines`, lines: armor },
-            { key: 'component' as const, title: 'Unit Inventory', rollup: `${count(comp)} items · ${comp.length} lines`, lines: comp }, // D-066: the unit's held parts
+            { key: 'component' as const, title: 'Unit Inventory', rollup: `${count(comp)} items · ${comp.length} lines`, lines: comp },
         ];
     });
 
-    // D-058: the monthly economy projection — treasury vs recurring income/burn. D-074: the computation moved
     // to the shared computeLedger() util so the Overview economy summary reads the IDENTICAL numbers (single
     // source, no drift). DATA-003: pure derivation, not stored.
     protected readonly ledger = computed(() => computeLedger(this.state));

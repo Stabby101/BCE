@@ -1,8 +1,3 @@
-/*
- * DIRECTIVE-GM-1c — the open-redirect gate on the OAuth landing, pinned. `state` is attacker-writable; every shape that
- * must NOT redirect off-site is listed here, and the two shapes that must survive (a same-site path, an allow-listed
- * absolute URL) round-trip exactly.
- */
 import { frontendOrigins, oauthLanding, safeReturnTo } from './return-to';
 
 const PROD = ['https://bcengine.org'];
@@ -67,7 +62,7 @@ describe('oauthLanding', () => {
     it('lands on the validated target with the JWT on the fragment', () => {
         expect(oauthLanding(PROD, '/player/?campaign=x&engine=e', 'tok.en')).toBe('https://bcengine.org/player/?campaign=x&engine=e#bce_auth=tok.en');
     });
-    it('falls back to the root — byte-identical to the pre-GM-1c redirect — when the target is missing or rejected', () => {
+    it('falls back to the root — byte-identical to the pre-redirect — when the target is missing or rejected', () => {
         expect(oauthLanding(PROD, undefined, 't')).toBe('https://bcengine.org/#bce_auth=t');
         expect(oauthLanding(PROD, 'https://evil.example/', 't')).toBe('https://bcengine.org/#bce_auth=t');
         expect(oauthLanding([], undefined, 't')).toBe('/#bce_auth=t');

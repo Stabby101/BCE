@@ -1,13 +1,3 @@
-/*
- * BCE — DIRECTIVE-COMPLIANCE-1 Part B/D: the "Legal & Attribution" page (/legal). Renders the FULL notices
- * verbatim from NOTICE.md — the sections: code/GPLv3 + the corresponding-source link, the MegaMek Data, the Sarna.net GFDL historical-data attribution (§2b, GAZETTEER-1 P2), the
- * CC BY-NC-SA 4.0 attribution block, the Microsoft Game Content Usage Rules notice + link, and the Topps /
- * Catalyst trademark lines. Reachable from the footer on every route of BOTH the GM and player bundles. The
- * text is embedded (not fetched) so it renders offline + under the strict Artifact/asset CSP. Part D: includes
- * the GPLv3 corresponding-source availability statement + a written offer of source (belt-and-suspenders in
- * case the public repo link is unavailable to a given user). Nothing here is removable branding — this is the
- * legal attribution that MUST stay present (DIRECTIVE Part E).
- */
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { Location } from '@angular/common';
 
@@ -88,9 +78,6 @@ import { Location } from '@angular/common';
         </div>
     `,
     styles: [`
-        /* GM-1d-c — THIS host is the page's scroll container (both bundles share the document lock: body overflow:hidden).
-           The notices run several screens on a phone; without this the page could not be scrolled by touch or wheel on ANY
-           device — the COMPLIANCE-1 text was unreadable past the first screen. Ends above the reserved legal footer. */
         :host { display:block; height:calc(100dvh - var(--bce-footer-h, 0px)); overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; }
         .lp { max-width:760px; margin:0 auto; padding:28px 20px 72px; color:#1a1407; background:#f4ecd8; min-height:100%;
             font:15px/1.6 var(--type, system-ui), Segoe UI, Roboto, sans-serif; box-sizing:border-box; }

@@ -1,46 +1,29 @@
-/*
- * GM-1 P1+P2 — the GM PANEL: the Master GM session's control surface, one tab with the session controls in
- * one place (James's shape). P1 homes the EXISTING controls — advance month (D-131, the same root
- * ContractWindowService instance), track pick/generate (D-132's shared <bce-track-picker>, blessed
- * multi-mount), the OpFor-builder entry (D-130 lives on the Lobby claim board — a jump, not a re-host:
- * the claims wiring is panel-owned and must not be duplicated) — plus the TABLE MODE toggle. P2 adds the
- * PRESENT board (publish/retract the player-safe brief — the offer list mirrored from root state/catalog,
- * NOT the tab-provided NegotiationService) and the live SIDE PREFERENCES (rt.lobby — the GM socket gets
- * unredacted rows). Renders ONLY when gmSession (the dashboard gates the tab). Distinct gm-* testids
- * throughout — the originals keep theirs (harness selectors assume uniqueness).
- */
 import { Component, ChangeDetectionStrategy, computed, effect, inject, output, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
 import { ContractWindowService } from '../chaos/contract-window.service';
-import { HotSpotsCatalogService, resolveSides, type CatalogHotSpot } from '../chaos/hotspots-catalog'; // GM-3 P1 — resolveSides for the side chooser at Present
+import { HotSpotsCatalogService, resolveSides, type CatalogHotSpot } from '../chaos/hotspots-catalog';
 import { ClaimRealtimeService } from '../claims/claim-realtime.service';
 import { engagementKeyOf } from '../claims/engagement-key';
 import { eraTag } from '../mission/forge-select';
 import { TableModeService } from './table-mode.service';
 import { buildPresentedBrief } from './presented-hotspot';
-import { anonIdWeb } from './side-labels'; // GM-1 P4 — lobby token → provenance.owner mapping
-import type { ProtoInstance } from '../force/force-generator'; // GM-1 P4 (type-only)
+import { anonIdWeb } from './side-labels';
+import type { ProtoInstance } from '../force/force-generator';
 import { TrackPickerComponent } from '../chaos/track-picker';
-import { JoinLinkComponent } from '../claims/join-link'; // GM-1b — the session door (the lobby's join block, un-gated)
-import { NegotiationService } from '../chaos/negotiation.service'; // GM-2 P2a — the GM's BROKER instance of the D-128 modal
-import { GM_NEGOTIATION_HOST_PROVIDER } from '../chaos/negotiation-host-gm'; // GM-2 P2b
-import { NegotiateModalComponent } from '../chaos/negotiate-modal'; // GM-2 P2a — the same .cng modal, mounted here
-import { resolved, isSessionContract, participantSideFor, GM_SELF_KEY, type ChaosContract } from '../chaos/chaos-contract'; // GM-2 P2a — the signed terms line · GM-3 P1 — the session contract
+import { JoinLinkComponent } from '../claims/join-link';
+import { NegotiationService } from '../chaos/negotiation.service';
+import { GM_NEGOTIATION_HOST_PROVIDER } from '../chaos/negotiation-host-gm';
+import { NegotiateModalComponent } from '../chaos/negotiate-modal';
+import { resolved, isSessionContract, participantSideFor, GM_SELF_KEY, type ChaosContract } from '../chaos/chaos-contract';
 
 @Component({
     selector: 'bce-gm-panel',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TrackPickerComponent, JoinLinkComponent, NegotiateModalComponent], // GM-1b · GM-2 P2a
-    providers: [NegotiationService, GM_NEGOTIATION_HOST_PROVIDER], // GM-2 P2a — tab-lifetime, the HARDEN-3 pattern: this panel's own negotiation state (never the Contracts tab's) · P2b — the host supplies the tree + the broker sign path
+    imports: [TrackPickerComponent, JoinLinkComponent, NegotiateModalComponent],
+    providers: [NegotiationService, GM_NEGOTIATION_HOST_PROVIDER],
     template: `
         <div class="gmp">
-            <!-- ── GM-1b · SESSION JOIN — the session door: players join the GM's session BEFORE any track exists.
-                 The SAME join block the Lobby renders (<bce-join-link>, HOTFIX-027 QR + URL + copy/share), but
-                 UN-GATED: a join binds to the campaign (the session), never to a track, so there is nothing to
-                 wait for. The Lobby keeps its HOTFIX-029 deployment gate — it is the battle room; this is the
-                 session door. Two doors, two purposes, one URL. Deliberately NOT blanked by table mode: the QR
-                 is player-facing by nature (you project it on purpose). -->
             <section class="gmp-sec" data-testid="gm-join">
                 <div class="gmp-h">Session join &middot; before any track</div>
                 <bce-join-link [gated]="false" door="session" />
@@ -65,7 +48,6 @@ import { resolved, isSessionContract, participantSideFor, GM_SELF_KEY, type Chao
                         <span class="gmp-tag on">PRESENTED</span> <b>{{ p.title }}</b> &middot; {{ p.world }}
                         <button type="button" class="gmp-btn" (click)="retract()" data-testid="gm-retract">{{ sessionContract() ? 'Retract (un-present)' : 'Retract' }}</button>
                     </div>
-                    <!-- GM-3 P1 — THE SESSION CONTRACT: minted at Present ▸ from the authored terms, NO party; participants sign against it -->
                     @if (sessionContract(); as sc) {
                         <div class="gmp-session" data-testid="gm-session-contract">
                             <span class="gmp-tag on">SESSION CONTRACT</span> Scale {{ sc.scale }} &middot; {{ sc.intensity }} track{{ sc.intensity === 1 ? '' : 's' }} &middot; {{ sc.lengthMonths ?? sc.intensity }} month window &middot; side {{ (sc.side ?? 'a').toUpperCase() }} for {{ sc.employer }} vs {{ sc.enemyFaction }} &middot; {{ sc.tracksDone }} resolved
@@ -77,7 +59,6 @@ import { resolved, isSessionContract, participantSideFor, GM_SELF_KEY, type Chao
                 } @else {
                     <p class="gmp-note">Nothing presented — the players' devices show no contract. Present one to put its player-safe brief on every joined device and mint the session contract from its authored terms.</p>
                 }
-                <!-- GM-3 P2 (S38) — confirm before replacing a session contract that has SIGNERS (they would be voided + refunded) -->
                 @if (pendingReplace(); as ph) {
                     <div class="gmp-confirm" data-testid="gm-replace-confirm">
                         <p class="gmp-note">Replace the session contract with <b>{{ ph.title }}</b>? {{ signerCount() }} signed compan{{ signerCount() === 1 ? 'y' : 'ies' }} will be voided — each is told and its spent rep refunded.</p>
@@ -95,7 +76,6 @@ import { resolved, isSessionContract, participantSideFor, GM_SELF_KEY, type Chao
                                 @if (presented()?.id === h.id) {
                                     <span class="gmp-tag on">✓ live</span>
                                 } @else {
-                                    <!-- GM-3 P1 (hook 3) — the SIDE the table plays; a single-sided record has one -->
                                     @if (hasSideB(h)) {
                                         <span class="gmp-side-pick" data-testid="gm-present-side">
                                             <button type="button" class="gmp-btn sm" [class.on]="presentSide() === 'a'" (click)="presentSide.set('a')" data-testid="gm-present-side-a">A</button>
@@ -122,8 +102,6 @@ import { resolved, isSessionContract, participantSideFor, GM_SELF_KEY, type Chao
                                 <span class="gmp-dot" [class.on]="p.connected">●</span>
                                 <span class="gmp-pn">{{ p.name || 'Player' }}</span>
                                 <span class="gmp-pref" [attr.data-pref]="p.sidePref ?? ''">{{ prefLabel(p.sidePref) }}</span>
-                                <!-- GM-1 P4 — ASSIGN: the existing GM-only reassign message; the player's device
-                                     lands on the assigned side automatically (side A ↔ BLUFOR, B ↔ OPFOR). -->
                                 <!-- panel finding: assigning a DISCONNECTED device is silently undone by its
                                      reconnect re-announce (join-lobby carries the stale local side) — so the
                                      buttons disable on a red dot; assign when the player is actually there. -->
@@ -163,15 +141,12 @@ import { resolved, isSessionContract, participantSideFor, GM_SELF_KEY, type Chao
                 }
             </section>
 
-            <!-- ── GM-2 P2a — PLAYER CONTRACTS (GM as broker): each joined company signs its OWN terms on the primary's
-                 hot spot; the map rides under gmOnly and fans to its own device only (H14). ── -->
             @if (companies().length || ownFielded()) {
             <section class="gmp-sec" data-testid="gm-contracts">
                 <div class="gmp-h">Player contracts</div>
                 @if (!state.activeChaosContract()) {
                     <p class="gmp-note">Present a hot spot first — the session contract is minted from its authored terms, and each company then negotiates its own terms against it.</p>
                 }
-                <!-- GM-3 P1 — the GM's OWN company, when he fields: one more participant, signed like anyone (never a party to the session contract) -->
                 @if (ownFielded()) {
                     <div class="gmp-company" [attr.data-key]="selfKey" data-testid="gm-company">
                         <div class="gmp-co-head"><span class="gmp-bn">Your company</span> <span class="gmp-om">fielded &middot; Rep {{ state.reputation() ?? 1 }}</span></div>
@@ -211,22 +186,18 @@ import { resolved, isSessionContract, participantSideFor, GM_SELF_KEY, type Chao
             }
             <div class="cc-scope"><bce-negotiate-modal /></div>
 
-            <!-- ── THE CLOCK — D-131, homed (the same root service the Contracts tab renders) ── -->
             <section class="gmp-sec">
                 <div class="gmp-h">The clock</div>
                 @if (active(); as c) {
                     <span class="gmp-tag" [class.warn]="mw.windowElapsed()" data-testid="gm-month-tag">Month {{ mw.monthX() }} / {{ mw.windowMonths(c) }}@if (mw.windowElapsed()) { &middot; window elapsed }</span>
                     <button type="button" class="gmp-btn" (click)="mw.advanceMonth()" data-testid="gm-advance-month"
                             title="Advance the campaign one month — pays maintenance, collects base pay">&#9656; Advance a month</button>
-                    <!-- GM-3 P0 — TELL THE TABLE (PD2-4): the advance fans the snapshot; every joined device diffs the date and says so;
-                         the GM device says the same here (the root ContractWindowService sets it, gmSession only). -->
                     @if (mw.sessionClockNotice(); as n) { <p class="gmp-note gmp-clock-notice" role="status" data-testid="gm-clock-notice">{{ n }}</p> }
                 } @else {
                     <p class="gmp-note">No active contract — the month window starts when a contract is signed.</p>
                 }
             </section>
 
-            <!-- ── TRACKS — D-132's shared picker, homed per open branch ── -->
             <section class="gmp-sec">
                 <div class="gmp-h">Tracks</div>
                 @if (availableBranches().length) {
@@ -241,19 +212,17 @@ import { resolved, isSessionContract, participantSideFor, GM_SELF_KEY, type Chao
                 }
             </section>
 
-            <!-- ── OPFOR / SIDE B — GM-OpFor by default (generate/D-130); one press seeds it from the
-                 SIDE-B PLAYERS' imported units instead (P4: both sides from assigned rosters). ── -->
             <section class="gmp-sec">
                 <div class="gmp-h">OpFor / Side B</div>
                 <button type="button" class="gmp-btn" (click)="jump.emit({ tab: 'lobby' })" data-testid="gm-opfor-entry"
-                        title="The manual OpFor builder sits on the Lobby claim board (D-130)">&#9876; Build / Edit OpFor &mdash; on the Lobby board &rsaquo;</button>
+                        title="The manual OpFor builder sits on the Lobby claim board ">&#9876; Build / Edit OpFor &mdash; on the Lobby board &rsaquo;</button>
                 <button type="button" class="gmp-btn" [disabled]="!canSeedSideB()" (click)="seedSideBFromPlayers()" data-testid="gm-seed-side-b"
                         [title]="canSeedSideB() ? 'Replace the OpFor with the side-B imported units (A-vs-B)' : 'Needs a generated track + side-B players with imported units'">
                     &#8646; Side B = the side-B players&rsquo; units
                 </button>
                 @if (sideBSeeded()) { <span class="gmp-tag on" data-testid="gm-side-b-seeded">✓ side B is player-seeded</span> }
                 @if (seedNote(); as n) { <span class="gmp-note" data-testid="gm-seed-note">{{ n }}</span> }
-                <p class="gmp-note">Default = GM OpFor (Generate / the D-130 builder — "still have the option"). The swap moves the side-B players' machines across (they leave side A's roster as RESERVE); revert via the OpFor builder or a re-generate — then re-deploy the reserved units on the roster.</p>
+                <p class="gmp-note">Default = GM OpFor (Generate / the builder — "still have the option"). The swap moves the side-B players' machines across (they leave side A's roster as RESERVE); revert via the OpFor builder or a re-generate — then re-deploy the reserved units on the roster.</p>
             </section>
         </div>
     `,
@@ -273,12 +242,12 @@ import { resolved, isSessionContract, participantSideFor, GM_SELF_KEY, type Chao
         .gmp-tag.warn { border-color:#a33; color:#a33; }
         .gmp-tag.on { border-color:#3a6f3a; color:#3a6f3a; font-weight:700; }
         .gmp-note { font-size:12px; color:var(--ink2, #4a4436); margin:6px 0 0; line-height:1.5; }
-        .gmp-clock-notice { color:var(--ink, #2b2720); font-weight:700; } /* GM-3 P0 */
+        .gmp-clock-notice { color:var(--ink, #2b2720); font-weight:700; }
         .gmp-branch { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:6px 0; }
         .gmp-bn { font-weight:600; }
         .gmp-presented { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-        .gmp-session { font-size:12.5px; margin:4px 0 6px; line-height:1.5; } /* GM-3 P1 */
-        .gmp-side-pick { display:inline-flex; gap:4px; margin-right:6px; } /* GM-3 P1 */
+        .gmp-session { font-size:12.5px; margin:4px 0 6px; line-height:1.5; }
+        .gmp-side-pick { display:inline-flex; gap:4px; margin-right:6px; }
         .gmp-offers { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
         .gmp-offer { display:flex; flex-wrap:wrap; align-items:center; gap:10px; border:1px solid var(--rule, #b9b09b); padding:7px 10px; }
         .gmp-offer.live { border-color:#3a6f3a; }
@@ -313,7 +282,6 @@ export class GmPanelComponent {
     readonly jump = output<{ tab: string; sub?: string }>();
 
     constructor() {
-        // GM-1 P2 — the panel watches the room LIVE (side preferences fan on the lobby channel): join the
         // claim room like lobby-panel does — the GM may never open the Lobby tab. Idempotent (same socket,
         // same room as the panels; observeLobby brings in the roster/presence fan).
         effect(() => {
@@ -347,7 +315,6 @@ export class GmPanelComponent {
     // ── P3 — the join-with-force cap + the imported roster readout ──
     protected readonly cap = computed(() => this.state.playerUnitCap() ?? 4);
 
-    // ── GM-2 P2a — the joined companies: imports grouped by the home campaign id the mint's provenance carries, labelled
     //    by the lobby player whose device brought them (provenance.owner ↔ anonIdWeb(lobby token), the P4 mapping). ──
     protected readonly neg = inject(NegotiationService);
     private readonly anonByToken = signal<Record<string, string>>({});
@@ -369,7 +336,6 @@ export class GmPanelComponent {
             return { ...e, label: p ? `${p.name}'s company` : `Company ${e.key}`, side: p?.side ?? 'BLUFOR' };
         });
     });
-    /** GM-2 P3 — the REFEREE state: the GM has fielded nothing of its own; side A is the joined companies (copy only). */
     protected readonly referee = computed(() => {
         if (!this.state.gmSession()) return null;
         const own = (this.state.startingForce() ?? []).filter((u) => u.provenance?.origin !== 'player-import');
@@ -385,10 +351,9 @@ export class GmPanelComponent {
     protected negotiateFor(co: { key: string; label: string; side: string; rep: number | null }): void {
         const h = this.primaryHotspot(); const c = this.state.activeChaosContract();
         if (!h || !c) return;
-        const side = participantSideFor(c, co.side); // GM-3 P1 (hook 3) — the ONE side decision (D-133 flip on a GM-signed primary; the table's side on a session)
+        const side = participantSideFor(c, co.side);
         this.neg.negotiateForParticipant(h, side, { key: co.key, label: co.label }, co.rep, c.steps.command); // P2b — THEIR rep; Command locked to the primary's
     }
-    // ── GM-3 P1 — the session contract on the panel ──
     protected readonly selfKey = GM_SELF_KEY;
     protected readonly presentSide = signal<'a' | 'b'>('a');
     protected readonly sessionContract = computed(() => { const c = this.state.activeChaosContract(); return c && isSessionContract(c) ? c : null; });
@@ -398,7 +363,7 @@ export class GmPanelComponent {
         return this.sessionContract() ? '— no contract signed: paid nothing until it signs its own terms on the session contract' : "— pays by the session's primary terms (the team share)";
     }
     /** The GM fielded units of his own (deployed, not player-imports) — the referee state's inverse: he is one more participant. */
-    protected readonly ownFielded = computed(() => !!this.sessionContract() && (this.state.startingForce() ?? []).some((u) => u.provenance?.origin !== 'player-import' && u.condition === 'Deployed')); // GM-3 P1 — the GM is "one more participant" ONLY on a session contract; on a GM-signed primary (P2a) his company IS the primary team, no separate row
+    protected readonly ownFielded = computed(() => !!this.sessionContract() && (this.state.startingForce() ?? []).some((u) => u.provenance?.origin !== 'player-import' && u.condition === 'Deployed'));
     protected negotiateSelf(): void {
         const h = this.primaryHotspot(); const c = this.state.activeChaosContract();
         if (!h || !c || !isSessionContract(c)) return;
@@ -415,14 +380,11 @@ export class GmPanelComponent {
         void this.store.persistCurrent(); // top-level field → the fan carries it to every player device
     }
 
-    // GM-3 P1/P2 (S38) — a pending Present awaiting confirmation because replacing would VOID signers.
     protected readonly pendingReplace = signal<CatalogHotSpot | null>(null);
     protected readonly signerCount = computed(() => Object.keys(this.state.participantContracts()).length);
     protected present(h: CatalogHotSpot): void {
         const cur = this.sessionContract();
         if (cur?.hotspotId === h.id) return; // already the presented session contract
-        // GM-3 P2 (S38) — replacing a session contract that HAS SIGNERS voids + refunds them (hook 5). Confirm first: it is
-        // too destructive to fire on a mis-click. No signers → replace straight away (GM-1 P2's "presenting another replaces it").
         if (cur && this.signerCount() > 0) { this.pendingReplace.set(h); return; }
         this.doPresent(h);
     }
@@ -430,20 +392,16 @@ export class GmPanelComponent {
     protected cancelReplace(): void { this.pendingReplace.set(null); }
     private doPresent(h: CatalogHotSpot): void {
         const cur = this.sessionContract();
-        // GM-3 P1/P2 — a FRESH present (no session contract active) clears any stale voids from a prior session (already
         // consumed by the devices); a REPLACE (cur exists) keeps unpresentSession's new voids so the voided devices are told.
         if (!cur) this.state.setVoidedContracts({});
-        // GM-3 P1 — Present ▸ REPLACES: a DIFFERENT session contract is un-presented first — its signers voided + refunded, its
         // tree closed (hook 5) — then the new one is minted. A GM-signed primary (pre-P1) is left alone (presentSession refuses).
         if (cur) this.neg.unpresentSession();
-        this.state.setPresentedHotspot(buildPresentedBrief(h, Date.now())); // GM-1 P2 — the player-safe brief (replaces any prior)
-        // GM-3 P1 — Present ▸ MINTS THE SESSION CONTRACT (the hot spot's authored terms for the side the table plays, no party)
+        this.state.setPresentedHotspot(buildPresentedBrief(h, Date.now()));
         // and starts the tree (hook 1).
         this.neg.presentSession(h, this.presentSide());
         void this.store.persistCurrent(); // → the debounced PUT → changes$ → the per-recipient campaign fan
     }
     protected retract(): void {
-        // GM-3 P1 (hook 5) — un-present: the session contract goes with the brief — every signed company is VOIDED with a notice
         // and refunded its settled rep; no rep dock, no transport, the tree discarded. A plain presentation just clears.
         if (this.sessionContract()) { this.neg.unpresentSession(); return; }
         this.state.setPresentedHotspot(null);
@@ -453,7 +411,6 @@ export class GmPanelComponent {
         return p === 'a' ? 'Side A' : p === 'b' ? 'Side B' : '— no pick yet';
     }
 
-    // ── GM-1 P4 — side assignment + the side-B player seed ──
     protected assign(token: string, side: 'BLUFOR' | 'OPFOR'): void { this.rt.reassign(token, side); } // GM-only server-side; the fan lands it
     /** Side-B players' IMPORTED units (provenance.owner ↔ lobby token via the web anonId). */
     private async sideBUnits(): Promise<ProtoInstance[]> {
@@ -464,9 +421,6 @@ export class GmPanelComponent {
     protected readonly canSeedSideB = computed(() =>
         !!this.state.missionSpec() && this.rt.lobby().some((p) => p.side === 'OPFOR') && (this.state.startingForce() ?? []).some((u) => u.provenance?.origin === 'player-import'));
     protected readonly sideBSeeded = computed(() => (this.state.missionSpec()?.opforForce ?? []).some((u) => u.provenance?.origin === 'player-import'));
-    /** P4 — seed side B from the ASSIGNED side-B players' own machines: their units REPLACE the OpFor (the
-     *  D-130 saveOpFor shape) and leave side A's deployed roster (condition off Deployed — one unit is never
-     *  on both sides). SAME instanceIds — the P3 claims + per-unit ownership follow the units across. */
     protected readonly seedNote = signal<string | null>(null); // panel finding: the enabled button must never silently no-op
     protected async seedSideBFromPlayers(): Promise<void> {
         const spec = this.state.missionSpec();

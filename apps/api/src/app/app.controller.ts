@@ -13,7 +13,6 @@ export class AppController {
     return this.appService.getData();
   }
 
-  /** HOTFIX-028 — the deployed build commit for the client version handshake (open; no secrets). */
   @Get('version')
   getVersion(): { commit: string } {
     return { commit: buildCommit() };

@@ -1,10 +1,3 @@
-/*
- * BCE PLAYER — the overlay shell (DIRECTIVE-048 phase C). ONE D-010-pattern fullscreen overlay
- * (tap → fullscreen → ✕ / Esc / tap-outside → back exactly where you were) that hosts every player
- * overlay: a teammate's read-only sheet, the OPFOR doctrine card, the briefing card. No tabs, no nav —
- * the single screen + an overlay stack (T-030 presentation principle). Pure chrome; content is
- * projected. Dark player theme (matches the join/roster/sheet surfaces).
- */
 import { ChangeDetectionStrategy, Component, HostListener, input, output } from '@angular/core';
 
 @Component({
@@ -25,7 +18,7 @@ import { ChangeDetectionStrategy, Component, HostListener, input, output } from 
     styles: [`
         :host { display: block; }
         .ov-backdrop { position: fixed; inset: 0; z-index: 1000; background: rgba(6, 8, 11, .86);
-                       display: flex; align-items: center; justify-content: center; padding: 16px 16px calc(16px + var(--bce-footer-h, 0px)); /* IMPORT-7 A — clear the legal footer */
+                       display: flex; align-items: center; justify-content: center; padding: 16px 16px calc(16px + var(--bce-footer-h, 0px));
                        font: 15px/1.4 system-ui, Segoe UI, Roboto, sans-serif; }
         .ov-panel { background: #11161c; border: 1px solid #2a3340; border-radius: 14px; width: 100%;
                     max-width: 760px; max-height: 94dvh; display: flex; flex-direction: column; color: #e7edf3; }

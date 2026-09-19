@@ -1,9 +1,3 @@
-/*
- * HOTFIX-028 — hosted-aware host classification, shared by the engine-URL resolution (main.player.ts) and the
- * version/reset plumbing. The prod api origin is a single const (mirrors index.html:18 + the GM auto-set). The
- * private-LAN regex matches lobby-panel.ts:117-118. Pure — no Angular, safe to import from the pre-bootstrap
- * entry files.
- */
 export const PROD_API_URL = 'https://bce-production.up.railway.app/api';
 
 export type HostClass = 'dev' | 'lan' | 'public';
@@ -25,10 +19,6 @@ export function isLocalOrLanEngineUrl(url: string | null | undefined): boolean {
     try { return classifyHost(new URL(url).hostname) !== 'public'; } catch { return true; }
 }
 
-/** GM-1c — does the join page's per-host note ("campaigns live on the host you joined") apply? Only when the engine
- *  is NOT a public host: on the cloud host the note is noise that reads as a technical failure (the directive's rule),
- *  on a dev/LAN host it is the truth. Same classification as isLocalOrLanEngineUrl, named for what it decides;
- *  pinned by host-env.spec.ts (the browser harness can only stand up a local engine). */
 export function perHostNoteApplies(engineUrl: string | null | undefined): boolean {
     return isLocalOrLanEngineUrl(engineUrl);
 }
@@ -47,17 +37,6 @@ export function isReplaceableOnPublic(stored: string | null | undefined, current
     return false;
 }
 
-/**
- * HOTFIX-028 — the PURE engine-URL decision (main.player.ts wires location + localStorage to it). Returns the
- * value to persist, or null to KEEP the current stored value untouched. NEVER-destructive on a stored public
- * value; explicit ?engine always wins. This is the classification table:
- *   ?engine present            → the explicit value        (persist — a scanned QR always wins)
- *   public + stored good-public → null                     (KEEP — never clobber a real api with a guess)
- *   public + stored LAN/—/self:3000 → PROD_API_URL         (REPLACE — unreachable value / the reported wedge)
- *   dev (localhost) + stored    → the stored value          (KEEP — a manually-set engine survives)
- *   dev (localhost), no stored  → <host>:3000/api           (derive)
- *   lan                         → <host>:3000/api           (derive — the serving host IS the GM box)
- */
 export function chooseEngineUrl(p: { engineParam: string | null; hostname: string; protocol: string; stored: string | null }): string | null {
     if (p.engineParam) return p.engineParam;
     const cls = classifyHost(p.hostname);

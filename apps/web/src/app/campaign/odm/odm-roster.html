@@ -1,8 +1,6 @@
-<!-- FORKED FROM campaign/dashboard/roster/roster.html @ 6cc5dae - DIRECTIVE-ODM-1 Phase 1 (a DRIFT SURFACE). Strips: Acquire/Market CTA + overlay + market empty-state. -->
 <div class="roster-head">
     <span class="ph">Unit roster</span>
     @if (formationContext(); as fc) { <span class="formctx">{{ fc }}</span> }
-    <!-- ODM-1 FORK: the Acquire/Market CTA STRIPPED (IRON RULE - no unit market) -->
     <span class="live"><span class="pulse" aria-hidden="true"></span>LIVE · server-authoritative</span>
 </div>
 <p class="note">Your command's roster — <b>the company's authored order of battle</b>. Cells reuse MekBay's <b>unit-icon</b> (sprite) + its own <b>Classic record sheet</b> (streamed as you scroll). Tap a sheet to explode it (read-only); the condition dropdown is the campaign layer.
@@ -11,11 +9,9 @@
     } @else if (!ready()) {
         <span class="ph-note">loading unit data + sheets from db.mekbay.com…</span>
     }
-    <!-- DIRECTIVE-COMPLIANCE-1 Part C — data-source credit alongside the served unit data (CC BY-NC-SA 4.0). -->
     <span class="ph-note ph-datacredit">Unit data &copy; The MegaMek Team — CC BY-NC-SA 4.0</span>
 </p>
 
-<!-- ACTIVE MISSION cell (D-027) — the deployed set's dashboard face, above the lances -->
 @if (activeMission(); as m) {
     <div class="missioncell">
         <div class="mc-main">
@@ -75,7 +71,6 @@
                     @for (r of reserveUnits(); track r.id) { <option [value]="r.id">{{ r.name }}</option> }
                 </select>
             }
-            <!-- D-071 (B): print every record sheet in this group, one per page (ensures all sheets load first) -->
             <button type="button" class="lprint" [disabled]="printingLance() === sec.id" (click)="printLance(sec)" [attr.aria-label]="'Print every record sheet in ' + sec.name">{{ printingLance() === sec.id ? 'Loading…' : '⎙ Print' }}</button>
         </div>
         <div class="grid">
@@ -108,13 +103,8 @@
                             <!-- PILOT BLOCK (display ≠ control): name / callsign chip / G·P chip + a ▾ change control -->
                             @if (hasPilots() || u.captured) {
                                 <div class="pilot" [class.empty]="!u.pilotId">
-                                    <!-- HOTFIX-002.2: line 1 (pmain) = NAME (flex:1, ~12ch floor) + skills + ▾ — these always hold
-                                         line 1; the flavor chips (callsign/kin) WRAP to line 2 before the name is crushed. -->
                                     <div class="pmain">
                                         @if (u.pilotId) {
-                                            <!-- ODM-25b: the name WRAPS to two lines instead of truncating, and carries a
-                                                 title either way. "Aldous Bre…" is a person whose name the card refuses
-                                                 to say; an ellipsis is not a rendering choice, it is a lost fact. -->
                                             <button type="button" class="pname pbtn" (click)="detailPilot.set(u.pilotId)"
                                                     [title]="u.pilotDisplayName"
                                                     [attr.aria-label]="'Open ' + u.pilotDisplayName + ' personnel file'">{{ u.pilotDisplayName }}</button>
@@ -122,9 +112,6 @@
                                         } @else {
                                             <span class="pname">&mdash; no pilot assigned &mdash;</span>
                                         }
-                                        <!-- the ▾ reuses the D-020 assignment list — an opacity:0 select over the chevron (no select text).
-                                             ODM-25: the list is now PER MACHINE — pruned to the hull's own trade, every option
-                                             annotated with the person's trade and current posting. -->
                                         <span class="chg">
                                             <span class="chev" aria-hidden="true">▾</span>
                                             <!-- data-inst: the machine this control speaks for. A harness that has to
@@ -138,12 +125,6 @@
                                             </select>
                                         </span>
                                     </div>
-                                    <!-- ODM-25b — ROW 2: the flavour chips, and the crew controls as small ICONS pushed
-                                         to the right edge. James asked for "a small radial check box to the right of the
-                                         callsign" and it grew into two labelled buttons on a third row, which is a
-                                         heavier card than the information deserves. Two ~28px icons also make the
-                                         overflow IMPOSSIBLE BY CONSTRUCTION rather than merely absent today: a pair of
-                                         fixed-width glyphs cannot spill a column however narrow the name gets. -->
                                     <div class="prow2">
                                         @if (u.pilotId || u.captured) {
                                             <!-- flavor chips — lowest priority; they compress before the icons do.
@@ -156,10 +137,6 @@
                                             </span>
                                         }
                                         <span class="picons">
-                                            <!-- THE PRIMARY HULL marker (ruling 4): the CHASSIS this crew calls their own.
-                                                 The glyph carries its own state — ☆ hollow, ★ filled — matching the ★ CMD
-                                                 badge already on this card, so no text label has to say it. Record only;
-                                                 no mechanic reads it yet, ODM-16 is where it earns a number. -->
                                             <button type="button" class="picon prim" [class.on]="u.primary" [disabled]="!u.pilotId"
                                                     (click)="togglePrimary(u)" data-testid="odm-primary-hull"
                                                     [attr.aria-pressed]="u.primary"
@@ -180,24 +157,16 @@
                                     </div>
                                 </div>
                             }
-                            <!-- CONTROL ROW: condition + lance — labeled, reserved chevron space, ellipsis, ≥40px targets.
-                                 D-069 (B): dropped for a Quick Mission — a one-shot force is simply deployed, no roster
-                                 management (the pilot control above + the sheet stay). Campaign roster keeps them. -->
                             @if (!quickMission()) {
                                 <div class="ctrls">
                                     <div class="ctl" [class.deployed]="u.cond === 'Deployed'" [class.synced]="syncedId() === u.id">
                                         <label>Condition @if (syncedId() === u.id) { <span class="sok">✓</span> }</label>
                                         <select class="csel" (change)="setCondition(u.id, $any($event.target).value)" [attr.aria-label]="u.name + ' condition'">
-                                            <!-- HOTFIX-024 — 'In repair' is greyed out for an undamaged unit (nothing to repair → it would
-                                                 strand: invisible in the bays + excluded from the mission pool). Stays selectable for damaged units. -->
                                             @for (c of conditions; track c) { <option [value]="c" [selected]="c === u.cond" [disabled]="c === 'In repair' && !u.hasDamage && c !== u.cond">{{ c }}</option> }
                                         </select>
                                     </div>
                                     <div class="ctl">
                                         <label>Lance</label>
-                                        <!-- ODM-25b: a <select> cannot wrap, so the title carries the full lance name the
-                                             ellipsis eats. Same reasoning as the pilot name — a truncated value that
-                                             nothing can recover is a fact the card is refusing to say. -->
                                         <select class="lsel" [title]="u.lanceName" (change)="moveTo(u.id, $any($event.target).value)" [attr.aria-label]="u.name + ' lance assignment'">
                                             @for (l of lanceOptions(); track l.id) { <option [value]="l.id" [selected]="l.id === u.lanceId">{{ l.name }}</option> }
                                             <option [value]="reserveKey" [selected]="u.lanceId === reserveKey">Reserve</option>
@@ -232,10 +201,6 @@
 <button type="button" class="newlance" (click)="newLance()" aria-label="Create a new empty lance">+ new lance</button>
 }
 
-<!-- DIRECTIVE-ODM-17 P2-e — THE FLEET, real: packs/odm/fleet.json (one-way from the PM canonical-lift
-     master) rendered live (status overlay wins). The fake tier vessels died here. The Iron Covenant's
-     fuel bar IS the ODM-11 fuel card (one tank, never double-tracked); the Leopards' tanks are capacity
-     DATA. Doors are truth: a 0-door hold loads nothing afield. The lift budget derives live (R3). -->
 <div class="cat">
     <div class="cathead"><span>Fleet &amp; transport</span><span class="cnt">{{ fleetCount() }}</span></div>
     <div class="fleet" data-testid="odm-fleet-roster">
@@ -283,11 +248,7 @@
 @if (explodedFu()) {
     <bce-sheet-modal [fu]="explodedFu()" [title]="explodedTitle()" [abilities]="explodedAbilities()" (close)="closeModal()"></bce-sheet-modal>
 }
-<!-- ODM-1 FORK: the market overlay STRIPPED -->
 @if (detailPilot()) {
-    <!-- ODM-25 — the overlay that DISPLAYS a posting can now change it. postingOptions/postingChange are the
-         same caller-supplied override shape as ODM-18 P1's notesText/notesSaved: Classic passes nothing, the
-         control does not exist there, and the shared component stays byte-identical for Traditional and HS. -->
     <bce-pilot-detail [pilotId]="detailPilot()!" [notesText]="gmNoteFor(detailPilot()!)" (notesSaved)="saveGmNote(detailPilot()!, $event)"
                       [postingOptions]="postingOptions()" (postingChange)="changePosting(detailPilot()!, $event)"
                       [tradeOptions]="tradeOptions" (tradeChange)="changeTrade(detailPilot()!, $event)"

@@ -20,13 +20,15 @@ export function getUnitVariantGroupIdentity(unit: UnitVariantGroupLike): UnitVar
     };
 }
 
+// BCE-EDIT (P8, 2026-09-18): a slim SLICE unit carries no `as` block — the key must not throw on it (it took the whole
+// data-service initialize() down from the tag fixer). A missing type keys as '' — such units never group with real ones.
 export function getUnitVariantGroupKey(unit: UnitVariantGroupLike): string {
-    return `${solveChassis(unit.chassis)}|${unit.as.TP}${!!unit.omni?'|O':''}`;
+    return `${solveChassis(unit.chassis)}|${unit.as?.TP ?? ''}${!!unit.omni?'|O':''}`;
 }
 
 export function isSameVariantGroup(source: UnitVariantGroupLike, target: UnitVariantGroupLike): boolean {
     return solveChassis(source.chassis) === solveChassis(target.chassis)
-        && source.as.TP === target.as.TP
+        && source.as?.TP === target.as?.TP
         && !!source.omni === !!target.omni;
 }
 

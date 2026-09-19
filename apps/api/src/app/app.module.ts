@@ -5,7 +5,7 @@ import { CampaignsModule } from './campaigns/campaigns.module';
 import { ClaimsModule } from './claims/claims.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { AuthModule } from './auth/auth.module';
-import { DurabilityService } from './durability.service'; // HARDEN-7 A3/B1 — boot durability alarms
+import { DurabilityService } from './durability.service';
 
 @Module({
   imports: [CampaignsModule, ClaimsModule, CatalogModule, AuthModule], // + DEPLOY-002 P1 GM auth/approval gate

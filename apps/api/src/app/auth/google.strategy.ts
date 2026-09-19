@@ -7,7 +7,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, type Profile } from 'passport-google-oauth20';
 import type { OAuthProfile } from './auth.types';
-import { devEndpointOverrides } from './oauth-dev-endpoints'; // GM-1c: the harness's local stand-in provider (dev-login-gated)
+import { devEndpointOverrides } from './oauth-dev-endpoints';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {

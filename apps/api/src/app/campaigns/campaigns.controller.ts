@@ -1,10 +1,3 @@
-/*
- * BCE ENGINE (DIRECTIVE-041; DEPLOY-002 P2 owner-scoping) — REST for the host record under /api/campaigns.
- * Every read/write/delete is scoped to the authenticated owner: the Viewer is DERIVED SERVER-SIDE from the
- * session (the global ApprovedGmGuard sets req.user) — a client-supplied ownerId is NEVER trusted. Admin
- * (and single-tenant/dev where auth is off) sees all. The catalog is global (separate, @Public).
- * ROUTE ORDER: static `last` routes before `:id` (Express matches /campaigns/last to the pointer).
- */
 import { Body, Controller, Delete, ForbiddenException, Get, HttpCode, NotFoundException, Param, Post, Put, Req } from '@nestjs/common';
 import { CampaignsService, type CheckpointInfo, type SaveRecord, type Viewer } from './campaigns.service';
 import { AuthService } from '../auth/auth.service';
@@ -19,27 +12,25 @@ export class CampaignsController {
     constructor(
         private readonly svc: CampaignsService,
         private readonly users: UsersService, // DEPLOY-010: operational audit (campaign created) — AuthModule is @Global
-        private readonly grants: EntitlementsService, // ODM-1: the pack persistence gate — AuthModule is @Global
+        private readonly grants: EntitlementsService,
     ) {}
 
     /** The tenant view for this request — server-derived, never from the client body. */
     private viewer(req: AuthedRequest): Viewer {
-        if (!AuthService.authRequired()) return { ownerId: null, admin: true }; // dev/single-tenant: unscoped
+        if (!AuthService.authRequired()) return { ownerId: null, admin: true, role: 'admin', features: [] }; // dev/single-tenant: unscoped
         const u = req.user; // set by the global ApprovedGmGuard (approved gm/admin)
-        return { ownerId: u?.id ?? null, admin: u?.role === 'admin' };
+        // device. Validated to the mint's alphabet; absent/malformed = no device (a cached bundle) → an ODM write is refused.
+        const raw = req.headers?.['x-bce-device'];
+        const deviceId = typeof raw === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(raw) ? raw : null;
+        return { ownerId: u?.id ?? null, admin: u?.role === 'admin', role: u?.role ?? null, features: u ? this.grants.featuresFor(u.id) : [], deviceId };
     }
 
-    /** IMPORT-1 Part A — the server-authoritative custom-hotspot gate. Custom hotspots ride in the snapshot
-     *  blob, so this save path is the chokepoint: a GUEST persisting a snapshot that carries custom hotspots is
-     *  refused (403) and NOTHING is stored. gm/admin (and dev/LAN where auth is off) are unaffected. */
     private assertCustomHotspotsAllowed(req: AuthedRequest, rec: SaveRecord): void {
         if (guestCustomHotspotRefused(req.user?.role, AuthService.authRequired(), rec?.snapshot)) {
             throw new ForbiddenException('Sign in with Google to import your own missions — guest accounts cannot save custom hotspots.');
         }
     }
 
-    /** DIRECTIVE-ODM-1 — the server-authoritative PACK gate (the IMPORT-1 shape): a pack-tagged snapshot
-     *  (snapshot.packId) persists only for an admin or an account holding that pack's feature grant. */
     private assertPackAllowed(req: AuthedRequest, rec: SaveRecord): void {
         const packId = snapshotPackId(rec?.snapshot);
         const entitled = !!packId && !!req.user && this.grants.has(req.user.id, packId);
@@ -48,12 +39,7 @@ export class CampaignsController {
         }
     }
 
-    /** GM-1 P2 — the gmOnly ENTITLEMENT belt (the pack-gate shape): a snapshot carrying the gmOnly key
-     *  persists only for an admin or a gm-mode-granted account. Existence check only — the contents are
-     *  never parsed. Closes the crafted-snapshot class (content smuggled under gmOnly past top-level
-     *  readers) at the same chokepoint the custom-hotspot and pack gates guard. */
     private assertGmOnlyAllowed(req: AuthedRequest, rec: SaveRecord): void {
-        // ODM-18 P1 — entitled = the gm-mode grant OR the snapshot's own pack grant (an ODM-entitled owner
         // carries gmOnly.pilotNotes as the GM of their pack campaign; the pack gate enforces the same grant).
         const packId = snapshotPackId(rec?.snapshot);
         const entitled = !!req.user && (this.grants.has(req.user.id, 'gm-mode') || (!!packId && this.grants.has(req.user.id, packId)));
@@ -81,13 +67,12 @@ export class CampaignsController {
     }
     @Post()
     create(@Req() req: AuthedRequest, @Body() rec: SaveRecord): SaveRecord {
-        this.assertCustomHotspotsAllowed(req, rec); // IMPORT-1: guest cannot persist custom hotspots
-        this.assertPackAllowed(req, rec); // ODM-1: pack campaigns need the feature grant
-        this.assertGmOnlyAllowed(req, rec); // GM-1: gmOnly persists only for gm-mode-granted accounts
+        this.assertCustomHotspotsAllowed(req, rec);
+        this.assertPackAllowed(req, rec);
+        this.assertGmOnlyAllowed(req, rec);
         const v = this.viewer(req);
         // DEPLOY-010: audit a genuinely NEW campaign (gated only — an actor exists) for the admin activity feed.
         const isNew = AuthService.authRequired() && !!req.user && !this.svc.get(rec.id, v);
-        // ODM-21 — the force-new channel. `forceNew` rides the REQUEST BODY, not the snapshot: it is an
         // intent for THIS write and is never persisted. Client-supplied and therefore forgeable — see
         // pack-gate.odmSingletonRefused: a data-integrity guard for the user's own account, NOT a security
         // boundary (tenancy is canAccess/ownerId, elsewhere).
@@ -106,10 +91,9 @@ export class CampaignsController {
     }
     @Put(':id')
     put(@Req() req: AuthedRequest, @Param('id') id: string, @Body() rec: SaveRecord): SaveRecord {
-        this.assertCustomHotspotsAllowed(req, rec); // IMPORT-1: guest cannot persist custom hotspots
-        this.assertPackAllowed(req, rec); // ODM-1: pack campaigns need the feature grant
-        this.assertGmOnlyAllowed(req, rec); // GM-1: gmOnly persists only for gm-mode-granted accounts
-        // ODM-21 — the SAME force-new channel as create(). This matters: the web client writes exclusively
+        this.assertCustomHotspotsAllowed(req, rec);
+        this.assertPackAllowed(req, rec);
+        this.assertGmOnlyAllowed(req, rec);
         // via PUT (campaign-save-store.put), and a PUT to an id that does not exist IS a create — which is
         // precisely why the guard lives in upsert rather than only on the POST route.
         const forceNew = (rec as unknown as { forceNew?: unknown })?.forceNew === true;
@@ -121,15 +105,10 @@ export class CampaignsController {
         this.svc.remove(id, this.viewer(req));
     }
 
-    // ── ODM-18 P2 — checkpoint history + GM rollback (owner-scoped through the campaign row) ──
     @Get(':id/checkpoints')
     listCheckpoints(@Req() req: AuthedRequest, @Param('id') id: string): CheckpointInfo[] {
         return this.svc.listCheckpoints(id, this.viewer(req));
     }
-    /** ODM-26 option 1 — PIN THE CURRENT STATE as canon: capture the live snapshot and mark it, one step.
-     *  Deliberately not "flag an existing checkpoint": checkpoints hold the state BEFORE the save that
-     *  minted them, so pinning from the list alone means saving twice and pinning the second capture —
-     *  which a GM gets wrong once, silently, about the one record everything else is measured against. */
     @Post(':id/pin')
     pin(@Req() req: AuthedRequest, @Param('id') id: string): CheckpointInfo {
         return this.svc.pinCurrent(id, this.viewer(req));

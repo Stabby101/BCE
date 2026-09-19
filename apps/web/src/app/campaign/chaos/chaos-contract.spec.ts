@@ -1,15 +1,9 @@
-/*
- * DIRECTIVE-IMPORT-6 Part A — the authored-intensity seam. Pins that a hot spot signs at its AUTHORED intensity (the
- * track count the author wrote), never clamped into the mapped contract type's intensityRange — the clamp was the
- * tester's "5-track custom ended silently at track 3" (Recon → expedition [1,3]). Completion itself (tracksDone >=
- * intensity, mission-tree.service.ts) is unchanged and harness-proven (smoke/verify-import6.js).
- */
-import { authoredIntensity, syntheticOfferFromChaos, isSessionContract, participantSideFor, type ChaosContract, sessionPhase, hasGeneratedTrackOf } from './chaos-contract';
+import { authoredIntensity, syntheticOfferFromChaos, UNSIGNED_EMPLOYER, isSessionContract, participantSideFor, type ChaosContract, sessionPhase, hasGeneratedTrackOf } from './chaos-contract';
 import { CHAOS_CONTRACT_TYPES } from './chaos-contract-steps';
 import { hotspotTypeId } from './hotspots-catalog';
 
-describe('authoredIntensity — IMPORT-6 Part A (the authored track count is the contract intensity, verbatim)', () => {
-    it('keeps an authored intensity ABOVE the mapped type range (the pre-IMPORT-6 clamp bug: Recon 5 → 3)', () => {
+describe('authoredIntensity — Part A (the authored track count is the contract intensity, verbatim)', () => {
+    it('keeps an authored intensity ABOVE the mapped type range (the pre-clamp bug: Recon 5 → 3)', () => {
         const type = hotspotTypeId({ type: 'Recon' } as never); // → 'expedition'
         const [, hi] = CHAOS_CONTRACT_TYPES.find((t) => t.id === type)!.intensityRange;
         expect(hi).toBe(3); // the range that used to clamp
@@ -34,10 +28,21 @@ describe('authoredIntensity — IMPORT-6 Part A (the authored track count is the
         expect(off.pay.total).toBe(0);
         expect(off.status).toBe('ACTIVE');
     });
+    it('R0-2: the offer’s employer is the signed side’s employer by name; an unsigned legacy contract reads the honest fallback, never the old placeholder', () => {
+        const base = { id: 'cc-y', type: 'expedition', scale: 1, intensity: 1, steps: { basePay: 4, command: 10, salvage: 3, support: 3, transport: 5 }, status: 'active', acceptedDate: null } as unknown as ChaosContract;
+        const signed = syntheticOfferFromChaos({ ...base, employer: 'Alyina Mercantile League', side: 'a', sideRole: 'attacker' });
+        expect(signed.employer.name).toBe('Alyina Mercantile League');
+        expect(signed.employer.generic).toBeFalse();
+        const legacy = syntheticOfferFromChaos(base);
+        expect(legacy.employer.name).toBe(UNSIGNED_EMPLOYER);
+        expect(legacy.employer.generic).toBeTrue();
+        expect(legacy.employer.name).not.toContain('Hot Spots Command');
+        expect(syntheticOfferFromChaos({ ...base, employer: '   ' }).employer.name).toBe(UNSIGNED_EMPLOYER);
+    });
 });
 
-describe('participantSideFor (GM-3 P1 hook 3 — the participant side, and the session flip-suppression)', () => {
-    it('a GM-signed primary (D-133): a wire-OPFOR player signs the OPPOSING side; BLUFOR/no-side signs the primary side', () => {
+describe('participantSideFor (P1 hook 3 — the participant side, and the session flip-suppression)', () => {
+    it('a GM-signed primary a wire-OPFOR player signs the OPPOSING side; BLUFOR/no-side signs the primary side', () => {
         expect(participantSideFor({ side: 'a' }, 'OPFOR')).toBe('b');
         expect(participantSideFor({ side: 'b' }, 'OPFOR')).toBe('a');
         expect(participantSideFor({ side: 'a' }, 'BLUFOR')).toBe('a');
@@ -54,7 +59,7 @@ describe('participantSideFor (GM-3 P1 hook 3 — the participant side, and the s
     });
 });
 
-describe('sessionPhase — DIRECTIVE-PD3 P2 (PD3-9/11): the ONE phase the phone gates the pick window and the brief on', () => {
+describe('sessionPhase — P2 (/11): the ONE phase the phone gates the pick window and the brief on', () => {
     const live = { status: 'active' as const }; const done = { status: 'completed' as const };
     it("'none' — nothing presented, no contract, no record", () => { expect(sessionPhase({ presented: null, contract: null, completed: null, tree: [], spec: null })).toBe('none'); });
     it("'lobby' — presented + a live contract, nothing generated (the pick is live)", () => { expect(sessionPhase({ presented: {}, contract: live, completed: null, tree: [{ state: 'AVAILABLE' }], spec: null })).toBe('lobby'); });

@@ -1,14 +1,3 @@
-/*
- * BCE — DIRECTIVE-108/108b: the Chaos Campaign ("Hot Spots") catalog for the Campaign Setup card.
- * Data-driven so campaigns light up as their mechanics are extracted. `available:false` = listed but not yet
- * selectable ("coming soon").
- *   - `eraLocked` — a published Hot Spot campaign is tied to a specific era; selecting it seeds that era and
- *     SKIPS the Era step. `Generic Hot Spots` is era-free (eraLocked:false) → the player still picks the era.
- *   - `era` — an era DISPLAY NAME that resolves against the SAME canonical list the Era step uses
- *     (era/eras.ts `eraCardByName`); null when not era-locked.
- * IP: our own names/blurbs only — `book` is the reference source TITLE (so a player knows which rulebook it
- * draws on), null for the generic engine-driven mode; NO rulebook text is reproduced. Room to add more entries.
- */
 export interface ChaosCampaign {
     id: string;
     name: string;

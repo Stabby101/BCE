@@ -1,10 +1,6 @@
-/*
- * GM-1 P2 — pins the gmOnly strip (the P0 architectural ruling): GM recipients get the key, non-GM
- * recipients provably do not, and the shared parsed snapshot is never mutated (the fan parses once).
- */
 import { shapeSnapshot, ownContractOf, ownCompanyKeysOf, ownVoidOf } from './snapshot-shape';
 
-describe('shapeSnapshot (GM-1 — the gmOnly strip)', () => {
+describe('shapeSnapshot (the gmOnly strip)', () => {
     const snap = { name: 'Alpha', hotSpotCampaign: 'x', gmOnly: { hotSpotOffer: ['hs-1', 'hs-2'], reckoningBegun: true } };
 
     it('a GM recipient keeps gmOnly intact (same reference — nothing copied, nothing lost)', () => {
@@ -45,9 +41,8 @@ describe('shapeSnapshot (GM-1 — the gmOnly strip)', () => {
         }
     });
 
-    // ── ODM-18 P1 — the LEGACY pilots[].gmNotes strip (panel finding: a pre-migration ODM snapshot at
     //    rest still carries GM notes on the pilot rows; the fan must not wait for the GM-device migration).
-    describe('the legacy pilots[].gmNotes strip (ODM-18 P1)', () => {
+    describe('the legacy pilots[].gmNotes strip (P1)', () => {
         const legacy = { name: 'Ghosts', pilots: [{ pilotId: 'p1', callsign: 'Beacon', gmNotes: 'SECRET' }, { pilotId: 'p2', callsign: 'Fog' }] };
 
         it('non-GM: gmNotes is stripped from every pilot row; every other pilot field intact', () => {
@@ -72,7 +67,7 @@ describe('shapeSnapshot (GM-1 — the gmOnly strip)', () => {
             expect(shapeSnapshot(clean, false)).toBe(clean);
         });
 
-        it('gmNotes strips even when gmOnly is absent (the pre-ODM-18 wire shape)', () => {
+        it('gmNotes strips even when gmOnly is absent (the pre-wire shape)', () => {
             const out = shapeSnapshot({ pilots: [{ gmNotes: 'x', a: 1 }] }, false) as { pilots: Record<string, unknown>[] };
             expect('gmNotes' in out.pilots[0]).toBe(false);
             expect(out.pilots[0]['a']).toBe(1);
@@ -80,7 +75,7 @@ describe('shapeSnapshot (GM-1 — the gmOnly strip)', () => {
     });
 });
 
-describe('shapeSnapshot — GM-2 P2a: the per-recipient contract ATTACH (H14)', () => {
+describe('shapeSnapshot — P2a: the per-recipient contract ATTACH (H14)', () => {
     const pcA = { id: 'pc-home-a', scale: 2, steps: { basePay: 3, salvage: 4 } };
     const pcB = { id: 'pc-home-b', scale: 1, steps: { basePay: 1, salvage: 2 } };
     const snap = {
@@ -131,7 +126,7 @@ describe('shapeSnapshot — GM-2 P2a: the per-recipient contract ATTACH (H14)', 
     });
 });
 
-describe('ownCompanyKeysOf — GM-2 P2b: the homes a device brought', () => {
+describe('ownCompanyKeysOf — P2b: the homes a device brought', () => {
     const force = [
         { provenance: { origin: 'player-import', owner: 'anon-A', sourceCampaignId: 'home-a' } },
         { provenance: { origin: 'player-import', owner: 'anon-A', sourceCampaignId: 'home-a' } },
@@ -146,7 +141,7 @@ describe('ownCompanyKeysOf — GM-2 P2b: the homes a device brought', () => {
     });
 });
 
-describe('shapeSnapshot — GM-3 P1: the per-recipient VOID attach (participantVoid)', () => {
+describe('shapeSnapshot — P1: the per-recipient VOID attach (participantVoid)', () => {
     const force = [
         { instanceId: 'imp-1', provenance: { origin: 'player-import', owner: 'anon-A', sourceCampaignId: 'home-a' } },
         { instanceId: 'imp-2', provenance: { origin: 'player-import', owner: 'anon-B', sourceCampaignId: 'home-b' } },

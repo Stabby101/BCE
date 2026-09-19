@@ -1,12 +1,3 @@
-/*
- * GM-2 P2b — the GM-side CONTRACT-SIGN APPLY (the GM-1 P3 ForceImportService pattern): a PLAYER signed its company's
- * contract on the phone; the server validated the SHAPE and fanned it to GM sockets only; THIS service is the snapshot
- * author's half. It re-checks the belts the phone's chain cannot be trusted for — a GM session with a signed primary,
- * the SAME hot spot, Command LOCKED to the primary's value, Scale 1..3, the rep spent within the company's OWN rep
- * budget (its home reputation, off the mint's provenance) — then writes the map entry through the SAME setter the GM's
- * broker uses and persists (the one-writer law). A refused signing writes an honest campaign-log line and nothing else;
- * Release on the GM tab stays the human veto. Dashboard-lifetime, gmSession-gated.
- */
 import { Injectable, effect, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
@@ -17,10 +8,6 @@ import { minimalRepCost, type Steps } from '../chaos/chaos-chain-cost'; // P2b-f
 import { HotSpotsCatalogService, resolveSides } from '../chaos/hotspots-catalog';
 import type { ChaosContract } from '../chaos/chaos-contract';
 
-/** The belts, pure — pinned by contract-sign.spec.ts. Returns null when the signing may be written, else the refusal.
- *  P2b-fix — `seed` (the authored side's steps the phone's chain started from) adds the PATH check: the signed terms must be
- *  reachable by the D-128 chain from that seed (Command locked), and the claimed spend must not be below the chain's
- *  minimal cost. A null seed (the hot spot unknown to this device) refuses — the belt never passes on ignorance. */
 export function signRefusal(contract: ChaosContract, primary: ChaosContract | null, homeRep: number, seed?: Steps | null): string | null {
     if (!primary) return 'no session contract is signed';
     if (contract.hotspotId !== primary.hotspotId) return 'not the session\'s hot spot';
@@ -31,7 +18,7 @@ export function signRefusal(contract: ChaosContract, primary: ChaosContract | nu
     if (seed !== undefined) {
         if (!seed) return 'the session\'s hot spot is not in this device\'s catalog — the path cannot be checked';
         const chain = minimalRepCost({ ...seed, command: primary.steps.command }, contract.steps, contract.scale, { lockCommand: true });
-        if (!chain.ok) return `off the D-128 chain: ${chain.reason}`;
+        if (!chain.ok) return `off the chain: ${chain.reason}`;
         if (spent < chain.minimalRep) return `rep spent (${spent}) is below the chain's minimal cost (${chain.minimalRep}) for these terms`;
     }
     return null;

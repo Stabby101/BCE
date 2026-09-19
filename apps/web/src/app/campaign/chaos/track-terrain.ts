@@ -1,16 +1,3 @@
-/*
- * DIRECTIVE-IMPORT-7 Part C — TRACK ↔ TERRAIN coherence for Hot Spots tracks. Pure TS, no Angular/DOM.
- *
- * The tactical terrain (spec.terrain) is a random roll from mission-spec's TERRAIN_TABLE, independent of the track's
- * words. A Hot Spots track carries fixed prose — an authored title/situation ("Reading the Jungle … the Paraíso green"),
- * a hot spot's system profile, a preset's title, a forged track's dressing — so a roll of "Tundra" contradicts it on the
- * sheet (tester round 5). Rule: mine the track's texts (title first, then situation/deployment/profile) for BIOME
- * KEYWORDS; if the rolled biome is among the mentioned biomes, keep it; else if any biome is mentioned, use the first
- * mentioned (title outranks body); if none is mentioned there is nothing to contradict — keep the roll. Deterministic
- * (no RNG consumed — Traditional's roll sequence is untouched; this only runs on Hot Spots seeded tracks).
- * The lint (smoke/verify-import7.js) sweeps every authored + forged track through this rule and asserts zero
- * contradictions remain.
- */
 import { TERRAIN_TABLE } from '../mission/mission-spec';
 
 /** biome → the words that name it (word-boundary, case-insensitive). Order = tie-break priority within ONE text. */

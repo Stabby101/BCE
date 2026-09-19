@@ -46,9 +46,6 @@ type Tab = 'dashboard' | 'approvals' | 'users' | 'audit';
                         <div class="ap-card"><div class="apc-n">{{ s.new7d }}</div><div class="apc-l">New this week</div><div class="apc-s">{{ s.newToday }} in 24h</div></div>
                     </div>
                     <p class="ap-cardnote">Presence is in-memory (an authed socket = online; 2 tabs of one user = 1); “active” counts use the durable last-seen. Everything here is admin-only (server-gated).</p>
-                    <!-- ODM-26 — the off-box DB export existed as a route with no way to reach it, which is
-                         the same as not existing for anyone who does not read source. VACUUM INTO, so it is a
-                         CONSISTENT single file, not a copy of a live WAL database. -->
                     <div class="ap-export">
                         <button type="button" class="ap-btn" [disabled]="exporting()" (click)="exportDb()" data-testid="admin-export">
                             {{ exporting() ? 'Preparing…' : '⬇ Download a full database export' }}
@@ -81,7 +78,6 @@ type Tab = 'dashboard' | 'approvals' | 'users' | 'audit';
             }
 
             @if (tab() === 'users') {
-                <!-- HOTFIX-041 Part B — finding tools for OAuth-scale row counts (716 users, mostly gst-* noise). -->
                 <div class="ap-filters ap-userfilters">
                     <input class="ap-search" type="search" placeholder="Search name / email…" [value]="q()" (input)="onQ($event)" data-testid="user-search" />
                     <div class="ap-seg" role="tablist">
@@ -104,11 +100,7 @@ type Tab = 'dashboard' | 'approvals' | 'users' | 'audit';
                                     <td class="ap-dim">{{ fmt(u.createdAt) }}</td>
                                     <td class="ap-dim">{{ u.lastSeen ? fmt(u.lastSeen) : '—' }}</td>
                                     <td class="ap-rowacts">
-                                        <!-- HOTFIX-041 Part C: the ODM toggle sits OUTSIDE the self-guard — the admin's OWN row is the
-                                             primary self-grant flow (the cover door keys off the explicit grant; admins get no implicit
-                                             entitlement in /me). Guests can't hold entitlements (server refuses; no button). -->
                                         @if (u.role !== 'guest' && u.status === 'approved') { <button type="button" class="ap-mini" [class.ok]="hasGrant(u, 'odm')" (click)="toggleGrant(u, 'odm')" data-testid="odm-grant">{{ hasGrant(u, 'odm') ? 'ODM ✓' : 'ODM' }}</button> }
-                                        <!-- GM-1 P1 — the gm-mode flag rides the same generic grant chain (same guard: non-guest + approved). -->
                                         @if (u.role !== 'guest' && u.status === 'approved') { <button type="button" class="ap-mini" [class.ok]="hasGrant(u, 'gm-mode')" (click)="toggleGrant(u, 'gm-mode')" data-testid="gm-mode-grant">{{ hasGrant(u, 'gm-mode') ? 'GM ✓' : 'GM' }}</button> }
                                         @if (u.id === selfId()) { <span class="ap-youtag">you</span> }
                                         @else {
@@ -165,9 +157,6 @@ type Tab = 'dashboard' | 'approvals' | 'users' | 'audit';
         </div>
     `,
     styles: [`
-        /* HOTFIX-041 Part A — the IMPORT-7 route-host pattern (cover.scss / merc-command.scss siblings): body is
-           overflow:hidden + one viewport tall, so EVERY route host must own its own scroll and end above the legal
-           footer. min-height:100dvh let the host grow past the fold with no scroller — 716 rows unreachable. */
         :host { display:block; height:calc(100dvh - var(--bce-footer-h, 0px)); overflow-y:auto; overflow-x:hidden;
                 box-sizing:border-box; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
                 background:#0c0f13; color:#e7edf3;
@@ -210,7 +199,6 @@ type Tab = 'dashboard' | 'approvals' | 'users' | 'audit';
         .ap-mini.del { border-color:#6b3a2f; color:#e08b7a; }
         .ap-youtag { font-size:11px; color:#6b7682; font-style:italic; }
         .ap-filters { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
-        /* HOTFIX-041 Part B — user-directory finding tools (touch-friendly: no hover-only anything) */
         .ap-userfilters { gap:10px; flex-wrap:wrap; }
         .ap-search { flex:1 1 220px; min-width:170px; background:#0c0f13; border:1px solid #2a3340; color:#e7edf3;
                      border-radius:8px; padding:9px 12px; font-size:13px; }
@@ -240,7 +228,6 @@ type Tab = 'dashboard' | 'approvals' | 'users' | 'audit';
         .apc-l { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#9fb2c4; margin-top:7px; font-weight:600; }
         .apc-s { font-size:11px; color:#6b7682; margin-top:3px; }
         .ap-cardnote { font-size:11px; color:#6b7682; font-style:italic; margin:2px 2px 18px; }
-        /* ODM-26 — the export row: a real button plus the sentence that says what the file is for */
         .ap-export { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:0 2px 18px; }
         .ap-export .ap-btn { background:#2b3a4a; color:#e8eef4; }
         .ap-export .ap-btn:disabled { opacity:.55; cursor:progress; }
@@ -251,7 +238,7 @@ export class AdminPageComponent implements OnDestroy {
     private readonly auth = inject(AuthService);
     private readonly router = inject(Router);
 
-    protected readonly ACTIONS = ['login', 'register', 'approve', 'reject', 'ban', 'unban', 'role_change', 'remove', 'recover', 'campaign_created', 'grant', 'revoke']; // ODM-1: +grant/revoke
+    protected readonly ACTIONS = ['login', 'register', 'approve', 'reject', 'ban', 'unban', 'role_change', 'remove', 'recover', 'campaign_created', 'grant', 'revoke'];
     protected readonly tab = signal<Tab>('dashboard'); // DEPLOY-010: the dashboard is the new default
     protected readonly users = signal<GmUser[]>([]);
     protected readonly audit = signal<AuditEntry[]>([]);
@@ -263,7 +250,6 @@ export class AdminPageComponent implements OnDestroy {
     protected readonly selfId = computed(() => this.auth.user()?.id ?? '');
     protected readonly pending = computed(() => this.users().filter((u) => u.status === 'pending'));
 
-    // ── HOTFIX-041 Part B — live search + role/provider filter over the user directory ──
     protected readonly FILTERS = [
         { id: 'all', label: 'All' },
         { id: 'accounts', label: 'Accounts' }, // non-guest — the one-click cut past the gst-* noise
@@ -275,7 +261,6 @@ export class AdminPageComponent implements OnDestroy {
     protected onQ(e: Event): void { this.q.set((e.target as HTMLInputElement).value); }
     // DECISION: default order = newest first (createdAt desc) — matches "who just signed up?", the common admin
     // question; grants-first would bury fresh registrations under the handful of granted rows. Client-side filter
-    // is fine at 716 rows; ledger threshold ~5,000 (FOLLOWUPS §HOTFIX-041) before server-side paging is owed.
     protected readonly filteredUsers = computed(() => {
         const f = this.roleFilter();
         const needle = this.q().trim().toLowerCase();
@@ -290,7 +275,6 @@ export class AdminPageComponent implements OnDestroy {
                 || u.id.toLowerCase().includes(needle))
             .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
     });
-    // DIRECTIVE-ODM-1 — per-account feature grants (the hidden-pack toggle). Set of "userId|feature".
     protected readonly grants = signal<Set<string>>(new Set());
     protected hasGrant(u: GmUser, feature: string): boolean { return this.grants().has(u.id + '|' + feature); }
 
@@ -304,7 +288,6 @@ export class AdminPageComponent implements OnDestroy {
 
     private async refreshStats(): Promise<void> { this.stats.set(await this.auth.adminStats()); }
 
-    // ── ODM-26 — the whole-DB export, given a button. Blunt (every campaign, not one) but it is a real file
     //    the admin holds, and it is the only durability that survives the volume the database sits on. ──
     protected readonly exporting = signal(false);
     protected readonly exportNote = signal<string | null>(null);
@@ -349,7 +332,7 @@ export class AdminPageComponent implements OnDestroy {
             this.stats.set(await this.auth.adminStats()); // DEPLOY-010
             this.users.set(await this.auth.listUsers());
             this.audit.set(await this.auth.listAudit({ user: this.auditUser() || undefined, action: this.auditAction() || undefined }));
-            this.grants.set(new Set((await this.auth.listGrants()).map((g) => g.userId + '|' + g.feature))); // ODM-1
+            this.grants.set(new Set((await this.auth.listGrants()).map((g) => g.userId + '|' + g.feature)));
             void this.auth.refreshPending();
         } finally { this.busy.set(false); }
     }
@@ -369,7 +352,6 @@ export class AdminPageComponent implements OnDestroy {
     protected async setRole(u: GmUser, role: 'admin' | 'gm'): Promise<void> {
         if (this.ask(`Change ${u.email || u.id} to ${role}?`)) await this.run(() => this.auth.setRole(u.id, role));
     }
-    /** ODM-1 — toggle a pack grant. No confirm (reversible one-click; the server audits both directions). */
     protected async toggleGrant(u: GmUser, feature: string): Promise<void> {
         await this.run(() => (this.hasGrant(u, feature) ? this.auth.revokeFeature(u.id, feature) : this.auth.grantFeature(u.id, feature)));
     }

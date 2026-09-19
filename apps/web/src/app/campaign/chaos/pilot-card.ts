@@ -1,9 +1,3 @@
-/*
- * DIRECTIVE-125 — Campaign Pilot Card pricing + pure helpers (Hot Spots fork; modeled on Draconis Reach p.159).
- * SP-denominated advancement ladders (spend from the Warchest, D-110): raise Gunnery/Piloting, buy Edge tokens,
- * learn Edge Abilities/SPAs, plus Warchest costs (Heal, Formation Commander, Command Abilities). Handicap = the
- * summed H-column of every bought rung (a single balance number). Facts cited to Draconis Reach — our own tables.
- */
 import type { CampaignPilot, Pilot } from '../barracks/pilot-generator';
 
 /** One rung on a skill/edge/ability ladder: the SP price + the H-column (Handicap) it adds. */
@@ -25,14 +19,12 @@ export const PILOT_CARD_PRICES = {
     replaceCommandAbility: 250,        // swap a command ability
 } as const;
 
-/** DIRECTIVE-125 — a short, IP-safe list of Special Command Abilities a Formation Commander can learn (our words). */
 export const COMMAND_ABILITIES: readonly string[] = [
     'Coordinated Strike', 'Rapid Redeploy', 'Hold the Line', 'Forced Withdrawal', 'Focused Fire', 'Overwatch',
 ];
 
 const G_BASE = 4, P_BASE = 5; // a new MechWarrior baseline (Gunnery 4 / Piloting 5)
 
-/** Init a fresh campaign card for a named pilot (base Edge 1; wounds mirror the pilot's D-036 hits). */
 export function initCampaignPilot(pilot: Pilot, type = 'BM'): CampaignPilot {
     return {
         careerSP: 0,

@@ -1,18 +1,3 @@
-/*
- * BCE campaign-pack — PILOT generation (DIRECTIVE-020, T-018/T-017). Pure TS, no Angular/DOM.
- *
- * Pilots are ENTITIES that outlive any one 'Mech: name + Gunnery/Piloting, a status lifecycle,
- * and a both-way assignment LINK to a roster instance (spares = the unassigned pool). Generated
- * once at Begin (and pilots-on-first-load for older saves), 1:1 auto-assigned, the commanding
- * unit's pilot getting the best rolled skills (completing D-019's command designation).
- *
- * Skills model the canon experience table — Gunnery/Mek TN = 7 − level, Piloting/Mek = 8 − level,
- * tier levels Green 2 / Regular 3 / Veteran 4 / Elite 5 (= canon Gun 5/4/3/2, Pilot 6/5/4/3) —
- * cross-checked against the GPLv3 MekHQ skill generators (campaign/personnel/generator +
- * skills/SkillType.java; concepts only, NO MekHQ data files / NC name assets). Variance ports
- * MekHQ Skill.randomizeLevel (1d6: 1 worse / 6 better / else same), rolled ONCE and stored
- * (the D-017/18 stored-not-rerolled principle). Names are BCE-ORIGINAL tunable pools.
- */
 import type { ProtoInstance } from '../force/force-generator';
 
 export type PilotStatus = 'Active' | 'Injured' | 'KIA'; // Injured/KIA reserved for the AAR/engine phase
@@ -25,9 +10,8 @@ export interface Pilot {
     piloting: number;
     status: PilotStatus;
     assignedInstanceId?: string; // the LINK; absent = spare/bench
-    note?: string; // D-024: "kin — shares the <surname> name" when a surname is deliberately shared
-    recoveryDays?: number; // D-031: days left until an Injured pilot returns to Active (ticks on the D-022 clock)
-    // ── D-036 Barracks v2 — ALL optional: pre-D-036 pilots migrate forward-only, no version bump ──
+    note?: string;
+    recoveryDays?: number;
     perks?: string[];        // granted SPA ids (pilot-abilities.ts); display + print only this slice
     bio?: string;            // generated once at creation / ensured once on load (stored; GM-editable)
     gmNotes?: string;        // the GM's free-text on this pilot
@@ -35,29 +19,20 @@ export interface Pilot {
     recordsBegin?: { y: number; m: number; d: number }; // when the service record started counting
     hits?: number;           // last recorded wound level (walk-applied; cleared on recovery)
     kiaDate?: { y: number; m: number; d: number };      // the memorial date (walk-applied)
-    named?: boolean;         // D-112: a Chaos "Named Pilot" (improvement-eligible, capped at 4). Optional/additive.
-    trade?: string;          // ODM-15: the crew trade ('mechwarrior' | 'vehicle-crew' | 'aero'), stamped at muster
+    named?: boolean;
+    trade?: string;
                              // from the machine's catalog type + re-derived on reassignment. ODM-only writer;
-                             // Classic pilots are never stamped (the D-036 optional/additive pattern, no version bump).
-    primaryHull?: string;    // ODM-25 (ruling 4): the CHASSIS this crew member calls their own — familiarity is
+    primaryHull?: string;
                              // per-hull, and an instanceId dies with the machine. DELIBERATELY NOT `pilotPrimary`
-                             // (ODM-15b's stables/mint marker answers a different question; one field answering
                              // two is the bay bug). One per pilot — setting REPLACES. NO mechanic reads it yet;
-                             // ODM-16 is where it earns a number. ODM-only writer; additive; no version bump.
-    stableHulls?: string[];  // ODM-15b ADDENDUM: a stable pilot's owned hulls (instanceIds, primary first) —
+    stableHulls?: string[];
                              // the recoverable person→both-hulls linkage, PRESERVED not modeled (the seed of a
-                             // future hull-familiarity mechanic whose trigger is James's, not ours). ODM-only
                              // writer; additive; no version bump; NO mechanic reads it yet.
-    // ── DIRECTIVE-125 — the Hot Spots Campaign Pilot Card (SP career + advancement). Optional/additive, HS-only;
     //    absent on Traditional pilots (no card, no behavior change). Persists with the pilot object (no version bump). ──
     campaignPilot?: CampaignPilot;
-    /** GM-2 P1 — on a pilot minted by the GM-1 P3 import: the HOME campaign's pilot id (the re-minted `impp-` id is the
-     *  live one). Echoed onto the results slip so a fate lands on the right home pilot. Absent on every other pilot. */
     originPilotId?: string;
 }
 
-/** DIRECTIVE-125 — per-pilot campaign progression (Draconis Reach p.159). SP career ledger + invested SP + the
- *  balance Handicap (summed H-column of every bought rung). Wounds mirror the pilot's D-036 `hits`. */
 export interface CampaignPilot {
     careerSP: number;                                                     // cumulative SP earned across missions (visibility of "who's earning")
     investedSP: { gunnery: number; piloting: number; edge: number; abilities: number }; // SP spent per track (from the Warchest)
@@ -83,9 +58,7 @@ export const PILOT_TUNABLES = {
     gunneryBounds: [1, 8] as [number, number],
     pilotingBounds: [1, 9] as [number, number],
     callsignPct: 0.55,
-    /** D-024: probability a surname is deliberately SHARED (kin) rather than fresh — marked in the note. */
     familyPct: 0.05,
-    // BCE-ORIGINAL name pools (NOT MekHQ data). D-024 widened them ≥3×; FIRST names are sized to cover
     // a regiment-plus draw (≥160) so the within-campaign guard can keep every first name unique.
     firstNames: [
         'Mara', 'Tomas', 'Jen', 'Kade', 'Sasha', 'Rourke', 'Lena', 'Drex', 'Ivo', 'Petra', 'Garrick', 'Yana', 'Cole', 'Nadia', 'Bram', 'Suki', 'Elias', 'Vora', 'Dane', 'Risa',
@@ -134,7 +107,7 @@ export function generatePilots(instances: ProtoInstance[], rating: string | null
     const total = instances.length + spares;
 
     const usedCall = new Set<string>();
-    const usedFirst = new Set<string>(); // D-024: first names are NEVER duplicated within a campaign
+    const usedFirst = new Set<string>();
     const usedLast = new Map<string, number>(); // surname -> index of its first bearer (for the kin note)
     const pilots: Pilot[] = [];
     for (let i = 0; i < total; i++) {

@@ -1,28 +1,20 @@
-/*
- * GM-1 P2 — the PRESENTED BRIEF on the player device. Renders the player-safe record the GM published
- * (state.presentedHotspot — hydrated from the fanned snapshot; the server's gmOnly strip means the offer
- * board itself never reaches this device). Shows BOTH sides (employer · role · vs — enemy NAME only) and
- * a SIDE PREFERENCE picker: advisory, fanned to the GM panel (server-redacted from other players).
- * Renders NOTHING when nothing is presented — the directive's "player device shows nothing" is literal.
- * Waiting-state voice per HOTFIX-029: declarative, present-tense, says it updates automatically.
- */
 import { Component, ChangeDetectionStrategy, computed, effect, inject, signal, untracked } from '@angular/core';
 import { NewCampaignState } from '../campaign/new-campaign-state';
-import { CampaignSaveStore } from '../campaign/campaign-save-store'; // GM-3 P1 — the home campaign, on this device's own token (the refund)
-import { applyVoidToSnapshot } from '../campaign/gm/apply-slip'; // GM-3 P1 — the rep refund transform (pure)
+import { CampaignSaveStore } from '../campaign/campaign-save-store';
+import { applyVoidToSnapshot } from '../campaign/gm/apply-slip';
 import { ClaimRealtimeService } from '../campaign/claims/claim-realtime.service';
-import { NegotiationService } from '../campaign/chaos/negotiation.service'; // GM-2 P2b — the SAME D-128 modal, on the phone
+import { NegotiationService } from '../campaign/chaos/negotiation.service';
 import { NegotiateModalComponent } from '../campaign/chaos/negotiate-modal';
 import { PLAYER_NEGOTIATION_HOST_PROVIDER } from './player-negotiation-host';
 import { HotSpotsCatalogService } from '../campaign/chaos/hotspots-catalog';
-import { resolved, participantSideFor, type ChaosContract, sessionPhase } from '../campaign/chaos/chaos-contract'; // GM-3 P1 — the one participant-side decision
+import { resolved, participantSideFor, type ChaosContract, sessionPhase } from '../campaign/chaos/chaos-contract';
 import { anonIdWeb } from '../campaign/gm/side-labels';
 
 @Component({
     selector: 'bce-presented-brief',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NegotiateModalComponent], // GM-2 P2b
-    providers: [NegotiationService, PLAYER_NEGOTIATION_HOST_PROVIDER], // GM-2 P2b — component-lifetime (the HARDEN-3 pattern), never root; the host cuts the tree edge
+    imports: [NegotiateModalComponent],
+    providers: [NegotiationService, PLAYER_NEGOTIATION_HOST_PROVIDER],
     template: `
         @if (brief(); as p) {
             <div class="pp" data-testid="pp-brief">
@@ -44,8 +36,6 @@ import { anonIdWeb } from '../campaign/gm/side-labels';
                         @if (p.transit.rechargeHours !== null) { <span>&middot; recharge {{ p.transit.rechargeHours }} h</span> }
                     </div>
                 }
-                <!-- PD3 P2 (PD3-9) — the pick is a LOBBY thing: once a track is generated the side is a fact ("Your side: X — assigned");
-                     once the contract is complete the sides are gone. Gated on the shared sessionPhase(), never on the brief alone. -->
                 @if (phase() === 'lobby') {
                 <div class="pp-sides">
                     @for (s of p.sides; track s.key) {
@@ -68,7 +58,6 @@ import { anonIdWeb } from '../campaign/gm/side-labels';
                 }
             </div>
         }
-        <!-- GM-2 P2b — the company's contract block stands on the SIGNED PRIMARY, whether or not the GM has presented a brief -->
         @if (contractBlock(); as cb) {
             <div class="pp-contract" data-testid="pp-contract">
                 @if (cb.signed; as sc) {
@@ -83,8 +72,6 @@ import { anonIdWeb } from '../campaign/gm/side-labels';
                 }
             </div>
         }
-        <!-- GM-3 P1 (hook 5) — the GM UN-PRESENTED the session contract: this company's signed terms are VOID (the fan attached this
-             device's own void); the rep a slip already settled at home comes back here, on this device, idempotent by voidId. -->
         @if (voidBlock(); as vb) {
             <div class="pp-contract pp-void" data-testid="pp-void" [attr.data-void-id]="vb.v.voidId" [attr.data-state]="vb.state">
                 <div class="pp-ctitle">Session contract withdrawn</div>
@@ -99,11 +86,6 @@ import { anonIdWeb } from '../campaign/gm/side-labels';
                 }
             </div>
         }
-        <!-- P4 (2026-09-04, PD2-3 — the transparent modal): the modal styles through the .theme-dossier TOKENS (--paper/--ink/--line/
-             --stamp/--label/--type…), which the GM app supplies from the dashboard HOST class and this bundle supplied from
-             nowhere — every var() was invalid at computed-value time (transparent panel, no border, naked chrome; the terms
-             rendered as plain text over the Brief). The wrapper carries the ONE global token rule the GM app uses; no twin copy.
-             Proven by verify-gm2p2b P2a–P2c: computed alpha + the GM-vs-player full-computed-style diff at 375×812 = 0. -->
         <div class="cc-scope theme-dossier"><bce-negotiate-modal /></div>
     `,
     styles: [`
@@ -138,7 +120,7 @@ import { anonIdWeb } from '../campaign/gm/side-labels';
         .pp-cterms { font-family:var(--mono, monospace); font-size:12px; margin-top:4px; }
         .pp-cnote { font-size:12px; opacity:.8; margin-top:6px; line-height:1.45; }
         .pp-cnote.warn { color:#e0a15a; opacity:1; }
-        .pp-void { border-color:#e0a15a; } /* GM-3 P1 */
+        .pp-void { border-color:#e0a15a; }
         .pp-btn.go { border-color:#4caf7d; color:#4caf7d; font-weight:700; }
         .pp-assigned { margin-top:10px; padding:10px 12px; border:1px solid #2f5a6b; border-radius:8px; background:#141a22; color:#cdd8e3; font-size:14px; } /* PD3 P2 */
         .pp-assigned b { color:#8fb0cf; }
@@ -161,7 +143,6 @@ export class PresentedBriefComponent {
     });
     protected readonly lastOutcome = computed(() => (this.state.resultsSlip()?.outcome ?? 'resolved').replace(/_/g, ' '));
 
-    // ── GM-2 P2b — the phone negotiates its own company's contract on the session's hot spot ──
     private readonly catalog = inject(HotSpotsCatalogService);
     protected readonly neg = inject(NegotiationService);
     private readonly myAnon = signal<string | null>(null);
@@ -182,7 +163,6 @@ export class PresentedBriefComponent {
         const hotspot = primary.hotspotId ? this.catalog.hotSpotById(primary.hotspotId) ?? null : null;
         return { signed: this.state.participantContract(), rep: co.rep ?? 1, hotspot, key: co.key, primary };
     });
-    /** GM-3 P1 — the primary's nature in one sentence (a session contract has no signature; a GM-signed primary does). */
     protected contractNote(primary: { party?: 'session' }): string {
         return primary.party === 'session' ? "The session contract is presented — the hot spot's own terms, nobody's signature." : "The session's contract is signed.";
     }
@@ -190,8 +170,6 @@ export class PresentedBriefComponent {
         const t = resolved(c.steps);
         return `Scale ${c.scale} · Base pay ${t.basePay}% · Salvage ${typeof t.salvage === 'number' ? `${t.salvage}%` : t.salvage} · Support ${t.support} · Transport ${t.transport}% · Command ${t.command}`;
     }
-    /** GM-2 P2b test seam (OPT-IN: localStorage['bce.test.neg']) — drive the negotiation SERVICE past the markup, so a harness
-     *  can prove the Command lock is a service guard (a forced click on the locked button reaches no handler by construction). */
     private readonly seam = effect(() => {
         try {
             if (typeof localStorage === 'undefined' || localStorage.getItem('bce.test.neg') !== '1') return;
@@ -204,7 +182,7 @@ export class PresentedBriefComponent {
     protected negotiate(): void {
         const cb = this.contractBlock(); if (!cb?.hotspot) return;
         const me = this.rt.lobby().find((p) => p.token === this.rt.token());
-        const side = participantSideFor(cb.primary, me?.side); // GM-3 P1 (hook 3) — the ONE side decision; session ⇒ the table's side, no flip
+        const side = participantSideFor(cb.primary, me?.side);
         this.neg.negotiateForParticipant(cb.hotspot, side, { key: cb.key, label: `${me?.name ?? 'Your'}'s company` }, cb.rep, cb.primary.lockedCommand ?? null);
     }
 
@@ -213,12 +191,10 @@ export class PresentedBriefComponent {
         this.rt.setSidePref(this.rt.mySidePref() === key ? null : key);
     }
 
-    // ── GM-3 P1 (hook 5) — the VOID notice + the rep refund on this device ──
     private readonly store = inject(CampaignSaveStore);
     protected readonly voidState = signal<'idle' | 'busy' | 'applied' | 'error' | 'foreign'>('idle');
     protected readonly voidMsg = signal<string>('');
     private refundedFor = ''; // the voidId this device has already tried (one automatic attempt per void; Retry is manual)
-    // GM-3 P3 (S40) — voidIds this device has already CONSUMED, persisted so a stale void (still in the session's
     // gmOnly.voidedContracts after refund) does not re-show "Already returned" on a reload / re-join.
     private static readonly VOIDS_DONE_KEY = 'bce.player.voids.done';
     private voidsDone(): Set<string> { try { return new Set(JSON.parse(localStorage.getItem(PresentedBriefComponent.VOIDS_DONE_KEY) ?? '[]')); } catch { return new Set(); } }

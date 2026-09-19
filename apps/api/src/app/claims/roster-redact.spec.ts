@@ -1,9 +1,3 @@
-/*
- * DIRECTIVE-HARDEN-6 Part B — pins the shipped token-redaction helpers (roster-redact.ts, HARDEN-5b). anonId is
- * a stable, prefixed, non-reversible handle; redactLobby/redactClaims replace OTHER players' token/holderToken
- * with it while leaving the recipient's OWN entry (and a blank holderToken) untouched — the property that keeps
- * the client's self-identity check working with no client change.
- */
 import { anonId, redactLobby, redactClaims } from './roster-redact';
 
 describe('anonId', () => {
@@ -44,18 +38,17 @@ describe('redactLobby', () => {
         redactLobby(roster, 'p1');
         expect(roster).toEqual(copy);
     });
-    // ── GM-1 P2 — sidePref is GM-only advisory truth on the wire ──
     const prefRoster = [
         { token: 'p1', name: 'One', side: 'BLUFOR', connected: true, sidePref: 'a' as string | null },
         { token: 'p2', name: 'Two', side: 'OPFOR', connected: false, sidePref: 'b' as string | null },
     ];
-    it("strips OTHER players' sidePref to null, keeps the recipient's OWN preference (GM-1)", () => {
+    it("strips OTHER players' sidePref to null, keeps the recipient's OWN preference ", () => {
         const out = redactLobby(prefRoster, 'p1');
         expect(out[0].sidePref).toBe('a');   // own — kept
         expect(out[1].sidePref).toBeNull();  // other — stripped (advisory prefs fan to the GM, never to players)
         expect(out[1].name).toBe('Two');     // everything else preserved
     });
-    it('rows WITHOUT a sidePref field stay byte-identical under redaction (the pre-GM-1 shape)', () => {
+    it('rows WITHOUT a sidePref field stay byte-identical under redaction (the pre-shape)', () => {
         const out = redactLobby(roster, 'p1');
         expect('sidePref' in out[1]).toBe(false);
     });

@@ -1,16 +1,3 @@
-/*
- * DIRECTIVE-106 — OFFLINE ISCS ingest v2 (deterministic, re-runnable). D-105 pre-merged the canon hex grid into
- * lossy ring polygons (lumpy, black inter-faction gaps). v2 keeps the HEXES: the component fills each canon hex
- * as a polygon → contiguous, gap-free, canon-exact (reproduces the ISCS poster 1:1). We ship only OUR facts-
- * derived data (hex code+coords, planet coords, canon RGB harmonized); the raw MAPS/ POV stays local (gitignored).
- *
- * GLOBS every iscs_{year}.tar.gz present (auto-ingests more snapshots if James adds them — today only 3025+3058
- * ship as parseable POV; the rest are JPG/PDF). Emits under apps/web/src/app/campaign/star/iscs/:
- *   iscs-{year}.json  — { year, factions:{code:{name,color,rgb}}, hexes:[{c,x,z}] }
- *   iscs-planets.json — [{n,c,x,z}] the dense canon planet layer (from the latest snapshot)
- *   iscs-index.json   — { _meta(attribution), eraMap(era→year|null), extent, hexShape }
- *   flashpoints.json  — { events:[{y,w,t,k}] } Sarna event FACTS (unchanged)
- */
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
@@ -64,8 +51,6 @@ const r2 = (v) => Math.round(v * 100) / 100;
 function parseYear(year) {
     const hexTxt = readFileSync(join(TMP, `is${year}_hexes.pov`), 'utf8');
     const hexes = [...hexTxt.matchAll(/([A-Z]+)Prism translate <\s*([-0-9.]+)\s*,\s*[-0-9.]+\s*,\s*([-0-9.]+)\s*>/g)].map((m) => ({ c: m[1], x: r2(+m[2]), z: r2(+m[3]) }));
-    // D-107: `[A-Z]*` (not `+`) also matches the ~81 UN-PREFIXED `object { Planet … }` unaligned/periphery worlds
-    // (Acamar, Caph, Circinus…) the D-106 extractor silently dropped → the full canon ISCS planet set (1935).
     const plTxt = readFileSync(join(TMP, `is${year}_planets.pov`), 'utf8');
     const planets = [...plTxt.matchAll(/([A-Z]*)Planet translate <\s*([-0-9.]+)\s*,\s*[-0-9.]+\s*,\s*([-0-9.]+)\s*>\s*}\s*\/\/\s*(.+?)\s*$/gm)].map((m) => ({ n: m[4].trim(), c: m[1] || 'IND', x: r2(+m[2]), z: r2(+m[3]) }));
     const codes = [...new Set(hexes.map((h) => h.c))].sort();
@@ -99,7 +84,7 @@ for (const e of ERAS) {
     eraMap[e.id] = bd <= 45 ? best : null;
 }
 const index = {
-    _meta: { built: '2026-07-01', directive: 'D-106', cartography: 'Cartography data: ISCS — own render from canon hex facts', timeline: 'Flashpoints: Sarna (CC BY-NC-SA) — event facts', snapshots: YEARS },
+    _meta: { built: '2026-07-01', directive: '', cartography: 'Cartography data: ISCS — own render from canon hex facts', timeline: 'Flashpoints: Sarna (CC BY-NC-SA) — event facts', snapshots: YEARS },
     eraMap, extent: { minx: r2(ext.minx), maxx: r2(ext.maxx), minz: r2(ext.minz), maxz: r2(ext.maxz) }, hexShape,
 };
 writeFileSync(join(OUT, 'iscs-index.json'), JSON.stringify(index, null, 2));

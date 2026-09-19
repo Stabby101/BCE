@@ -1,16 +1,3 @@
-/*
- * PlayerSessionService.retainOrReapply — DIRECTIVE-PD3 P2 (PD3-11), the FAST mutation-kill for the H17 yield.
- *
- * ORDER-3 H17 retains the last OpFor-bearing spec on the player's mirror and re-applies it while the live snapshot has
- * none (an OPFOR device's roster + sheet must not empty after a resolve). PD3 P2 makes that retention YIELD once the
- * contract is COMPLETE (sessionPhase 'complete'): the re-applied spec was the brief that outlived its contract on the
- * phone, and a dead spec left in place poisons the NEXT contract's lobby (hasGeneratedTrackOf reads the spec → 'committed'
- * where the pick should be live).
- *
- * The E2E harness (verify-pd3-phone-phase) proves the phone's SURFACES; its device joins BLUFOR, so H17's OpFor-only
- * retention never runs there and a kill of the yield line SURVIVED it (2026-09-12). This spec is the witness that line
- * needs: it drives the retention directly, in milliseconds, under `nx test web` — the ORDER-9 "faster spec" shape.
- */
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { PlayerSessionService } from './player-session.service';
@@ -51,7 +38,6 @@ describe('PlayerSessionService — ORDER-3 H17 retention YIELDS at PD3 P2 sessio
         fan({ missionSpec: opforSpec, contractSummary: { status: 'active' }, missionTree: [{ branchId: 'b1', state: 'ACTIVE' }] });
         expect(svc.specRetained()).toBeFalse();
         expect(state.missionSpec()?.opforForce?.length).toBe(1);
-        // the GM resolved the track: the fan carries no spec, the contract is still live (more tracks) → H17 re-applies the last OpFor view
         fan({ missionSpec: null, contractSummary: { status: 'active' }, missionTree: [{ branchId: 'b1', state: 'RESOLVED' }] });
         expect(svc.specRetained()).toBeTrue();
         expect(state.missionSpec()?.opforForce?.length).toBe(1);

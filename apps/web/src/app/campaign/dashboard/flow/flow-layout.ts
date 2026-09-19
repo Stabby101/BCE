@@ -1,9 +1,3 @@
-/*
- * BCE — FLOW tree layout (DIRECTIVE-028). Pure TS, no Angular/DOM, no external graph lib (REF-001 —
- * mermaid was the witness, not the spec). A tidy top-down layout: root(s) at depth 0, children below;
- * leaves take sequential x-slots and each parent centers over its children. Returns absolute pixel
- * positions for node cards + bezier edge paths labeled with each child's outcome gate.
- */
 import type { MissionBranch } from '../../mission/mission-tree';
 
 export const NODE_W = 196;

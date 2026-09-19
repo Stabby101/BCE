@@ -1,14 +1,6 @@
-/*
- * BCE ENGINE — per-player FAVORITES (DIRECTIVE-048 phase C). A player's starred unit/pilot for quick
- * reference on the single-screen surface: {playerId -> instanceId/pilotId}, campaign-persistent. Host-
- * authoritative + durable (DATA-002 — the client is a cache, never the system of record), keyed
- * (campaignId, token). Mirrors ClaimsService/LobbyService 1:1 (own node:sqlite handle, dedicated
- * table). Per-player (no fan needed) — set + sync-own over the D-042 socket; the map exists host-side
- * for a later GM view. instanceId/pilotId are opaque ids; the host never interprets them.
- */
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { DatabaseSync } from 'node:sqlite';
-import { openDb } from '../open-db'; // HARDEN-7 A2 — shared durability-PRAGMA opener
+import { openDb } from '../open-db';
 import { dbPath } from '../db-path';
 
 export interface Favorite {
@@ -22,7 +14,7 @@ export class FavoritesService implements OnModuleInit {
     private db!: DatabaseSync;
 
     onModuleInit(): void {
-        this.db = openDb(dbPath()); // HARDEN-7 A2 — shared opener (WAL + busy_timeout + synchronous=NORMAL, asserted)
+        this.db = openDb(dbPath());
         this.db.exec(
             `CREATE TABLE IF NOT EXISTS favorites (
                 campaignId TEXT NOT NULL,

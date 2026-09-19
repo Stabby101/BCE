@@ -41,7 +41,7 @@ import { EraComponent } from './campaign/era/era';
 import { DateForceComponent } from './campaign/date-force/date-force';
 import { FactionComponent } from './campaign/faction/faction';
 import { SizeCapitalComponent } from './campaign/size-capital/size-capital';
-import { MercCommandComponent } from './campaign/chaos/merc-command'; // D-113 — Hot Spots creation tail
+import { MercCommandComponent } from './campaign/chaos/merc-command';
 import { CampaignDashboardComponent } from './campaign/dashboard/dashboard';
 import { CampaignHostComponent } from './campaign/campaign-host';
 import { ShutdownComponent } from './shutdown/shutdown';
@@ -73,17 +73,17 @@ const coverOrDeepLinkRedirect: CanActivateFn = (route) => {
 
 export const routes: Routes = [
     { path: '', component: CoverComponent, canActivate: [coverOrDeepLinkRedirect] },
-    { path: 'campaign/new/setup', component: CampaignSetupComponent }, // D-108 — new FIRST wizard step
+    { path: 'campaign/new/setup', component: CampaignSetupComponent },
     { path: 'campaign/new/era', component: EraComponent },
     { path: 'campaign/new/date-force', component: DateForceComponent },
     { path: 'campaign/new/faction', component: FactionComponent },
     { path: 'campaign/new/size-capital', component: SizeCapitalComponent },
-    { path: 'campaign/new/merc-command', component: MercCommandComponent }, // D-113 — Hot Spots creation tail (replaces date-force→size-capital)
-    { path: 'campaign', component: CampaignHostComponent }, // ODM-1 — the shell host routes packId:'odm' to the fenced odm container; a pack-less campaign mounts the untouched dashboard
+    { path: 'campaign/new/merc-command', component: MercCommandComponent },
+    { path: 'campaign', component: CampaignHostComponent },
     { path: 'admin', component: AdminPageComponent, canActivate: [adminRouteGuard] },
     { path: 'login', component: LoginComponent }, // LINK-1 Part B2 — always-available (renders in the 'open' state; wall intercepts when auth is on)
     { path: 'shutdown', component: ShutdownComponent },
-    { path: 'legal', component: LegalPageComponent }, // DIRECTIVE-COMPLIANCE-1 — the Legal & Attribution page
+    { path: 'legal', component: LegalPageComponent },
     { path: 'app', component: App },
     { path: '**', redirectTo: '' },
 ];

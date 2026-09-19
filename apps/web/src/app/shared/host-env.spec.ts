@@ -1,9 +1,3 @@
-/*
- * HOTFIX-028 / GM-1c — the host classification that decides hosted-vs-LAN behaviour, pinned. GM-1c's rule for the
- * join page: the per-host ("campaigns live on the host you joined") note is shown ONLY when the engine is NOT a
- * public host — never on the cloud host, where it reads as a technical failure. The browser harness can only stand
- * up a local engine (it proves the note renders there); this spec is the public branch.
- */
 import { classifyHost, isLocalOrLanEngineUrl, perHostNoteApplies } from './host-env';
 
 describe('classifyHost', () => {
@@ -25,7 +19,7 @@ describe('classifyHost', () => {
     });
 });
 
-describe('perHostNoteApplies — GM-1c: the per-host note is never shown on the cloud host', () => {
+describe('perHostNoteApplies — the per-host note is never shown on the cloud host', () => {
     it('is FALSE for the production engine and any public host', () => {
         expect(perHostNoteApplies('https://bce-production.up.railway.app/api')).toBeFalse();
         expect(perHostNoteApplies('https://bcengine.org/api')).toBeFalse();

@@ -1,11 +1,3 @@
-/*
- * BCE — DIRECTIVE-110: the Chaos Campaign "Contract Steps Table" (Draconis Reach §5) as EDITABLE DATA, plus the
- * contract-type defaults (§4). The numeric/enum step values are FACTS from the negotiation matrix (not book
- * prose); the contract-type default steps + intensity ranges are OUR OWN values. `null` = an invalid `—` step
- * (can't be landed on — negotiation skips over it). Each column is a 17-entry array (index 0 = Step 1).
- *
- * IP: values are facts; this is our own extraction — no rulebook text. The tool requires the rulebook.
- */
 export type ContractColumn = 'basePay' | 'command' | 'salvage' | 'support' | 'transport';
 export const CONTRACT_COLUMNS: ContractColumn[] = ['basePay', 'command', 'salvage', 'support', 'transport'];
 export const COLUMN_LABEL: Record<ContractColumn, string> = {
@@ -45,13 +37,6 @@ export function nextValidStep(col: ContractColumn, from: number, dir: 1 | -1): n
     return null;
 }
 
-/**
- * DIRECTIVE-IMPORT-5 (Part D) — coerce an arbitrary step index onto a VALID (non-`—`) step for its column, so a
- * builder/paste value can NEVER land on a dead `—` step (transport is valid ONLY at indices 4–8; command at
- * 2/6/7/10 — a raw 1–10 number frequently misses the window, which rendered transport blank + non-negotiable).
- * Clamps into range, then prefers the nearest valid step BELOW (conservative — doesn't inflate the author's
- * intended generosity), else the nearest above. Idempotent for an already-valid index (authored packs unaffected).
- */
 export function snapValidStep(col: ContractColumn, idx: number): number {
     const i = Math.max(0, Math.min(CONTRACT_STEP_COUNT - 1, Math.round(Number(idx) || 0)));
     if (STEPS[col][i] != null) return i;
@@ -65,32 +50,17 @@ export function stepLabel(col: ContractColumn, step: number): string {
     return typeof v === 'number' && (col === 'basePay' || col === 'transport' || col === 'salvage') ? `${v}%` : String(v);
 }
 
-/** DIRECTIVE-IMPORT-5 (Part D) — the VALID steps of a column as {index,label}, for a builder <select> so a GM picks
- *  a REAL value (0/25/50/75/100% transport; the enum for command/salvage/support; 50–200% base pay) instead of a raw
- *  1–10 index that can miss the valid window. The stored draft value is the INDEX; the label is what it resolves to. */
 export function validStepOptions(col: ContractColumn): { index: number; label: string }[] {
     const out: { index: number; label: string }[] = [];
     for (let i = 0; i < CONTRACT_STEP_COUNT; i++) if (STEPS[col][i] != null) out.push({ index: i, label: stepLabel(col, i) });
     return out;
 }
 
-/**
- * DIRECTIVE-128 (DR pp.27–28) — the Reputation cost to raise one increment = the number of step-ROWS to the next
- * valid step up. The book counts increments in step-rows (1–17); `—` rows are PAID-but-WASTED (you spend to pass
- * them, you may never land on one), so a hop across an em-dash costs more than 1. Command Liaison(8)→Independent(11)
- * costs 3 (rows 9–10 are `—`). `null` when no valid step remains above `from`.
- */
 export function repCostUp(col: ContractColumn, from: number): number | null {
     const to = nextValidStep(col, from, 1);
     return to == null ? null : to - from;
 }
 
-/**
- * DIRECTIVE-128 — the sacrifice DROP target: drop 2 step-ROWS, then floor to the next valid step at/below — the
- * largest index `j ≤ from-2` with a valid (non-`—`) step; `null` if none. Command Independent(11)→ lands on
- * Liaison(8), NOT House(7): index 10 − 2 = 8 is a `—`, so it floors down to 7 (Liaison). Replaces the old
- * "two `nextValidStep(-1)` hops" (which skipped `—` rows for free and over-dropped).
- */
 export function sacrificeDropTarget(col: ContractColumn, from: number): number | null {
     for (let j = from - 2; j >= 0; j--) {
         if (STEPS[col][j] != null) return j;
@@ -98,20 +68,10 @@ export function sacrificeDropTarget(col: ContractColumn, from: number): number |
     return null;
 }
 
-/**
- * DIRECTIVE-HARDEN-1 (DR pp.27–28 / D-128) — the negotiation Rep-budget as a pure function (moved from the
- * negotiate component's computed so the book rule is unit-tested; the component delegates — byte-identical).
- * Rep budget = min(Reputation, 2 × Contract Scale) step-rows per negotiation.
- */
 export function repBudgetFor(rep: number, scale: number): number {
     return Math.min(rep, 2 * scale);
 }
 
-/**
- * DIRECTIVE-HARDEN-1 — a term can be Rep-raised iff a valid step remains above (`cost` non-null), the row-cost
- * fits the REMAINING Rep budget, AND the term's accumulated raise-rows stay within the per-term cap (= Scale).
- * Pure form of the component's canRaise predicate (D-128; the component delegates — byte-identical).
- */
 export function canRaiseTerm(cost: number | null, repUsed: number, repBudget: number, colRaises: number, scale: number): boolean {
     return cost != null && repUsed + cost <= repBudget && colRaises + cost <= scale;
 }

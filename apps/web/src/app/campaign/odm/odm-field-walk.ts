@@ -1,11 +1,6 @@
-/*
- * FORKED FROM campaign/walk/field-walk.ts @ 2fa97a0 — DIRECTIVE-ODM-13 Phase 1 (a DRIFT SURFACE).
- * The SURVIVAL walk panel: the R2 per-wreck trio both sides (RECOVER / STRIP / LEAVE), the strip-yield
- * preview in place of the credit column, a materiel footer in place of "Net credit". NO C-bill anything —
- * the writer (OdmFieldWalkService) has no money path. Styles shared from the Classic walk sheet.
- */
 import { Component, ChangeDetectionStrategy, computed, inject, signal, output } from '@angular/core';
 import { OdmFieldWalkService, type OdmWalkRow, type OdmDisposition } from './odm-field-walk.service';
+import { weightClassOf } from '../walk/field-walk-core'; // S66 — the class beside the tonnage
 
 @Component({
     selector: 'bce-odm-field-walk',
@@ -24,7 +19,6 @@ export class OdmFieldWalkComponent {
     protected readonly opf = computed(() => this.rows().filter((r) => r.side === 'opfor'));
     protected readonly prizeSlots = this.svc.prizeSlots;
     protected readonly branchName = computed(() => this.svc.pendingBranch()?.name ?? 'Engagement');
-    // ODM-17 P2 — the fleet is the cap (recoverCap is dead); null until fleet/shop load (the walk waits).
     protected readonly liftBays = this.svc.liftBays;
     protected readonly cargoCap = this.svc.cargoCap;
     protected readonly hoursWindow = this.svc.fieldHoursWindow;
@@ -36,8 +30,8 @@ export class OdmFieldWalkComponent {
 
     protected readonly disp = signal<Record<string, OdmDisposition>>({});
     protected readonly q1ov = signal<Record<string, boolean>>({});
-    protected readonly q3ov = signal<Record<string, boolean>>({}); // ODM-17 P2-c — Q3 override, logged like Q1's
-    protected readonly forceReason = signal('');                   // ODM-17 P2-c — the logged GM reason when forcing a full lift
+    protected readonly q3ov = signal<Record<string, boolean>>({});
+    protected readonly forceReason = signal('');
     protected readonly refusal = signal<string | null>(null);      // apply()'s refusal, shown in the footer
 
     protected effDisp(r: OdmWalkRow): OdmDisposition { return this.disp()[r.instanceId] ?? r.def; }
@@ -50,7 +44,6 @@ export class OdmFieldWalkComponent {
     protected readonly capturesSelected = computed(() => this.opf().filter((r) => this.effDisp(r) === 'RECOVER').length);
     protected readonly recoversSelected = computed(() => this.blu().filter((r) => this.effDisp(r) === 'RECOVER').length);
 
-    // ── ODM-17 P2 — the LIVE load manifest (the service's math, the same math apply() enforces). ──
     protected readonly manifest = computed(() => this.svc.manifestFor(this.disp()));
     protected readonly overBays = computed(() => { const m = this.manifest(); return !!m && m.baysUsed > m.liftBays; });
     protected readonly overCargo = computed(() => { const m = this.manifest(); return !!m && m.cargoUsed > m.cargoTons; });
@@ -79,7 +72,7 @@ export class OdmFieldWalkComponent {
         const others = this.opf().filter((x) => x.instanceId !== r.instanceId && this.effDisp(x) === 'RECOVER').length;
         return others >= this.prizeSlots();
     }
-    protected readonly salvageBayOperational = this.svc.salvageBayOperational; // ODM-17 P4-c — the D36 gate (warn-only)
+    protected readonly salvageBayOperational = this.svc.salvageBayOperational;
     protected captureGate(r: OdmWalkRow): string | null {
         if (this.effDisp(r) !== 'RECOVER' || r.side !== 'opfor') return null;
         if (!this.effQ1(r)) return 'Q1 NO — can\'t reach the ship (override Q1 to force)';
@@ -103,7 +96,12 @@ export class OdmFieldWalkComponent {
         if (!r.unpriced.length || this.effDisp(r) !== 'STRIP') return null;
         return `not catalog-priced, counted 0 t: ${[...new Set(r.unpriced)].join(', ')}`; // reported, never guessed
     }
-    protected sevLabel(s: string): string { return ({ G: 'LIGHT', Y: 'MODERATE', R: 'HEAVY', B: 'DESTROYED' } as Record<string, string>)[s] ?? s; }
+    /** S66 — the badge is the DAMAGE severity, and now says so ("DMG LIGHT"); the weight class rides beside the tonnage. */
+    protected sevLabel(s: string): string { return ({ G: 'DMG LIGHT', Y: 'DMG MODERATE', R: 'DMG HEAVY', B: 'DESTROYED' } as Record<string, string>)[s] ?? s; }
+    protected weightClass(tons: number): string | null { return weightClassOf(tons); }
+    /** P8 — the manifest load state for the footer (+ Retry). */
+    protected readonly manifestLoad = this.svc.manifestLoad;
+    protected retryManifest(): void { this.svc.retryManifest(); }
     protected pct(n: number): number { return Math.round(n * 100); }
 
     protected confirm(): void {
@@ -116,8 +114,8 @@ export class OdmFieldWalkComponent {
             const ov: string[] = [];
             if (d !== r.def) ov.push(`disposition ${r.def}→${d}`);
             if (this.effQ1(r) !== r.q1) ov.push(`Q1 ${r.q1 ? 'YES' : 'NO'}→${this.effQ1(r) ? 'YES' : 'NO'}`);
-            if (this.effQ3(r) !== r.q3) ov.push(`Q3 ${r.q3 ? 'YES' : 'NO'}→${this.effQ3(r) ? 'YES' : 'NO'} (call was: ${r.q3Reason})`); // ODM-17 P2-c
-            if (!this.q2(r) && this.needsForce()) ov.push('Q2 NO — room forced past the lift (GM reason logged)'); // ODM-17 P2-c
+            if (this.effQ3(r) !== r.q3) ov.push(`Q3 ${r.q3 ? 'YES' : 'NO'}→${this.effQ3(r) ? 'YES' : 'NO'} (call was: ${r.q3Reason})`);
+            if (!this.q2(r) && this.needsForce()) ov.push('Q2 NO — room forced past the lift (GM reason logged)');
             if (ov.length) overrides[r.instanceId] = ov;
         }
         const res = this.svc.apply(dispositions, overrides, this.forceReason() || undefined);

@@ -368,7 +368,6 @@ export class CBTForceUnitState extends ForceUnitState {
             }
         }
 
-        // BCE-EDIT (REBASE-1 P1, ruling #7 / ORDER-9 H20): `data.crew.map` is UNGUARDED upstream — a malformed
         // live state (e.g. a crewless `{}` from a buggy/hostile client; ws-validate gates it as a JSON object,
         // not its shape) throws here, inside the loader. BCE's BattleForceService.entryFor already confines the
         // blast to one broken sheet (never a CD-loop hang), but this guards the loader itself: a state with no

@@ -1,18 +1,13 @@
-/*
- * BCE retool — cover (field-dossier splash + three doors). DIRECTIVE-003
- * (+ option 02 activated D-011; + multi-save LOAD browser & RESUME-LAST D-013).
- * New BCE component layered onto the vendored MekBay app to realise MERGE-001's
- * three splash doors. Does not touch MekBay-proper.
- */
 import { Component, ChangeDetectionStrategy, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { TableReturnService } from '../shared/table-return.service'; // GM-3 P3
-import { safeTablePath } from '../shared/return-to'; // GM-3 P3 — the client Back-to-the-table gate
+import { TableReturnService } from '../shared/table-return.service';
+import { safeTablePath } from '../shared/return-to';
 import { AuthService } from '../auth/auth.service';
 import { OdmCreateService } from '../campaign/odm/odm-create.service';
 import { NewCampaignState } from '../campaign/new-campaign-state';
 import { CampaignSaveStore, type SaveRecord } from '../campaign/campaign-save-store';
 import { LoadBrowserComponent } from './load-browser';
+import { odmDoorDecision } from './odm-door';
 import { ExitConfirmComponent } from '../campaign/dashboard/exit-confirm';
 import { SaveDialogComponent } from '../campaign/dashboard/save-dialog';
 import { LegalFooterComponent } from '../shared/legal-footer'; // COMPLIANCE-3 — inline notice in the console chrome
@@ -26,13 +21,12 @@ import { LegalFooterComponent } from '../shared/legal-footer'; // COMPLIANCE-3 �
 })
 export class CoverComponent {
     private readonly router = inject(Router);
-    private readonly tableReturn = inject(TableReturnService); // GM-3 P3 — the hand-off's Back-to-the-table context
+    private readonly tableReturn = inject(TableReturnService);
     private readonly state = inject(NewCampaignState);
     private readonly store = inject(CampaignSaveStore);
     private readonly auth = inject(AuthService);
-    private readonly odm = inject(OdmCreateService); // ODM-1 — the pack create path
+    private readonly odm = inject(OdmCreateService);
 
-    // HOTFIX-025 — the gated-mode account line (replaces the removed floating chip). Null in dev/LAN (no gmUser)
     // → the cover is visually unchanged there. Sign out reuses AuthService.signOut() (HF-016 guest confirm intact).
     protected readonly gmUser = this.auth.gmUser;
     protected readonly isAdmin = this.auth.isAdmin;
@@ -47,11 +41,9 @@ export class CoverComponent {
     protected readonly saveCount = signal(0);
     protected readonly lastSave = signal<SaveRecord | null>(null);
     protected readonly loadOpen = signal(false);
-    // D-053: the save-aware CREATE prompt (mirrors the D-013 exit confirm).
     protected readonly confirmCreate = signal(false);
     protected readonly saveOpen = signal(false);
 
-    // engine-offline state (D-041 / MERGE-002 / T-003) — Create + Load + Resume degrade honestly;
     // door 3 (MekBay) is engine-independent and stays open.
     protected readonly online = this.store.online;
     protected readonly offlineReason = this.store.offlineReason;
@@ -66,22 +58,21 @@ export class CoverComponent {
         // count()/getLast() probe the host and set the online signal as a side effect.
         this.saveCount.set(await this.store.count());
         this.lastSave.set(await this.store.getLast());
-        await this.openFromTable(); // GM-3 P3 — the hand-off: ?campaign=<homeId>&returnTo=/player/… opens the home campaign
-        // ODM-20 — does an ODM campaign already exist? Drives BOTH the door's resume/create routing hint and
+        await this.openFromTable();
         // the force-new escape hatch's visibility (shown only when there IS something to duplicate). Entitled
         // accounts only, so a non-ODM account pays nothing; failures leave it null (the door still works).
         if (this.odmEntitled()) {
             try {
                 const mine = await this.odmCampaigns();
                 this.odmHasExisting.set(mine.slice().sort((x, y) => this.touchedAt(y) - this.touchedAt(x))[0] ?? null);
-            } catch { this.odmHasExisting.set(null); }
+                // anyone else). A co-GM's door — decided by the same rule that opens it — never shows it.
+                const u = this.auth.user();
+                const door = odmDoorDecision(mine, { authRequired: this.auth.authRequired(), id: u?.id ?? null, role: u?.role ?? null });
+                this.odmCoGm.set(door.kind === 'enter' && door.coGm);
+            } catch { this.odmHasExisting.set(null); this.odmCoGm.set(false); }
         }
     }
 
-    /** GM-3 P3 — the hand-off landing: the root app opened with `?campaign=<homeId>` (+ returnTo, engine). Load the home
-     *  campaign OWNER-SCOPED (store.get is 404→null for anyone but the owner) and go straight to its dashboard, stashing the
-     *  validated /player/ returnTo for the "◄ Back to the table" control. A foreign / missing campaign, or an unsafe returnTo,
-     *  falls through to the normal cover (no navigation) — never an open redirect, never someone else's campaign. */
     private async openFromTable(): Promise<void> {
         let params: URLSearchParams;
         try { params = new URLSearchParams(location.search); } catch { return; }
@@ -123,24 +114,16 @@ export class CoverComponent {
         }
     }
 
-    /** HOTFIX-028 — "Reset app data": route through the pre-bootstrap ?fresh=1 path (evict SWs + caches + IDB
-     *  mirrors + bce.* localStorage EXCEPT device token / player name, then reload). One code path, so the
-     *  in-app affordance and the support healing link behave identically. Campaigns live on the host. */
     protected async resetAppData(): Promise<void> {
-        // HOTFIX-040 Fix C — drop the local session token + guest keys AND clear the server cookie (matching
         // attributes) BEFORE the ?fresh=1 reload. Otherwise a surviving cross-site cookie re-authenticates on
         // the reload (/auth/me re-mints the token) and "Reset" appears to do nothing.
         await this.auth.clearSession();
         location.href = `${location.pathname}?fresh=1`;
     }
 
-    /** Door 1 — Create a campaign. D-053: when a campaign exists (Resume is live), PROMPT to save/name
-     *  it first (save-aware, mirroring the D-013 exit confirm) so CREATE can never feel like — or risk —
-     *  losing the active campaign. Declining still never deletes it: the host keeps every campaign as its
-     *  own record, and CREATE only writes a NEW record at Begin. Requires the host — no-op when offline. */
     protected createCampaign(): void {
         if (!this.online()) return;
-        this.gmNext = false; // GM-1 — a plain CREATE after an aborted GM-door click must not carry the flag
+        this.gmNext = false;
         if (this.lastSave()) { this.confirmCreate.set(true); return; }
         this.doCreate();
     }
@@ -151,21 +134,15 @@ export class CoverComponent {
         this.confirmCreate.set(false);
         this.saveOpen.set(false);
         this.state.reset();
-        if (this.gmNext) { this.gmNext = false; this.state.setGmSession(true); } // GM-1 — flag AFTER reset (quickMission ordering)
-        void this.router.navigate(['/campaign/new/setup']); // D-108 — Setup card is the new first step
+        if (this.gmNext) { this.gmNext = false; this.state.setGmSession(true); }
+        void this.router.navigate(['/campaign/new/setup']);
     }
-    // save-aware CREATE wiring (mirrors the dashboard D-013 exit→save flow) ──────────────────────
     protected createSaveAs(): void { this.saveOpen.set(true); } // the confirm hides while the save dialog is open
     protected async createQuickSave(): Promise<void> { await this.store.quickSave(); this.doCreate(); }
     protected onCreateSaved(): void { this.doCreate(); } // named/quick save committed → into the fresh wizard
     protected onCreateSaveCancel(): void { this.saveOpen.set(false); } // back to the confirm (confirmCreate still set)
-    protected cancelCreate(): void { this.confirmCreate.set(false); this.gmNext = false; } // GM-1 — cancel drops the pending GM flag
+    protected cancelCreate(): void { this.confirmCreate.set(false); this.gmNext = false; }
 
-    /** Door — Quick Mission (D-067): a one-shot from the cover. Reuses the era → faction → force setup with
-     *  the quickMission flag set, then drops into the reduced dashboard (roster + market + Deploy). EPHEMERAL —
-     *  it never writes a campaign record (no Begin save), so it can't lose an active save; no save-aware prompt
-     *  is needed, and reset() clears only the in-memory wizard state. Requires the host (no-op offline). */
-    // ── DIRECTIVE-ODM-1 — the hidden pack door (entitled-only; dev/LAN permissive; server enforces regardless) ──
     protected odmEntitled(): boolean { return this.auth.hasPack('odm'); }
     protected readonly odmBusy = signal(false);
     /** The door card's copy comes from the SERVER manifest, never the bundle — a dist grep must show zero pack
@@ -175,11 +152,6 @@ export class CoverComponent {
         if (!this.odmEntitled() || !this.online() || this.odmCard()) return;
         void this.odm.manifest().then((m) => { if (m) this.odmCard.set({ title: m.title, blurb: m.blurb ?? '' }); }).catch(() => undefined);
     });
-    /* ── DIRECTIVE-ODM-20 — THE SINGLETON. Routing only: no schema, no uniqueness constraint, no canonical
-       column, no migration, no cross-account rule. 588 live campaigns share that table and none of them are
-       ODM's problem; D-0b holds because nothing persisted changes shape. The tile resolves to RESUME when an
-       ODM campaign exists and CREATE only when none does — the door stopped minting a fresh company every
-       time it was tapped. ── */
     /** The account's ODM campaigns, owner-scoped by the server (store.list() is the existing REST read). */
     private async odmCampaigns(): Promise<SaveRecord[]> {
         const all = await this.store.list();
@@ -190,13 +162,16 @@ export class CoverComponent {
         this.odmBusy.set(true);
         try {
             const mine = await this.odmCampaigns();
-            if (mine.length === 0) { await this.odm.begin(); return; }          // none → create, as today
-            if (mine.length === 1) { await this.enterOdm(mine[0]); return; }    // the normal path, every time
+            // anomaly picker is never shown to it (the picker is the OWNER's). The owner's routing is unchanged.
+            const u = this.auth.user();
+            const door = odmDoorDecision(mine, { authRequired: this.auth.authRequired(), id: u?.id ?? null, role: u?.role ?? null });
+            if (door.kind === 'create') { await this.odm.begin(); return; }     // none → create, as today
+            if (door.kind === 'enter') { await this.enterOdm(door.rec); return; } // the normal path, every time
             /* 2+ is an ANOMALY under the singleton rule, not a menu. Never pick for him — auto-resuming the
                NEWEST would be exactly wrong: the newest may be the stray instance minted by accident, and
                silently entering it would CONFIRM the fork instead of catching it. The picker IS the alarm. */
-            this.odmForked.set(mine.slice().sort((a, b) => this.touchedAt(b) - this.touchedAt(a)));
-        } catch (e) { console.error('[ODM-20] entry failed', e); }
+            this.odmForked.set(door.recs.sort((a, b) => this.touchedAt(b) - this.touchedAt(a)));
+        } catch (e) { console.error('[] entry failed', e); }
         finally { this.odmBusy.set(false); }
     }
     /** Resume an existing ODM campaign — the same load Resume-last uses; nothing ODM-specific about it. */
@@ -209,11 +184,6 @@ export class CoverComponent {
     protected readonly odmForked = signal<SaveRecord[] | null>(null);
     protected dismissForked(): void { this.odmForked.set(null); }
 
-    /* ── HOTFIX — THE ANOMALY PICKER AT REAL N. ODM-20's alarm was designed for N=2; the actual population is
-       ~20, because the pre-ODM-20 tile minted a fresh campaign on EVERY tap for weeks. Twenty near-identical
-       rows in a box with no scroll is not an alarm, it is a LOCKOUT — worse than the duplicate it reports.
-       NOTHING IS DELETED HERE, not even provably-unplayed rows: the unplayed are COLLAPSED behind one line,
-       which retires the noise without touching the data. A real cleanup is a separate, deliberate decision. ── */
     /** LAST-TOUCHED, with a fallback chain: `updatedAt` is host-owned, `savedAt` comes off the snapshot, and
      *  a row missing both would otherwise sort as 0 and sink. Sorting on one field is what put a newer-touched
      *  campaign below an older one. */
@@ -243,19 +213,6 @@ export class CoverComponent {
     protected readonly showUnplayed = signal(false);
     protected toggleUnplayed(): void { this.showUnplayed.update((v) => !v); }
 
-    /* ── DIRECTIVE-ODM-24 — SEE · CHOOSE · REMOVE · START OVER, all in one place. The picker told James which
-       campaigns were junk and then sent him to another surface to act on it — the same shape as a refusal
-       whose recourse lives on a different tab. The cleanup belongs where the diagnosis is.
-
-       THE READ PATH STILL NEVER DELETES. Rendering, sorting and expanding are incapable of removing anything;
-       ONLY an explicit confirmed action deletes, and the harness asserts exactly that rather than the weaker
-       "the picker never prunes". NO "DELETE ALL" EXISTS — the bulk action is confined to the PROVABLE set
-       (clock never left the start date, so there is nothing in them), and the played campaigns must each be
-       deleted deliberately. That friction is the feature.
-
-       NO DELETION LOG IS POSSIBLE: the campaign log lives IN the campaign, so there is nowhere to write "this
-       campaign was deleted" that survives the delete. Stated honestly rather than invented; if that record
-       matters later it wants its own decision. ── */
     protected readonly confirmDelete = signal<SaveRecord | null>(null);
     protected readonly confirmBulk = signal(false);
     protected readonly deleteBusy = signal(false);
@@ -274,7 +231,7 @@ export class CoverComponent {
         if (this.deleteBusy()) return;
         this.deleteBusy.set(true);
         try { await this.store.remove(r.id); await this.reReadForked(); }
-        catch (e) { console.error('[ODM-24] delete failed', e); }
+        catch (e) { console.error('[] delete failed', e); }
         finally { this.deleteBusy.set(false); this.confirmDelete.set(null); }
     }
     /** The BULK action, confined to the provable set. It re-reads `forkedUnplayed()` at call time rather than
@@ -285,7 +242,7 @@ export class CoverComponent {
         try {
             for (const r of this.forkedUnplayed()) await this.store.remove(r.id);
             await this.reReadForked();
-        } catch (e) { console.error('[ODM-24] bulk delete failed', e); }
+        } catch (e) { console.error('[] bulk delete failed', e); }
         finally { this.deleteBusy.set(false); this.confirmBulk.set(false); }
     }
     /** Re-derive from the SERVER after any delete — never splice the local array. The list on screen is then
@@ -303,9 +260,6 @@ export class CoverComponent {
         if (n === 1) return 'One ODM campaign remains.';
         return `You have ${n} ODM campaigns. That is not supposed to happen.`;
     }
-    /** START OVER — routes through the EXISTING ODM-20 force-new path rather than a second door to the same
-     *  room. It was never missing, only stranded on the cover behind this overlay. With nothing left to
-     *  duplicate the force-new confirm would be meaningless, so that case goes straight to a plain create. */
     protected startNewFromPicker(): void {
         this.odmForked.set(null);
         if (this.odmHasExisting()) this.confirmOdmNew.set(true);
@@ -323,16 +277,17 @@ export class CoverComponent {
        mints a SECOND, which trips the anomaly alarm above on next entry. That is correct — the alarm doing
        its job. The confirm names the campaign it is about to duplicate, in plain words. */
     protected readonly odmHasExisting = signal<SaveRecord | null>(null);
+    protected readonly odmCoGm = signal(false);
     protected readonly confirmOdmNew = signal(false);
-    protected askOdmNew(): void { if (this.online() && this.odmHasExisting()) this.confirmOdmNew.set(true); }
+    protected askOdmNew(): void { if (this.online() && this.odmHasExisting() && !this.odmCoGm()) this.confirmOdmNew.set(true); }
     protected cancelOdmNew(): void { this.confirmOdmNew.set(false); }
     protected async doOdmNew(): Promise<void> {
         this.confirmOdmNew.set(false);
         if (!this.online() || this.odmBusy()) return;
         this.odmBusy.set(true);
-        this.store.armForceNew(); // ODM-21 — the one-shot override for the server-side singleton guard
+        this.store.armForceNew();
         try { await this.odm.begin(); }
-        catch (e) { console.error('[ODM-20] force-new failed', e); }
+        catch (e) { console.error('[] force-new failed', e); }
         finally { this.odmBusy.set(false); }
     }
     protected odmNewQuestion(): string {
@@ -345,12 +300,10 @@ export class CoverComponent {
         if (!this.online()) return;
         this.state.reset();
         this.state.setQuickMission(true);
-        void this.router.navigate(['/campaign/new/setup']); // D-108 — Setup card is the new first step (quick mission)
+        void this.router.navigate(['/campaign/new/setup']);
     }
 
-    // ── GM-1 P1 — the MASTER GM door (entitled-only: hasPack('gm-mode'); dev/LAN permissive). A GM session is a
     //    full HS campaign with the additive gmSession flag; the tile rides the SAME save-aware CREATE confirm
-    //    (D-053) via gmNext — the flag is applied in doCreate() AFTER reset() (the quickMission ordering), and
     //    the Setup card locks the system to Hot Spots when it sees gmSession. ──
     protected gmEntitled(): boolean { return this.auth.hasPack('gm-mode'); }
     private gmNext = false;
@@ -384,7 +337,6 @@ export class CoverComponent {
         void this.router.navigate(['/app']);
     }
 
-    // ── HOTFIX-025 — account controls relocated from the removed floating chip ──
     protected signOut(): void { void this.auth.signOut(); } // HF-016 guest confirm + return to cover (shared logic)
     protected goAdmin(): void { void this.router.navigate(['/admin']); }
 }

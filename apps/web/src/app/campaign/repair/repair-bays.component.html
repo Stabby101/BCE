@@ -1,5 +1,4 @@
 <div class="rb">
-    <!-- header: the shop's identity (D-037) + capacity + treasury -->
     <header class="rb-head">
         <div class="rb-title">Repair &amp; Salvage bays</div>
         <div class="rb-cap">
@@ -124,7 +123,6 @@
                             <span class="bc-sub">debits at completion</span>
                         </div>
 
-                        <!-- D-037: the shop note — summary prose from the itemized bill + the parts line -->
                         <div class="shop-note">
                             <p class="sn-text">{{ summary(bay.label || '—', bay.bill, bay.laborHours, bay.estimateCost) }}</p>
                             @if (parts(bay.bill); as pn) { <p class="sn-parts">{{ pn }}</p> }
@@ -176,7 +174,6 @@
                         } @else {
                             <span class="h-out wo">written off</span>
                         }
-                        <!-- D-037: the shop record line (honest absence on pre-D-037 entries) -->
                         <span class="h-note">{{ histSummary(h) }}@if (histParts(h); as pn) { <em class="h-parts">{{ pn }}</em> }</span>
                     </div>
                 }

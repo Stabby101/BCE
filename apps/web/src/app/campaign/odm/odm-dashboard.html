@@ -1,6 +1,3 @@
-<!-- FORKED FROM campaign/dashboard/dashboard.html @ 6cc5dae — DIRECTIVE-ODM-1 Phase 1 (a DRIFT SURFACE:
-     fixes to the original may need mirroring here). Strips: the contract layer (market/negotiation/employer/pay,
-     house orders, the 3 contract modals) + every HS (chaos/warchest/SP) and Quick mount. Classic KEEP surfaces verbatim. -->
 <main class="sheet">
     <div class="classbar">{{ classbar() }}</div>
 
@@ -14,6 +11,36 @@
             <div><b>ERA</b> {{ eraText() }} &middot; <b>WK</b> <span data-testid="hdr-week">{{ weekText() }}</span></div>
         </div>
     </div>
+
+    @if (readOnly()) {
+        <div class="ro-banner" role="status" data-testid="odm-reading-banner">
+            <div class="ro-ico">👁</div>
+            <div class="ro-body"><b>Reading</b> — <span data-testid="odm-holder-name">{{ holderLine() }}</span> holds the table. Your changes are not saved.</div>
+            @if (canTakeHere()) {
+                <button type="button" class="ro-btn take" (click)="takeTableHere()" data-testid="odm-take-here">Take it here</button>
+            } @else {
+                <a class="ro-btn" [href]="mySeatUrl()" target="_blank" rel="noopener" data-testid="odm-my-seat">My own seat &rsaquo; the player console</a>
+            }
+            @if (isRecordOwner()) {
+                @for (r of tableReaders(); track r.userId + '|' + r.deviceId) {
+                    <button type="button" class="ro-btn" (click)="handTableTo(r.userId, r.deviceId)" data-testid="odm-hand-to" [attr.data-user]="r.userId" [attr.data-device]="r.deviceId">Hand the table to {{ r.name }}{{ r.label ? ' · ' + r.label : '' }}</button>
+                }
+            }
+        </div>
+    } @else if (holdsByHandOff()) {
+        <div class="ro-banner" role="status" data-testid="odm-holding-banner">
+            <div class="ro-ico">✍</div>
+            <div class="ro-body"><b>You hold the table</b> — your changes are saved. The GM can take it back at any time.</div>
+        </div>
+    } @else if (isRecordOwner() && tableReaders().length) {
+        <div class="ro-banner" role="status" data-testid="odm-handout">
+            <div class="ro-ico">🤝</div>
+            <div class="ro-body"><b>You hold the table</b> — @for (r of tableReaders(); track r.userId + '|' + r.deviceId; let last = $last) {<span>{{ r.name }}{{ r.label ? ' · ' + r.label : '' }}</span>{{ last ? '' : ', ' }}} {{ tableReaders().length === 1 ? 'is' : 'are' }} reading along.</div>
+            @for (r of tableReaders(); track r.userId + '|' + r.deviceId) {
+                <button type="button" class="ro-btn" (click)="handTableTo(r.userId, r.deviceId)" data-testid="odm-hand-to" [attr.data-user]="r.userId" [attr.data-device]="r.deviceId">Hand the table to {{ r.name }}{{ r.label ? ' · ' + r.label : '' }}</button>
+            }
+        </div>
+    }
 
     <!-- DEPLOY-009: the guest recovery-code banner (amber, distinct from the player-join QR). Settings keeps a copy. -->
     @if (showRecoveryBanner()) {
@@ -30,9 +57,6 @@
         </div>
     }
 
-    <!-- DIRECTIVE-119 P2 — the Hot Spots top-of-sheet PROCESS RAIL (above the tab bar). Reuses the flow engine in
-         'rail' mode; HS-only (Traditional keeps its full tab bar + advisory Flow-tab rail). -->
-    <!-- ODM-1 FORK: HS process rail STRIPPED -->
 
     <div class="tabs" role="tablist">
         @for (t of tabs(); track t.id) {
@@ -40,10 +64,9 @@
                 [attr.data-t]="t.id" [attr.aria-selected]="activeTab() === t.id" (click)="select(t.id)">{{ t.label }}</button>
         }
         <div class="tab-actions">
-            <!-- D-053: the autosave note — specific + bold (campaign · Day N · M missions), never a datestamp.
-                 It autosaves to the host record and stays in Load even after you Create a new campaign.
-                 D-067: a Quick Mission is EPHEMERAL — no autosave note / Save (it never writes a campaign record). -->
-            @if (!quickMission()) {
+            @if (readOnly()) {
+                <span class="save-note" data-testid="odm-reading-note"><span class="sn-k">READING</span><b class="sn-v">the GM holds the table &middot; not saved</b></span>
+            } @else if (!quickMission()) {
                 <span class="save-note" title="This campaign autosaves to the host record — it stays in Load even if you Create a new one">
                     <span class="sn-k">AUTOSAVE</span><b class="sn-v">{{ commandName() }} &middot; {{ saveProgress() }}</b>
                 </span>
@@ -69,8 +92,6 @@
                 <span class="ftag">{{ ff }}</span>
             </div>
         }
-        <!-- D-108/108b — read-only Campaign System badge (reuses the framing chip styling: .ftag = system,
-             .frat = the chosen Hot Spot campaign). `.csys-badge` is a hook class only (no CSS of its own). -->
         <div class="framing csys-badge">
             <span class="ftag">{{ campaignSystemLabel() }}</span>
             @if (hotSpotCampaignName(); as hn) { <span class="frat">{{ hn }}</span> }
@@ -83,31 +104,20 @@
                     <button type="button" class="cadvb" (click)="advance(s.id)">{{ s.label }}</button>
                 }
             </div>
-            <!-- ODM-22 — the GM clock CORRECTION. Deliberately NOT labelled "-1 Day": mirroring "+1 Day"
-                 implies a symmetry that does not exist. Advancing runs the campaign forward; this only moves
-                 the date. The note is not decoration — the GM who reads this as "rewind a day" will use it
-                 wrong, and the label is the only thing standing between them and that. -->
             <div class="ccorr">
                 <button type="button" class="ccorrb" [disabled]="!canCorrectClock()"
                         (click)="correctClockBack()" data-testid="odm-clock-correct">Correct date back a day</button>
                 <span class="ccorrn">Fixes an over-advanced clock. Moves the date only — repairs, ticks and recovery already banked stay banked. Every press is logged.</span>
             </div>
         </div>
-        <!-- ODM-11 Part B — the survival stat cards: Treasury legible + narrowed (Part C), force/pilots state
-             the truth (no hiring hall on occupied Terra), EXPOSURE replaces the inert Threat meter (GM-set,
-             honestly labelled), and the Iron Covenant is named — she is the unit's spine, not a line item. -->
         <div class="stats">
             <div class="stat"><div class="l">Treasury</div><div class="v" data-testid="odm-treasury">{{ treasuryOdm() }}</div><div class="s">C-bills &middot; bribes &middot; black market &middot; silence</div></div>
             <div class="stat"><div class="l">Force</div><div class="v">{{ forceCount() }}</div><div class="s">’Mechs &middot; irreplaceable &middot; no replacements</div></div>
-            <!-- TESTER-ODM-1 #3 — PEOPLE, not machines: this card read forceCount() (28 hulls) while the
-                 barracks holds 29 after the ODM-15b stables fold. It is the number a GM quotes out loud. -->
             <div class="stat"><div class="l">Pilots</div><div class="v" data-testid="odm-pilot-count">{{ pilotCount() }}</div><div class="s">irreplaceable &middot; no replacements</div></div>
             <div class="stat" [class.warn]="exposureV() !== 'LOW'" data-testid="odm-exposure"><div class="l">Exposure</div><div class="v">{{ exposureV() }}</div><div class="s">GM assessment</div></div>
             <div class="stat"><div class="l">Transport</div><div class="v">Iron Covenant</div><div class="s">Union-class DropShip</div></div>
         </div>
 
-        <!-- ODM-18 P1 (ruling 3) — the TWO-KEY donor-strip queue: players raise; the GM approves/declines
-             here. Decline is an honest ack — the audit line fans to the requester's console log. -->
         @if (intentApply.pendingStrips().length) {
             <div class="strip-queue" data-testid="odm-pending-strips">
                 <div class="sq-h">PENDING DONOR STRIPS — player-raised, your call</div>
@@ -121,14 +131,23 @@
             </div>
         }
 
-        <!-- DIRECTIVE-079 — Star Map Phase 1: current location line + GM setter (extracted → current-location.ts). -->
+        @if (openSeatRequests().length) {
+            <div class="strip-queue" data-testid="odm-seat-requests">
+                <div class="sq-h">SEAT REQUESTS — raised from a player's own seat</div>
+                @for (r of openSeatRequests(); track r.id) {
+                    <div class="sq-row" data-testid="odm-seat-request-row">
+                        <span class="sq-who">{{ r.by }}</span> · <b>{{ r.seatLabel }}</b> · {{ r.kind }}: “{{ r.text }}”
+                        @if (!readOnly()) {
+                            <button type="button" class="sq-btn ok" (click)="intentApply.closeSeatRequest(r.id, 'done')" data-testid="odm-seat-request-done">Done</button>
+                            <button type="button" class="sq-btn no" (click)="intentApply.closeSeatRequest(r.id, 'declined')" data-testid="odm-seat-request-decline">Decline</button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
         <bce-current-location />
 
-        <!-- DIRECTIVE-ODM-11 — STOCKS replaces the merc P&L panel: a survival economy models ATTRITION, not
-             cash flow (stock − consumption = operations remaining; you cannot earn your way out). Numbers are
-             AUTHORED (the pack's own quartermaster ledger). v1 displays + GM-adjusts (R2); below-floor
-             WARNS and never gates BEGIN OPERATION (R1). The merc advice string is DELETED, not reworded —
-             there is no equivalent action to recommend. -->
         <div class="econ">
             <div class="econ-led" data-testid="odm-stocks">
                 <div class="ph flat">Stocks <button type="button" class="stk-adj" data-testid="odm-stocks-adjust" (click)="openStocksAdjust()">⚙ Adjust (GM)</button></div>
@@ -155,7 +174,6 @@
                 @if (anyBreach()) {
                     <div class="stk-warn" data-testid="odm-bin-warn">⚠ Stocks below floor.</div>
                 }
-                <!-- ODM-17 P2-f — fleet status on the Overview: one line per ship (the depth lives on the Force page). -->
                 <div class="flt" data-testid="odm-fleet-overview">
                     <div class="ph flat">Fleet</div>
                     @for (v of fleetVessels(); track v.id) {
@@ -198,13 +216,35 @@
 
         <div class="grid2">
             <div class="box">
-                <!-- ODM-1 FORK: overview contract/orders status box STRIPPED (the contract layer / HS never comes along) -->
             </div>
             <div class="box">
                 <div class="ph flat">Campaign log</div>
                 <div class="log">
                     @for (e of log(); track $index) {
                         <div><span class="t">{{ e.t }}</span> — {{ e.text }}</div>
+                    }
+                </div>
+            </div>
+            <div class="box" data-testid="odm-ledger">
+                <div class="ph flat">Actor ledger
+                    <select class="led-sel" (change)="ledgerActor.set($any($event.target).value)" data-testid="odm-ledger-filter" aria-label="Filter the ledger by player">
+                        <option value="" [selected]="ledgerActor() === ''">everyone ({{ ledgerTotal() }})</option>
+                        @for (a of ledgerActorList(); track a.key) { <option [value]="a.key" [selected]="ledgerActor() === a.key">{{ a.name }} ({{ a.count }})</option> }
+                    </select>
+                </div>
+                <div class="led">
+                    @for (e of ledgerRows(); track $index) {
+                        <div class="led-row" [attr.data-outcome]="e.outcome" [attr.data-actor]="e.actorKey" [attr.data-role]="e.role ?? null" [attr.data-src]="e.role ? 'server' : 'snapshot'" data-testid="odm-ledger-row">
+                            <span class="t">{{ ledgerTime(e.ts) }}</span>
+                            <b class="led-who">{{ e.actor }}</b>
+                            @if (e.role) { <span class="led-role" data-testid="odm-ledger-role">{{ e.role }}</span> }
+                            <span class="led-seat">{{ e.seatLabel ?? 'company' }}</span>
+                            <span class="led-field">{{ e.field }}</span>
+                            <span class="led-chg">{{ e.was ?? '—' }} → {{ e.now ?? '—' }}</span>
+                            @if (e.outcome !== 'applied') { <span class="led-out">{{ e.outcome }}</span> }
+                        </div>
+                    } @empty {
+                        <div class="led-none">Nothing yet — every change a player makes from their own seat lands here.</div>
                     }
                 </div>
             </div>
@@ -216,25 +256,19 @@
         <bce-odm-roster />
     </section>
 
-    <!-- INVENTORY (D-056; ODM-13 P3 fork) — the quartermaster's ledger: owned stock + donor hulks, no trade surface -->
     <section class="panel" [class.active]="activeTab() === 'inventory'">
         @if (activeTab() === 'inventory') { <bce-odm-inventory-tab /> }
     </section>
 
-    <!-- BARRACKS (D-020; people depth D-036) -->
     <section class="panel" [class.active]="activeTab() === 'barracks'">
         @if (hasBarracks()) {
             <div class="ph">Barracks <span class="scaf">{{ barracksCount().total }} personnel</span></div>
-            <!-- ODM-15 — the barracks by trade: a tanker is not a MechWarrior; the register is people-first. -->
             <p class="note">Your command's combat crews, by trade — <b>MechWarriors</b>, <b>vehicle crews</b>, <b>aerospace pilots</b>. Every card explodes to the full file: <b>bio</b>, <b>service record</b>, <b>special pilot abilities</b> (GM-granted under the CamOps p.72 caps), injuries and recovery. Assignment mirrors the <b>Unit Roster</b> pull-down.</p>
             <div class="bk-sum">
                 <span><b>{{ barracksCount().assigned }}</b> assigned</span>
                 <span><b>{{ barracksCount().spares }}</b> spare</span>
                 @if (barracksCount().kia) { <span><b>{{ barracksCount().kia }}</b> fallen</span> }
             </div>
-            <!-- ODM-15 Part B — one HF-016 collapsible per trade PRESENT (zero-member groups never render);
-                 "Unassigned — awaiting posting" trails for stampless pilots (ruling A4 — an honest gap,
-                 never a MechWarriors default). Same card markup; all groups start collapsed. -->
             @for (g of pilotGroups(); track g.key) {
                 <button type="button" class="bk-grouphd" [attr.data-trade]="g.key" (click)="toggleTrade(g.key)" [attr.aria-expanded]="tradeOpen(g.key)">
                     <span class="caret" [class.open]="tradeOpen(g.key)">▸</span> {{ g.label }} <span class="scaf">{{ g.people.length }}</span>
@@ -261,7 +295,6 @@
                 }
             }
 
-            <!-- D-036 INFIRMARY — the D-031 injuries + the clock tick, surfaced at last -->
             @if (infirmary().length) {
                 <div class="ph flat" style="margin-top:18px">Infirmary <span class="scaf">{{ infirmary().length }}</span></div>
                 <div class="inf-rows">
@@ -275,7 +308,6 @@
                 </div>
             }
 
-            <!-- D-036 the roll of the fallen — dead stays dead; the table will care -->
             @if (fallen().length) {
                 <div class="ph flat" style="margin-top:18px">Roll of the fallen <span class="scaf">{{ fallen().length }}</span></div>
                 <div class="inf-rows">
@@ -303,43 +335,27 @@
             </div>
         }
 
-        <!-- ODM-13 P3 — the survival barracks: the fork roster (no wage column, no dismiss). The Classic
-             staff-for-C-bills hall does NOT mount here (Ruling 3c / ODM-11: nobody is hired, nobody replaced). -->
         <bce-odm-support-personnel />
     </section>
 
     <!-- MISSIONS -->
-    <!-- ODM-2 — the mission-packet briefing surface (GM-only container; opfor sub-tab labeled + gated inside) -->
     <section class="panel" [class.active]="activeTab() === 'briefing'">
         @if (activeTab() === 'briefing') { <bce-odm-briefing /> }
     </section>
 
     <section class="panel" [class.active]="activeTab() === 'missions'">
         @if (activeTab() === 'missions') {
-        <!-- D-072: Missions is the mission-lifecycle HUB — Brief → Force Preview (deploy) → Claims (play) → AAR (resolve).
-             D-114: this panel DOUBLE-DUTIES the HS Contracts tab — the Chaos contract layer renders on top, the hub below.
-             Traditional (isHotspots false) is unaffected: the new clause + contract block are false, so it renders as before. -->
-        <!-- ODM-1 FORK: HS chaos-contracts mount STRIPPED (the contract layer / HS never comes along) -->
         <div class="msub" role="tablist">
-            <!-- ODM-12b C1 — was "Contract / Brief": live merc copy on an ODM surface. There is no contract
-                 under this pack; the operation IS the order. (Sub-tab id 'brief' unchanged — deep links stable.) -->
             <button type="button" class="msub-b" [class.on]="missionsSub() === 'brief'" (click)="selectMissionSub('brief')">Operation brief</button>
             <button type="button" class="msub-b" [class.on]="missionsSub() === 'force'" (click)="selectMissionSub('force')">Force Preview</button>
-            <!-- HOTFIX-029 — Claims moved to the Lobby tab (join QR + roster + claim board together). -->
             <button type="button" class="msub-b" [class.on]="missionsSub() === 'aar'" (click)="selectMissionSub('aar')">AAR</button>
         </div>
         @if (missionsSub() === 'brief') {
-        <!-- ODM-1 FORK: missions-tab contract/brief + house-orders layer STRIPPED (the contract layer / HS never comes along) -->
 
-        <!-- SHARED operation zones (D-032) — a merc active contract OR an acknowledged House order; the IDENTICAL D-025/26 pipeline -->
         @if (accepted()) {
             @if (walkPending()) {
-                <!-- D-110b — the C-bill field walk (salvage/strip) is Traditional; Hot Spots salvage is SP (estimated at resolve; SP walk is D-110c). -->
                 <div class="walk-banner">
                     <span class="wb-t">⚠ Field walk pending</span>
-                    <!-- ODM-12b C1 — stale Traditional walk copy: ODM-13 P1 replaced the C-bill dispositions
-                         with the survival trio (RECOVER · STRIP · LEAVE). Nothing is "claimed as a prize" for
-                         credit here; a hulk is stores on legs. -->
                     <span class="wb-s">A resolved engagement awaits dispositions — recover, strip, or leave what fell, off the live end-state.</span>
                     <button type="button" class="gobtn" (click)="openWalk()">Walk the field &raquo;</button>
                 </div>
@@ -349,14 +365,8 @@
             @if (activeBranch(); as ab) {
                 <div class="ph flat" style="margin-top:18px">Active mission — {{ ab.name }}@if (genericMission()) { <span class="scaf" style="border-color:var(--warn);color:var(--warn)">GENERIC</span> }@else if (hasPackage()) { <span class="scaf" style="border-color:var(--ok);color:var(--ok)">FORGE PACKAGE</span> }</div>
                 @if (odmIsAuthored(ab.branchId)) {
-                    <!-- ODM-3 addendum A — the AUTHORED operation zone: no forge, no rolled spec. The briefing
-                         packet IS the mission document; deploy + play + resolve ride the Classic machinery. -->
                     <div class="brief">
                         @if (activeGmMission(); as gm) {
-                            <!-- ODM-18 P3 §S-3/§S-7 — a GM-COMPOSED operation: the GM's own prose IS the mission
-                                 document. No packet sentence (there is no packet), and no narrator fallthrough:
-                                 odmIsAuthored() reads the MERGED node set, so NONE_NARRATOR's merc-contract copy
-                                 ("has engaged the command…", "Contract pay N C-bills") is unreachable here. -->
                             <div class="bsec" data-testid="odm-composed-op"><div class="bsl">Operation</div><p class="bp">{{ nodeSystem(ab.branchId) }} · THREAT {{ ab.threat }} — GM-composed operation; the brief below is the mission document.</p></div>
                             @if (gm.brief) { <div class="bsec" data-testid="odm-composed-brief"><div class="bsl">Brief</div><p class="bp" style="white-space:pre-wrap">{{ gm.brief }}</p></div> }
                             <div class="bsec"><div class="bsl">Objectives</div><ul class="bobj">
@@ -383,33 +393,24 @@
                         @if (missionSpec(); as m) {
                             <div class="bsec"><div class="bsl">OpFor</div><div class="ofsum">{{ m.opforForce.length }} ’Mechs &middot; {{ m.opforBv }} BV (vs your {{ m.playerBv }} BV) &middot; {{ m.terrain.biome }}</div></div>
                         }
-                        <!-- D-118 — inline deploy roster: check units to deploy them to THIS track right here (no Roster hop). -->
                         <div class="bsec"><div class="bsl">Deploy to this track</div><bce-deploy-roster /></div>
-                        <!-- IMPORT-3 P2 — hire special personnel for Support Points BEFORE the battle (book track-setup order); self-hides when the hot spot offers none. -->
                         <div class="msn-actions">
                             <button type="button" class="gobtn primary" [disabled]="!deployedCount()" (click)="playMission()">&#9654; Play mission &raquo;</button>
                             <button type="button" class="gobtn" [disabled]="!deployedCount()" (click)="prepareDeploy()">Prepare &amp; deploy &raquo;</button>
                             @if (hasPackage()) { <button type="button" class="gobtn" (click)="openPackage()">Open full package &raquo;</button> }
                             @if (activeNodePacket()) { <button type="button" class="gobtn" data-testid="view-briefing" (click)="viewBriefing()">View briefing &raquo;</button> }
                             <button type="button" class="gobtn" (click)="res.askResolve()">Resolve mission &raquo;</button>
-                            <!-- ODM-3 addendum A: Reroll (a Forge affordance) STRIPPED from the odm fork -->
                         </div>
                         @if (!deployedCount()) { <div class="gate-note">no deployed units — set conditions on the roster to take the field in <b>Force Preview</b></div> }
                     </div>
                 }
             } @else {
                 <div class="ph flat" style="margin-top:18px">Active mission</div>
-                <!-- ODM-9b — reworded from Classic: ODM operations BEGIN (nothing is ever rolled here); the Forge verb was wrong advice. Classic's dashboard.html keeps its original sentence. -->
                 <p class="note">No mission in progress. Choose an operation from the calendar below and begin it — its outcome will unlock the next branches.</p>
             }
 
             <!-- ZONE 2 — OPERATIONS BOARD -->
-            <!-- ODM-5 Part D (James ruling) — the TIME-AXIS TREE replaces the operations board: the ODM-4 flow
-                 fork remounts HERE; BEGIN OPERATION ▸ + View briefing live on the node drawers; the mission
-                 state & gates rail rides inside the component, below the tree. The Flow tab is gone. -->
             <div class="ph flat" style="margin-top:18px">Operations — the campaign calendar</div>
-            <!-- ODM-18 P3 — the GM MISSION COMPOSER (GM-side only; drafts ride gmOnly, publish derives the
-                 player-safe record). The board below renders published operations as ordinary cards. -->
             <bce-odm-composer [tree]="odmTreeData()" />
             <bce-odm-flow [odmTree]="odmTreeAll()" (begin)="beginFromTree($event)" (briefing)="briefingFromTree($event)"
                           (openPackage)="openPackage()" (navigate)="goToStep($event)" (advancePhase)="advancePhase()"></bce-odm-flow>
@@ -428,91 +429,57 @@
             }
         }
 
-        <!-- ODM-1 FORK: report-orders modal STRIPPED -->
         }
-        <!-- D-072: the relocated lifecycle surfaces (unchanged behavior, just folded under Missions in order) -->
         @if (missionsSub() === 'force') { <bce-odm-battle-view /> }
-        <!-- HOTFIX-029: Claims moved to the Lobby tab. -->
         @if (missionsSub() === 'aar') { <bce-odm-aar-tab (walkMission)="openWalk($event)" /> }
         }
     </section>
 
-    <!-- ODM-9b FORK STRIP: the QUICK MISSION hub (DIRECTIVE-067, a Forge affordance — a BV-matched rolled OpFor)
-         removed. It was unreachable here (no tab, emitter or deep-link ever minted 'quickmission' in this fork),
-         but its path — acceptQuickMissionContract() + the mission roller — would have overwritten the ODM-9
-         carrier's authored roll wholesale. A fork strips what it does not need (BOUNDARY-1 Class-1). -->
 
 
-    <!-- D-072: the MekBay (Force Preview) panel was folded into the Missions/Quick-Mission hubs above. -->
 
-    <!-- LOBBY (D-048 + HOTFIX-029) — the join QR + live roster, and the Claims board (its natural home: the
-         claim board is where players who joined here pick their units). Both share ClaimRealtimeService; the
-         second ensure() is idempotent (single socket, single room-join). -->
     <section class="panel" [class.active]="activeTab() === 'lobby'">
         @if (activeTab() === 'lobby') {
             <bce-lobby-panel (viewTrack)="viewTrack()" (resolveMission)="res.askResolve()" />
             <bce-odm-claims-panel />
+            <bce-odm-seats />
         }
     </section>
 
-    <!-- AAR (D-034; ODM-14 fork) — the after-action archive in the AUTHORED crew's voices.
-         D-072: ALSO reachable inside Missions (dual-placed); the front-row AAR tab stays for now. -->
     <section class="panel" [class.active]="activeTab() === 'aar'">
         <bce-odm-aar-tab (walkMission)="openWalk($event)" />
     </section>
 
-    <!-- INTEL (D-034, T-031 slice 1) — contacts met through play + the campaign notebook -->
     <section class="panel" [class.active]="activeTab() === 'intel'">
         <bce-odm-intel-tab />
     </section>
 
-    <!-- FLOW (D-028) — the native branching-tree view -->
-    <!-- ODM-5 Part D: the standalone Flow panel REMOVED (the tree lives in Missions) -->
 
-    <!-- STAR MAP (DIRECTIVE-104) — 762-system contour-smoothed faction territories; lazy-mounted (heavy d3 render) -->
     <section class="panel" [class.active]="activeTab() === 'starmap'">
         @if (activeTab() === 'starmap') { <bce-star-map-tab /> }
     </section>
 
-    <!-- WARCHEST (DIRECTIVE-109) — the Hot Spots (Chaos Campaign) SP economy home: summary + Contract Record Sheet.
-         Only in the HOTSPOTS_TABS set (stands in for Overview); lazy-mounted like the other rich tabs. -->
     <section class="panel" [class.active]="activeTab() === 'warchest'">
-        <!-- ODM-1 FORK: HS warchest panel STRIPPED (the contract layer / HS never comes along) -->
     </section>
 
-    <!-- CONTRACTS (DIRECTIVE-110) — D-114: the Chaos contract layer (<bce-chaos-contracts>) now double-duties inside the
-         Missions panel above (the HS 'chaos-contracts' tab renders it on top + the track hub below). No standalone panel. -->
 
-    <!-- REPAIR & REFIT (DIRECTIVE-111) — the Chaos economy tab: SP repair/rearm/heal. Hot Spots tab set only. -->
     <section class="panel" [class.active]="activeTab() === 'chaos-repair'">
-        <!-- ODM-1 FORK: HS chaos-repair panel STRIPPED (the contract layer / HS never comes along) -->
     </section>
 
-    <!-- MARKET (DIRECTIVE-112) — the Chaos "acquire" tab: buy/sell units + hire MechWarriors for SP. Hot Spots only.
-         D-114 — Hiring folded in here (its standalone tab/panel removed); both spend SP. -->
     <section class="panel" [class.active]="activeTab() === 'chaos-market'">
-        <!-- ODM-1 FORK: HS chaos-market panel STRIPPED (the contract layer / HS never comes along) -->
     </section>
 
-    <!-- SETTINGS (D-038) — the narrator controls (OFF/LOCAL), TEST CONNECTION, toggles, SPA-cap knob -->
     <section class="panel" [class.active]="activeTab() === 'settings'">
         <bce-settings-tab />
-        <!-- ODM-22 — the GM facts card: the campaign id in plain sight, copyable. A missing id LABEL cost
-             four hours on 2026-08-30; this is the cheapest possible answer to "which campaign is this?" -->
         <bce-odm-gm-facts />
-        <!-- ODM-18 P2 — the GM rollback list (ODM-only mount; the shared settings tab stays untouched) -->
         <bce-odm-rollback />
     </section>
 
-    <!-- REPAIR & SALVAGE (D-033) — the canon-timed bays: queue, assignment, clock-driven burn, prize refit -->
     <section class="panel" [class.active]="activeTab() === 'repair'">
-        <!-- ODM-13 P2 — the survival bays fork (R3 parts consumption · rearm-from-bins · donor yard) -->
         <bce-odm-repair-bays />
     </section>
 
     <footer>
-        <!-- D-038: the narrator console strip lives in the footer deadspace; renders ONLY when mode is on
-             (OFF → the clean dossier footer, nothing). Height-safe (occupies the existing footer line). -->
         <bce-narrator-console />
         <div class="meta">BCE v0.1 · campaign dashboard · field-dossier theme</div>
         <!-- COMPLIANCE-3 — the legal notice attached to the dashboard chrome (mirrors Classic dashboard.html;
@@ -528,15 +495,8 @@
         <bce-save-dialog (saved)="onSaved()" (cancel)="onSaveCancel()"></bce-save-dialog>
     }
     @if (walkOpen()) {
-        <!-- ODM-13 — the survival walk fork (R2 trio; materiel to both stores; no money path exists) -->
         <bce-odm-field-walk (close)="walkOpen.set(false)"></bce-odm-field-walk>
     }
-    <!-- ODM-1 FORK: accept-contract modal STRIPPED (the contract layer / HS never comes along) -->
-    <!-- ODM-1 FORK: renegotiate modal STRIPPED (the contract layer / HS never comes along) -->
-    <!-- ODM-1 FORK: complete-contract modal STRIPPED (the contract layer / HS never comes along) -->
-    <!-- ODM-9b FORK STRIP: the Reroll confirm modal removed (dead markup — its opener button was stripped in
-         ODM-3 addendum A; a confirm would have re-rolled the ACTIVE branch over the authored carrier). -->
-    <!-- ODM-11 — the GM manual stocks adjust (R2: v1 numbers are driven by hand; Save materializes + persists). -->
     @if (stocksAdjustOpen()) {
         <div class="cmodal" role="dialog" aria-modal="true" (click)="cancelStocksAdjust()">
             <div class="cbox" (click)="$event.stopPropagation()">
@@ -561,7 +521,6 @@
             </div>
         </div>
     }
-    <!-- DIRECTIVE-HARDEN-4 — the resolve modal → resolve-modal.ts (dashboard-provided ResolveService). -->
     <bce-odm-resolve-modal />
     <!-- TABLE-2 T2-3 — Resolve is BLOCKED while deployed devices still have un-ended (unshared) picks. The GM
          waits for END PHASE, or takes the logged "Resolve anyway" override (ledger names the participants). -->
@@ -577,7 +536,6 @@
             </div>
         </div>
     }
-    <!-- DIRECTIVE-139 — the SP transaction toast (HS-only; Traditional never calls warchest.post so it stays silent). -->
 </main>
 @if (packageOpen()) {
     <bce-odm-mission-package (close)="closePackage()"></bce-odm-mission-package>

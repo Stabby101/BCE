@@ -1,14 +1,7 @@
-/*
- * BCE ENGINE slice 2 (DIRECTIVE-042) — client realtime service for claim/release fan-out.
- * Lives in the BCE CAMPAIGN LAYER (never the vendored MekBay core — MERGE-002, the engine->core
- * arrow stays one-way). Wraps socket.io-client: rooms by campaignId, built-in reconnection (the
- * token survives a wifi drop, T-030), full RESYNC on every (re)connect via 'join'. Identity = a
- * device token in localStorage (no accounts — ROLE-001, the room is the boundary); the holder's
- * display NAME rides the claim. Engine/socket-down degrades honestly (the `connected` signal feeds
- * the panel's read-only / last-known state, extending D-041's online/offlineReason).
- */
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import { NewCampaignState } from '../new-campaign-state'; // GM-1 P4 — the adopt-effect's gmSession gate (leaf state svc; no cycle)
+import type { OdmLedgerEntry } from '../odm/odm-ledger'; // ORDER-13 — the server-written seat ledger's entry shape (lockstep with the api)
+import { gmDeviceId, gmDeviceLabel } from './gm-device';
+import { NewCampaignState } from '../new-campaign-state';
 import { io, type Socket } from 'socket.io-client';
 import { BUILD_COMMIT_HASH } from '../../build-meta';
 import { evictAndReload } from '../../shared/app-reset';
@@ -20,33 +13,27 @@ export interface Claim {
     at: number;
 }
 
-/** D-048 lobby roster row — mirrors the host LobbyService.LobbyPlayer. */
 export interface LobbyPlayer {
     token: string;
     name: string;
     side: string; // 'BLUFOR' | 'OPFOR'
     joinedAt: number;
-    connected?: boolean; // HOTFIX-030: live socket presence (green/red dot); optional for older payloads
-    sidePref?: string | null; // GM-1 P2: advisory side preference ('a' | 'b' | null); GM sees all, players see only their own (server-redacted)
+    connected?: boolean;
+    sidePref?: string | null;
     pendingPhase?: number; // REBASE-1 P3 item 1: this device's un-ended-pick count this phase (the GM's "who hasn't ended" signal)
 }
 
-/** ODM-18 P1 — a company-console intent fanned to GM sockets (allowlist-validated server-side; the GM
- *  device applies it through the SAME services its own UI calls, then persists — the one-writer law). */
-/** GM-2 P2b — a phone's signing, fanned to GM sockets (server-shaped: the actor's lobby name; signedBy stamped 'player'). */
 export interface SignRequest { campaignId: string; token: string; name: string; key: string; contract: Record<string, unknown> }
 
 export interface OdmIntent {
     campaignId: string;
     token: string;
     name: string; // the actor's lobby callsign (server-resolved) — the audit line's actor
+    actorKey?: string;
     verb: string;
     payload: Record<string, unknown>;
 }
 
-/** GM-1 P3 — a server-minted join-with-force payload fanned to GM sockets (raw token rides it: the GM is
- *  trusted with tokens per HOTFIX-030; it never reaches player sockets). Units arrive re-minted + stamped
- *  (imp- ids, condition Deployed, provenance {origin:'player-import', owner:anonId}) — the GM merge is dumb. */
 export interface ImportRequest {
     campaignId: string;
     token: string;
@@ -55,11 +42,11 @@ export interface ImportRequest {
     pilots: import('../barracks/pilot-generator').Pilot[];
 }
 
-const ENGINE_URL_KEY = 'bce.engine.url'; // D-041: 'http://host:3000/api'
+const ENGINE_URL_KEY = 'bce.engine.url';
 const DEFAULT_ENGINE_URL = 'http://localhost:3000/api';
 const TOKEN_KEY = 'bce.device.token';
 const NAME_KEY = 'bce.player.name';
-const SIDE_KEY = 'bce.player.side'; // D-048: 'BLUFOR' | 'OPFOR' — gates visibility (ROLE-002)
+const SIDE_KEY = 'bce.player.side';
 const SESSION_TOKEN_KEY = 'bce.auth.token'; // DEPLOY-002 P4: the GM session JWT (mirrored by AuthService); absent for players → account-less
 
 @Injectable({ providedIn: 'root' })
@@ -67,12 +54,10 @@ export class ClaimRealtimeService {
     private socket: Socket | null = null;
     private campaignId = '';
     private engagementKey = 'none';
-    /** HOTFIX-029 — this device's stable lobby token, resolved once, for the `registered` truth check. */
     private readonly deviceToken = this.token();
-    private readonly stateRef = inject(NewCampaignState); // GM-1 P4 — gmSession gate only
+    private readonly stateRef = inject(NewCampaignState);
 
     constructor() {
-        // GM-1 P4 — players LAND on their GM-ASSIGNED side automatically: the lobby row is the server truth
         // (reassign fans it); when this device's OWN row carries a different side, adopt it. Player-joined
         // devices only (lobbyMode 'player') AND gmSessions only (panel finding: without the gate, a plain-HS/
         // Traditional reassign would move the player device's ROLE-002 side gate — a Traditional-surface
@@ -94,26 +79,16 @@ export class ClaimRealtimeService {
     readonly claims = signal<Record<string, Claim>>({});
     /** the holder display name (editable in the proof UI). */
     readonly playerName = signal<string>(localStorage.getItem(NAME_KEY) || '');
-    /** D-048: this device's side (BLUFOR/OPFOR) — gates which force the player sees (ROLE-002). */
     readonly side = signal<string>(localStorage.getItem(SIDE_KEY) || 'BLUFOR');
-    /** D-048: the host-authoritative lobby roster (campaign-room scoped), fanned on 'lobby'. */
     readonly lobby = signal<LobbyPlayer[]>([]);
-    /** HOTFIX-029 — CONNECTION TRUTH for a PLAYER: green means REGISTERED, not merely socket-connected. True
-     *  only when the socket is up AND this device's own token is echoed back in the fanned roster (socket +
-     *  room + registration). A pre-registration or stale-room socket is honestly "connecting/registering", not
-     *  "connected" — this is what makes the reported tablet-"connected"-but-GM-"Joined 0" state impossible. */
     readonly registered = computed(() => this.connected() && this.lobby().some((p) => p.token === this.deviceToken));
     /** Whether this device registers as a player (re-announce on reconnect) or just observes (GM). */
     private lobbyMode: 'player' | 'observer' | null = null;
 
-    /** D-048 phase B: the host-authoritative per-instance battle state for the current engagement,
-     *  keyed by instanceId. `state` is opaque transport (MekBay's CBTSerializedState) — the battle
-     *  force service does the typing/apply. Updated by 'battle' deltas + the 'battle-state' resync. */
     readonly battleStates = signal<Record<string, { state: unknown; at: number }>>({});
     /** Push subscribers (BattleForceService) — applied to a loaded sheet the instant a delta arrives. */
     private readonly battleListeners = new Set<(instanceId: string, state: unknown, at: number) => void>();
 
-    /** D-048 phase C: this device's campaign-persistent favorite (host-authoritative, keyed by token). */
     readonly favorite = signal<{ instanceId: string | null; pilotId: string | null }>({ instanceId: null, pilotId: null });
 
     /** DEPLOY-002 P4: the host campaign snapshot, delivered over the socket to a joined account-less PLAYER
@@ -122,9 +97,19 @@ export class ClaimRealtimeService {
     readonly campaignSnapshot = signal<unknown | null>(null);
     private wantsCampaign = false; // player-only: request the snapshot over the socket on (re)connect
 
-    /** HOTFIX-028 — set true when the server's deployed build commit (socket 'hello') differs from this
-     *  bundle's baked BUILD_COMMIT_HASH: a stale cached bundle. Drives the "new version — tap to update"
-     *  banner in both shells. Suppressed when either side is unknown/empty (no false alarms). */
+    readonly writerHolder = signal<string | null>(null);
+    readonly writerHolderDevice = signal<string | null>(null);
+    readonly writerHolderLabel = signal<string | null>(null);
+    readonly writerKnown = signal(false);
+    readonly writerHolderName = signal<string | null>(null);
+    readonly myDeviceId = gmDeviceId();
+    readonly readers = signal<{ userId: string; deviceId: string; name: string; label: string | null }[]>([]);
+    readonly seats = signal<{ instanceId: string; holderName: string; mine: boolean; holderToken?: string }[]>([]);
+    /** ORDER-13 — the SERVER-written SEAT LEDGER (the newest tail): every seat change, whoever performed it, with the acting role.
+     *  Rides the `seats` payload for GM-app recipients only (GM truth, like gmOnly); the dashboard merges it into its ledger view.
+     *  A player's payload never carries it → stays []. */
+    readonly seatLedger = signal<OdmLedgerEntry[]>([]);
+
     readonly updateAvailable = signal(false);
     /** TESTER-4 (1) — the server's deployed commit that raised updateAvailable (the banner keys its once-per-version quiet on it). */
     readonly serverVersion = signal<string | null>(null);
@@ -132,12 +117,6 @@ export class ClaimRealtimeService {
     private origin(): string {
         return (localStorage.getItem(ENGINE_URL_KEY) || DEFAULT_ENGINE_URL).replace(/\/api\/?$/, '');
     }
-    /** The GM session JWT, if signed in (AuthService mirrors it here). Undefined for the account-less player
-     *  → the socket handshake sends no token → the gateway treats it as a player (P3 confinement).
-     *  HOTFIX-033: the PLAYER bundle NEVER sends a token — even if this device's localStorage carries a
-     *  bce.auth.token from also being used as a GM, the player must stay account-less or the server would deny
-     *  it access to a campaign its guest doesn't own. (We withhold the token, never CLEAR it — the GM app on
-     *  the same origin still needs it.) */
     private sessionToken(): string | undefined {
         if ((globalThis as { __bcePlayerBundle?: boolean }).__bcePlayerBundle) return undefined;
         try { return localStorage.getItem(SESSION_TOKEN_KEY) || undefined; } catch { return undefined; }
@@ -164,20 +143,22 @@ export class ClaimRealtimeService {
     ensure(campaignId: string, engagementKey: string): void {
         if (!campaignId) return;
         const changed = campaignId !== this.campaignId || engagementKey !== this.engagementKey;
-        // ODM-18 P1 (panel fix): leave the PRIOR room on a campaign switch — server rooms otherwise never
         // shrink, so this socket kept counting as a present GM for the old campaign (odm-intents acked
         // 'delivered' there and black-holed; this client discards mismatched-campaignId fans anyway).
         if (campaignId !== this.campaignId && this.campaignId && this.socket) {
             this.socket.emit('leave-campaign', { campaignId: this.campaignId });
         }
         if (changed) this.engagementClosed.set(false); // ORDER-5 E-4 — a new key starts OPEN until the server says otherwise
+        if (campaignId !== this.campaignId) { this.writerHolder.set(null); this.writerHolderDevice.set(null); this.writerHolderLabel.set(null); this.writerKnown.set(false); this.writerHolderName.set(null); this.readers.set([]); this.seatLedger.set([]); }
         this.campaignId = campaignId;
         this.engagementKey = engagementKey;
         if (!this.socket) {
             // DEPLOY-002 P4: send the GM session JWT in the handshake (auth.token → the host's P2 ownership
             // path). An account-less player sends no token → the gateway's P3 confinement applies. socket.io
             // reads auth at construction; the GM dashboard only mounts post-login, so the token is present here.
-            this.socket = io(this.origin(), { transports: ['websocket', 'polling'], reconnection: true, auth: { token: this.sessionToken() } });
+            // session token) sends none — players carry no baton, and no GM device id is minted in a player-only profile.
+            const tok = this.sessionToken();
+            this.socket = io(this.origin(), { transports: ['websocket', 'polling'], reconnection: true, auth: { token: tok, ...(tok ? { device: gmDeviceId(), deviceLabel: gmDeviceLabel() } : {}) } });
             this.socket.on('connect', () => { this.lastPendingPhase = -1; this.connected.set(true); this.join(); this.rejoinLobby(); this.battleSync(); this.favoriteSync(); this.campaignSyncEmit(); }); // (re)connect → full resync (claims + lobby + battle + favorite + campaign); REBASE-1 P3 item 1: reset the pending dedup so the next re-derivation re-reports (the server cleared pending on disconnect)
             this.socket.on('disconnect', () => this.connected.set(false));
             this.socket.on('connect_error', () => this.connected.set(false)); // reconnect attempts fail while offline
@@ -188,7 +169,6 @@ export class ClaimRealtimeService {
             this.socket.on('lobby', (roster: LobbyPlayer[]) => {
                 const list = Array.isArray(roster) ? roster : [];
                 this.lobby.set(list);
-                // PD3 P2 (PD3-9) — RE-SEED this device's own preference from the fan: the server preserves the recipient's own
                 // sidePref (roster-redact), but the signal was local-only, so a reload read "unpicked" over a stored pick.
                 const me = list.find((p) => p.token === this.token());
                 if (me && 'sidePref' in me) this.mySidePref.set(me.sidePref === 'a' || me.sidePref === 'b' ? me.sidePref : null);
@@ -196,19 +176,17 @@ export class ClaimRealtimeService {
             this.socket.on('favorite', (f: { instanceId?: string | null; pilotId?: string | null }) => this.favorite.set({ instanceId: f?.instanceId ?? null, pilotId: f?.pilotId ?? null }));
             this.socket.on('campaign', (snap: unknown) => { // P4: the player's host snapshot over the socket
                 this.campaignSnapshot.set(snap ?? null);
-                // GM-2 P2a test seam (OPT-IN: localStorage['bce.test.snapshot']) — expose the LAST RECEIVED wire snapshot so a
-                // harness can prove what THIS device was fanned (the H14 negative: no other company's terms), never a re-render.
                 try { if (typeof localStorage !== 'undefined' && localStorage.getItem('bce.test.snapshot') === '1') (window as unknown as { __bceLastCampaign?: unknown }).__bceLastCampaign = snap; } catch { /* no storage */ }
             });
-            this.socket.on('hello', (m: { version?: string }) => this.onServerVersion(m?.version)); // HOTFIX-028 version handshake
-            // GM-1 P3 — the join-with-force lanes: 'import-request' arrives on GM sockets only (server-shaped
+            this.socket.on('hello', (m: { version?: string }) => this.onServerVersion(m?.version));
             // per-recipient); 'denied' finally gets a CLIENT consumer (the import one-shot + any future UX).
             this.socket.on('import-request', (r: ImportRequest) => { if (r?.campaignId === this.campaignId) this.importRequests.update((q) => [...q, r]); });
-            this.socket.on('sign-contract', (r: SignRequest) => { if (r?.campaignId === this.campaignId) this.signRequests.update((q) => [...q, r]); }); // GM-2 P2b — GM sockets only
-            // ODM-18 P1 — company-console intents arrive on GM sockets only (server-fanned; the GM applies)
+            this.socket.on('sign-contract', (r: SignRequest) => { if (r?.campaignId === this.campaignId) this.signRequests.update((q) => [...q, r]); });
             this.socket.on('odm-intent', (r: OdmIntent) => { if (r?.campaignId === this.campaignId) this.odmIntents.update((q) => [...q, r]); });
             this.socket.on('denied', (d: { event?: string; reason?: string }) => this.lastDenied.set({ event: d?.event ?? '', reason: d?.reason ?? '', at: Date.now() }));
-            // D-048 phase B — a per-instance battle delta: update the map + push to loaded sheets.
+            this.socket.on('writer', (w: { campaignId?: string; holderId?: string | null; holderDeviceId?: string | null; holderName?: string | null; holderLabel?: string | null }) => { if (w?.campaignId === this.campaignId) { this.writerHolder.set(w?.holderId ?? null); this.writerHolderDevice.set(w?.holderDeviceId ?? null); this.writerHolderLabel.set(w?.holderLabel ?? null); this.writerHolderName.set(w?.holderName ?? null); this.writerKnown.set(true); } });
+            this.socket.on('seats', (r: { campaignId?: string; seats?: { instanceId: string; holderName: string; mine: boolean; holderToken?: string }[]; ledger?: OdmLedgerEntry[] }) => { if (r?.campaignId === this.campaignId) { this.seats.set(Array.isArray(r.seats) ? r.seats : []); if (Array.isArray(r.ledger)) this.seatLedger.set(r.ledger); } }); // ORDER-13 — the ledger tail rides the GM-app payload
+            this.socket.on('readers', (r: { campaignId?: string; readers?: { userId: string; deviceId: string; name: string; label: string | null }[] }) => { if (r?.campaignId === this.campaignId) this.readers.set(Array.isArray(r.readers) ? r.readers : []); });
             this.socket.on('battle', (p: { engagementKey: string; instanceId: string; state: unknown; at: number }) => {
                 if (!p || p.engagementKey !== this.engagementKey || !p.instanceId) return;
                 this.battleStates.update((m) => ({ ...m, [p.instanceId]: { state: p.state, at: p.at } }));
@@ -244,11 +222,6 @@ export class ClaimRealtimeService {
     /** DEPLOY-002 P4 (player only): request the host campaign snapshot over the socket — the cloud player's
      *  REST is gated (no account), so the roster/OpFor ride the P3-confined socket instead. Re-emits on every
      *  (re)connect (the connect handler calls campaignSyncEmit). No-op for the GM (it never enables this). */
-    /** HOTFIX-030 — the PLAYER "Reconnect" heal: drop the (possibly half-open) transport and reconnect, which
-     *  re-fires the connect handler → re-join the room + re-register in the lobby + re-pull the campaign
-     *  snapshot (campaign-sync) + battle/favorite sync. Recovers a stuck phone — a mobile socket that reads
-     *  "connected" while its transport is silently dead, so registration + late snapshots never arrive — with
-     *  no reload and without losing identity. No-op before the socket exists (the join effect creates it). */
     reconnect(): void {
         const s = this.socket;
         if (!s) return;
@@ -256,7 +229,6 @@ export class ClaimRealtimeService {
         try { s.disconnect(); s.connect(); } catch { /* the reconnection option retries on its own */ }
     }
 
-    // HOTFIX-030 — AUTO-HEAL watchdog (player only). A mobile socket can read "connected" while its transport is
     // silently dead (no 'disconnect' fires — see the WS-SMOKE-OFFLINE gotcha), so registration + the campaign
     // snapshot never arrive and the phone sits on "registering…" / empty. The watchdog notices the stuck state
     // (joined-but-unregistered, or wants-snapshot-but-null, while "connected") and auto-reconnect()s — faster
@@ -290,9 +262,31 @@ export class ClaimRealtimeService {
         if (this.wantsCampaign && this.campaignId) this.socket?.emit('campaign-sync', { campaignId: this.campaignId });
     }
 
-    /** HOTFIX-028 — clear the per-campaign socket-layer mirrors when the player SWITCHES campaigns (a new QR),
-     *  so the previous session's claims / lobby roster / battle states / host snapshot never bleed into the new
-     *  one. Identity (device token, player name, side) is deliberately untouched. */
+    seatSync(): void {
+        if (this.campaignId) this.socket?.emit('seat-sync', { campaignId: this.campaignId });
+    }
+
+    seatPlayer(instanceId: string, toToken: string): Promise<{ ok: boolean; reason?: string; was?: string | null; now?: string | null }> {
+        const s = this.socket;
+        if (!s || !this.campaignId) return Promise.resolve({ ok: false, reason: 'offline' });
+        const nonce = Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+        return new Promise((resolve) => {
+            let done = false;
+            const finish = (r: { ok: boolean; reason?: string; was?: string | null; now?: string | null }): void => { if (done) return; done = true; s.off('seat-ack', okH); s.off('denied', dnH); clearTimeout(timer); resolve(r); };
+            const okH = (d: { nonce?: string; was?: string | null; now?: string | null } | null): void => { if (d?.nonce === nonce) finish({ ok: true, was: d.was ?? null, now: d.now ?? null }); };
+            const dnH = (d: { event?: string; reason?: string; nonce?: string } | null): void => { if (d?.event === 'seat' && d?.nonce === nonce) finish({ ok: false, reason: d?.reason ?? 'denied' }); };
+            s.on('seat-ack', okH);
+            s.on('denied', dnH);
+            s.emit('seat', { campaignId: this.campaignId, instanceId, toToken, nonce });
+            const timer = setTimeout(() => finish({ ok: false, reason: 'timeout — the host did not answer' }), 6000);
+        });
+    }
+
+    handTable(toUserId: string, toDeviceId: string): void {
+        if (this.campaignId && toUserId && toDeviceId) this.socket?.emit('hand-table', { campaignId: this.campaignId, toUserId, toDeviceId });
+    }
+    takeTableHere(myUserId: string): void { this.handTable(myUserId, this.myDeviceId); }
+
     resetCampaignResidue(): void {
         this.engagementClosed.set(false); // ORDER-5 E-4
         this.claims.set({});
@@ -300,14 +294,13 @@ export class ClaimRealtimeService {
         this.battleStates.set({});
         this.campaignSnapshot.set(null);
         this.favorite.set({ instanceId: null, pilotId: null });
+        this.readers.set([]);
+        this.writerHolderDevice.set(null); this.writerHolderLabel.set(null); this.writerKnown.set(false);
+        this.seats.set([]);
+        this.seatLedger.set([]); // ORDER-13
     }
 
-    /** HOTFIX-028 — version handshake. The server greets every socket with its deployed build commit; a stale
-     *  cached bundle (older baked hash) surfaces the update banner and, at most once per hour, self-heals via a
-     *  cache-evicting reload. Suppressed when either side is unknown/empty so a co-deploy gap or an un-stamped
-     *  dev build never false-alarms. */
     private onServerVersion(server?: string): void {
-        // HOTFIX-036 — the PLAYER app is no-store (always the current bundle), so an "update available" banner is
         // never legitimate there; it only appears when a stale service worker serves an old bundle, and tapping
         // it reloads into that SW's GM-index fallback (the "tap to update → GM sign-in" bug). Suppress on player.
         if ((globalThis as { __bcePlayerBundle?: boolean }).__bcePlayerBundle) return;
@@ -326,31 +319,15 @@ export class ClaimRealtimeService {
         } catch { /* localStorage blocked — the banner still offers the manual update */ }
     }
 
-    // ── D-048 LOBBY (client half) — join → name → side; the GM observes + reassigns/kicks ──
-    /** Re-announce the lobby role on every (re)connect (mirrors join() for claims). No-op for the
-     *  claims-only GM panel (lobbyMode stays null) → the D-042 surface is unchanged. */
     private rejoinLobby(): void {
         if (!this.campaignId) return;
         if (this.lobbyMode === 'player') {
             this.socket?.emit('join-lobby', { campaignId: this.campaignId, token: this.token(), name: this.playerName() || 'Player', side: this.side() });
-            /* TESTER-PLAYTEST-1 #2 — CLAIM RECOVERY after a device interruption (universal: Traditional, HS
-               and ODM all ride this path). The device token is DURABLE (bce.device.token in localStorage —
-               it survives sleep, back-out, tab discard and reload), so nothing is ever actually lost. What
-               broke was the ORDER: on (re)connect the client emits `join` BEFORE `join-lobby`, and the
-               server shapes its claims reply with redactClaims(full, client.data.lobbyToken) — which is
-               still UNDEFINED at that moment, so every claim including the player's OWN came back
-               anonymised. heldByMe() then compared the durable token against an anonId, judged the player's
-               own machines to belong to a stranger, and rendered them .taken. join-lobby binds a moment
-               later but replies with `lobby` only, so nothing ever re-sent the claims and the lockout
-               persisted for the rest of the session.
-               The fix is to ask again AFTER the identity is bound: `resync` exists for exactly this and
-               returns the set shaped for the now-bound socket. Covers the reconnect race AND the very first
-               join (where the claims fetch also precedes joinLobby()). Ownership is UNCHANGED — the server
-               still matches the same token, so a stranger presenting a different one is denied at
-               join-lobby's rebind check and still sees anonymised claims (HARDEN-5b / HARDEN-7 intact). */
+            this.socket?.emit('seat-sync', { campaignId: this.campaignId });
             this.socket?.emit('resync', { campaignId: this.campaignId, engagementKey: this.engagementKey });
         } else if (this.lobbyMode === 'observer') {
             this.socket?.emit('lobby-sync', { campaignId: this.campaignId });
+            this.socket?.emit('seat-sync', { campaignId: this.campaignId });
         }
     }
     /** Player: register (or re-announce name/side) in the lobby. Safe before connect — connect replays it. */
@@ -364,7 +341,6 @@ export class ClaimRealtimeService {
     /** Player: leave the lobby (self). */
     leaveLobby(): void { this.socket?.emit('leave-lobby', { campaignId: this.campaignId, token: this.token() }); }
 
-    // ── D-048 PHASE B — battle-state channel (the live-damage fan, engine-authoritative) ──
     /** Publish one instance's edited sheet state -> host persists + fans the delta to the room. */
     publishBattle(instanceId: string, state: unknown): void {
         this.socket?.emit('battle', { campaignId: this.campaignId, engagementKey: this.engagementKey, instanceId, state, at: Date.now() });
@@ -373,10 +349,6 @@ export class ClaimRealtimeService {
      *  room event and by every battle-sync reply's `closed`; reset when the engagement key changes (a new track opens). The
      *  player's Resolved banner + the read-only sheet read this beside the client's own retained-view inference. */
     readonly engagementClosed = signal(false);
-    /** ORDER-4 H18 — the GM's resolve ENDS the engagement explicitly: the server marks the key closed and refuses every later
-     *  battle write to it (claims untouched). Sent as the LAST step of a resolve by both resolve services (+ Traditional, the
-     *  same Classic path). ensure() first so a GM who never opened a claims surface still has the socket; socket.io buffers an
-     *  emit until connect. GM-only on the server; harmless where no players are joined. */
     closeEngagement(campaignId: string, engagementKey: string): void {
         this.ensure(campaignId, engagementKey);
         this.socket?.emit('engagement-close', { campaignId, engagementKey });
@@ -388,17 +360,9 @@ export class ClaimRealtimeService {
         return () => this.battleListeners.delete(cb);
     }
 
-    /** D-048 phase D — fetch the host's CURRENT battle state for an engagement NOW (one-shot), so the
-     *  reconcile at resolve has the authoritative player-entered damage even if this device never joined
-     *  the room / opened a sheet. Connects if needed; resolves with whatever has arrived by the timeout
-     *  (offline → the last-known map — best-effort, the resolve never blocks). */
     syncBattleStatesNow(campaignId: string, engagementKey: string): Promise<Record<string, { state: unknown; at: number }>> {
         return this.syncBattleStatesTimed(campaignId, engagementKey).then((r) => r.states);
     }
-    /** DIRECTIVE-PD3 P1 (PD3-12) — the same one-shot sync, REPORTING: `connected` = a socket existed to ask; `timedOut` = the
-     *  host never answered within the 3 s window (the map returned is then the last-known one, NOT the host's word). The
-     *  reconcile turns either into a LOUD failure instead of a silent 0. `bce.test.pd3` = 'timeout' (localStorage, a test
-     *  seam) forces the timed-out shape so the failure path can be witnessed by a harness without killing the api. */
     syncBattleStatesTimed(campaignId: string, engagementKey: string): Promise<{ states: Record<string, { state: unknown; at: number }>; connected: boolean; timedOut: boolean }> {
         this.ensure(campaignId, engagementKey);
         const s = this.socket;
@@ -416,7 +380,6 @@ export class ClaimRealtimeService {
         });
     }
 
-    // ── D-048 PHASE C — favorite (campaign-persistent, per-player; host round-trip echoes 'favorite') ──
     private favoriteSync(): void {
         this.socket?.emit('favorite-sync', { campaignId: this.campaignId, token: this.token() });
     }
@@ -426,10 +389,8 @@ export class ClaimRealtimeService {
         this.socket?.emit('favorite', { campaignId: this.campaignId, token: this.token(), instanceId, pilotId });
     }
 
-    // ── GM-1 P2 — the ADVISORY side preference for the presented hotspot. Optimistic local signal (this
     //    device's own pick — the server strips others' prefs from player recipients anyway); the lobby row
     //    is durable server-side (SQLite), so no reconnect re-emit is needed. Emit AFTER joinLobby (the
-    //    token must be bound — D-048 ordering holds on the player pages). ──
     readonly mySidePref = signal<'a' | 'b' | null>(null);
     setSidePref(pref: 'a' | 'b' | null): void {
         this.mySidePref.set(pref);
@@ -445,8 +406,6 @@ export class ClaimRealtimeService {
         this.socket?.emit('phase-pending', { campaignId: this.campaignId, token: this.token(), count });
     }
 
-    // ── GM-1 P3 — JOIN-WITH-FORCE ──
-    /** GM-2 P2b — GM side: a phone's signing, queued for the ContractSignService (the import-request pattern). */
     readonly signRequests = signal<SignRequest[]>([]);
     consumeSignRequest(): SignRequest | null {
         const q = this.signRequests();
@@ -454,7 +413,6 @@ export class ClaimRealtimeService {
         this.signRequests.set(q.slice(1));
         return q[0];
     }
-    /** GM-2 P2b — the phone's last signing receipt (ack / denied / timeout) for the brief's honest note. */
     readonly lastSignResult = signal<{ ok: boolean; reason?: string; at: number } | null>(null);
     /** Player side: sign THIS company's contract on the phone — one-shot (ack or denied, the odm-intent pattern). */
     sendSignContract(key: string, contract: Record<string, unknown>): Promise<{ ok: boolean; reason?: string }> {
@@ -480,10 +438,7 @@ export class ClaimRealtimeService {
         this.importRequests.set(q.slice(1));
         return q[0];
     }
-    /** The last 'denied' ack this socket received (event + reason) — the client-side observability HARDEN-5
-     *  never had; the import one-shot listens through it. */
     readonly lastDenied = signal<{ event: string; reason: string; at: number } | null>(null);
-    // ── ODM-18 P1 — the company-console intent lanes ──
     /** GM side: intents queued for the apply service (the import-request pattern). */
     readonly odmIntents = signal<OdmIntent[]>([]);
     consumeOdmIntent(): OdmIntent | null {
@@ -512,8 +467,6 @@ export class ClaimRealtimeService {
         });
     }
 
-    /** Player side: the one-shot company import (D-048 ordering — call AFTER joinLobby). NOT in the
-     *  reconnect-resync chain by design: replaying an import on every wifi blip would duplicate the ask. */
     importForce(payload: { units: unknown[]; pilots: unknown[]; engagementKey: string; name: string; sourceCampaignId?: string; reputation?: number }): Promise<{ ok: boolean; reason?: string; instanceIds?: string[] }> {
         const s = this.socket;
         if (!s) return Promise.resolve({ ok: false, reason: 'offline' });

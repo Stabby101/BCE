@@ -1,19 +1,3 @@
-/*
- * BCE campaign-pack — FACTION FLAVOR (presentation enrichment for the era-gated faction picker).
- *
- * The era-gated faction LIST is authoritative from MekBay data (filter factions by
- * faction.eras[selectedEra]); THIS file only decorates a matched faction with display
- * flavor: affinity label, accent colors, and a one-line blurb.
- *
- * PROVENANCE / COPYRIGHT: blurbs are ORIGINAL short summaries (<= ~18 words) written for
- * BCE — NOT copied from sourcebooks or Sarna. Each record cites the source consulted
- * (sarna.net, the BattleTech wiki) for verification. Colors approximate faction heraldry
- * for UI accenting only.
- *
- * Wiring (CC): match a MekBay `faction.name` against `match[]` (case/loose-insensitive,
- * like the D-010 chassis-name reconcile). No match => the picker falls back to
- * logo + name + affinity with no blurb/color. Coverage grows by adding records here.
- */
 
 export type FlavorAffinity =
     | 'Inner Sphere'
@@ -225,14 +209,6 @@ export const FACTION_FLAVOR: FactionFlavor[] = [
  */
 export const META_FACTION_DENY: string[] = ['Extinct', 'Unique', 'None', 'Non-Aligned', 'Unknown', 'Undetermined'];
 
-/**
- * The Pirate (PIR) archetype shows ONLY these bandit/pirate factions, intersected with the
- * era-active set — NEVER legitimate Periphery realms (Taurian Concordat, Magistracy of
- * Canopus, Outworlds Alliance, Marian Hegemony are NOT pirates). Match against MUL
- * faction.name + aliases (resolve-probe misses, like the D-010 chassis reconcile). Names not
- * present in a given era simply won't appear; if the set is empty for an era, fall back to
- * the generic "Pirates" entry + a note (never dead-end).
- */
 export const PIRATE_FACTIONS: string[] = [
     'Pirates', 'Bandits',
     'Circinus Federation',

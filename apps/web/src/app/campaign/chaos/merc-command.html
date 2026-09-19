@@ -19,6 +19,14 @@
         <input type="text" [value]="commandName()" (input)="commandName.set($any($event.target).value)" placeholder="e.g. Grey Death Legion" maxlength="40" />
     </label>
 
+    <label class="fld">
+        <span class="fl">Affiliation</span>
+        <select class="affsel" (change)="affiliation.set($any($event.target).value)" data-testid="mc-affiliation" aria-label="The command's affiliation">
+            @for (a of affiliations; track a) { <option [value]="a" [selected]="affiliation() === a">{{ a }}</option> }
+        </select>
+        <span class="fhint">Which faction's MUL list the <span class="ctag">off-list</span> tag reads, and who will hire you. Mercenary takes contracts from anyone who hires mercenaries.</span>
+    </label>
+
     <!-- HSFORGE-1 P2 - the merc command's THEATER of operations (ruling D4/D11): specific region or a
          random draw (resolved at pick - the select then shows the resolved theater). Era-wide default =
          the pre-P2 behavior byte-identical. Drives the offer board's chamber filter + the Forge top-up. -->
@@ -66,7 +74,6 @@
     </div>
     <div class="cols">
         <div class="cat">
-            <!-- DIRECTIVE-123 — search + two-key sort (Sort by / then + direction). [selected] per option (NG-SELECT). -->
             <div class="ctools">
                 <input type="search" class="csearch" [value]="search()" (input)="search.set($any($event.target).value)" placeholder="Search chassis / model…" />
                 <div class="csort">
@@ -84,7 +91,6 @@
                     </label>
                 </div>
             </div>
-            <!-- DIRECTIVE-123b — FILTER groups: Weight × BV × Era (AND across groups, OR within a group). -->
             <div class="ffilters">
                 <div class="fgroup">
                     <span class="fglabel">Weight</span>
@@ -94,8 +100,6 @@
                     <span class="fglabel">BV</span>
                     @for (band of bvBands; track band.key) { <button type="button" class="fchip" [class.on]="bvFilter().has(band.key)" (click)="toggleBv(band.key)">{{ band.label }}</button> }
                 </div>
-                <!-- DIRECTIVE-124f — the ERA band sub-filter is hidden in a Hot Spots campaign (the era is fixed to the
-                     campaign era; the pool is already the campaign-era slice). Traditional renders it exactly as before. -->
                 @if (!isHotspots() && eraBands().length > 1) {
                     <div class="fgroup">
                         <span class="fglabel">Era</span>
@@ -103,23 +107,34 @@
                     </div>
                 }
                 <div class="fmeta">
-                    <span class="fcount">{{ catalog().length }} unit{{ catalog().length === 1 ? '' : 's' }}@if (catalog().length > 120) { · showing 120 }</span>
+                    <span class="fcount" data-testid="mc-count">{{ catalog().length }} unit{{ catalog().length === 1 ? '' : 's' }} · era-legal@if (offCount() > 0) { · {{ offCount() }} off-list }@if (catalog().length > 120) { · showing 120 }</span>
                     @if (activeFilters()) { <button type="button" class="fclear" (click)="clearFilters()">✕ Clear filters ({{ activeFilters() }})</button> }
                 </div>
             </div>
+            @switch (mulState()) {
+                @case ('loading') { <p class="empty" data-testid="mc-loading">Faction list loading… — nothing is tagged until it lands.</p> }
+                @case ('failed') { <p class="empty" data-testid="mc-failed">Couldn’t load the faction list — nothing is tagged. <button type="button" class="cbtn" (click)="retryMul()" data-testid="mc-retry">Retry</button></p> }
+                @case ('ready') {
+                    @if (mulActive()) {
+                        <p class="empty" data-testid="mc-advisory">Every era-legal unit is listed. <span class="ctag">off-list</span> marks one that is not on the {{ mulKey() }} MUL list for this era — yours to field all the same.</p>
+                    } @else if (noListFor(); as nf) {
+                        <p class="empty" data-testid="mc-nolist">No MUL list for {{ nf }} in this era — nothing is tagged.</p>
+                    }
+                }
+            }
             @if (catalogVisible().length) {
                 <div class="clist">
                     @for (u of catalogVisible(); track u.name) {
-                        <div class="crow">
-                            <span class="cn">{{ u.chassis }} {{ u.model }}</span>
+                        <div class="crow" [class.off]="isOffList(u)" data-testid="mc-row" [attr.data-unit-id]="u.id" [attr.data-off]="isOffList(u) ? '1' : '0'">
+                            <span class="cn">{{ u.chassis }} {{ u.model }}@if (isOffList(u)) { <span class="ctag" data-testid="mc-offlist">off-list</span> }</span>
                             <span class="csub"><span class="ctype" [class.veh]="u.type !== 'Mek'">{{ unitTypeLabel(u) }}</span> {{ u.tons }}t &middot; BV {{ money(u.bv) }}</span>
-                            <button type="button" class="cbtn" [disabled]="!canAdd(u)" (click)="addUnit(u)">Add</button>
+                            <button type="button" class="cbtn" [disabled]="!canAdd(u)" (click)="addUnit(u)" data-testid="mc-add">Add</button>
                         </div>
                     }
                 </div>
             } @else if (catalogError()) { <p class="empty">Couldn't load the unit catalog. <button type="button" class="cbtn" (click)="retryCatalog()">Retry</button></p> }
             @else if (!catalogReady()) { <p class="empty">Loading the unit catalog…</p> }
-            @else { <p class="empty">No era-legal units match.</p> }
+            @else { <p class="empty" data-testid="mc-empty">{{ catalogEmptyWhy() ?? 'No era-legal units match.' }}</p> }
         </div>
         <div class="chz">
             <div class="chz-h">Chosen force</div>
@@ -137,8 +152,6 @@
         </div>
     </div>
 
-    <!-- GM-3 P2 — HOST A TABLE: a GM session may begin with no company of its own. The difficulty slider is the table's
-         (era + theater are the wizard's earlier steps). Shown only for a gmSession; a plain campaign never sees it. -->
     @if (gmSess()) {
         <section class="host-table" data-testid="mc-host-table">
             <div class="ht-h">Host a table</div>

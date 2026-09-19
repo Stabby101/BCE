@@ -11,7 +11,6 @@
 .cap-n { font-family: var(--mono); font-size: 9.5px; font-style: italic; color: var(--ink2); }
 .rb-treasury { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink2); }
 .rb-treasury b { color: var(--ink); font-size: 12.5px; }
-/* D-037 — the shop's identity strip + per-job notes + history texture */
 .rb-pool { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; border: 1.5px solid var(--ink); border-left: 5px solid var(--stamp); background: var(--paper2); padding: 8px 13px; }
 .tp-name { font-family: var(--stencil); font-size: 15px; letter-spacing: 1px; }
 .tp-head { font-family: var(--mono); font-size: 10.5px; letter-spacing: .5px; color: var(--paper); background: var(--ink2); padding: 1px 7px; }

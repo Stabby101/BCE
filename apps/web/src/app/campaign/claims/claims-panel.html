@@ -1,6 +1,4 @@
 <div class="claims-panel">
-    <!-- HOTFIX-030 — the board IS the roster. No Claim button (players claim on their own devices). Header
-         carries the counts that used to live in the Joined panel. -->
     <div class="cl-head">
         <h3 class="ph">Roster / claim board</h3>
         <div class="cl-counts">
@@ -20,8 +18,6 @@
     @for (side of sides(); track side.key) {
         <section class="cl-group cl-{{ side.key }}">
             <h4 class="cl-side">{{ side.label }} <span class="cl-side-sub">{{ side.sub }}</span> <span class="cl-side-n">{{ side.units.length }}</span>
-                <!-- DIRECTIVE-130 — GM manual OpFor builder (Hot Spots only; enabled once a mission is generated).
-                     GM-1 P1 — table mode blanks it (a GM surface; table.on() is constant false outside a GM session). -->
                 @if (side.key === 'opfor' && isHotspots() && !table.on()) {
                     <button type="button" class="cl-buildopfor" data-testid="cc-build-opfor" [disabled]="!missionSpec()" (click)="openBuilder()"
                             [title]="missionSpec() ? 'Hand-pick the OpFor roster — field your own minis' : 'Generate the mission first'">⚔ Build / Edit OpFor</button>
@@ -52,7 +48,6 @@
         </section>
     }
 
-    <!-- HOTFIX-030 — joined-but-unclaimed players (spectators): name · presence dot · reassign · kick. Hidden when empty. -->
     @if (unclaimedPlayers().length) {
         <section class="cl-group cl-spectators">
             <h4 class="cl-side">Joined · no unit yet <span class="cl-side-n">{{ unclaimedPlayers().length }}</span></h4>
@@ -71,8 +66,6 @@
         </section>
     }
 
-    <!-- DIRECTIVE-130 — the GM manual OpFor builder modal (HS-only; opens on ⚔ Build / Edit OpFor).
-         GM-1 P1 — unmounted in table mode (blanking the button alone leaves the modal reachable via seams). -->
     @if (builderOpen() && !table.on()) {
         <bce-opfor-builder [faction]="opforFaction()" [initial]="opfor()" [playerBv]="playerBv()" (save)="saveOpFor($event)" (close)="closeBuilder()" />
     }

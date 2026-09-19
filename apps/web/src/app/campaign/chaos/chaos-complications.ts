@@ -1,10 +1,3 @@
-/*
- * BCE — DIRECTIVE-110e: Hot Spots track complications + universal ("standing") track rules. Tighter Command Rights
- * mean the employer imposes more on you, so a track rolls EXTRA complications scaled by the negotiated Command term;
- * every Chaos track also inherits a handful of universal rules. All EDITABLE DATA in OUR OWN words — general mission
- * modifiers + our own summaries of the universal rules, NO rulebook prose (IP: the tool requires the rulebook).
- * The roll is DETERMINISTIC (seeded by the mission/branch id) so a brief re-renders / reloads identically.
- */
 import type { SeedComplication } from '../mission/forge-types';
 import type { CommandRights } from '../contract/contract-terms';
 

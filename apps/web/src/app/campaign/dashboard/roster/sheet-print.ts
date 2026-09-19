@@ -1,12 +1,3 @@
-/*
- * BCE — record-sheet PRINT (DIRECTIVE-071). Reuses the BCE print idiom (window.print + a print-only region,
- * like mission-package/aar) but builds a dedicated, SELF-CLEANING print root so it: (a) composes the D-070
- * pilot box + SPA overlay onto each sheet, (b) prints ONE record sheet per page, (c) never collides with the
- * mission-package/aar @media print (scoped by a body class), (d) carries no app chrome. Read-only.
- *
- * Layout note: the root is rendered OFF-SCREEN (not display:none) while composing so the SVGs have layout —
- * injectSheetAbilities needs getBBox. @media print then promotes it to the visible, paginated page flow.
- */
 import { ApplicationRef, EnvironmentInjector, createComponent } from '@angular/core';
 import { cloneSheetSvg, injectSheetAbilities } from './sheet-compose';
 import type { CBTForceUnit } from '../../../models/cbt-force-unit.model';
@@ -18,7 +9,6 @@ export interface PrintSheet {
     abilities: string[];
 }
 
-/** DIRECTIVE-083 — when gameSystem === 'as' (+ the injectors), print routes to the Alpha Strike card path. */
 export interface PrintOpts {
     gameSystem?: GameSystem;
     appRef?: ApplicationRef;
@@ -39,8 +29,6 @@ const PRINT_CSS = `
 }
 `;
 
-/** Compose + print one card per page. CBT (default) = the unchanged record-sheet path; Alpha Strike (D-083)
- *  = the alpha-strike-card path when the injectors are supplied. */
 export function printSheets(items: PrintSheet[], opts?: PrintOpts): void {
     if (opts?.gameSystem === GameSystem.ALPHA_STRIKE && opts.appRef && opts.environmentInjector) {
         return printAsCards(items, opts.appRef, opts.environmentInjector);
@@ -66,7 +54,7 @@ export function printSheets(items: PrintSheet[], opts?: PrintOpts): void {
         document.head.appendChild(style);
     }
     document.body.appendChild(root); // off-screen but laid out → getBBox works
-    for (const pg of pending) injectSheetAbilities(pg.svg, pg.abilities); // D-070 overlay AFTER layout
+    for (const pg of pending) injectSheetAbilities(pg.svg, pg.abilities);
     document.body.classList.add('bce-printing-sheets');
 
     let done = false;
@@ -83,8 +71,6 @@ export function printSheets(items: PrintSheet[], opts?: PrintOpts): void {
     setTimeout(cleanup, 120000); // safety net if afterprint never fires (e.g. dialog dismissed oddly)
 }
 
-/** DIRECTIVE-083 — Alpha Strike print: one <alpha-strike-card> per page. Units whose `as` is slice-stripped are
- *  skipped (graceful, logged). Self-cleaning; scoped by the same body class as the CBT print path. */
 function printAsCards(items: PrintSheet[], appRef: ApplicationRef, environmentInjector: EnvironmentInjector): void {
     const root = document.createElement('div');
     root.className = 'bce-print-root';
@@ -92,7 +78,7 @@ function printAsCards(items: PrintSheet[], appRef: ApplicationRef, environmentIn
     let any = false;
     for (const it of items) {
         const unit = it.fu?.getUnit() ?? null;
-        if (!unit?.as) { if (unit) console.warn(`[D-083] AS print: "${unit.name}" has no AS stats (slice-stripped) — skipped.`); continue; }
+        if (!unit?.as) { if (unit) console.warn(`[] AS print: "${unit.name}" has no AS stats (slice-stripped) — skipped.`); continue; }
         const page = document.createElement('div');
         page.className = 'bce-print-page';
         const ref = createComponent(AlphaStrikeCardComponent, { environmentInjector });

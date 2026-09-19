@@ -1,9 +1,3 @@
-/*
- * DIRECTIVE-104 — faction → territory color. Covers all 41 tags StarSystemsService.ownerAt() can return
- * (the D-082 ownerByEra set); the 'Unknown' sentinel + null resolve to grey; any surprise tag gets a stable
- * hashed HSL so a new faction still paints distinctly. Pure data + one pure fn — no Angular, no deps: the
- * Star Map component stays portable.
- */
 export const FACTION_COLORS: Readonly<Record<string, string>> = {
     'Federated Suns': '#d99b28',
     'Draconis Combine': '#c0392b',

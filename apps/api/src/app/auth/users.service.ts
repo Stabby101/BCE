@@ -5,7 +5,7 @@
  */
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { DatabaseSync } from 'node:sqlite';
-import { openDb } from '../open-db'; // HARDEN-7 A2 — shared durability-PRAGMA opener
+import { openDb } from '../open-db';
 import { randomUUID } from 'node:crypto';
 import { dbPath } from '../db-path';
 import type { AuditAction, AuditEntry, AuditFilter, OAuthProfile, User, UserRole, UserStatus } from './auth.types';
@@ -48,7 +48,7 @@ export class UsersService implements OnModuleInit {
     private db!: DatabaseSync;
 
     onModuleInit(): void {
-        this.db = openDb(dbPath()); // HARDEN-7 A2 — shared opener (WAL + busy_timeout + synchronous=NORMAL, asserted)
+        this.db = openDb(dbPath());
         this.db.exec(CREATE);
         this.db.exec(AUDIT_CREATE);
         // DEPLOY-003 migration: a pre-existing users table lacks lastSeen — add it (NULL = never seen).
@@ -127,9 +127,6 @@ export class UsersService implements OnModuleInit {
     getByRecoveryHash(recoveryHash: string): User | null {
         return this.toUser(this.db.prepare('SELECT * FROM users WHERE recoveryHash = ?').get(recoveryHash) as Row | undefined);
     }
-    /** HARDEN-7 B2 — replace a user's recoveryHash (regenerate-while-logged-in). Row-scoped UPDATE; the row
-     *  (and its ownerId link to campaigns) is otherwise untouched. The old hash no longer resolves — the prior
-     *  code is invalidated the instant the new one is minted. */
     setRecoveryHash(id: string, recoveryHash: string): void {
         this.db.prepare('UPDATE users SET recoveryHash = ? WHERE id = ?').run(recoveryHash, id);
     }

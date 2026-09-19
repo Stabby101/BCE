@@ -1,9 +1,3 @@
-/*
- * BCE — Star Map Phase 2 (DIRECTIVE-080) localized world selection. Pure (no Angular/DOM) so it unit-tests:
- * given an in-range candidate pool + an ownerAt resolver, pick a target SYSTEM for a mission by faction-space
- * BIAS (soft) and seed localeFit (relaxed terrain → regionRole → settlement, never dead-ends). The jumpLy
- * widening + the final random-pool fallback live in the generator (mission-generator.service.ts).
- */
 import type { StarSystem } from '../star/star-types';
 
 export interface LocaleFit {
@@ -14,7 +8,7 @@ export interface LocaleFit {
 export interface LocalizeOpts {
     eraId: number;
     targetFaction: string;
-    employer?: string; // D-085 — the EMPLOYER/friendly faction; a strike must NOT land on your own backyard
+    employer?: string;
     ownerAt: (sys: StarSystem, eraId: number) => string;
     localeFit?: LocaleFit | null;
     rng?: () => number;
@@ -22,8 +16,8 @@ export interface LocalizeOpts {
 export interface LocalizeResult {
     system: StarSystem;
     relaxLevel: number; // 0 = full localeFit honored; 1 dropped terrain; 2 dropped regionRole; 3 dropped settlement
-    tier: number;       // D-085: 0 = TARGET-owned (the enemy's world); 1 = a conflict frontier NOT your own; 2 = friendly/interior (last resort)
-    friendlyFallback: boolean; // D-085 — tier 2 landed on employer/friendly space (only option in range) → soften the framing
+    tier: number;
+    friendlyFallback: boolean;
 }
 
 // settlement → a district appropriate to it (replaces the random district pool when localized).
@@ -52,7 +46,6 @@ export function pickLocalizedSystem(candidates: StarSystem[], opts: LocalizeOpts
         (s: StarSystem) => !lf.regionRole?.length || lf.regionRole.includes(s.localeAttrs.regionRole),
         (s: StarSystem) => !lf.settlement?.length || lf.settlement.includes(s.localeAttrs.settlement),
     ];
-    // D-085 — a strike vs targetFaction localizes to the ENEMY's space, not your own. Bias:
     //   0 = the TARGET owns this system (the enemy's world — the right place to hit);
     //   1 = a border/contested CONFLICT FRONTIER that is NOT employer-owned (plausibly contested with the target);
     //   2 = friendly/interior in range (your own backyard) — LAST RESORT only, and flagged so the framing softens.

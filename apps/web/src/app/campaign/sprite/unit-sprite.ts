@@ -1,10 +1,3 @@
-/*
- * BCE — bce-unit-sprite (HOTFIX-003): the ONE sprite-rendering component. Resolves a unit-ish subject
- * through SpriteResolverService, then either renders MekBay's unchanged <unit-icon> fed a resolved-key
- * CLONE (so a case/punct mismatch or family alias paints the real atlas art) or, when nothing resolves,
- * a weight-class <bce-mech-silhouette>. Roster, market BUY, and OpFor all use this — never <unit-icon>
- * directly — so the unknown.png question mark can never appear for a generated unit. MekBay untouched.
- */
 import { Component, ChangeDetectionStrategy, computed, inject, input } from '@angular/core';
 import { UnitIconComponent } from '../../components/unit-icon/unit-icon.component';
 import { MechSilhouetteComponent } from './mech-silhouette';

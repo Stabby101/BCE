@@ -3,14 +3,13 @@
     "title": "Hot Spots — The Hinterlands (BCE premade hotspots, ilClan era 3151–3152: the collapsed Jade Falcon Occupation Zone)",
     "era": "ilclan",
     "region": "hinterlands",
-    "packNote": "One pack of the multi-pack hotspot catalog (D-124). era + region tag the whole file; its hotspots inherit them. The `hinterlands` theater (hsforge-regions.json) is this pack's build item — anchor Skye or Arc-Royal, ~120 LY, era-6/ilClan owner column. The sibling pack CLAUDE.md always named ('Hinterlands + general-per-era ship as sibling hotspots-*.json packs').",
-    "authoredBy": "PM (Fable) — direct-authored 2026-09-02/03 overnight at James's order ('do ALL the work on this while I sleep'). Not Forge-generated.",
-    "consumes": "DIRECTIVE-124 (hotspots-catalog ingestion) + IMPORT-5 Part C (singleSided) + D-133 (two-sided `sides` on hs-hin-10 only). Each track → a preset seed; forks link tracks by nextTrackId.",
+    "packNote": "One pack of the multi-pack hotspot catalog. era + region tag the whole file; its hotspots inherit them. The `hinterlands` theater (hsforge-regions.json) is this pack's build item — anchor Skye or Arc-Royal, ~120 LY, era-6/ilClan owner column. The sibling pack CLAUDE.md always named ('Hinterlands + general-per-era ship as sibling hotspots-*.json packs').",
+    "consumes": "(hotspots-catalog ingestion) + Part C (singleSided) + (two-sided `sides` on hs-hin-10 only). Each track → a preset seed; forks link tracks by nextTrackId.",
     "ipPosture": "System stats are FACTS cited to Sarna.net (page per world; absent fields ABSENT, never guessed). Historical events 3134–3152 (which Clan took what, when, who defended, the uprisings, the League, the Coalition) are canonical facts. All situations, every named character the player meets or fights, and all prose are ORIGINAL BCE writing. Canon people (Malvina Hazen, Alaric Ward, Heather GioAvanti, Callandre Kell, Factor Marena, Star Colonel Riss) appear ONLY as historical context, never voiced, never fielded. No book prose reproduced.",
     "writingBar": "HOTSPOT-BRIEF v1.0.1 budgets + FORGE-BRIEF v3 prose law. A reader gets each field on one pass; situation carries texture, instructions stay plain.",
     "setting": "3151 is a COLLAPSE, not a front. The Jade Falcon touman went to Terra and died there with Malvina Hazen; the Occupation Zone fragmented into a vacuum that small successor polities are carving up — the Isle of Skye (Dec 3151 uprising), the Arc-Royal Liberty Coalition (the Kell Hounds, Oct 3151), the Alyina Mercantile League (the Falcon merchant caste under Factor Marena, July 3151), Hell's Horses on Tamar since 3137, Falcon warrior remnants on Sudeten, Wolf Empire garrisons refusing to leave. EVERY FRAGMENT HIRES MERCENARIES. That is the pack's whole premise.",
     "singleSided": "Non-hiring Clan enemies (Wolf Empire/Clan Wolf, Jade Falcon remnant, Hell's Horses) → `singleSided: true`, side A only. hs-hin-10 Bolan is the pack's ONE authored two-sided pair (Lyran vs Free Worlds League — both hire) — the thing this pack can do that the corridor could not.",
-    "employerMapping": "REQUIRED CODE at ingest (see DIRECTIVE-HIN-1): hsFactionToMulFaction maps only 8 DM-era names. This pack's employers — Lyran Commonwealth, Isle of Skye, Free Worlds League — resolve to NULL today (side A → 'Local / planetary forces'). ARLC strings carry '(mercenary command)' → Mercenary; AML strings carry '(Sea Fox-backed)' → Clan Sea Fox, which also hires. OpFor strings use MekBay's Clan names: Clan Wolf · Clan Jade Falcon · Clan Hell's Horses. Adding aliases is the H13 moment — split the hiring predicate from the MUL allowlist first.",
+    "employerMapping": "REQUIRED CODE at ingest (see 1): hsFactionToMulFaction maps only 8 DM-era names. This pack's employers — Lyran Commonwealth, Isle of Skye, Free Worlds League — resolve to NULL today (side A → 'Local / planetary forces'). ARLC strings carry '(mercenary command)' → Mercenary; AML strings carry '(Sea Fox-backed)' → Clan Sea Fox, which also hires. OpFor strings use MekBay's Clan names: Clan Wolf · Clan Jade Falcon · Clan Hell's Horses. Adding aliases is the moment — split the hiring predicate from the MUL allowlist first.",
     "status": "10 authored (hs-hin-01..10) — the launch set; forge floor 8 cleared. Rotating-chamber target 24; 11–24 follow. Employers: Isle of Skye ×2 · ARLC ×1 · AML ×3 · Lyran ×3 · Lyran/FWL two-sided ×1. Enemies: Clan Wolf ×3 · Clan Jade Falcon ×4 · Clan Hell's Horses ×1 · FWL ×1 · Wolf-in-Exile ally ×1. Roots: Pushback · Defend · Objective Raid · Recon · Defend · Strike · Defend · Breakthrough · Flank · Meeting Engagement. Idea-registry: hotspots-IDEA-LEDGER.md (Hinterlands section).",
     "roster": [
       "01 Skye",
@@ -457,7 +456,7 @@
             "faction": "Clan Jade Falcon",
             "armsMix": "MECH_ONLY",
             "vehicleShare": 0,
-            "bvRatio": 1.0
+            "bvRatio": 1
           },
           "forks": [
             {
@@ -603,7 +602,7 @@
             "faction": "Clan Jade Falcon",
             "armsMix": "MECH_ONLY",
             "vehicleShare": 0,
-            "bvRatio": 1.0
+            "bvRatio": 1
           },
           "forks": [
             {
@@ -631,7 +630,7 @@
         "positionInSystem": "4th",
         "timeToJumpPointDays": 4.12,
         "satellites": "2 (Saar, Sule)",
-        "surfaceGravity": 1.0,
+        "surfaceGravity": 1,
         "atmPressure": "Standard (Breathable)",
         "equatorialTempC": 30,
         "climate": "Cool-Temperate",
@@ -1378,7 +1377,7 @@
             "faction": "Clan Jade Falcon",
             "armsMix": "MECH_ONLY",
             "vehicleShare": 0,
-            "bvRatio": 1.0
+            "bvRatio": 1
           },
           "forks": [
             {
@@ -1474,7 +1473,7 @@
             "faction": "Clan Jade Falcon",
             "armsMix": "MECH_ONLY",
             "vehicleShare": 0,
-            "bvRatio": 1.0
+            "bvRatio": 1
           },
           "forks": [
             {
@@ -1502,7 +1501,7 @@
         "positionInSystem": "3rd",
         "timeToJumpPointDays": 21.94,
         "satellites": "1 (Twycross III)",
-        "surfaceGravity": 1.0,
+        "surfaceGravity": 1,
         "atmPressure": "Standard (Breathable)",
         "equatorialTempC": 65,
         "climate": "Desert",
@@ -1627,7 +1626,7 @@
             "faction": "Clan Jade Falcon",
             "armsMix": "MECH_ONLY",
             "vehicleShare": 0,
-            "bvRatio": 1.0
+            "bvRatio": 1
           },
           "forks": [
             {
@@ -1682,7 +1681,7 @@
             "faction": "Clan Jade Falcon",
             "armsMix": "MECH_ONLY",
             "vehicleShare": 0,
-            "bvRatio": 1.0
+            "bvRatio": 1
           },
           "forks": [
             {
@@ -1934,7 +1933,7 @@
             "faction": "Clan Wolf",
             "armsMix": "MECH_ONLY",
             "vehicleShare": 0,
-            "bvRatio": 1.0
+            "bvRatio": 1
           },
           "forks": [
             {
@@ -2179,7 +2178,7 @@
             "faction": "Clan Jade Falcon",
             "armsMix": "MECH_ONLY",
             "vehicleShare": 0,
-            "bvRatio": 1.0
+            "bvRatio": 1
           },
           "forks": [
             {
@@ -2234,7 +2233,7 @@
             "faction": "Clan Jade Falcon",
             "armsMix": "MECH_ONLY",
             "vehicleShare": 0,
-            "bvRatio": 1.0
+            "bvRatio": 1
           },
           "forks": [
             {
@@ -2325,7 +2324,7 @@
             "faction": "Clan Jade Falcon",
             "armsMix": "MECH_ONLY",
             "vehicleShare": 0,
-            "bvRatio": 1.0
+            "bvRatio": 1
           },
           "forks": [
             {
@@ -2619,7 +2618,7 @@
             "faction": "Clan Wolf",
             "armsMix": "MECH_ONLY",
             "vehicleShare": 0,
-            "bvRatio": 1.0
+            "bvRatio": 1
           },
           "forks": [
             {
@@ -2811,7 +2810,7 @@
             "faction": "Free Worlds League",
             "armsMix": "MECH_ONLY",
             "vehicleShare": 0,
-            "bvRatio": 1.0
+            "bvRatio": 1
           },
           "forks": [
             {
@@ -2957,7 +2956,7 @@
             "faction": "Free Worlds League",
             "armsMix": "MECH_ONLY",
             "vehicleShare": 0,
-            "bvRatio": 1.0
+            "bvRatio": 1
           },
           "forks": [
             {

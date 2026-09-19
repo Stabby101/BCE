@@ -1,9 +1,3 @@
-/*
- * BCE retool — New Campaign, step 1: select era (field-dossier). DIRECTIVE-003.
- * Static-fallback era list: MekBay's live era feed needs unit data (mm-data,
- * T-006) absent from this build, so these are the 12 canonical eras + placeholder
- * sigils per the directive's fallback clause.
- */
 import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
@@ -31,7 +25,6 @@ export class EraComponent {
     private readonly state = inject(NewCampaignState);
 
     protected readonly eras = ERAS;
-    // D-108 — the game-system choice moved to the Campaign Setup card (the new first step); state.gameSystem
     // is unchanged and still drives everything downstream (unit-card swap, Star Map mount).
     // Restore the previously-chosen era (e.g. Back from step 2), else default.
     protected readonly selected = signal<EraCard>(
@@ -62,13 +55,10 @@ export class EraComponent {
         this.state.setEra(toCampaignEra(e));
     }
 
-    /** Back → the Setup card (D-108 — the new step immediately before Era; was cover when Era was step 1). */
     protected back(): void {
         void this.router.navigate(['/campaign/new/setup']);
     }
 
-    /** Proceed → the next step. D-113 — a FULL Hot Spots campaign (not Quick Mission) forks to the Mercenary
-     *  Command step instead of the Traditional date-force tail; Traditional + Quick Mission keep date-force. */
     protected proceed(): void {
         this.state.setEra(toCampaignEra(this.selected()));
         const hotspots = this.state.campaignSystem() === 'hotspots' && !this.state.quickMission();

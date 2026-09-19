@@ -1,23 +1,10 @@
-/*
- * GM-1 P4 — SIDE A / SIDE B display names + the web-side anonId. THE MAPPING LAW: side A ↔ BLUFOR,
- * side B ↔ OPFOR — the WIRE keeps BLUFOR/OPFOR everywhere (lobby rows, side gates, deployedSet), so every
- * existing side-gates-what-you-see rule is byte-untouched; only the LABELS change, and only in a gmSession
- * with a signed contract or a presented pair (null → callers fall back to BLUFOR/OPFOR verbatim).
- */
 import type { NewCampaignState } from '../new-campaign-state';
 
 export interface SideLabels { a: string; b: string }
 
-/** The D-133 employer/role names for the two sides, or null (plain campaigns / nothing signed or presented).
- *  PANEL-CORRECTED: `a`/`b` here are the WIRE sides (a = BLUFOR = the signing company's roster, b = OPFOR =
- *  the opposing force) — NOT the hotspot's authored letters. On a signed contract the mapping is therefore
- *  side-independent: a = the signed employer, b = the enemyFaction, WHICHEVER authored side was signed
- *  (chaos-contract.ts: employer = the chosen side; enemyFaction = the opposing side; generateOpFor fields
- *  enemyFaction). Pre-sign (presented only) the authored letters map naturally (side-A players = BLUFOR,
- *  the directive's default). */
 export function sideLabelsOf(state: Pick<NewCampaignState, 'gmSession' | 'activeChaosContract' | 'contractSummary' | 'presentedHotspot'>): SideLabels | null {
     if (!state.gmSession()) return null;
-    const c = state.activeChaosContract() ?? state.contractSummary(); // GM-2 P2a — a player device reads the player-safe summary (the terms never fan — H14)
+    const c = state.activeChaosContract() ?? state.contractSummary();
     if (c?.side) {
         const mine = `${c.employer ?? 'Employer'}${c.sideRole ? ` (${c.sideRole})` : ''}`;
         const theirs = c.enemyFaction ?? 'the opposition';

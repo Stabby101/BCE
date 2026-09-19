@@ -1,15 +1,3 @@
-/*
- * FORKED FROM campaign/mission/mission-package.ts @ 6cc5dae - DIRECTIVE-ODM-1 Phase 1 (a DRIFT SURFACE: fixes to the original
- * may need mirroring here). Strips: the Employer framing (no employer under the IRON RULE). The cycle-format briefing skeleton lands in content waves.
- */
-/*
- * BCE — mission PACKAGE renderer (DIRECTIVE-025). A full-screen dossier view rendered FROM the stored
- * MissionSpec + its bound forge seed (DATA-003 — prose over the record, never parsed back), matching
- * content-forge/SAMPLE-BRIEF-ash-curfew.html: classification bars, masthead + register stamp, WARNORD,
- * intent, intel + NPC voice sidebars, OPFOR + reaction-timeline tables, hard-deadline callout, 3-option
- * blocks with OPERATION COST + treasury-after lines (D-022) + resourceGate lock/reprice (D-007), staff-
- * voice sidebars (the MacCready rule), success-tier table, story, register closing — + a PRINT stylesheet.
- */
 import { Component, ChangeDetectionStrategy, computed, HostListener, inject, output, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { ForgePackService } from '../mission/forge-pack.service';
@@ -27,13 +15,9 @@ import { NarratorService } from '../narrator/narrator.service';
 import type { RefineTarget, VoiceBoxTarget } from '../narrator/narrator-types';
 import type { MissionSpec } from '../mission/mission-spec';
 import { diffAfter, type DiffToken } from '../narrator/prose-diff';
-import { OdmContactsService, type OdmAarSlot } from './odm-contacts.service'; // ODM-12b B2 — one source of people
+import { OdmContactsService, type OdmAarSlot } from './odm-contacts.service';
 
-/** A staff-voice sidebar box (D-025 pattern, placed per-section since D-035). D-045: `refined` marks a
- *  box the narrator rewrote (machine-diff-verified) so it badges in place instead of being preferred silently. */
 interface VoiceBox { header: string; lines: string[]; rules: string; refined: boolean; characterization: boolean; }
-/** A v1.3 sidebarKernel box — the voice + WHAT it should comment on (the D-036 narrator's prompt;
- *  NONE-mode renders the kernel as the subject line over one authored sample). */
 interface KernelBox { header: string; subject: string; line: string; rules: string; }
 
 interface OptionVm {
@@ -42,7 +26,7 @@ interface OptionVm {
     disadvantages: string[];
     consequence: string;
     costLine: string | null;
-    treasuryAfter: string | null; // D-085 — pre-formatted ("119,985,000 C-bills"); null when no cash cost
+    treasuryAfter: string | null;
     locked: boolean;
     gateNote: string | null;
     repriceText: string | null;
@@ -53,14 +37,14 @@ interface OptionVm {
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [BceUnitSpriteComponent],
-    templateUrl: './odm-mission-package.html', // ODM-1 fork (HS branches stripped)
+    templateUrl: './odm-mission-package.html',
     styleUrl: '../mission/mission-package.scss', // SHARED
 })
 export class OdmMissionPackageComponent {
     readonly close = output<void>();
     private readonly state = inject(NewCampaignState);
     private readonly pack = inject(ForgePackService);
-    private readonly contacts = inject(OdmContactsService); // ODM-12b B2 — the authored voices; staffVoices is never read here
+    private readonly contacts = inject(OdmContactsService);
     private readonly data = inject(DataService);
     protected readonly narrator = inject(NarratorService);
     private readonly store = inject(CampaignSaveStore);
@@ -85,7 +69,6 @@ export class OdmMissionPackageComponent {
             const npc = this.pack.npcById(assigns[flag]);
             if (npc) npcNames[flag] = npc.name;
         }
-        // D-096 — the recurring antagonist + intel contact must resolve in the engine-composed continuity callback even
         // when no seed prose references the flag, so {NPC:opfor-commander}/{NPC:intel-source} fill (no extra voice box —
         // voice boxes are driven by npcFlags, untouched here).
         for (const flag of ['opfor-commander', 'intel-source']) {
@@ -98,7 +81,7 @@ export class OdmMissionPackageComponent {
             DISTRICT: f?.slots.DISTRICT ?? '—',
             YEAR: f?.slots.YEAR ?? '—',
             FORCE_SIZE: f?.slots.FORCE_SIZE ?? '—',
-            PRIOR_TIER: f?.slots.PRIOR_TIER,   // D-077 — prior outcome (degrades to '' in fillSlots when absent)
+            PRIOR_TIER: f?.slots.PRIOR_TIER,
             PRIOR_WORLD: f?.slots.PRIOR_WORLD,
             specifics: f?.rolledSpecifics ?? {},
             npcNames,
@@ -114,8 +97,6 @@ export class OdmMissionPackageComponent {
         const t = s == null ? '' : String(s);
         return t ? fillSlots(t, this.ctx()) : '';
     }
-    /** D-091 — fill {SLOT}s in EVERY string of a structured seed value (option / complication / fork), so no
-     *  field can leak a raw token to the page (the §1–§2 prose was filled, but option/fork strings were not). */
     private fillDeep<T>(value: T): T {
         return fillSlotsDeep(value, this.ctx());
     }
@@ -153,7 +134,7 @@ export class OdmMissionPackageComponent {
             oploc: `${c.WORLD} · ${c.DISTRICT}`.toUpperCase(),
             threat: `THREAT RATING — ${(spec.opforBv >= spec.playerBv ? 'HIGH' : (s.threatRange[0] ?? 'MEDIUM'))}`,
             cycle: `${mt?.name ?? s.family} · ${c.YEAR}`,
-            source: `Generated mission package`, // D-085: seed-id / register are engine internals — stripped from the player package
+            source: `Generated mission package`,
             transmission: {
                 from: `${c.EMPLOYER} command authority`,
                 to: `${commandName} — eyes only`,
@@ -162,32 +143,32 @@ export class OdmMissionPackageComponent {
             warnord: [
                 ['Operation: ' + s.title.replace(/^OPERATION\s+/i, ''), 'Classification: Unit Eyes Only'],
                 [`Mission Type: ${mt?.name ?? s.family}`, this.fill(this.vmThreatRow())],
-                [`Assigned Force: ${c.FORCE_SIZE}`, `Command: ${commandName}${this.state.unitSize()?.name ? ' — ' + this.state.unitSize()!.name : ''}, SLDF`], // ODM-1 FORK: no employer (the IRON RULE has none); names come from campaign STATE (pack data never bakes into the bundle)
+                [`Assigned Force: ${c.FORCE_SIZE}`, `Command: ${commandName}${this.state.unitSize()?.name ? ' — ' + this.state.unitSize()!.name : ''}, SLDF`],
                 [`Target / Opposition: ${c.TARGET_FACTION}`, `Window: ${spec.window.deployByDays}-day deploy · ~${spec.window.engagementDays}-day engagement`],
             ] as [string, string][],
             intent: this.field('objectives.primary', s.objectives.primary),
             situation: this.situationParas(s, spec),
-            situationRefined: !!spec.refined?.['situation']?.verified, // D-038 badge
+            situationRefined: !!spec.refined?.['situation']?.verified,
             npcVoices: (spec.forge?.npcFlags ?? []).map((flag) => {
                 const npc = this.pack.npcById(this.state.npcAssignments()[flag]);
                 if (!npc) return null;
                 return { header: `${npc.name.toUpperCase()} — ${flag.replace(/-/g, ' ').toUpperCase()}:`, body: npc.background, tags: npc.voiceTags.join(' · ') };
             }).filter((x): x is { header: string; body: string; tags: string } => !!x),
-            complications: [...(s.complications ?? []), ...(spec.forge?.rolledComplications ?? [])].map((x) => { const xf = this.fillDeep(x); return { name: xf.name, text: xf.text, effect: xf.mechanicalEffect }; }), // D-091: name was raw; D-110e: seed + HS rolled complications together (Traditional → undefined, unchanged)
-            standingRules: null as { name: string; text: string }[] | null, // ODM-1 FORK: HS standing rules never render here // D-110e — universal Chaos track rules (HS-only; Traditional → null, no block)
-            opforLead: this.opforSummaryLine(spec), // D-085: §3 summary DERIVED from the BV-matched force (matches the table); the seed opforSketch.composition prose no longer states a contradicting count
+            complications: [...(s.complications ?? []), ...(spec.forge?.rolledComplications ?? [])].map((x) => { const xf = this.fillDeep(x); return { name: xf.name, text: xf.text, effect: xf.mechanicalEffect }; }),
+            standingRules: null as { name: string; text: string }[] | null,
+            opforLead: this.opforSummaryLine(spec),
             opforBehavior: this.fill(s.opforSketch?.behavior ?? ''),
             opforRows: (spec.opforForce ?? []).map((u) => {
-                const src = this.data.getUnitByName(u.unitRef); // HOTFIX-003: feed the ONE sprite path
-                return { chassis: u.chassis, model: u.model, tons: u.tons, bv: u.bv, bvText: this.fmt(u.bv ?? 0), icon: src?.icon, weightClass: src?.weightClass, unitType: u.unitType ?? 'mech' }; // D-046 combined arms; D-091 comma-formatted BV
+                const src = this.data.getUnitByName(u.unitRef);
+                return { chassis: u.chassis, model: u.model, tons: u.tons, bv: u.bv, bvText: this.fmt(u.bv ?? 0), icon: src?.icon, weightClass: src?.weightClass, unitType: u.unitType ?? 'mech' };
             }),
             opforTotal: {
-                count: spec.opforForce?.length ?? 0, bv: spec.opforBv, bvText: this.fmt(spec.opforBv), // D-091 comma-formatted
+                count: spec.opforForce?.length ?? 0, bv: spec.opforBv, bvText: this.fmt(spec.opforBv),
                 mechs: (spec.opforForce ?? []).filter((u) => (u.unitType ?? 'mech') !== 'vehicle').length,
                 vehicles: (spec.opforForce ?? []).filter((u) => u.unitType === 'vehicle').length,
             },
-            opforSupport: null as string | null, // D-046 → T-032 SEAM: battlefield support package attaches here (none this slice)
-            timeline: (s.reactionTimeline?.entries ?? []).map((e) => ({ t: this.fill(e.t), event: this.fill(e.event) })), // HOTFIX/D-098: fill the time column too (a seed may put a {specifics} slot in T+… — e.g. DAR3-04 "T+{DECOY_DAYS} days")
+            opforSupport: null as string | null,
+            timeline: (s.reactionTimeline?.entries ?? []).map((e) => ({ t: this.fill(e.t), event: this.fill(e.event) })),
             deadline: this.fill(s.reactionTimeline?.hardDeadline ?? ''),
             decisionPoints: (s.decisionPoints ?? []).map((dp) => ({
                 name: dp.name,
@@ -195,21 +176,18 @@ export class OdmMissionPackageComponent {
                 options: dp.options.map((o, i) => this.optionVm(s, dp.name, o, i)),
             })),
             logistics: [
-                // D-110b — Hot Spots runs the SP Warchest, not a C-bill treasury; show SP (never "0 C-bills") on its dossier.
                 this.state.campaignSystem() === 'hotspots'
                     ? [`Warchest (current): ${this.fmt(this.state.warchestSP() ?? 0)} SP`, `Resource posture: ${(this.state.resources() ?? 'normal').toUpperCase()}`]
                     : [`Unit treasury (current): ${this.fmt(this.state.treasury() ?? 0)} C-bills`, `Resource posture: ${(this.state.resources() ?? 'normal').toUpperCase()}`],
                 [this.rewardLine(spec), `Transport: ${this.transportLine()}`],
             ] as [string, string][],
-            // D-035: staff sidebars placed per-section (the exemplar's density) — command opens §1,
             // intelligence reads §2, engineering+logistics close §5, naval/medical/comms hold App.A.
             sidebars: ((seen: Set<string>) => ({
                 s1: [this.voiceBox('command', seen)].filter((x): x is VoiceBox => !!x),
                 s2: [this.voiceBox('intelligence', seen)].filter((x): x is VoiceBox => !!x),
                 s5: [this.voiceBox('engineering', seen), this.voiceBox('logistics', seen)].filter((x): x is VoiceBox => !!x),
                 appA: [this.voiceBox('naval', seen), this.voiceBox('medical', seen), this.voiceBox('comms', seen)].filter((x): x is VoiceBox => !!x),
-            }))(new Set<string>()), // D-085 — shared seen-set: no voice repeats its lines across sidebars
-            // ── D-035 §2.1 — the world sheet (stored theater; GENERATED texture until T-010) ──
+            }))(new Set<string>()),
             worldSheet: spec.theater ? {
                 rows: [
                     ['Population (est.)', spec.theater.population],
@@ -222,9 +200,7 @@ export class OdmMissionPackageComponent {
                 ] as [string, string][],
                 occupation: this.fill(spec.theater.occupation),
             } : null,
-            // ── D-035 §2.3 — the enemy commander dossier (the campaign's recurring adversary) ──
             commander: this.commanderVm(),
-            // ── D-035 §4 — the v1.3 phased journey (graceful when absent) ──
             phases: (s.phases ?? []).map((p) => ({
                 name: this.fill(p.name),
                 lead: this.fill(p.lead),
@@ -234,7 +210,6 @@ export class OdmMissionPackageComponent {
                 kernel: p.sidebarKernel ? this.kernelBox(p.sidebarKernel.voiceSlot, p.sidebarKernel.kernel) : null,
             })),
             assets: (s.assetDetails ?? []).map((a) => ({ ref: this.fill(a.ref), detail: this.fill(a.detail), priority: a.priority })),
-            // ── D-035 appendices — from the ACTUAL campaign state ──
             appendixA: this.appendixA(),
             appendixB: spec.comms ? {
                 schedule: [spec.comms.syncSchedule, spec.comms.reportWindow],
@@ -246,15 +221,14 @@ export class OdmMissionPackageComponent {
                 { p: 'Secondary', text: this.field('objectives.secondary', s.objectives.secondary) },
                 { p: 'Bonus', text: this.field('objectives.bonus', s.objectives.bonus) },
             ],
-            forks: (s.forks ?? []).map((f) => { const ff = this.fillDeep(f); return { name: ff.name, gate: ff.outcomeGate, threat: ff.threat, trigger: ff.trigger, consequence: ff.consequence }; }), // D-091: name was raw
+            forks: (s.forks ?? []).map((f) => { const ff = this.fillDeep(f); return { name: ff.name, gate: ff.outcomeGate, threat: ff.threat, trigger: ff.trigger, consequence: ff.consequence }; }),
             story: this.fill(s.storyElementSeed),
             closing: registerClosing(s.register),
-            travel: spec.travel ?? null,                        // D-099 — the appended transit/insertion timer (shown outside the brief)
+            travel: spec.travel ?? null,
             operationDays: spec.operationDays ?? spec.window.engagementDays,
         };
     });
 
-    // ── DIRECTIVE-101 — WARNORD | FRAGORD: INDEPENDENT order-format selection (per-user, persisted; mirrors the
     //    COH_KEY pattern below). FRAGORD is a RENDER over the SAME vm — no new data, no prose change. At least one
     //    format is always on (toggling the last one off re-enables the other). ──
     private readonly WARN_KEY = 'bce.order.warnord';
@@ -265,9 +239,6 @@ export class OdmMissionPackageComponent {
     protected toggleWarnord(): void { const n = !this.showWarnord(); this.showWarnord.set(n); if (!n && !this.showFragord()) this.showFragord.set(true); this.persistOrder(); }
     protected toggleFragord(): void { const n = !this.showFragord(); this.showFragord.set(n); if (!n && !this.showWarnord()) this.showWarnord.set(true); this.persistOrder(); }
 
-    /** D-099 (D-101 DECISION 4) — the FRAGORD situation is the first ~2 sentences only, so a monolithic seed lead
-     *  (ARC-01) doesn't wall the top of a 3-page order. Sentence-boundary; a run-on soft-caps at a WORD boundary
-     *  (never a mid-word char cut). WARNORD keeps the full situation. */
     private fragSituation(text: string): string {
         const t = (text ?? '').trim();
         if (!t) return t;
@@ -277,7 +248,6 @@ export class OdmMissionPackageComponent {
         return brief;
     }
 
-    /** DIRECTIVE-101 — the FRAGORD view-model: the 7 condensed elements, ALL derived from the same vm/spec/seed. */
     protected readonly frag = computed(() => {
         const v = this.vm();
         const spec = this.state.missionSpec();
@@ -289,7 +259,7 @@ export class OdmMissionPackageComponent {
             cycle: v.cycle,                                     //     mission-type · YEAR (era line)
             loc: v.oploc,                                       //     WORLD · DISTRICT
             threat: v.threat.replace(/^THREAT RATING — /, ''),
-            brief: this.fragSituation(v.situation[0] ?? ''),    // (2) the lead — capped to ~2 sentences (D-099/D-101 dec.4)
+            brief: this.fragSituation(v.situation[0] ?? ''),
             objectives: v.priorities,                           // (3) primary / secondary / bonus
             opforLine: v.opforLead,                             // (4) the §3 one-liner (composition + BV)
             opforBv: v.opforTotal.bvText, playerBv: this.fmt(spec.playerBv),
@@ -297,46 +267,26 @@ export class OdmMissionPackageComponent {
             mechs: v.opforTotal.mechs, vehicles: v.opforTotal.vehicles, // arms mix
             decisions: v.decisionPoints.map((dp) => ({ name: dp.name, options: dp.options.map((o) => o.title) })), // (5) titles only
             deadline: v.deadline,                               // (6) the clock
-            operationDays: spec.operationDays ?? spec.window.engagementDays, // D-099 — authored op length, else type window
+            operationDays: spec.operationDays ?? spec.window.engagementDays,
             window: `${spec.window.deployByDays}-day deploy · ~${spec.window.engagementDays}-day engagement`,
-            travel: spec.travel ?? null,                       //     D-099 — the appended transit/insertion block
+            travel: spec.travel ?? null,
             force: c.FORCE_SIZE,                                // (7) force line
         };
     });
 
-    // ── DIRECTIVE-117 — Hot Spots TRACK view (a book-format reshape of the SAME vm/spec; HS-only, view-layer only). ──
     protected readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots');
-    /** IMPORT-6 Part E — ANY Hot Spots track renders the TRACK sheet (authored packs keep their own article via
-     *  hotspotBrief); the Traditional WARNORD dossier + the WARNORD/FRAGORD toggles are Traditional-only. Same gate the
-     *  player brief already uses (player-briefing.ts). Reuses isHotspots() — no new mode-branch read (branch-pin). */
     protected readonly trackOnly = computed(() => this.isHotspots());
 
-    /** The condensed order reshaped into the rulebook's five-part TRACK layout. Renders only when isHotspots(); the
-     *  Traditional FRAGORD branch is untouched. All text is the SAME derived vm/spec (DATA-003) plus the static
-     *  track-setup archetype (GAME SETUP / Track End / salvage policy). IMPORT-6 Part E: the archetype honors a picked
-     *  §18 template (forge.trackTemplate) and the objectives list every authored preset objective (forge.trackObjectives)
-     *  with its VP; the sheet also carries the full situation, the deployment lines and the standing track rules the
-     *  dropped Traditional dossier used to hold. */
-    // ODM-1 FORK: the HS track-sheet computed STRIPPED (HS machinery)
-
-    /** IMPORT-6 Part E — a custom hot spot's authored track may leave Track end / Salvage blank: fall back to the
-     *  track template's own standard end (else the universal default) + a dash rather than printing a bare label.
-     *  Authored packs always fill them (unchanged); the player brief applies the same fallbacks (one brief, both surfaces). */
-    // ODM-1 FORK: hsTrackEnd STRIPPED (HS machinery)
 
 
-    /** The render VP for an objective priority: an additive per-objective VP (spec.forge.objectiveVp) wins, else the
-     *  TRACK_VP fallback. VP is a RENDER mapping only — combat pay stays D-110b's objective-tier logic. */
-    // ODM-1 FORK: trackVp STRIPPED (HS machinery)
 
-    /** The D-023 terrain line shown under GAME SETUP. */
+
     private trackTerrainLine(spec: MissionSpec): string {
         const t = spec.terrain;
         if (!t?.biome) return '';
         return t.note ? `${t.biome} — ${t.note}` : t.biome;
     }
     /** The Salvage sentence — leads with the contract's NEGOTIATED % (spec.clauses), then the track's default policy. */
-    // ODM-1 FORK: salvageSentence STRIPPED (HS machinery)
 
 
     private vmThreatRow(): string {
@@ -350,9 +300,6 @@ export class OdmMissionPackageComponent {
         return 'lift bought / leased per drop (Lean — no owned transport)';
     }
 
-    // ── D-035 helpers ──
-    /** D-085 — the §3 lead, DERIVED from the BV-matched OpFor (so it can never contradict the table). Replaces the
-     *  seed opforSketch.composition prose (which stated a fixed count). */
     private opforSummaryLine(spec: MissionSpec): string {
         const f = spec.opforForce ?? [];
         if (!f.length) return '';
@@ -363,10 +310,7 @@ export class OdmMissionPackageComponent {
         return `Assessed order of battle — ${parts.join(' and ')} (${f.length} units, ${this.fmt(spec.opforBv)} BV). The table below is the fielded force; doctrine and posture follow.`;
     }
 
-    /** D-085 — the reward line. A House unit on its OWN house's operation has no contract fee; show that sensibly
-     *  instead of a bare "0 C-bills · 0/mo" (which reads as missing). Merc / paid contracts print the figures. */
     private rewardLine(spec: MissionSpec): string {
-        // D-110b — a Hot Spots contract pays in Support Points (Combat Pay + Salvage on resolution → the Warchest),
         // NOT C-bills; the synthetic offer's pay is all-zero, so never print "0 C-bills · 0/mo" here.
         if (this.state.campaignSystem() === 'hotspots') {
             return 'Reward: Hot Spots contract — Combat Pay + Salvage in Support Points on resolution (Warchest)';
@@ -378,20 +322,6 @@ export class OdmMissionPackageComponent {
         return `Reward (contract): ${this.fmt(spec.reward.total)} C-bills · ${this.fmt(spec.reward.monthly)}/mo`;
     }
 
-    /* ODM-12b B2 — the sidebars resolve SEVEN role families out of what used to be the ROLLED voice-cast
-     * (command · intelligence · engineering · logistics · naval · medical · comms). This fork reads the
-     * AUTHORED registry instead, and a family with no registry voice renders NOTHING — an honest absence,
-     * the posture the AAR takes when a voice is not on record. Never a fallback to the rolled cast.
-     *
-     * ODM-12b FOLLOW-UP (PM rulings, 2026-08-26/27): four further mappings authorized, each verified
-     * against the registry's own `role` field before wiring. THREE now render — comms and medical map to
-     * registry slots whose contacts carry a voice block, and naval got its voice block DELIVERED by the
-     * PM (the mapping had held all along; the missing piece was content, which is exactly where the
-     * earlier STOP said it was). ONE is DROPPED by ruling, permanently: the logistics family's `role`
-     * field does not state logistics, and the registry is the source of truth precisely because the data
-     * is never bent to serve the code — logistics renders nothing. Role text is deliberately NOT quoted
-     * here: this file is published GPL source and bundles, and pack content never belongs in either
-     * (the ODM-11 leak-net lesson). */
     private static readonly REGISTRY_SLOT: Record<string, OdmAarSlot> = {
         command: 'command', intelligence: 'intelligence', engineering: 'engineering',
         comms: 'intelligence',   // the relay operator IS the company's comms voice
@@ -407,29 +337,20 @@ export class OdmMissionPackageComponent {
     private voiceBox(roleFamily: string, seen?: Set<string>): VoiceBox | null {
         const reg = this.registryBox(roleFamily);
         if (!reg) return null;
-        // D-085's dedup key must be the PERSON, not the role family: one contact can serve two families
         // (Coss is intelligence AND comms), and keying by family would print her twice — exactly the
-        // cross-section repeat D-085 exists to prevent. The rolled cast keyed by voiceId for this reason.
         const voiceId = `odm:${reg.contactId}`;
         const v = { sidebarHeader: reg.header, speechRules: [reg.rules] };
-        // D-085: a voice already printed in an earlier sidebar isn't repeated (no verbatim cross-section repeats).
         if (seen) { if (seen.has(voiceId)) return null; seen.add(voiceId); }
-        // D-043: prefer the mission-aware refined voice (machine-diff-verified) over the stub samples.
         const rv = this.state.missionSpec()?.refinedVoices?.[roleFamily];
         const refined = !!(rv?.verified && rv.text.trim());
-        // D-085 POLICY: the canned `sampleLines` are voice CHARACTERIZATION (authored flavor that cites generic /
         // invented geography — Hill 212, the reservoir) and are NOT mission ground-truth. Only a REFINED,
         // mission-grounded (machine-verified) voice prints quoted lines; an un-refined box shows the standing-rules
         // characterization (header + speech rules) with NO phantom-geography quotes.
         const lines = refined ? rv!.text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean) : [];
         return { header: v.sidebarHeader, lines, rules: v.speechRules.join(' · '), refined, characterization: !refined };
     }
-    /** v1.3 sidebarKernel → a voice box: the kernel (mission-grounded) as the SUBJECT + the standing rules.
-     *  D-085: the canned sample line is dropped unless the narrator wrote a real, mission-grounded note for this
-     *  kernel — same policy as the sidebars (sampleLines are characterization, not briefing ground-truth; they
-     *  cite invented geography). The subject stays (it's filled from the mission's real slots). */
     private kernelBox(voiceSlot: string, kernel: string): KernelBox | null {
-        const reg = this.registryBox(voiceSlot); // ODM-12b B2 — registry or nothing; never the rolled cast
+        const reg = this.registryBox(voiceSlot);
         if (!reg) return null;
         return { header: reg.header, subject: this.fill(kernel), line: '', rules: reg.rules };
     }
@@ -448,8 +369,6 @@ export class OdmMissionPackageComponent {
             assessment: this.commanderAssessment(npc),
         };
     }
-    /** The quality-assessment line — traits + whether this command has faced them (from the D-034
-     *  resolution snapshots; render-derived, DATA-003). */
     private commanderAssessment(npc: ForgeNpc): string {
         const t = npc.traits.slice(0, 2).map((x) => x.replace(/-/g, ' ')).join(', ');
         const all = [...(this.state.missionTree() ?? []), ...(this.state.treeArchive() ?? []).flatMap((e) => e.tree)];
@@ -481,7 +400,7 @@ export class OdmMissionPackageComponent {
     }
 
     private optionVm(seed: MissionSeed, dpName: string, oRaw: MissionSeed['decisionPoints'][number]['options'][number], idx: number): OptionVm {
-        const o = this.fillDeep(oRaw); // D-091: fill EVERY string in the option — title / advantages / disadvantages / consequence / costs
+        const o = this.fillDeep(oRaw);
         const treasury = this.state.treasury() ?? 0;
         const tier = this.state.resources();
         // gate: an option-title gate beats a decision-point gate (matched on the RAW title so the gate map keys line up).
@@ -493,22 +412,20 @@ export class OdmMissionPackageComponent {
             if (gate.whenLacking === 'lock') { locked = true; gateNote = `LOCKED — requires ${gate.requires.replace(/-/g, ' ')}`; }
             else { repriceText = this.fill(gate.lackingText); }
         }
-        // cost line — items via costParts (D-034: negative days print as a GAIN, the JIH-10 case)
         let costLine: string | null = null;
         let treasuryAfter: string | null = null;
         const co = o.costs;
         if (co) {
             costLine = 'OPERATION COST — ' + (costParts(co).join(' · ') || 'no direct cost');
-            if (co.cbills != null && co.cbills > 0) treasuryAfter = `${this.fmt(treasury - co.cbills)} C-bills`; // D-085: comma-formatted
+            if (co.cbills != null && co.cbills > 0) treasuryAfter = `${this.fmt(treasury - co.cbills)} C-bills`;
         }
         return { title: `OPTION ${idx + 1} — ${o.title}`, advantages: o.advantages, disadvantages: o.disadvantages, consequence: this.fill(o.consequence), costLine, treasuryAfter, locked, gateNote, repriceText };
     }
 
-    // ── §2 situation paragraphs: prefer narrator-refined-and-verified over template (D-038) ──
     private templateSituation(s: MissionSeed, spec: MissionSpec): string[] {
         return [
-            ...(spec.forge?.continuityLead ? [this.fill(spec.forge.continuityLead)] : []), // D-096 recurring-NPC callback (slot-filled, same as the fork lead)
-            ...(spec.forge?.branchLead ? [this.fill(spec.forge.branchLead)] : []), // D-026 fork lead
+            ...(spec.forge?.continuityLead ? [this.fill(spec.forge.continuityLead)] : []),
+            ...(spec.forge?.branchLead ? [this.fill(spec.forge.branchLead)] : []),
             ...this.fill(s.situation).split(/\n{2,}|(?<=\.)\s{2,}/).filter((p) => p.trim().length > 40),
         ];
     }
@@ -518,14 +435,10 @@ export class OdmMissionPackageComponent {
         return this.templateSituation(s, spec);
     }
 
-    // ── D-038 REFINE (GM-triggered; OFF/toggle hides the button) ──
     protected readonly canRefine = computed(() => this.narrator.mode() === 'local' && this.narrator.briefingsOn() && this.hasSeed());
     protected readonly refining = this.narrator.busy;
     protected readonly results = this.narrator.lastRun;
 
-    /** D-043 — the WHOLE-MISSION REFINE (one GM click). Jobs 1+2 (mission-aware voices + the coherence
-     *  verdict, over the assembled package) + Job 3 (the D-038 §2 situation polish, the fine layer).
-     *  Every piece is machine-diff-guarded; accepted output stores on the spec, persisted once. */
     async refine(): Promise<void> {
         const s = this.seed();
         const spec = this.state.missionSpec();
@@ -533,9 +446,8 @@ export class OdmMissionPackageComponent {
         const c = this.ctx();
         const register = this.state.force() === 'MERC' ? 'merc' : this.seed()?.register ?? '';
 
-        const log: NonNullable<MissionSpec['refineLog']> = []; // D-045 GM change-log (records output only)
+        const log: NonNullable<MissionSpec['refineLog']> = [];
 
-        // Job 3 (fine layer) — §2 situation polish (D-038, unchanged path)
         let nextRefined = spec.refined ?? {};
         const situationBefore = this.templateSituation(s, spec).join('\n\n');
         if (situationBefore.trim()) {
@@ -562,7 +474,6 @@ export class OdmMissionPackageComponent {
             if (wm.coherence) nextCoherence = wm.coherence;
         }
 
-        // D-045 — record the transparency metadata (stamp + change-log). The refine LOGIC is untouched;
         // this only persists what the pass already produced (accepted text, rejected reasons, the verdict).
         const refinedModel = nextCoherence?.model || this.narrator.activeModel() || 'local';
         this.state.setMissionSpec({ ...spec, refined: nextRefined, refinedVoices: nextVoices, coherence: nextCoherence, refineLog: log, refinedAt: Date.now(), refinedModel });
@@ -573,7 +484,6 @@ export class OdmMissionPackageComponent {
     /** GM-only coherence verdict (Job 2), display-only — rendered as the COHERENCE panel. */
     protected readonly coherence = computed(() => this.state.missionSpec()?.coherence ?? null);
 
-    // ── D-045 refine transparency ──
     /** Any narrator refinement present → the package carries the ✦ REFINED stamp + the GM panel toggle. */
     protected readonly refined = computed(() => {
         const sp = this.state.missionSpec();
@@ -592,7 +502,6 @@ export class OdmMissionPackageComponent {
         return diffAfter(before, after ?? '');
     }
 
-    // ── the dismissable / recallable coherence panel (D-045 step 1 — the blocker) ──
     private readonly COH_KEY = 'bce.coh.open';
     protected readonly cohOpen = signal<boolean>(this.lsBool(this.COH_KEY, true));
     private lsBool(k: string, d: boolean): boolean { try { const v = localStorage.getItem(k); return v === null ? d : v === '1'; } catch { return d; } }
@@ -607,7 +516,7 @@ export class OdmMissionPackageComponent {
     private voiceTargets(): VoiceBoxTarget[] {
         const out: VoiceBoxTarget[] = [];
         for (const fam of this.VOICE_FAMILIES) {
-            const reg = this.registryBox(fam); // ODM-12b B2 — the narrator rewrites AUTHORED voices only
+            const reg = this.registryBox(fam);
             if (!reg) continue;
             out.push({ id: fam, header: reg.header, name: reg.name, speechRules: [reg.rules], stub: [], commentOn: this.commentFor(fam) });
         }
@@ -645,7 +554,7 @@ export class OdmMissionPackageComponent {
         if (v.decisionPoints.length) { L.push('DECISION POINTS:'); for (const dp of v.decisionPoints) { L.push(`  ${dp.name}: ${dp.context}`); for (const o of dp.options) L.push(`    ${o.title} — ${o.consequence}${o.costLine ? ' [' + o.costLine + ']' : ''}`); } }
         L.push('LOGISTICS:'); for (const [a, b] of v.logistics) L.push(`  ${a} — ${b}`);
         if (v.complications?.length) { L.push('COMPLICATIONS:'); for (const x of v.complications) L.push(`  ${x.name}: ${x.text} (${x.effect})`); }
-        if (v.standingRules?.length) { L.push('STANDING TRACK RULES:'); for (const r of v.standingRules) L.push(`  ${r.name}: ${r.text}`); } // D-110e
+        if (v.standingRules?.length) { L.push('STANDING TRACK RULES:'); for (const r of v.standingRules) L.push(`  ${r.name}: ${r.text}`); }
         if (v.worldSheet) { L.push('WORLD SHEET:'); for (const [k, val] of v.worldSheet.rows) L.push(`  ${k}: ${val}`); }
         return L.join('\n').slice(0, 16000);
     }
@@ -660,7 +569,7 @@ export class OdmMissionPackageComponent {
     }
     private voiceCard(roleFamily: string | null): { name: string; speechRules: string[] } | null {
         if (!roleFamily) return null;
-        const reg = this.registryBox(roleFamily); // ODM-12b B2 — the authored registry, never the rolled cast
+        const reg = this.registryBox(roleFamily);
         return reg ? { name: reg.name, speechRules: [reg.rules] } : null;
     }
 

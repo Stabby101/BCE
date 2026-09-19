@@ -1,11 +1,3 @@
-/*
- * BCE Personnel (DIRECTIVE-058, T-040 slice 1) — the Support Personnel Barracks section (GM surface).
- *
- * A self-contained, render-only view of the stored PersonnelState (DATA-003: renders from structure, never
- * re-rolls). Three reads: (1) the STAFFING summary (6:1 have-vs-need + the short-staffed penalty band), (2) the
- * monthly PAYROLL total (the recurring burn the T-037 ledger projects), (3) the named support ROSTER grouped by
- * role. Embedded in the dashboard Barracks section beside the combat-pilot grid. Mirrors inventory-tab.ts.
- */
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { PersonnelService } from './personnel.service';
@@ -54,7 +46,7 @@ const ROLE_ORDER: SupportRole[] = ['mek_tech', 'astech', 'doctor', 'medic', 'adm
                                 <span class="sr-band">{{ band(s.experienceBand) }}@if (s.skillLevel) { · {{ skill(s.role) }} {{ s.skillLevel }} }</span>
                                 <span class="sr-salary">{{ money(s.salary) }} C-bills/mo</span>
                                 <span class="sr-status" [class.warn]="s.status !== 'active'">{{ s.status }}</span>
-                                <button type="button" class="sr-fire" (click)="fire(s.id)" title="Dismiss from the roster (D-059)">✕</button>
+                                <button type="button" class="sr-fire" (click)="fire(s.id)" title="Dismiss from the roster ">✕</button>
                             </div>
                         }
                     </div>

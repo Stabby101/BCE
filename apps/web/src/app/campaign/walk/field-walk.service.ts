@@ -1,10 +1,3 @@
-/*
- * BCE — WALK THE FIELD service (DIRECTIVE-031). Builds the per-unit walk rows from the RESOLVE-time
- * engaged snapshot (D-026 resolution.engaged) reading the LIVE damage envelopes, and applies the GM's
- * dispositions ATOMICALLY (one persistCurrent): BLUFOR recover/strip/abandon, OpFor claim/salvage/leave
- * under the STORED salvage clause (D-017), captures = ownership change (D-029 provenance), pilot outcomes
- * (D-030 crew hits), dated campaignLog entries, and the fieldWalk record stored on the resolution (D-033).
- */
 import { Injectable, computed, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { DataService } from '../../services/data.service';
@@ -149,7 +142,6 @@ export class FieldWalkService {
             results.push(res);
         }
 
-        // D-110b — never credit C-bills into a Hot Spots (SP-economy) treasury: it must stay null. The C-bill field
         // walk is Traditional-only (the UI is suppressed under hotspots); this is the airtight economy-layer guard.
         if (credit && this.state.campaignSystem() !== 'hotspots') this.state.setTreasury((this.state.treasury() ?? 0) + credit);
         this.state.setStartingForce(force);
@@ -171,7 +163,6 @@ export class FieldWalkService {
         const next = pilots.map((p): Pilot => {
             if (p.pilotId !== row.pilotId) return p;
             if (p.status === 'KIA') return p; // the reversibility guard — dead stays dead
-            // D-036: hits + the memorial date ride the pilot (the infirmary/KIA surfaces read them)
             if (outcome.status === 'KIA') return { ...p, status: 'KIA', recoveryDays: undefined, hits: 6, kiaDate: today, assignedInstanceId: undefined };
             if (outcome.status === 'Injured') return { ...p, status: 'Injured', recoveryDays: outcome.recoveryDays, hits: outcome.hits, assignedInstanceId: undefined };
             return p;

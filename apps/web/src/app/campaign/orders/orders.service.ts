@@ -1,10 +1,3 @@
-/*
- * BCE — HOUSE ORDERS service (DIRECTIVE-032). The non-merc mission ignition, a SIBLING of the merc
- * contract market (not a fork): it cuts a standing order (a synthetic ContractOffer), ACKNOWLEDGE mints
- * the root exactly as contract-accept (the identical D-025/26 pipeline), the clock cuts new orders on a
- * boundary with no open operation, REQUEST pulls early, REPORT COMPLETION closes the tree. No pay/clauses;
- * the walk reads the order's HOUSE_SALVAGE_DEFAULTS (10%) through the unchanged acceptedContract seam.
- */
 import { Injectable, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { DataService } from '../../services/data.service';
@@ -58,8 +51,6 @@ export class OrdersService {
         void this.store.persistCurrent();
     }
 
-    /** REPORT COMPLETION — D-026 closure of the operation tree + clear the active order; next orders at the
-     *  next month boundary or on request. Persists. */
     reportCompletion(): void {
         const ac = this.state.acceptedContract();
         this.tree.closeTree(ac ?? undefined);
@@ -68,7 +59,6 @@ export class OrdersService {
         void this.store.persistCurrent();
     }
 
-    /** Clock subscriber: on a boundary with no open operation, cut new orders. Caller persists (D-022 txn). */
     cutIfDue(): void {
         if (!this.canCutOrders()) return;
         this.state.setHouseOrder(this.makeOrder());

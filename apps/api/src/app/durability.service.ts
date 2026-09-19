@@ -1,16 +1,3 @@
-/*
- * BCE ENGINE — DIRECTIVE-HARDEN-7 A3 + B1: the boot durability alarms. Runs ONCE at application bootstrap,
- * after every service's onModuleInit has ensured its tables. LOG-ONLY (never aborts a running server): now
- * that Railway volume backups exist, these are smoke alarms that make the two silent catastrophes loud.
- *
- *  · A3 — the empty-DB (WIPE) alarm. A `meta` "was_populated" marker is written the first time the DB is
- *    non-empty. On a later boot, if users+campaigns are BOTH 0 but the marker says it was once populated →
- *    the volume/DB was wiped or the path is wrong → CRITICAL.
- *  · B1 — the secret-fingerprint alarm. A non-reversible fingerprint (sha256(secret).slice(0,12)) of the
- *    session secret is stored in `meta` on first boot. If a later boot's fingerprint DIFFERS → the secret was
- *    rotated/lost → every guest recovery code (HMAC'd under it) + all sessions are now invalid → CRITICAL.
- *    The fingerprint is never the secret itself; the stored marker leaks nothing.
- */
 import { Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { UsersService } from './auth/users.service';

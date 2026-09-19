@@ -1,16 +1,3 @@
-/*
- * BCE Inventory II (DIRECTIVE-056, T-037 slice 2) — the PURE starting-inventory model.
- *
- * No Angular/DOM/service deps: given a resolved force summary + a tier + the era-legal catalog rows, it
- * deterministically produces the starting InventoryState. The owning InventoryService does the impure
- * work (resolve units → ammo needs via DataService, fetch the era-legal catalog) and calls this.
- *
- * HEURISTIC — PM-tunable (like D-046 vehicle-share / D-037 tech-pool). Item identity/cost/era come from
- * the D-055 catalog (cited there); the ALLOTMENT math here is BCE-authored (INVENTORY_TUNABLES). Canon
- * shots/ton are cited (TechManual). DATA-002/003: this output is structured campaign state, stored on the
- * snapshot; never parsed from prose. Determinism: quantities are formulaic with a stable-seed jitter, and
- * the realized state is STORED (reload reads it — never re-rolls).
- */
 
 export type InventoryTier = 'lean' | 'normal' | 'established';
 export type InventoryCategory = 'ammunition' | 'armor' | 'component';
@@ -24,10 +11,6 @@ export interface InventoryLine {
     unit: 'tons' | 'count';
     floor: number;
     notes?: string;
-    /** DIRECTIVE-ODM-17 P3 (additive; the ODM fork only — Classic never reads or writes it): per-grade
-     *  counts for COMPONENT lines, the doctrine's A/B/C/RAW ledger (armor_parts qty_grade_a/b/c/raw_stock).
-     *  onHand stays the TOTAL (every existing render remains truthful); grades sum to onHand. Absent on a
-     *  legacy line = pre-P3; the fork migrates forward-only (a = onHand). */
     grades?: { a: number; b: number; c: number; raw: number };
 }
 export interface InventoryState {
@@ -36,9 +19,6 @@ export interface InventoryState {
     tier: string;
 }
 
-/** The frontend's view of a /api/catalog row (era-legal rows the server pre-filtered). The `list()` endpoint
- *  returns the FULL CatalogRow, so availability + tech_rating + tonnage + the lostech-window years are on the
- *  wire — DIRECTIVE-064 surfaces them here for the shop's availability-TN rotation. (Older callers ignore them.) */
 export interface CatalogItem {
     id: string;
     name: string;
@@ -48,8 +28,6 @@ export interface CatalogItem {
     cost_cbills: number | null;
     cost_formula: string | null;
     provenance: string;
-    /** DIRECTIVE-064: per-era availability brackets as a JSON string `{"sl","sw","clan","da"}` (codes A–F/X),
-     *  or null for the authored structural rows (which ride STAPLES_FORCE / the moderate default). */
     availability?: string | null;
     tech_rating?: string | null;       // overall tech rating A–F — the proxy for the INTRO/STD vs ADV TN mod
     tonnage?: number | null;
@@ -63,7 +41,6 @@ export interface ForceAmmoInput {
     rackSize: number;   // the weapon rack (the caliber digit for autocannons)
     weaponCount: number;
 }
-/** One weapon CLASS the force mounts, by display name × total mounted count (DIRECTIVE-057 spare-weapon spread). */
 export interface ForceWeaponInput {
     name: string;
     count: number;
@@ -79,7 +56,7 @@ export interface StartingInventoryInput {
     catalog: CatalogItem[];   // era-legal rows (server pre-filtered by era + techBase)
     seed: string;             // stable per-campaign seed string
     generatedAt: string;
-    logistics?: 'house-mic' | 'merc-market'; // DIRECTIVE-065 — the formation's logistics → starting depth
+    logistics?: 'house-mic' | 'merc-market';
 }
 
 // ── TUNABLES (HEURISTIC, PM-tunable — same house style as FORCE_GEN_TUNABLES / BAY_TUNABLES) ──────────
@@ -96,25 +73,15 @@ export const INVENTORY_TUNABLES = {
     /** components (before depth): heat sinks ∝ units, actuators ∝ units. */
     heatSinksPerUnit: 1.0,
     actuatorsPerUnit: 0.5,
-    /** DIRECTIVE-057 spare WEAPONS: stock spares of the top-N most-mounted weapon classes (breadth), each
-     *  scaled by (how many the force fields ÷ spareWeaponPerUnits). A Lyran company → LL/PPC/LRM/AC spares. */
     spareWeaponPerUnits: 4,
     weaponSpreadBreadth: 4,
-    /** DIRECTIVE-057 spare ENGINES: standard fusion cores ∝ units (big-ticket → low count, tight floor). One
-     *  per this many fielded units before depth: a lance (~4) → ~1, a company (~12) → ~2 at normal tier. */
     enginePerUnits: 6,
-    /** DIRECTIVE-057 JUMP JETS: spare jets per jump-capable unit (only stocked when the force has jumpers). */
     jumpJetsPerJumper: 1.5,
-    /** DIRECTIVE-064 DEEPER START (the "shallow" fix) — a wider, era-legal common-kit spread so a fresh
-     *  company's Inventory reads deep, not bare. All era-gated (skipped when no era-legal row exists). */
     structureTonsPerMechTon: 0.03, // spare internal-structure sections ∝ fielded 'Mech tonnage
     casePerUnits: 4,               // CASE ammo-protection kits ∝ units (era-legal; absent pre-2825 SW)
     gyroPerUnits: 8,               // spare standard gyros — big-ticket, low count
     cockpitPerUnits: 12,           // spare standard cockpit/life-support — rare, deep outfits only
     extraActuatorPerUnits: 6,      // broaden the actuator spread (foot/upper-arm beyond lower-arm/hand)
-    /** DIRECTIVE-065 — starting depth by the formation's logistics: a House command (house-mic) draws on its
-     *  military-industrial complex → deeper on-hand; a merc (merc-market) buys its own → the lean baseline.
-     *  Applied as a multiplier ON TOP of the tier/size depth; house-mic also gets a wider spare-weapon spread. */
     startingDepthByLogistics: { 'house-mic': 1.7, 'merc-market': 1.0 } as Record<string, number>,
     houseMicSpreadBonus: 3,        // house-mic stocks a broader weapon spread (its armory carries more lines)
     /** stable-seed jitter band on quantities (±) — genuine RNG variation, reproducible per seed. */
@@ -201,7 +168,6 @@ export const statusLabel = (s: InventoryStatus): string => STATUS_LABEL[s];
  */
 export function generateStartingInventory(input: StartingInventoryInput): InventoryState {
     const tier = tierOf(input.tier);
-    // DIRECTIVE-065 — logistics multiplies the tier/size depth: a House MIC starts deep, a merc lean.
     const logiMult = INVENTORY_TUNABLES.startingDepthByLogistics[input.logistics ?? 'merc-market'] ?? 1.0;
     const depth = INVENTORY_TUNABLES.depthByTier[tier] * logiMult;
     const ff = INVENTORY_TUNABLES.floorFractionByTier[tier];
@@ -250,17 +216,14 @@ export function generateStartingInventory(input: StartingInventoryInput): Invent
     // prefer Double Heat Sink when the era makes it legal (it is in the era-filtered catalog), else single
     const dhs = findCatalog(input.catalog, (c) => c.category === 'misc' && /^Double Heat Sink$/i.test(c.name));
     const shs = findCatalog(input.catalog, (c) => c.category === 'misc' && /^Heat Sink$/i.test(c.name));
-    addComponent(dhs ?? shs, Math.max(1, Math.round(units * INVENTORY_TUNABLES.heatSinksPerUnit * depth * jit())), 'Common spare; era-legal (D-055 catalog)');
+    addComponent(dhs ?? shs, Math.max(1, Math.round(units * INVENTORY_TUNABLES.heatSinksPerUnit * depth * jit())), 'Common spare; era-legal (catalog)');
     addComponent(findCatalog(input.catalog, (c) => c.id === 'struct:actuator_lower_arm'), Math.max(1, Math.round(units * INVENTORY_TUNABLES.actuatorsPerUnit * depth * jit())), 'Standard actuator spare');
     addComponent(findCatalog(input.catalog, (c) => c.id === 'struct:actuator_hand'), Math.max(1, Math.round(units * INVENTORY_TUNABLES.actuatorsPerUnit * depth * jit())), 'Standard actuator spare');
 
-    // ── SPARE ENGINES (D-057) — standard fusion cores ∝ company size; big-ticket → low count, tight floor.
-    //    A lean lance may stock 0 (thin); a normal company ~2; established deeper. era-legal (D-055 catalog). ──
     const engine = findCatalog(input.catalog, (c) => c.category === 'engine' && /standard fusion/i.test(c.name))
         ?? findCatalog(input.catalog, (c) => c.category === 'engine' && /^standard/i.test(c.name));
-    addComponent(engine, Math.round((units / INVENTORY_TUNABLES.enginePerUnits) * depth * jit()), 'Spare standard fusion engine core; era-legal (D-055)');
+    addComponent(engine, Math.round((units / INVENTORY_TUNABLES.enginePerUnits) * depth * jit()), 'Spare standard fusion engine core; era-legal ');
 
-    // ── FORCE-MATCHED SPARE WEAPONS (D-057) — top-N most-mounted weapon classes the command actually fields,
     //    each scaled by how many it mounts ÷ spareWeaponPerUnits. Replaces the lone hard-coded Medium Laser. ──
     const breadth = INVENTORY_TUNABLES.weaponSpreadBreadth + (input.logistics === 'house-mic' ? INVENTORY_TUNABLES.houseMicSpreadBonus : 0);
     const topWeapons = [...input.weapons].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, breadth);
@@ -269,25 +232,23 @@ export function generateStartingInventory(input: StartingInventoryInput): Invent
         addComponent(item, Math.max(1, Math.round((w.count / INVENTORY_TUNABLES.spareWeaponPerUnits) * depth * jit())), `Force-matched spare — the command fields ${w.count}; era-legal`);
     }
 
-    // ── JUMP JETS (D-057) — only when the force has jump-capable units; scaled to that count. era-legal. ──
     if (input.jumperCount > 0) {
         const jj = findCatalog(input.catalog, (c) => /^jump jet$/i.test(c.name));
         addComponent(jj, Math.max(1, Math.round(input.jumperCount * INVENTORY_TUNABLES.jumpJetsPerJumper * depth * jit())), `Spare jets for ${input.jumperCount} jump-capable unit${input.jumperCount === 1 ? '' : 's'}; era-legal`);
     }
 
-    // ── DIRECTIVE-064 DEEPER START — a wider era-legal common-kit spread so the Inventory reads deep, not bare.
     //    Each line is era-gated (findCatalog over the era-filtered catalog → absent rows are simply skipped, e.g.
     //    CASE before 2825) and tier/size-scaled like the rest; the SHOP covers everything else on demand. ──
     const T = INVENTORY_TUNABLES;
     // spare internal-structure sections ∝ fielded 'Mech tonnage (the standard skeleton sections crews swap)
     const struct = findCatalog(input.catalog, (c) => c.id === 'struct:structure_standard') ?? findCatalog(input.catalog, (c) => c.category === 'structure' && /^standard/i.test(c.name));
-    addComponent(struct, Math.round(input.fieldedMechTonnage * T.structureTonsPerMechTon * depth * jit()), 'Spare standard internal-structure sections; era-legal (D-055)');
+    addComponent(struct, Math.round(input.fieldedMechTonnage * T.structureTonsPerMechTon * depth * jit()), 'Spare standard internal-structure sections; era-legal ');
     // CASE (ammo-protection) ∝ units — era-legal only (absent in early Succession Wars; in by ~2825)
-    addComponent(findCatalog(input.catalog, (c) => /^case$/i.test(c.name)), Math.round((units / T.casePerUnits) * depth * jit()), 'CASE ammo-protection kit; era-legal (D-055)');
+    addComponent(findCatalog(input.catalog, (c) => /^case$/i.test(c.name)), Math.round((units / T.casePerUnits) * depth * jit()), 'CASE ammo-protection kit; era-legal ');
     // spare standard gyro — big-ticket, low count (a company ~1, a lance ~0)
-    addComponent(findCatalog(input.catalog, (c) => c.id === 'struct:gyro_standard'), Math.round((units / T.gyroPerUnits) * depth * jit()), 'Spare standard gyro; era-legal (D-055)');
+    addComponent(findCatalog(input.catalog, (c) => c.id === 'struct:gyro_standard'), Math.round((units / T.gyroPerUnits) * depth * jit()), 'Spare standard gyro; era-legal ');
     // spare standard cockpit/life-support — rare, deep outfits only
-    addComponent(findCatalog(input.catalog, (c) => c.id === 'struct:cockpit_standard'), Math.round((units / T.cockpitPerUnits) * depth * jit()), 'Spare standard cockpit + life support; era-legal (D-055)');
+    addComponent(findCatalog(input.catalog, (c) => c.id === 'struct:cockpit_standard'), Math.round((units / T.cockpitPerUnits) * depth * jit()), 'Spare standard cockpit + life support; era-legal ');
     // broaden the actuator spread beyond lower-arm/hand → foot + upper-arm
     addComponent(findCatalog(input.catalog, (c) => c.id === 'struct:actuator_foot'), Math.round((units / T.extraActuatorPerUnits) * depth * jit()), 'Standard foot actuator spare');
     addComponent(findCatalog(input.catalog, (c) => c.id === 'struct:actuator_upper_arm'), Math.round((units / T.extraActuatorPerUnits) * depth * jit()), 'Standard upper-arm actuator spare');

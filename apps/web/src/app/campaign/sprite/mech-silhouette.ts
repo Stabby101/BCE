@@ -1,10 +1,3 @@
-/*
- * BCE — weight-class 'Mech silhouette (HOTFIX-003). The on-theme placeholder that replaces MekBay's
- * unknown.png question mark for the rare chassis with NO atlas art (1 in the 4114-combat-'Mech catalog
- * today; a safety net for any future generated unit). An inline SVG blocky biped — text, not a binary,
- * so it commits cleanly and tints to the dossier ink token — scaled bulkier by class (Light→Assault)
- * with a class tag so it reads as an intentional "BattleMech, this weight class," never a broken icon.
- */
 import { Component, ChangeDetectionStrategy, computed, input } from '@angular/core';
 import type { WeightClass } from './sprite-aliases';
 

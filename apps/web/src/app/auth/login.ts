@@ -1,14 +1,3 @@
-/*
- * DIRECTIVE-LINK-1 Part B2 — the always-available LOGIN SCREEN. The authRequired sign-in WALL (app-shell-gated)
- * only renders in the gate() === 'wall' state, which needs BCE_AUTH_REQUIRED — and we keep that OFF, so the wall
- * never shows and a logout would otherwise drop straight back into the open app. This standalone /login view
- * renders in the 'open' state (a plain route) and offers the SAME choices as the wall — a provider button per
- * enabledProviders (LOGIN-1) + Continue as guest + recover-with-a-code — reusing AuthService's handlers.
- *
- * It is the FALLBACK entry, not the transfer path: a signed-out visitor has no guest session to migrate. The
- * lossless upgrade (Part A) happens when a STILL-signed-in guest clicks the cover's "save your account" prompt.
- * On a successful guest/recover/dev sign-in we hard-navigate to '/' so the app re-boots with the new session.
- */
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { AuthService } from './auth.service';
 

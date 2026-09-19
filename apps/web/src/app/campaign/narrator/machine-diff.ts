@@ -1,16 +1,3 @@
-/*
- * BCE LOCAL NARRATOR — THE MACHINE DIFF (DIRECTIVE-038). Pure TS, no Angular/DOM. The gate the model
- * never sees: after REFINE, the engine diffs the locked values against the refined prose; ANY drift
- * auto-rejects that section to template. Model output is audited, never trusted (DATA-003).
- *
- * Two classes of locked value, two strictnesses (bias to SAFETY — a false-reject merely keeps the
- * template; a false-accept lets a wrong fact reach the table):
- *   • NUMBERS — strict. Every digit figure in the source (counts, costs, %, years, times) must reproduce
- *     EXACTLY (comma-normalized). This is the dangerous drift: a wrong C-bill or count misleads the GM.
- *   • NAMES — distinctive-token. A proper noun survives if its distinctive token appears (e.g. "Halstead"
- *     for "Halstead Station", "Canopus" for "Magistracy of Canopus") — so a faithful rephrase passes while
- *     a dropped faction/world still fails. Codewords are names too (single tokens → exact).
- */
 
 const STOPWORDS = new Set(['the', 'of', 'and', 'a', 'an', 'to', 'for', 'in', 'on', 'at', 'by', 'mechs', 'mech']);
 
@@ -68,13 +55,6 @@ export function lockedValues(templateText: string, names: string[]): string[] {
     return [...names.filter((n) => (n || '').trim()), ...numbersIn(templateText)];
 }
 
-/**
- * D-043 voice-box guard — the INVERSE of diffLocked. A mission-aware voice box ADDS facts (it didn't
- * have them in its stub), so "preserve source numbers" doesn't apply; instead EVERY number the box
- * states must already exist in the package's locked figure set — a number the model invented (a wrong
- * count/cost/date) is rejected, never shipped (DATA-003). `allowed` = numbersIn(the whole package).
- * Returns the invented (disallowed) numbers; ok when none.
- */
 export function noInventedNumbers(refined: string, allowed: string[]): DiffResult {
     const allow = new Set(allowed.map((n) => norm(n)));
     const invented: string[] = [];

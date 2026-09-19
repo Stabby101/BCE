@@ -1,11 +1,3 @@
-/*
- * BCE campaign-pack — UNIT MARKET model + gate logic (DIRECTIVE-029). Pure TS, no Angular/DOM.
- *
- * The acquisition surface: price a catalog 'Mech, evaluate the four MARKET GATES against the campaign's
- * faction/era context, and value a resale. BUY browses the eligibility-filtered catalog (D-018 reuse)
- * PLUS these gates; a GM override surfaces (not removes) the gate failures per row. All money/valuation is
- * flagged INTERIM until the cited CamOps/MekHQ valuation pass (T-022/T-025).
- */
 import type { UnitSummary as Unit } from '../../models/unit-summary.model';
 
 export const MARKET_TUNABLES = {

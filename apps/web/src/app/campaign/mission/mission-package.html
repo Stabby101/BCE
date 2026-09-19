@@ -7,9 +7,6 @@
     @if (coherence()) {
       <button type="button" class="pa-btn coh" [class.on]="cohOpen()" (click)="toggleCoh(); $event.stopPropagation()" title="Show / hide the GM coherence read (Esc dismisses)">⚖ Coherence</button>
     }
-    <!-- DIRECTIVE-101: WARNORD / FRAGORD are INDEPENDENT (either, or both) — the print path prints whatever is shown.
-         DIRECTIVE-124: a premade hotspot renders the ONE authored brief, so the Forge format toggles are hidden.
-         DIRECTIVE-IMPORT-6 Part E: ANY Hot Spots track renders the TRACK sheet only — the toggles are Traditional-only. -->
     @if (!hotspotBrief() && !trackOnly()) {
       <button type="button" class="pa-btn fmt" [class.on]="showWarnord()" (click)="toggleWarnord(); $event.stopPropagation()" title="Full dossier — WARNORD">▤ WARNORD</button>
       <button type="button" class="pa-btn fmt" [class.on]="showFragord()" (click)="toggleFragord(); $event.stopPropagation()" [title]="isHotspots() ? 'Track sheet — the rulebook five-part layout' : 'Condensed ~3-page order — FRAGORD'">{{ isHotspots() ? '▦ TRACKS' : '▦ FRAGORD' }}</button>
@@ -26,7 +23,6 @@
       }
     </div>
   }
-  <!-- D-043 — the GM-only COHERENCE verdict (advisory; the narrator reasons, the GM decides) -->
   @if (coherence(); as cv) { @if (cohOpen()) {
     <div class="coherence-panel no-print" [class.clean]="cv.reads === 'clean'" [class.flagged]="cv.reads === 'flags'" (click)="$event.stopPropagation()">
       <div class="coh-h">⚖ COHERENCE READ — GM ONLY <span class="coh-model">{{ cv.model }}</span>
@@ -59,8 +55,6 @@
     </div>
   } }
 
-  <!-- DIRECTIVE-124 — the AUTHORED premade-hotspot brief. The ONE brief (same source drives the player tablet);
-       renders instead of the Forge FRAGORD/WARNORD, which are suppressed below when a hotspot is bound. -->
   @if (hotspotBrief(); as hb) {
   <article class="pkg track hotspot" (click)="$event.stopPropagation()">
     <div class="classbar">{{ v.classbar }}</div>
@@ -73,7 +67,6 @@
     @if (sysProfileRows().length || hb.systemProfile?.description) {
       <section class="hs-sec"><div class="hs-h">System Profile — {{ hb.world }}</div>
         @if (sysProfileRows().length) { <div class="hs-sys">@for (r of sysProfileRows(); track r.label) { <div class="hs-kv"><span>{{ r.label }}</span><b>{{ r.value }}</b></div> }</div> }
-        <!-- IMPORT-5 Part F — the free-text planet description (prose, not a key/value row). -->
         @if (hb.systemProfile?.description) { <p class="hs-p">{{ hb.systemProfile.description }}</p> }
       </section>
     }
@@ -89,7 +82,6 @@
     </section>
     <section class="hs-sec"><div class="hs-h">Rules &amp; Resolution</div>
       @if (hb.specialRules) { <p class="hs-p"><b>Special rules.</b> {{ hb.specialRules }}</p> }
-      <!-- IMPORT-6 Part E — a custom track may leave these blank: standard track end / a dash instead of a bare label. -->
       <p class="hs-p"><b>Track end.</b> {{ hsTrackEnd() }}</p>
       <p class="hs-p"><b>Salvage.</b> {{ hsSalvage() }}</p>
     </section>
@@ -97,8 +89,6 @@
       <p class="hs-p"><b>Contract victory.</b> {{ hb.contractVictory }}</p>
       @if (hb.tally) { <p class="hs-p"><b>Tally.</b> {{ hb.tally }}</p> }
       @if (hb.constraints) { <p class="hs-p"><b>Constraints.</b> {{ hb.constraints }}</p> }
-      <!-- IMPORT-7 Part D — display honesty: authored scale-dependent requirements render as PROVENANCE (the Scale the content was
-           written at) plus the LIVE signed Scale; never a bare assertion that contradicts the contract. Scale freedom unchanged. -->
       @if (hb.additionalRequirements) {
         <p class="hs-p" data-testid="hs-req"><b>Requirements@if (hb.authoredScale) { (authored at Track Scale {{ hb.authoredScale }})}.</b> {{ hb.additionalRequirements }}
           @if (hb.authoredScale && hb.signedScale && hb.signedScale !== hb.authoredScale) { <span class="hs-req-signed" data-testid="hs-req-signed">&middot; <b>Signed at Scale {{ hb.signedScale }}</b> — the scale-dependent figures above are the author's for Scale {{ hb.authoredScale }}; your contract runs at Scale {{ hb.signedScale }}.</span> }
@@ -120,14 +110,7 @@
   </article>
   }
 
-  <!-- DIRECTIVE-101 — FRAGORD: the condensed ~3-page order, a RENDER over the same vm (no prose/content change).
-       When both are on it prints first as the quick-reference card, then the full WARNORD on a fresh page.
-       DIRECTIVE-124 — suppressed for a premade hotspot (the authored article above is the ONE brief). -->
-  <!-- DIRECTIVE-IMPORT-6 Part E — under Hot Spots the TRACK sheet ALWAYS renders (trackOnly), whatever the FRAGORD toggle
-       says; Traditional (trackOnly false) reduces to today's `showFragord() && !hotspotBrief()` exactly. -->
   @if ((showFragord() || trackOnly()) && !hotspotBrief()) { @if (frag(); as f) {
-  <!-- DIRECTIVE-117 — Hot Spots TRACK: the SAME condensed order reshaped into the rulebook's five-part track sheet.
-       Traditional keeps the untouched FRAGORD article (the @else branch below, byte-identical to HEAD). -->
   @if (isHotspots()) { @if (track(); as t) {
   <article class="pkg track" (click)="$event.stopPropagation()">
     <div class="classbar">{{ v.classbar }}</div>
@@ -139,7 +122,6 @@
     </div>
     <!-- (2) italic situation blurb — no section header -->
     @if (t.blurb) { <p class="trk-blurb">{{ t.blurb }}</p> }
-    <!-- IMPORT-6 Part E — SITUATION: the full situation paragraphs (the dropped dossier's §2 lead) beyond the blurb. -->
     @if (t.situation.length) {
       <section class="trk-sec trk-sit"><h3>Situation</h3>
         @for (para of t.situation; track $index) { <p>{{ para }}</p> }
@@ -156,7 +138,6 @@
           @if (sd.extra) { <p class="ts-extra">{{ sd.extra }}</p> }
         </div>
       }
-      <!-- IMPORT-6 Part E — DEPLOYMENT lines (mirrors the player brief) -->
       @if (t.deployment.player || t.deployment.opfor) {
         <div class="trk-deploy" data-testid="trk-deploy">
           @if (t.deployment.player) { <p><b>Deployment — you.</b> {{ t.deployment.player }}</p> }
@@ -164,7 +145,6 @@
         </div>
       }
     </section>
-    <!-- (4) OBJECTIVES — each with its VP value in brackets (IMPORT-6: every authored preset objective, else the three slots) -->
     <section class="trk-sec trk-obj"><h3>Objectives</h3>
       @for (o of t.objectives; track $index) {
         <div class="to-row"><span class="to-name">{{ o.label }}</span><span class="to-text">{{ o.text }}</span><span class="to-vp">[{{ o.vp }}]</span></div>
@@ -176,11 +156,9 @@
       @for (cx of t.complications; track cx.name) {
         <div class="tr-rule"><span class="tr-name">{{ cx.name }}.</span> <span class="tr-text">{{ cx.effect || cx.text }}</span></div>
       }
-      <!-- IMPORT-6 Part C/E — a preset's authored special rules line -->
       @if (t.specialRules) { <div class="tr-rule"><span class="tr-name">Special Rules.</span> <span class="tr-text">{{ t.specialRules }}</span></div> }
       <div class="tr-rule"><span class="tr-name">Track End.</span> <span class="tr-text">{{ t.trackEnd }}</span></div>
       <div class="tr-rule"><span class="tr-name">Salvage.</span> <span class="tr-text">{{ t.salvage }}</span></div>
-      <!-- IMPORT-6 Part E — the universal Chaos track rules used to live in §2.5 of the dossier this sheet replaces. -->
       @if (t.standingRules.length) {
         <div class="tr-standing" data-testid="trk-standing"><div class="tr-standing-h">Standing Track Rules</div>
           @for (r of t.standingRules; track r.name) { <div class="tr-rule"><span class="tr-name">{{ r.name }}.</span> <span class="tr-text">{{ r.text }}</span></div> }
@@ -256,7 +234,6 @@
       }
     </section>
     }
-    <!-- (6) the clock — operation length + the appended travel/insertion timer (D-099) -->
     <section class="frag-sec frag-clock"><h3>5 · The Clock</h3>
       <div class="fc-row"><span>Hard deadline</span><b>{{ f.deadline || '—' }}</b></div>
       <div class="fc-row"><span>Operation</span><b>≈ {{ f.operationDays }} days planetside</b></div>
@@ -278,7 +255,6 @@
   </article>
   }
   } }
-  <!-- DIRECTIVE-IMPORT-6 Part E — the Traditional WARNORD dossier never renders under Hot Spots (trackOnly); Traditional unchanged. -->
   @if (showWarnord() && !hotspotBrief() && !trackOnly()) {
   <article class="pkg" (click)="$event.stopPropagation()">
     <div class="classbar">{{ v.classbar }}</div>
@@ -296,7 +272,6 @@
     <div class="cycle">{{ v.cycle }}</div>
     <div class="srcline">{{ v.source }}</div>
 
-    <!-- D-099 — the appended travel/insertion + operation timer, OUTSIDE the brief (the FRAGORD §6 reads the same source). -->
     @if (v.travel; as tr) {
       <div class="transit-strip">
         @if (tr.hasTravel) {
@@ -369,7 +344,6 @@
       }
     }
     @if (v.standingRules?.length) {
-      <!-- D-110e — universal Chaos track rules (HS-only; our own summaries). Absent for Traditional (standingRules=null). -->
       <h3>2.5 Standing Track Rules</h3>
       @for (r of v.standingRules; track $index) {
         <p><b>{{ r.name }}.</b> {{ r.text }}</p>
@@ -385,9 +359,6 @@
       }
       <tr><td><b>Total</b></td><td><b>{{ v.opforTotal.mechs }} ’Mechs@if (v.opforTotal.vehicles) { · {{ v.opforTotal.vehicles }} vehicles }</b></td><td></td><td><b>{{ v.opforTotal.bvText }} BV</b></td></tr>
     </table>
-    <!-- D-046 → T-032 SEAM: battlefield support (artillery · mines/area-denial · aero/orbital strikes,
-         both-sides, under authorization + stockpile floors) attaches to the OpFor here as a separate
-         support package. Armor-only this slice; T-032 owns all support + aerospace. -->
     @if (v.opforSupport) {
       <p class="of-support"><b>Attached support:</b> {{ v.opforSupport }}</p>
     }

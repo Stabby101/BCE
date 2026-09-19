@@ -1,16 +1,3 @@
-/*
- * BCE campaign-pack — CANON MERCENARY COMMANDS (model-your-outfit templates).
- *
- * First slice of the faction order-of-battle (T-024), merc-flow-first. The MERC archetype
- * lets a player MODEL their command on one of these, seeing its signature 'Mechs + notable
- * pilots (the "signature 'Mechs + notable pilots" depth James chose), or build their own.
- *
- * PROVENANCE / COPYRIGHT (T-022 posture): blurbs/notes are ORIGINAL short summaries — NOT
- * copied from Sarna/sourcebooks. Gunnery/Piloting are game-mechanic facts; left null where a
- * canon rating couldn't be verified (do not guess). Each record cites its Sarna page.
- * Signature-'Mech ↔ pilot pairings reflect canon association; CC may resolve-probe chassis
- * names against MUL like the D-010 reconcile.
- */
 
 export interface MercSigMech {
     chassis: string;

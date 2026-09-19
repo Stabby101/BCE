@@ -1,9 +1,3 @@
-/*
- * BCE LOCAL NARRATOR — prompt builders (DIRECTIVE-038). Pure. Two split calls, DATA-003 at the prompt:
- * REFINE = free-text, per-section, prose-only over a READ-ONLY locked spec; VALIDATE = a json_schema
- * lint of the quality formula (schema ALSO echoed in-prompt — the proven-reliable pattern). The MACHINE
- * DIFF (machine-diff.ts) is the real gate; the prompt's "untouchable" instruction is belt-and-braces.
- */
 import { numbersIn } from './machine-diff';
 import type { RefineTarget, VoiceBoxTarget } from './narrator-types';
 
@@ -38,11 +32,6 @@ const REFINE_SCHEMA = {
     additionalProperties: false,
 };
 
-/** REFINE — polish ONE section's prose in voice, over the locked spec as read-only context. D-045
- *  hardening: returns STRUCTURED JSON {text} (the service parses `text`; any chain-of-thought or prompt
- *  scaffolding the model emits OUTSIDE the JSON is dropped — no leak), and the LOCKED list is SCOPED to
- *  this section's own values (the old whole-package manifest forced §2 to insert values it never owned,
- *  mangling it + leaking the struggle). The machine diff + the §2/AAR noInventedNumbers guard still gate. */
 export function buildRefine(target: RefineTarget, voiceCard: { name: string; speechRules: string[] } | null, register: string): ChatBody {
     const voice = voiceCard
         ? `STAFF VOICE — ${voiceCard.name}. Speech rules (obey verbatim):\n${voiceCard.speechRules.map((r) => `  • ${r}`).join('\n')}`
@@ -54,7 +43,6 @@ export function buildRefine(target: RefineTarget, voiceCard: { name: string; spe
         'each exactly, all present; invent NO new figure, unit, date, name, or outcome. Do not narrate your ' +
         'reasoning. Output STRICT JSON {"text": "<the polished section prose>"} — prose only in `text`, no ' +
         'preamble, no headers, no commentary, no markdown, and NOTHING outside the JSON object.';
-    // SCOPE the locked list to THIS section (D-045): only names whose token actually appears in the
     // section text + the section's own figures (numbersIn is in-section by definition). Never the
     // whole-package manifest — that ordered §2 to force in values it never owned.
     const txt = target.text.toLowerCase();
@@ -112,7 +100,6 @@ export function buildValidate(refined: string, source: string): ChatBody {
     };
 }
 
-// ── D-043 narrator v2 — the WHOLE-MISSION pass (voice rewrite + coherence verdict) ──
 
 const VOICE_SCHEMA = {
     type: 'object',
@@ -191,10 +178,6 @@ export function buildCoherence(pkg: string): ChatBody {
     };
 }
 
-/** Strip any stray reasoning/markdown the model emits despite instructions (thinking off, prose only).
- *  D-040: also strips the Gemma-4 channel scaffolding the 26B-A4B leaks under --reasoning-format none
- *  (`<|channel>thought<channel|>` markers) + a leading echo of the LOCKED-values line — harmless no-ops
- *  for the clean 12B. The machine diff still guards every locked value regardless. */
 export function cleanProse(s: string): string {
     return (s || '')
         .replace(/<think>[\s\S]*?<\/think>/gi, '')

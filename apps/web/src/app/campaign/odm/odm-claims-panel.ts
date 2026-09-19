@@ -1,8 +1,3 @@
-/*
- * FORKED FROM campaign/claims/claims-panel.ts @ 1ab399b — DIRECTIVE-ODM-9 Part C (a DRIFT SURFACE).
- * Divergences: the OPFOR empty-state copy (Classic's advice is wrong in ODM) + the D-130 builder member
- * block stripped (ODM-9 removed its button/modal; ODM-10 removed the orphaned members incl. saveOpFor).
- */
 import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
@@ -11,7 +6,6 @@ import type { ProtoInstance } from '../force/force-generator';
 import { ClaimRealtimeService } from '../claims/claim-realtime.service';
 import { engagementKeyOf, engagementFrozen } from '../claims/engagement-key';
 import { BceUnitSpriteComponent } from '../sprite/unit-sprite';
-// ODM-9 FORK: the D-130 OpFor builder STRIPPED (HS-only at runtime AND engine-hs-scoped — the fence caught the inherited import; ODM's OpFor is the authored ODM-7 roll)
 
 @Component({
     selector: 'bce-odm-claims-panel',
@@ -22,8 +16,6 @@ import { BceUnitSpriteComponent } from '../sprite/unit-sprite';
 })
 export class OdmClaimsPanelComponent {
     private readonly state = inject(NewCampaignState);
-    /** ODM-18 P3 — a GM-COMPOSED operation has no packet and no ⚔ OPFOR tab; sending the reader there
-     *  would be an affirmative falsehood (the authored copy stays verbatim in the @else). */
     protected readonly isComposed = computed(() => {
         const id = this.state.odmActiveNodeId();
         return !!id && this.state.odmGmMissions().some((m) => m.id === id);
@@ -34,9 +26,6 @@ export class OdmClaimsPanelComponent {
     protected readonly deployed = computed(() => deployedSet(this.state.startingForce()));
     protected readonly opfor = computed<ProtoInstance[]>(() => this.state.missionSpec()?.opforForce ?? []);
 
-    // ODM-10 FORK STRIP: the whole D-130 builder member block (isHotspots/missionSpec alias/opforFaction/
-    // playerBv/builderOpen/openBuilder/closeBuilder/saveOpFor) removed — ODM-9 stripped the button + modal
-    // that called it, leaving saveOpFor() an orphaned opforForce writer (the ODM-9b Part 2 residue class).
     protected readonly sides = computed(() => [
         { key: 'blufor', label: 'BLUFOR', sub: 'deployed company', units: this.deployed() },
         { key: 'opfor', label: 'OPFOR', sub: 'mission OpFor', units: this.opfor() },
@@ -47,7 +36,6 @@ export class OdmClaimsPanelComponent {
     protected readonly connected = this.rt.connected;
     protected readonly lobby = this.rt.lobby;
 
-    // HOTFIX-030 — header counts (the removed Joined panel's info now lives on the board header).
     protected readonly connectedCount = computed(() => this.lobby().filter((p) => p.connected).length);
     protected readonly bluforCount = computed(() => this.lobby().filter((p) => p.side === 'BLUFOR').length);
     protected readonly opforCount = computed(() => this.lobby().filter((p) => p.side === 'OPFOR').length);

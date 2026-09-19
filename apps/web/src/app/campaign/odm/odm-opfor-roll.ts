@@ -1,20 +1,3 @@
-/*
- * DIRECTIVE-ODM-7 Phase 1 — the seeded OpFor roller (PURE, engine-odm scope; no Angular, no platform imports).
- *
- * THE FORGE LINE: the roll draws EXCLUSIVELY from the authored pools — it picks variants, counts (authored
- * ranges), pilot names, and G/P jitter (clamped to the quality band edges), all inside the authored BV
- * envelope. fixed[] passes through unrolled. There is NO substitution path: an unreachable envelope after
- * MAX_ATTEMPTS yields the CLOSEST-LEGAL in-pool roll, flagged — never invention (the ingest-time
- * reachability assert makes that terminal case an authoring bug caught before it ships).
- *
- * DETERMINISM LAWS (Phase 0, ratified): the roster is a pure function of (seed, spec, resolve) — no
- * Math.random, no Date, no locale/Set-order dependence, NO roll-time catalog filtering (the pools are the
- * only draw source; `resolve` supplies BV/tons for envelope math, with the ingest-stamped annotations as the
- * offline fallback). tools/odm-docx/roll-opfor.mjs is the node port, cross-pinned by verify-odm7.
- *
- * RNG: a restatement of the public-domain cyrb53 + mulberry32 substream construction (the HS forge's
- * hs-forge-rng.ts is engine-hs — fence-forbidden here; restating ~40 lines is the ruled Class-1-style route).
- */
 
 export interface OdmCatalogAnnotation { name: string; mulId: number; tons: number; bv: number; type: string }
 export interface OdmForceSpecFixed {
@@ -74,7 +57,6 @@ function mulberry32(a: number): () => number {
     };
 }
 const rngFor = (seed: string, sub: string): (() => number) => mulberry32(hashKey(`odm7|${seed}|${sub}`));
-/** ODM-9 — a deterministic numeric for MissionSpec.seed (display/plumbing only; never a roll input). */
 export const seedToNumber = (seed: string): number => hashKey(seed) % 2147483647;
 const rngInt = (rng: () => number, lo: number, hi: number): number => lo + Math.floor(rng() * (hi - lo + 1));
 
@@ -92,12 +74,11 @@ const MAX_ATTEMPTS = 24;
 
 /** Roll the concrete roster — a pure function of (spec, seed, resolve). See the header for the laws. */
 export function rollOpfor(spec: OdmForceSpec, seed: string, resolve: OdmResolveUnit): OdmRolledRoster {
-    // PM RULING (Phase 1 review, BLOCKER 1): THE INGEST STAMP IS AUTHORITATIVE — pinned pack content that
     // catalog drift must never silently override. The live catalog is the FALLBACK only (unstamped dev specs);
     // this also kills the hydration race (a stamped spec rolls identically whatever the catalog's load state).
     const resolveOr = (chassis: string, variant: string, ann?: OdmCatalogAnnotation): OdmCatalogAnnotation => {
         const cat = ann ?? resolve(chassis, variant);
-        if (!cat) throw new Error(`ODM-7: unresolvable unit "${chassis} ${variant}" — the ingest validator must stamp annotations`);
+        if (!cat) throw new Error(`unresolvable unit "${chassis} ${variant}" — the ingest validator must stamp annotations`);
         return cat;
     };
     const fixedUnits: OdmRolledUnit[] = spec.fixed.map((f) => {
@@ -128,7 +109,7 @@ export function rollOpfor(spec: OdmForceSpec, seed: string, resolve: OdmResolveU
                 const q = QUALITY[slot.quality];
                 // FORGE LINE (Phase 1 review, MAJOR 5): an empty pilotNames pool THROWS — the roll never
                 // invents a name (the validator forbids shipping such a spec; this is the belt).
-                if (!nameOrder.length) throw new Error('ODM-7: pilotNames is empty — the roll cannot invent names');
+                if (!nameOrder.length) throw new Error('pilotNames is empty — the roll cannot invent names');
                 // LOAD-BEARING PROPERTY ORDER: the object literal below DRAWS from the RNG in property order
                 // (pilotName consumes nameIx, then gunnery/piloting each consume skillRng). Reordering these
                 // properties — by hand, lint autofix, or key sort — silently changes every roster. DO NOT SORT.

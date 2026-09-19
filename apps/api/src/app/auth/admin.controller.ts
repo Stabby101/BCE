@@ -28,12 +28,9 @@ export class AdminController {
         private readonly presence: PresenceService,
         private readonly campaigns: CampaignsService,
         private readonly backup: BackupService,
-        private readonly grants: EntitlementsService, // ODM-1: per-account feature grants
+        private readonly grants: EntitlementsService,
     ) {}
 
-    /** HARDEN-7 A1 — off-box DB export. Streams a CONSISTENT single-file snapshot (VACUUM INTO a temp file,
-     *  never a raw copy of the live WAL DB), then deletes the temp. AdminGuard (class-level) → 403 for a
-     *  non-admin; never public. The one durability the volume backups can't give (they die with the volume). */
     @Get('export')
     export(@Res() res: Response): void {
         const tmp = this.backup.exportToTemp();
@@ -106,7 +103,6 @@ export class AdminController {
     /** DEPLOY-010 SOLE-ADMIN LOCK — NO runtime path creates an admin: admin is conferred ONLY via
      *  BCE_ADMIN_EMAILS (on sign-in). This endpoint may DEMOTE admin→gm but REFUSES role:'admin'. Self-
      *  demotion stays blocked. (The promote-to-admin UI is removed from admin-page.ts too.) */
-    // ── DIRECTIVE-ODM-1 Phase 1 — per-account feature grants (the hidden-pack entitlement toggle) ──
     /** The whole grants directory (tiny table) — the console renders per-user chips from one call. */
     @Get('grants')
     listGrants(): { grants: { userId: string; feature: string; grantedBy: string | null; grantedAt: number }[] } {
@@ -142,7 +138,6 @@ export class AdminController {
         return { user };
     }
 
-    // ── IMPORT-1 Part C — custom-hotspot takedown (DMCA-style response lever) ──
     /** Remove a specific custom hotspot (by id) from a campaign's snapshot. Admin-only (class @UseGuards).
      *  The campaign identifies the owner (campaigns are owner-scoped). Audited as a 'remove'. */
     @Post('campaigns/:campaignId/custom-hotspots/:hotspotId/remove')
@@ -152,8 +147,6 @@ export class AdminController {
         return { removed };
     }
 
-    /** ODM-18 P3 — the same lever for a GM-COMPOSED mission (IP-002): composed prose is GM-typed content,
-     *  so the takedown must reach it, and the checkpoint purge rides along so a restore cannot resurrect it. */
     @Post('campaigns/:campaignId/gm-missions/:missionId/remove')
     removeGmMission(@Req() req: AuthedRequest, @Param('campaignId') campaignId: string, @Param('missionId') missionId: string): { removed: boolean } {
         const removed = this.campaigns.removeGmMission(campaignId, missionId);

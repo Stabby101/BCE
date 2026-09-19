@@ -1,36 +1,15 @@
-/*
- * BCE — custom-hotspot authoring. DIRECTIVE-124 shipped the JSON import/export; DIRECTIVE-IMPORT-1 extends it
- * into a private homebrew/owned-content importer with THREE ways in, one review surface:
- *   B1 — a manual field-by-field FORM (the HotSpot shape: identity + contract terms + repeatable tracks);
- *   B2 — PASTE-and-parse: a "Paste your mission text" box parses (lenient, §16 label map) → pre-fills the form
- *        (never blind-saves; the GM reviews + corrects, then saves);
- *   B3 — JSON import + a downloadable template (the power-user path; Export still round-trips to JSON).
- * Saving is STRICT (needs a title + a root track with an objective); the parser is lenient (pre-fill only).
- *
- * GATE (IMPORT-1 Part A): the whole panel is hidden for GUEST accounts (a nudge to sign in with Google shows
- * instead); the server is the authoritative gate (a guest campaign-save carrying custom hotspots is 403'd —
- * see campaigns/custom-hotspot-gate.ts). When auth is off (dev/LAN) there is no guest tier → the panel shows.
- *
- * The draft/JSON state lives in HotspotIoState, PROVIDED ON THE TAB — the original signals' lifetime: it
- * survives the active-contract ↔ offer-board branch flip (sign → back out keeps your draft) and dies with the
- * tab. The parent's per-card Export button drives exportHotspot() through a viewChild ref.
- */
 import { Component, ChangeDetectionStrategy, Injectable, computed, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
-import { AuthService } from '../../auth/auth.service'; // IMPORT-1 — the guest gate (panel hidden for guests)
+import { AuthService } from '../../auth/auth.service';
 import type { HotSpot, HotSpotHireable } from './hotspots-catalog';
-import { validStepOptions, snapValidStep, CONTRACT_COLUMNS, type ContractColumn } from './chaos-contract-steps'; // IMPORT-5 Part D — valid-step dropdown options; HSFORGE-1 rider — snap imported steps
+import { validStepOptions, snapValidStep, CONTRACT_COLUMNS, type ContractColumn } from './chaos-contract-steps';
 import {
     type HotSpotDraft, type DraftSide, type DraftHireable,
     emptyDraft, emptyTrack, emptyHireable, parseHotspotText, draftToHotSpot, validateDraft, oppositeRole,
 } from './hotspot-text-parser';
-import { TrackEditorComponent, type TrackUpdater } from './track-editor'; // IMPORT-6 Part C — the ONE shared per-track editor (also mounted by the D-116 preset builder)
+import { TrackEditorComponent, type TrackUpdater } from './track-editor';
 
-/** HSFORGE-1 rider (1) — the JSON-IMPORT path never snapped contract steps (only the form builder did,
- *  via draftToHotSpot), so a pasted hotspot could land on dead `—` rows (blank, non-negotiable transport —
- *  the exact IMPORT-5 Part D bug class). Snap every steps column on the top-level contract AND each
- *  authored side. Idempotent for already-valid indices (exports/authored packs re-import byte-identical). */
 export function snapImportedSteps(h: HotSpot): HotSpot {
     const snap = (steps: Record<ContractColumn, number>): Record<ContractColumn, number> => {
         const out = { ...steps };
@@ -54,7 +33,6 @@ export class HotspotIoState {
     readonly ioOpen = signal<boolean>(false);
     readonly ioText = signal<string>('');
     readonly ioMsg = signal<string>('');
-    // IMPORT-1 — the form draft + active input mode + paste buffer (survive the branch flip like ioText).
     readonly mode = signal<IoMode>('form');
     readonly draft = signal<HotSpotDraft>(emptyDraft());
     readonly pasteText = signal<string>('');
@@ -63,7 +41,7 @@ export class HotspotIoState {
 @Component({
     selector: 'bce-hotspot-io',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TrackEditorComponent], // IMPORT-6 Part C
+    imports: [TrackEditorComponent],
     template: `
         <button type="button" class="cc-btn ghost small" (click)="toggleIo()">{{ ioOpen() ? 'Hide' : '＋ Import / author a hotspot' }}</button>
         @if (ioOpen()) {
@@ -101,10 +79,7 @@ export class HotspotIoState {
                     @default {
                         <!-- B1 — the manual form (the review surface the paste-parser also fills) -->
                         <div class="hi-form">
-                            <!-- IMPORT-4 — single offer vs two opposing offers (opposed-pair). Two-sided reveals the A/B panels below. -->
                             <label class="hi-tog"><input type="checkbox" [checked]="d().twoSided" (change)="setTwoSided($event)" data-testid="cc-two-sided"> Two opposing offers (opposed-pair contract)</label>
-                            <!-- IMPORT-5 Part E — SHARED across both sides: World, Intensity, Length (one hot spot, one world).
-                                 Title/Type/Employer-desc/Situation are PER-SIDE in two-sided mode (each employer frames the op). -->
                             <div class="hi-grid">
                                 @if (!d().twoSided) {
                                     <label>Title<input class="hi-in" [value]="d().title" (input)="setStr('title', $event)" placeholder="Operation name"></label>
@@ -144,8 +119,6 @@ export class HotspotIoState {
                             <label class="hi-wide">Planet description<textarea class="hi-ta" rows="2" [value]="d().planetDescription" (input)="setStr('planetDescription', $event)" placeholder="A few sentences of colour about the world — history, terrain, why it matters (free text)."></textarea></label>
 
                             @if (!d().twoSided) {
-                                <!-- IMPORT-5 Part D — pick a REAL contract-terms value per column (the starting negotiation
-                                     position). Dropdowns of valid steps only → transport (and command) can't land on a dead em-dash step. -->
                                 <div class="hi-sec">Contract terms <span class="hi-opt">(the starting position — raise/sacrifice further at signing)</span></div>
                                 <div class="hi-grid">
                                     <label>Base Pay<select class="hi-in" (change)="setNum('basePay', $event)">@for (o of stepOptions('basePay'); track o.index) { <option [value]="o.index" [selected]="o.index === d().basePay">{{ o.label }}</option> }</select></label>
@@ -155,7 +128,6 @@ export class HotspotIoState {
                                     <label>Command<select class="hi-in" (change)="setNum('command', $event)">@for (o of stepOptions('command'); track o.index) { <option [value]="o.index" [selected]="o.index === d().command">{{ o.label }}</option> }</select></label>
                                 </div>
                             } @else {
-                                <!-- IMPORT-4 — two opposing offers. OpFor is DERIVED (each side faces the OTHER side's faction) — never a field. -->
                                 <div class="hi-sec">Two opposing offers <span class="hi-help">objectives tagged <b>attacker</b>/<b>defender</b> score for that side; <b>both</b> = either. OpFor = the opposing side's faction (automatic).</span></div>
                                 <div class="hi-track">
                                     <div class="hi-thead"><b>Side A</b> <span class="hi-opt">you play {{ d().sideA.role }} · OpFor: {{ d().sideB.faction || '(Side B faction)' }}</span></div>
@@ -208,8 +180,6 @@ export class HotspotIoState {
                                 <input class="hi-in" [value]="d().contractVictory" (input)="setStr('contractVictory', $event)" placeholder="e.g. The Combine thrust is broken and the world stays Federated Suns.">
                             </label>
 
-                            <!-- IMPORT-6 Part D — hireable special personnel (→ HotSpot.hireable[], the IMPORT-3 P2 deploy hire panel reads it).
-                                 SHARED across both sides (hireable is top-level on HotSpot, not per SideOffer) → sits OUTSIDE the A/B panels. -->
                             <div class="hi-sec">Special personnel — for hire <span class="hi-opt">(optional — offered at deploy for Support Points)</span>
                                 <button type="button" class="cc-btn small" (click)="addMerc()" data-testid="cc-add-hireable">＋ Add specialist</button></div>
                             @if (!d().hireable.length) {
@@ -235,8 +205,6 @@ export class HotspotIoState {
                             @if (!d().tracks.length) {
                                 <p class="hi-rights">No embedded tracks — at play time you'll pick each track from the universal library (or a saved Custom Track), and can advance a month between tracks. Add tracks here only for bespoke, authored content.</p>
                             }
-                            <!-- IMPORT-6 Part C — each track is the SHARED <bce-track-editor> (also mounted by the D-116 preset builder);
-                                 the list (add / remove / order) stays here, the per-track fields + objective rows live in the editor. -->
                             @for (t of d().tracks; track $index; let ti = $index) {
                                 <bce-track-editor [track]="t" [index]="ti" (trackChange)="updTrack(ti, $event)" (remove)="removeTrack(ti)" />
                             }
@@ -269,9 +237,8 @@ export class HotspotIoState {
         .hi-opt { font-weight:400; color:var(--ink2); font-size:10px; text-transform:none; letter-spacing:0; }
         .hi-tog { display:flex; align-items:center; gap:6px; font-family:var(--type); font-size:12px; font-weight:600; margin:0 0 10px; cursor:pointer; }
         .hi-help { font-family:var(--type); font-weight:400; font-size:10.5px; color:var(--ink2); font-style:italic; margin:2px 0; }
-        .hi-track { border:1.2px solid var(--ink); padding:8px; margin:8px 0; } /* still used by the IMPORT-4 Side A/B panels (the track rows moved to <bce-track-editor>) */
+        .hi-track { border:1.2px solid var(--ink); padding:8px; margin:8px 0; }
         .hi-thead { display:flex; justify-content:space-between; align-items:center; font-family:var(--type); font-size:12px; margin-bottom:6px; }
-        /* IMPORT-6 Part D — one hireable-specialist row (name · role · G/P/Edge · 'Mech · variant · SP · one-time · ×) */
         .hi-merc { display:flex; gap:5px; margin:3px 0; align-items:center; flex-wrap:wrap; }
         .hi-in.sk { width:56px; } .hi-in.sp { width:72px; } .hi-in.nm, .hi-in.role, .hi-in.ch, .hi-in.md { flex:1 1 110px; width:auto; }
         .hi-merc .hi-tog { flex-direction:row; margin:0; font-size:11px; font-weight:400; white-space:nowrap; }
@@ -280,7 +247,7 @@ export class HotspotIoState {
 export class HotspotIoComponent {
     private readonly state = inject(NewCampaignState);
     private readonly store = inject(CampaignSaveStore);
-    private readonly auth = inject(AuthService); // IMPORT-1 — guest gate
+    private readonly auth = inject(AuthService);
     private readonly st = inject(HotspotIoState); // tab-provided — the draft survives branch flips (see header)
 
     protected readonly ioOpen = this.st.ioOpen;
@@ -290,13 +257,10 @@ export class HotspotIoComponent {
     protected readonly pasteText = this.st.pasteText;
     protected readonly d = this.st.draft; // the form model
 
-    /** IMPORT-1 gate — a signed-in GUEST cannot import (server-enforced too). When auth is off (dev/LAN) there is
-     *  no guest tier → the panel shows. Only a guest with auth ON is blocked. */
     protected readonly blockedGuest = computed(() => this.auth.authRequired() && this.auth.user()?.role === 'guest');
 
     protected toggleIo(): void { this.ioOpen.update((v) => !v); this.ioMsg.set(''); }
     protected setMode(m: IoMode): void { this.mode.set(m); this.ioMsg.set(''); }
-    /** IMPORT-5 Part D — the VALID steps of a contract column for a builder <select> (label = the % / enum it resolves to). */
     protected stepOptions(col: ContractColumn): { index: number; label: string }[] { return validStepOptions(col); }
 
     /** Public — the parent offer card's Export button drives this through a viewChild ref (JSON round-trip). */
@@ -317,7 +281,6 @@ export class HotspotIoComponent {
     // ── B1 form editing ──
     private patch(p: Partial<HotSpotDraft>): void { this.st.draft.update((d) => ({ ...d, ...p })); }
     protected setStr(key: keyof HotSpotDraft, e: Event): void { this.patch({ [key]: (e.target as HTMLInputElement).value } as Partial<HotSpotDraft>); }
-    // ── IMPORT-4 — two-sided (opposed pair) editing ──
     protected setTwoSided(e: Event): void {
         const on = (e.target as HTMLInputElement).checked;
         // ensure the pair is opposed the moment two-sided turns on
@@ -334,13 +297,11 @@ export class HotspotIoComponent {
     protected setNum(key: keyof HotSpotDraft, e: Event): void { this.patch({ [key]: Number((e.target as HTMLInputElement).value) || 0 } as Partial<HotSpotDraft>); }
 
     // ── tracks: the LIST is owned here; the per-track fields + objective rows are the shared <bce-track-editor>
-    //    (IMPORT-6 Part C), which emits an UPDATER applied to the CURRENT track in place (never a stale snapshot). ──
     protected updTrack(i: number, upd: TrackUpdater): void {
         this.st.draft.update((d) => ({ ...d, tracks: d.tracks.map((t, idx) => (idx === i ? upd(t) : t)) }));
     }
     protected addTrack(): void { this.st.draft.update((d) => ({ ...d, tracks: [...d.tracks, emptyTrack()] })); }
-    protected removeTrack(i: number): void { this.st.draft.update((d) => ({ ...d, tracks: d.tracks.filter((_, idx) => idx !== i) })); } // IMPORT-3 — tracks optional: may remove to 0 (universal-library play)
-    // ── IMPORT-6 Part D — hireable special-personnel rows (mirror updObj*; immutable patches on the tab-provided draft) ──
+    protected removeTrack(i: number): void { this.st.draft.update((d) => ({ ...d, tracks: d.tracks.filter((_, idx) => idx !== i) })); }
     private updMerc(i: number, patch: Partial<DraftHireable>): void {
         this.st.draft.update((d) => ({ ...d, hireable: (d.hireable ?? []).map((m, idx) => (idx === i ? { ...m, ...patch } : m)) }));
     }
@@ -371,11 +332,9 @@ export class HotspotIoComponent {
             const list: HotSpot[] = Array.isArray(raw) ? raw : (Array.isArray(raw?.hotspots) ? raw.hotspots : [raw]);
             let n = 0;
             for (const h of list) {
-                // IMPORT-5 — tracks are OPTIONAL (a 0-track hot spot plays from the universal library, matching saveForm);
                 // only a NON-empty tracks array must include a root. Accept `tracks: []` so an exported 0-track custom re-imports.
                 if (!h || !Array.isArray(h.tracks) || !h.contract || (h.tracks.length > 0 && !h.tracks.some((t: { root?: boolean }) => t.root))) continue;
                 const id = 'hs-custom-' + (this.state.warchestLedger().length) + '-' + (this.state.customHotSpots().length + n);
-                // IMPORT-6 Part D — `hireable` rides the spread untouched (export→import round-trip); a malformed value is
                 // DROPPED rather than crashing the deploy hire panel: non-array → gone; rows that aren't objects with a
                 // non-empty name → gone (the panel tracks by name). // DECISION: shape-guard only (no per-field schema).
                 const snapped = snapImportedSteps(h);
@@ -414,7 +373,7 @@ function sampleDraft(): HotSpotDraft {
     d.type = 'Objective Raid'; d.blurb = 'A one-line teaser for the offer card.';
     d.situation = 'Set the scene for the whole contract here.';
     d.enemyFaction = 'The opposing faction'; d.scale = 1; d.intensity = 1; d.lengthMonths = 1;
-    d.basePay = 6; d.support = 5; d.transport = 6; d.salvage = 6; d.command = 6; // IMPORT-5 Part D — valid table indices
+    d.basePay = 6; d.support = 5; d.transport = 6; d.salvage = 6; d.command = 6;
     d.contractVictory = 'What counts as winning the contract, for both sides.';
     const t = emptyTrack();
     t.name = 'The Opening Move'; t.templateId = 'Objective'; t.situation = 'What is happening on this track.';
@@ -426,7 +385,6 @@ function sampleDraft(): HotSpotDraft {
     t.specialRules = 'Any special rules for this track.'; t.trackEnd = 'One side has no units, or turn 10.';
     t.salvagePolicy = 'WINNER-ALL';
     d.tracks = [t];
-    // IMPORT-6 Part D — one example specialist so the template documents the hireable[] shape (per-track spCost by
     // default; set oneTimeHire true to charge once for the whole contract).
     d.hireable = [{ name: 'Captain Vasquez', role: 'Ace lance leader', gunnery: 2, piloting: 3, edge: 2, chassis: 'Marauder', model: 'MAD-3R', bv: 1363, spCost: 300, oneTimeHire: false }];
     return d;

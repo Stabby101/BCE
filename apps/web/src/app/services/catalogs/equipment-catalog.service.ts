@@ -16,7 +16,6 @@ import { CatalogBaseService } from './catalog-base.service';
 
 // BCE-EDIT (REBASE-1 P1 c, SLICE-1 re-home ruling #2): same-origin build-asset base for the per-era slices
 // and the component-flag side-car (generate-slices.mjs). Shared with the DataService slice COORDINATOR — the
-// two halves of SLICE-1 must fetch from the same tree. (DEPLOY-005 / HOTFIX-011: NOT REMOTE_HOST, so it works
 // on dev where there is no remote.)
 export const SLICE_BASE = '/mekbay/slim';
 

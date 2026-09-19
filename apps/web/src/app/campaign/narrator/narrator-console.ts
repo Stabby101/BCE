@@ -1,11 +1,3 @@
-/*
- * BCE LOCAL NARRATOR — the footer CONSOLE STRIP (DIRECTIVE-038). A compact persistent dossier line in
- * the existing dashboard footer deadspace (no stolen content height): status dot · model · runs · token
- * tally · last tok/s · GPU util/VRAM/temp · CPU/RAM. Always visible on every tab WHEN MODE IS ON; polls
- * the sidecar only while the app is focused, and HEARTBEATS the sidecar (the death-watch keep-alive).
- * Mode OFF → renders NOTHING (the clean footer; the console exists only when AI is on). Offline panels
- * degrade in place. Cumulative tallies (NarratorService, localStorage) survive reload.
- */
 import { Component, ChangeDetectionStrategy, OnDestroy, computed, inject, signal } from '@angular/core';
 import { NarratorService } from './narrator.service';
 import type { NarratorStats } from './narrator-types';

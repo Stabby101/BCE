@@ -4,7 +4,6 @@
         <div class="pd-head">
             <div class="pd-id">
                 @if (editingId()) {
-                    <!-- D-070: full edit — name + G/P, nothing greyed; persists to the Pilot record (DATA-002) -->
                     <input class="pd-name-in" [value]="nameDraft()" (input)="nameDraft.set($any($event.target).value)" aria-label="Pilot name" maxlength="40" />
                     <span class="pd-skill-edit">G <input type="number" class="pd-sk" min="0" max="8" [value]="gunDraft()" (input)="gunDraft.set(+$any($event.target).value)" aria-label="Gunnery" />
                         · P <input type="number" class="pd-sk" min="0" max="9" [value]="pilDraft()" (input)="pilDraft.set(+$any($event.target).value)" aria-label="Piloting" />
@@ -49,9 +48,6 @@
             @if (v.p.note) { <div><span class="k">Kin</span><span class="vv">{{ v.p.note }}</span></div> }
         </div>
         @if (canPost()) {
-            <!-- ODM-25 — the posting is EDITABLE here, not just displayed. Options are trade-filtered and
-                 annotated with each machine's current crew by the host; picking one that is already crewed
-                 warns before it displaces anyone. -->
             <div class="pd-postrow">
                 <span class="k">Change posting</span>
                 <select class="pd-postsel" data-testid="pd-posting" (change)="onPosting($any($event.target))"
@@ -64,9 +60,6 @@
             </div>
         }
         @if (canEditTrade()) {
-            <!-- ODM-25b — the TRADE, correctable. A posting no longer rewrites a profession, which means a
-                 profession the old re-stamp got wrong had nowhere to be fixed. This is a RECORD correction
-                 (it says who they always were), not retraining, and it writes to the campaign log. -->
             <div class="pd-postrow">
                 <span class="k">Trade — record correction</span>
                 <select class="pd-postsel" data-testid="pd-trade" (change)="onTrade($any($event.target))"
@@ -95,8 +88,6 @@
         }
 
         @if (v.p.status !== 'KIA') {
-            <!-- D-070: the skill/force-wide cap is now ADVISORY (a hint), not a hard gate — any ability is
-                 grantable; the gate reason shows below as guidance. Only an already-held ability is non-grantable. -->
             <div class="pd-sec">Grant an ability <span class="pd-gov">cap is advisory — any ability grantable; the table adjudicates</span></div>
             <div class="grant-list">
                 @for (g of grantRows(); track g.ability.id) {
@@ -117,7 +108,6 @@
         <textarea class="pd-ta" rows="3" placeholder="Table notes on this pilot…" [value]="notesValue()" (input)="notesDraft.set($any($event.target).value)"></textarea>
         <div class="pd-row">@if (notesDraft() !== null) { <button type="button" class="lnk" (click)="saveNotes()">save notes</button> }</div>
 
-        <!-- DIRECTIVE-125 — the Hot Spots Campaign Pilot Card (named pilots only; Traditional shows nothing). -->
         @if (showCampaignCard()) { <bce-campaign-pilot-card [pilotId]="pilotId()" /> }
     </div>
 </div>

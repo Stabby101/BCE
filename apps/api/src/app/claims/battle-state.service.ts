@@ -1,17 +1,6 @@
-/*
- * BCE ENGINE — the per-instance BATTLE STATE store (DIRECTIVE-048 phase B). The host-authoritative
- * live battle state (DATA-001): each deployed/OpFor 'Mech's serialized armor/internal/crit/ammo/heat,
- * keyed (campaignId, engagementKey, instanceId). A player edits its claimed sheet -> the edit lands
- * here and fans to the room over the D-042 socket, so every tablet + the GM update live. Mirrors
- * ClaimsService 1:1 — its OWN node:sqlite handle to the shared host file, a DEDICATED table (NOT the
- * campaign snapshot blob → no version churn, no persistCurrent race). The state is opaque JSON to the
- * host (MekBay's CBTSerializedState); the host never interprets it — it stores + fans + resyncs.
- * Heat rides the live fan (shown live) but the CLIENT neutralizes it before persisting to the snapshot
- * (D-030 live-only-heat) — the host stores whatever the client sent for the live channel.
- */
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { DatabaseSync } from 'node:sqlite';
-import { openDb } from '../open-db'; // HARDEN-7 A2 — shared durability-PRAGMA opener
+import { openDb } from '../open-db';
 import { dbPath } from '../db-path';
 
 export interface BattleStateRow {
@@ -24,12 +13,11 @@ export interface BattleStateRow {
 export class BattleStateService implements OnModuleInit {
     private readonly log = new Logger('BattleStateService');
     private db!: DatabaseSync;
-    // ORDER-4 H18 — CLOSED engagements, in memory (the per-write check is a Set lookup) AND persisted beside the battle
     // state (a restart does not forget that the GM ended the fight). Key = `${campaignId}|${engagementKey}`.
     private readonly closedKeys = new Set<string>();
 
     onModuleInit(): void {
-        this.db = openDb(dbPath()); // HARDEN-7 A2 — shared opener (WAL + busy_timeout + synchronous=NORMAL, asserted)
+        this.db = openDb(dbPath());
         this.db.exec(
             `CREATE TABLE IF NOT EXISTS battle_state (
                 campaignId TEXT NOT NULL,
@@ -40,7 +28,6 @@ export class BattleStateService implements OnModuleInit {
                 PRIMARY KEY (campaignId, engagementKey, instanceId)
             );`,
         );
-        // ORDER-4 H18 — the engagement CLOSE mark: the GM's resolve tells the server the fight is over; battle writes
         // to a closed key are refused from then on (claims untouched). Persisted so a restart still refuses.
         this.db.exec(
             `CREATE TABLE IF NOT EXISTS engagement_closed (
@@ -56,14 +43,12 @@ export class BattleStateService implements OnModuleInit {
         this.log.log('battle-state store ready');
     }
 
-    /** ORDER-4 H18 — mark an engagement CLOSED (idempotent; the first closedAt is kept). */
     close(campaignId: string, engagementKey: string, at: number): void {
         this.db
             .prepare('INSERT INTO engagement_closed (campaignId, engagementKey, closedAt) VALUES (?, ?, ?) ON CONFLICT(campaignId, engagementKey) DO NOTHING')
             .run(campaignId, engagementKey, at);
         this.closedKeys.add(`${campaignId}|${engagementKey}`);
     }
-    /** ORDER-4 H18 — is this engagement closed? (a Set lookup — read on every battle write) */
     isClosed(campaignId: string, engagementKey: string): boolean {
         return this.closedKeys.has(`${campaignId}|${engagementKey}`);
     }

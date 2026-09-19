@@ -1,8 +1,3 @@
-/*
- * DIRECTIVE-HARDEN-1 Part B — pinned-value specs for the Draconis Reach SP economy constants the resolve
- * path pays out through (§6/§7). combatPayFor/salvageFractionFor were moved pure from WarchestService
- * (the service delegates); these pins keep every later refactor honest about the money.
- */
 import { combatPayFor, salvageFractionFor, CHAOS_COMBAT_PAY, CHAOS_START, CHAOS_MONTHLY } from './chaos-sp-costs';
 
 describe('combatPayFor — OutcomeGate → book combat pay × Track Scale (DR §7)', () => {
@@ -21,7 +16,7 @@ describe('combatPayFor — OutcomeGate → book combat pay × Track Scale (DR §
     });
 });
 
-describe('salvageFractionFor — the estimated-salvage fraction by outcome (D-110b)', () => {
+describe('salvageFractionFor — the estimated-salvage fraction by outcome ', () => {
     it('maps 0.5 / 0.35 / 0.15 / 0 across the tiers', () => {
         expect(salvageFractionFor('FULL_SUCCESS')).toBe(0.5);
         expect(salvageFractionFor('SUCCESS')).toBe(0.35);

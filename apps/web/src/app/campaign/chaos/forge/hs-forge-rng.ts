@@ -1,8 +1,3 @@
-/*
- * BCE — HSFORGE-1: deterministic RNG for the Hot Spots Forge. Same-seedKey → byte-identical hotspot
- * (the Phase 1 determinism gate). cyrb53→mulberry32 is the D-110e rollComplications pattern; substreams
- * derive by suffixing the key so a validation reroll never replays the failed draw.
- */
 
 /** cyrb53 string hash (public-domain construction) — stable across sessions/platforms. */
 export function hashKey(str: string, seed = 0): number {

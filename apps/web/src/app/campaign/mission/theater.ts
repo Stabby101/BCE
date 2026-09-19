@@ -1,12 +1,3 @@
-/*
- * BCE campaign-pack — THEATER SHEET + COMMS PLAN generators (DIRECTIVE-035). Pure TS, no Angular/DOM.
- *
- * GENERATED THEATER TEXTURE, flagged as such: plausible, biome-coherent, era/register-true planetary
- * data for the package's §2.1 world sheet and Appendix B comms protocol. REAL world data (population,
- * gravity, owners by year) arrives with T-010's star-map pass and replaces the rolled values wholesale —
- * nothing here claims canon. Values are rolled ONCE at mission generation and STORED on the MissionSpec
- * (stored-not-rerolled; reload renders identical paper). DATA-003: prose renders OVER these records.
- */
 
 export interface TheaterSheet {
     population: string;     // display string, e.g. "≈ 410 million (concentrated in the lowland arcologies)"
@@ -27,7 +18,6 @@ export interface CommsPlan {
     emergency: string[];             // emergency procedure lines (reference the codewords)
 }
 
-// ── biome → coherent climate/season pools (keyed off the D-023 TERRAIN_TABLE biomes) ──
 const BIOME_CLIMATE: Record<string, { climate: string[]; seasons: string[] }> = {
     'Temperate plains': { climate: ['Temperate continental', 'Maritime temperate'], seasons: ['early spring — wet ground', 'high summer — long sightlines', 'autumn — harvest traffic on every road', 'first frost — hard ground, bare cover'] },
     'Arid badlands': { climate: ['Hot arid', 'High-desert continental'], seasons: ['dry season — dust plumes betray movement', 'storm season — flash floods in the cuts', 'cold nights — thermal blooms carry'] },
@@ -77,17 +67,13 @@ const CODE_NOUN = ['REED', 'LANTERN', 'FURROW', 'ANVIL', 'CISTERN', 'PALISADE', 
 const pick = <T>(arr: readonly T[], rng: () => number): T => arr[Math.floor(rng() * arr.length)];
 const range = (lo: number, hi: number, rng: () => number): number => lo + rng() * (hi - lo);
 
-/** Roll the §2.1 theater sheet ONCE (caller stores it on the spec). biome = the D-023 rolled terrain. */
-/** D-080 — the real Star Map system this mission localized to (owner is era-resolved). When present, the
- *  §2.1 sheet leads with real world data instead of pure generated texture (biome stays the rolled D-023
- *  terrain; socio/population remain generated until that data lands). */
 export interface WorldContext {
     name: string;
     owner: string;
     settlement: string;
     regionRole: string;
     eraName: string;
-    terrain?: string[]; // D-085/#114 — the world's surveyed terrain (absent until #114 lands)
+    terrain?: string[];
 }
 
 /** a/an by the following word's initial sound (vowel-letter heuristic; good enough for our region/settlement words). */
@@ -102,12 +88,9 @@ export function generateTheater(biome: string, biomeNote: string, register: stri
     const population = popM >= 1000
         ? `≈ ${(popM / 1000).toFixed(1)} billion — ${infra.popNote}`
         : `≈ ${popM} million — ${infra.popNote}`;
-    // D-080: source the infrastructure line from the real world — owner (in the campaign era), region role,
     // and settlement type — ahead of the generated infrastructure character.
     const owner = world && world.owner && world.owner !== 'periphery-independent' ? world.owner : world ? 'an unaligned periphery power' : '';
-    // D-085: "a interior" → "an interior" — a/an by the region-role's initial sound.
     const worldLine = world ? `${world.name} is ${owner}-held — ${aOrAn(world.regionRole)} ${world.regionRole} ${world.settlement} world${world.eraName ? ` (${world.eraName})` : ''}. ${infra.line}` : infra.line;
-    // D-085: terrain agrees with the localized world when surveyed terrain exists (#114); until then the biome is
     // GENERATED THEATER TEXTURE — flag it so the §2.1 sheet never ASSERTS a specific world terrain that the body
     // (seed prose, a separate Forge fix) might contradict.
     const terrain = world?.terrain?.length

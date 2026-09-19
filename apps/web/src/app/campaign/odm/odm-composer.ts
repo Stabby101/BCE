@@ -1,19 +1,3 @@
-/*
- * DIRECTIVE-ODM-18 Phase 3 — the GM MISSION COMPOSER (ODM fork only; mounted in the Missions tab).
- *
- * The GM authors a mission the way the roleplay produced it: a title, the player-facing brief prose, the
- * objective trio, the resolve-flag checklist, the operation's real time cost, and a hand-picked OpFor.
- * PUBLISH derives the player-safe record (odm-gm-mission.publishRecord — a field WHITELIST, so GM notes
- * cannot ride along) into the top-level snapshot, and the merged node set (§S-1) makes it a real tree node.
- *
- * THE NO-FORGE RULING HOLDS: nothing here rolls a force. The picker fields units the GM chooses from the
- * era-legal catalog (DOCTRINE §7c ≤2767 by default), with an explicit off-list toggle that is a deliberate
- * GM act, never a default. §S-6: the D-130 builder is NOT imported — engine-odm→engine-hs is a forbidden
- * fence edge; this is the fork's own small picker (pool + counts, no BV cap — the ruled scope).
- *
- * Drafts live under gmOnly (stripped for players); a draft NEVER writes a campaign-log line — that would
- * leak an unpublished mission's existence and title through a surface the fan does not strip.
- */
 import { Component, ChangeDetectionStrategy, computed, inject, input, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';

@@ -1,20 +1,7 @@
-/*
- * DIRECTIVE-IMPORT-1 Part B — the homebrew mission editor's data spine: a draft model, a lenient plain-text
- * parser, a strict validator, and the draft→HotSpot builder. PURE (type-only import of HotSpot) so it is
- * unit-testable and carries no Angular deps.
- *
- * The parser is keyed to the KNOWN Hot Spots entry LAYOUT (section labels + field order), per §16 of
- * resources/chaos-campaign/DRACONIS-REACH-MECHANICS.md — structure/format, not copyrighted prose. It reads a
- * GM's OWN pasted mission text and PRE-FILLS the form; it never blind-saves. What it recognises maps into the
- * draft; the rest is left blank for manual entry. Saving is strict (needs a contract + ≥1 root track); parsing
- * is lenient (best-effort pre-fill).
- */
 import type { HotSpot, HotSpotTrack, ObjectiveKind, HotSpotFork, SideOffer, HotSpotContractTerms, HotSpotHireable } from './hotspots-catalog';
-import { snapValidStep } from './chaos-contract-steps'; // IMPORT-5 Part D — coerce each emitted step onto a VALID (non-`—`) table step
+import { snapValidStep } from './chaos-contract-steps';
 
-// ── IMPORT-4 — two-sided (opposed-pair) authoring: one editable side. The OpFor is DERIVED (the other side's
 //    faction), so it is never a form field. `role` is opposed across the pair (Side B = opposite of Side A).
-//    IMPORT-5 Part E — each side also owns its IDENTITY (title/type/situation/employerDesc): a true opposed pair
 //    is the SAME op framed by two employers, so each has its own name + briefing (shared: world/length/planet). ──
 export interface DraftSide {
     role: 'attacker' | 'defender';
@@ -26,7 +13,6 @@ export interface DraftSide {
     basePay: number; support: number; transport: number; salvage: number; command: number;
 }
 export function emptySide(role: 'attacker' | 'defender'): DraftSide {
-    // step defaults are VALID table indices (IMPORT-5 Part D): basePay 6=100% · support 5=Straight/80 · transport
     // 6=50% · salvage 6=40% · command 6=House. (The old flat 5 left command@5 on a dead `—` step.)
     return { role, title: '', type: '', employer: '', employerDesc: '', faction: '', situation: '', blurb: '', basePay: 6, support: 5, transport: 6, salvage: 6, command: 6 };
 }
@@ -34,9 +20,6 @@ export const oppositeRole = (r: 'attacker' | 'defender'): 'attacker' | 'defender
 
 // ── the editable draft shape (the form binds to this; the parser fills it; the builder emits a HotSpot) ──
 export interface DraftObjective { text: string; vp: number; kind: ObjectiveKind; side: 'both' | 'attacker' | 'defender'; }
-/** IMPORT-6 Part D — an authorable "Special personnel — for hire" row (→ HotSpotHireable). Every field is
- *  present + typed for simple form binding; the BUILDER omits blank optionals (a `''` chassis would defeat
- *  buildMercInstance's `??` fallback to the name). Shared across both sides (hireable is top-level on HotSpot). */
 export interface DraftHireable {
     name: string; role: string;
     gunnery: number; piloting: number; edge: number;
@@ -63,18 +46,16 @@ export interface HotSpotDraft {
     title: string;
     world: string;
     employer: string;
-    employerDesc: string; // IMPORT-2 Part B — free-text employer description
+    employerDesc: string;
     type: string;
     blurb: string;
     situation: string;
-    // IMPORT-2 Part B / IMPORT-5 Part F — planet / hot-spot detail (systemProfile). Strings for simple form binding; parsed on save.
     starType: string;
     surfaceGravity: string;
     atmPressure: string;
     climate: string;
     population: string;
     capitalCity: string;
-    // IMPORT-5 Part F — richer planet section: more structured fields + a free-text prose description.
     positionInSystem: string;
     timeToJumpPointDays: string;
     rechargeHours: string;
@@ -100,12 +81,11 @@ export interface HotSpotDraft {
     // mission brief
     contractVictory: string;
     behindScenes: string;
-    // IMPORT-4 — two-sided (opposed pair). Off = single offer (today's form; emits no `sides`). On = emit sides:{a,b}.
     twoSided: boolean;
     sideA: DraftSide;
     sideB: DraftSide;
     tracks: DraftTrack[];
-    hireable: DraftHireable[]; // IMPORT-6 Part D — hireable special personnel (shared across sides; emitted only when ≥1 meaningful row)
+    hireable: DraftHireable[];
 }
 
 export function emptyObjective(): DraftObjective { return { text: '', vp: 100, kind: 'primary', side: 'both' }; }
@@ -121,35 +101,25 @@ export function emptyDraft(): HotSpotDraft {
         title: '', world: '', employer: '', employerDesc: '', type: '', blurb: '', situation: '',
         starType: '', surfaceGravity: '', atmPressure: '', climate: '', population: '', capitalCity: '',
         positionInSystem: '', timeToJumpPointDays: '', rechargeHours: '', satellites: '', equatorialTempC: '',
-        surfaceWaterPct: '', hpgClass: '', socioIndustrial: '', planetDescription: '', // IMPORT-5 Part F
+        surfaceWaterPct: '', hpgClass: '', socioIndustrial: '', planetDescription: '',
         scale: 1, intensity: 1, lengthMonths: 1, enemyFaction: '',
-        basePay: 6, support: 5, transport: 6, salvage: 6, command: 6, // IMPORT-5 Part D — valid table indices (was flat 5; command@5 was a dead `—`)
+        basePay: 6, support: 5, transport: 6, salvage: 6, command: 6,
         constraints: '', additionalRequirements: '', bonus: '',
         contractVictory: '', behindScenes: '',
-        twoSided: false, sideA: emptySide('attacker'), sideB: emptySide('defender'), // IMPORT-4
+        twoSided: false, sideA: emptySide('attacker'), sideB: emptySide('defender'),
         tracks: [emptyTrack()],
-        hireable: [], // IMPORT-6 Part D — starts EMPTY (the ＋ Add specialist button creates the first row)
+        hireable: [],
     };
 }
 
 // ── the strict SAVE validation (parsing is lenient; saving is strict) ──
-/** A track "counts" only if the GM put something in it (a name or any objective text). A pristine, untouched
- *  default track row is ignored — so a hot spot can be saved with NO embedded tracks (IMPORT-3: it then draws
- *  from the universal track library at play time). */
 const meaningfulTracks = (d: HotSpotDraft): DraftTrack[] => d.tracks.filter((t) => t.name.trim() || t.objectives.some((o) => o.text.trim()));
-/** IMPORT-6 Part D — a hireable row "counts" once the GM typed a name, a role, or a chassis; a pristine ＋Add'd row
- *  is ignored (mirrors meaningfulTracks). `?? []` guards a draft de-serialised from an older shape / a hand-built one. */
 const meaningfulHireables = (d: HotSpotDraft): DraftHireable[] => (d.hireable ?? []).filter((h) => h.name.trim() || h.role.trim() || h.chassis.trim());
 
-/** Returns a list of human-readable problems; empty ⇒ the draft may be saved. Needs a title. Tracks are
- *  OPTIONAL (IMPORT-3 — universal-library play); but any track the GM STARTED (name or objectives) must be
- *  complete: a name AND ≥1 objective (a half-built track is a save error, not a silent drop). */
 export function validateDraft(d: HotSpotDraft): string[] {
     const errs: string[] = [];
-    // IMPORT-5 Part E — in two-sided mode the shared top-level Title is hidden (title is per-side); the hot spot's
     // identity comes from each side. So require the per-side titles there, and the shared title only single-sided.
     if (!d.twoSided && !d.title.trim()) errs.push('A title is required.');
-    // IMPORT-4/5 — a two-sided (opposed-pair) hot spot must emit a COMPLETE, well-formed pair or nothing: each side
     // needs a title + an employer + a faction; the two roles must be opposed (one attacker, one defender); the two
     // factions must be distinct (the OpFor is the OTHER side). Single-sided validation is unchanged.
     if (d.twoSided) {
@@ -167,7 +137,6 @@ export function validateDraft(d: HotSpotDraft): string[] {
         if (!t.name.trim()) errs.push(`Track ${i + 1} needs a name (or clear it to draw from the library).`);
         else if (!t.objectives.some((o) => o.text.trim())) errs.push(`Track "${t.name.trim()}" needs at least one objective.`);
     });
-    // IMPORT-6 Part D — a STARTED specialist row needs a name (the deploy panel tracks + keys one-time-paid by NAME —
     // hire-personnel-panel `@for … track h.name`, hire-personnel `contractHiredKeys`), and names must be UNIQUE
     // (case-insensitive, trimmed) for the same reason, and a specialist costs ≥1 SP (the deploy panel reads a 0 charge as
     // "already paid"). Skills are coerced at emit, never validation errors. Row numbers are FORM rows (pristine rows skipped).
@@ -187,10 +156,6 @@ export function validateDraft(d: HotSpotDraft): string[] {
 }
 
 // ── draft → HotSpot (the builder mints the persisted shape; the caller adds id + custom:true) ──
-/** IMPORT-3 — tracks are OPTIONAL: a hot spot may embed 0 tracks (empty `tracks[]` → the GM picks from the
- *  universal library at play time), or 1+ authored tracks auto-wired as a LINEAR chain (track i → 'ANY' →
- *  track i+1; last ends the tree). Branching (SUCCESS/FAILURE splits) stays available via JSON import. Only
- *  MEANINGFUL tracks are emitted (a pristine default row is dropped). */
 export function draftToHotSpot(d: HotSpotDraft): Omit<HotSpot, 'id'> {
     const src = meaningfulTracks(d);
     const tracks: HotSpotTrack[] = src.map((t, i) => {
@@ -228,14 +193,11 @@ export function draftToHotSpot(d: HotSpotDraft): Omit<HotSpot, 'id'> {
         additionalRequirements: d.additionalRequirements.trim() || undefined,
         bonus: d.bonus.trim() || undefined,
     });
-    // IMPORT-5 Part D — every emitted step is SNAPPED to a valid (non-`—`) table step for its column, so a builder or
     // pasted value can never persist a dead index (which rendered transport blank + non-negotiable and zeroed its cover).
     const stepsOf = (s: { basePay: number; support: number; transport: number; salvage: number; command: number }) => ({
         basePay: snapValidStep('basePay', s.basePay), support: snapValidStep('support', s.support), transport: snapValidStep('transport', s.transport), salvage: snapValidStep('salvage', s.salvage), command: snapValidStep('command', s.command),
     });
-    // IMPORT-4/5 — two-sided emission: a COMPLETE authored `sides:{a,b}`. `enemyFaction` per side is DERIVED (the
     // OTHER side's faction). Side B's role is enforced opposite. `synthesized` is absent (these are authored). Each
-    // side also carries its own IDENTITY (title/type/situation/employerDesc — IMPORT-5 Part E).
     let sides: { a: SideOffer; b: SideOffer } | undefined;
     if (d.twoSided) {
         const aRole = d.sideA.role, bRole = oppositeRole(aRole);
@@ -247,7 +209,6 @@ export function draftToHotSpot(d: HotSpotDraft): Omit<HotSpot, 'id'> {
         });
         sides = { a: sideOffer(d.sideA, 'a', aRole, bFac), b: sideOffer(d.sideB, 'b', bRole, aFac) };
     }
-    // IMPORT-6 Part D — hireable special personnel → the exact HotSpotHireable shape (hire-personnel.ts reads it).
     // Numbers are COERCED + floored (never NaN into buildMercPilot); OPTIONALS ARE OMITTED when blank/zero (an
     // emitted `chassis: ''` would NOT fall through buildMercInstance's `??` chain to the name; `edge` is only
     // meaningful ≥1; `oneTimeHire` only when true). Only MEANINGFUL rows are emitted (a pristine ＋Add'd row is dropped).
@@ -268,12 +229,12 @@ export function draftToHotSpot(d: HotSpotDraft): Omit<HotSpot, 'id'> {
     const contract: HotSpotContractTerms = sides ? sides.a.contract : { ...sharedTerms(), steps: stepsOf(d), enemyFaction: d.enemyFaction.trim() };
     return {
         title: sides ? (d.sideA.title.trim() || d.title.trim()) : d.title.trim(),
-        world: d.world.trim(), // IMPORT-5 Part E — SHARED (one hot spot, one world)
+        world: d.world.trim(),
         employer: sides ? sides.a.employer : d.employer.trim(),
         employerDesc: sides ? str(d.sideA.employerDesc) : str(d.employerDesc),
         type: (sides ? d.sideA.type.trim() : d.type.trim()) || 'Objective Raid',
         blurb: (sides ? d.sideA.blurb.trim() : d.blurb.trim()) || undefined,
-        systemProfile: { // IMPORT-2 / IMPORT-5 Part F — planet / hot-spot detail (only the filled fields); SHARED across sides
+        systemProfile: {
             starType: str(d.starType), surfaceGravity: num(d.surfaceGravity), atmPressure: str(d.atmPressure),
             climate: str(d.climate), population: num(d.population), capitalCity: str(d.capitalCity),
             positionInSystem: str(d.positionInSystem), timeToJumpPointDays: num(d.timeToJumpPointDays), rechargeHours: num(d.rechargeHours),
@@ -282,7 +243,7 @@ export function draftToHotSpot(d: HotSpotDraft): Omit<HotSpot, 'id'> {
         },
         situation: sides ? d.sideA.situation : d.situation,
         contract,
-        ...(sides ? { sides } : { singleSided: true }), // IMPORT-4/5 — authoritative two-sided pair, else the SINGLE-offer flag (Part C: no synthesized B)
+        ...(sides ? { sides } : { singleSided: true }),
         missionBrief: {
             complications: [],
             contractVictory: d.contractVictory.trim(),
@@ -290,7 +251,7 @@ export function draftToHotSpot(d: HotSpotDraft): Omit<HotSpot, 'id'> {
             behindScenes: d.behindScenes.trim() || undefined,
         },
         tracks,
-        ...(hireable.length ? { hireable } : {}), // IMPORT-6 Part D — ABSENT when none authored → every existing emit stays byte-identical
+        ...(hireable.length ? { hireable } : {}),
     };
 }
 

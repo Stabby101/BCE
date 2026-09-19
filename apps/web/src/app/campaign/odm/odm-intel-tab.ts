@@ -1,25 +1,8 @@
-/*
- * FORKED FROM campaign/intel/intel-tab.ts @ 0840d6b — DIRECTIVE-ODM-12 Part B (a DRIFT SURFACE).
- * INTEL over the AUTHORED CONTACT REGISTRY, not the forge. Classic's contacts machinery derives from
- * npcAssignments (the forge's per-mission NPC casting) and an "introduce from the registry" pool over
- * voice-cast NPCs — structurally unreachable under this pack (no forge casting runs), which is the bug.
- * Here: contacts.json (server-served, in-memory only — never persisted, never bundled) supplies
- *   · DAY-ONE entries, rendered from campaign creation — authored order, so the registry's first entry
- *     leads and renders KIA: the company's dead founder, because the name is the obligation;
- *   · FIRST-ENCOUNTER entries, absent entirely until their channel is used (GM-filed — see the note on
- *     the file affordance) — a contact you have not made is not intel you possess;
- *   · the CELL LADDER as world-slots: CONFIRMED/SIGNALED show their note, UNCONTACTED shows the world
- *     name and NOTHING else. An empty line in a ledger is a promise.
- * Enemy personalities are NOT in this registry and do not seed it — they file from their PACKETS on
- * first encounter in a later pass (OdmContact.source is reserved for it; nothing sets it yet).
- * The NOTEBOOK is kept verbatim (campaign records, no forge dependency) minus the forge-fed copy.
- * NB: comments AND strings here reach the served GM bundle — never name pack content (the odm2 leak-net).
- */
 import { Component, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { NewCampaignState, type CampaignStartDate, type IntelNote, type IntelState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
 import { formatDate } from '../clock/campaign-clock';
-import { CONTACT_STATUSES } from '../intel/contact-status'; // ODM-12b C2 — the pure module, not the Classic component
+import { CONTACT_STATUSES } from '../intel/contact-status';
 import { OdmContactsService, type OdmCell, type OdmContact } from './odm-contacts.service';
 import type { MissionBranch } from '../mission/mission-tree';
 
@@ -42,7 +25,6 @@ interface ContactVm {
 interface FeedItem {
     dateKey: number;
     dateText: string;
-    // ODM-12b C1 — the fork's own vocabulary: no contract / purchase / sale kinds exist under this pack
     // (there is no employer, no market, and nothing is bought). Kinds seen here: mission | walk | repair
     // | admin | note | log — whatever the campaign log itself recorded, plus GM notes.
     kind: string;
@@ -176,8 +158,6 @@ export class OdmIntelTabComponent {
                 kind: 'mission', text: `Operation ${branch.name} resolved — ${r.outcomeTier}${r.override ? ' (GM override)' : ''}`,
             });
         }
-        // ODM-12b C1 — the Classic "Closed out: {employer · mission}" CONTRACT entry is DROPPED from the
-        // fork. Its label is built from contract.employer.name — employer vocabulary ODM-13 P3 purged —
         // and it is dead for a fresh pack campaign but live for any legacy save. The operations
         // themselves already file above as MISSION entries; nothing is lost but the employer's name.
         for (const n of this.state.intel()?.notes ?? []) {

@@ -14,8 +14,6 @@
 
     <div class="lead">Set how this campaign plays before you pick the era. <b>Defaults</b> — Classic BattleTech, Traditional — run the campaign exactly as before.</div>
 
-    <!-- DIRECTIVE-108 (1) — Game System (relocated D-083). Classic BattleTech is the default; Alpha Strike
-         swaps the unit card for the fast-play Alpha Strike card. CBT behaves exactly as before. -->
     <div class="cg" role="group" aria-label="Game system">
         <span class="cg-l">Game system</span>
         <div class="cg-opts">
@@ -28,7 +26,6 @@
         </div>
     </div>
 
-    <!-- DIRECTIVE-108 (2) — Campaign System. Traditional = Campaign Operations; Hot Spots = Chaos Campaign. -->
     <div class="cg" role="group" aria-label="Campaign system">
         <span class="cg-l">Campaign system</span>
         <div class="cg-opts">
@@ -39,14 +36,11 @@
                 Hot Spots <small>Chaos Campaign rules</small>
             </button>
         </div>
-        <!-- GM-1 P1 — the GM door pre-commits Hot Spots; say so instead of offering a dead choice. -->
         @if (gmSession()) {
             <div class="era-lock" data-testid="gm-session-lock"><span class="el-dot" aria-hidden="true"></span>Game Master session &mdash; Hot Spots, set by the door</div>
         }
     </div>
 
-    <!-- DIRECTIVE-108 (3) — Hot Spot campaign, only under Hot Spots. Data-driven; only available:true selectable.
-         D-108b — era-locked campaigns show their era; the generic engine mode is era-free (picked on the Era step). -->
     @if (campaignSystem() === 'hotspots') {
         <div class="cg col" role="group" aria-label="Hot Spot campaign">
             <span class="cg-l">Hot Spot campaign</span>
@@ -69,7 +63,6 @@
                     </button>
                 }
             </div>
-            <!-- D-108b (2) — an era-locked campaign sets the era; surface it (the Era step is skipped). -->
             @if (lockedEra(); as le) {
                 <div class="era-lock"><span class="el-dot" aria-hidden="true"></span>{{ le }} era &mdash; set by this campaign</div>
             }

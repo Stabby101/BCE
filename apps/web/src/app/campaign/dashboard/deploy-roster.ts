@@ -1,24 +1,12 @@
-/*
- * BCE — DIRECTIVE-118: the INLINE DEPLOY ROSTER shown in the "Prepare & deploy" brief box (both tab sets). A
- * compact, dense list of the player's force with a deploy checkbox per unit — so the GM deploys to the track
- * RIGHT THERE in the contract flow, not by hopping to the Roster tab (the dead-end this directive kills).
- *
- * PRESENTATIONAL + single-source-of-truth: it READS instances from state.startingForce() and WRITES through
- * state.setStartingForce condition updates ONLY (check → 'Deployed', uncheck → 'Active'). There is NO parallel
- * deploy state — the same `condition === 'Deployed'` marker every surface already reads (roster, deployedCount,
- * the HOTFIX-029 lobby gate, the market) reflects instantly. No new persisted fields (condition IS the record).
- */
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';
-import { DEPLOY_ELIGIBLE, deployBlocker } from '../force/deployed'; // ODM-18 P1 — the single-sourced deploy gate (ruling 5) · TESTER-ODM-1 #2 — + crew
+import { DEPLOY_ELIGIBLE, deployBlocker } from '../force/deployed';
 import { DataService } from '../../services/data.service';
 import { BceUnitSpriteComponent } from '../sprite/unit-sprite';
 import { GameSystem } from '../../models/common.model';
 import type { Pilot } from '../barracks/pilot-generator';
 
-/** Conditions a unit can be deployed FROM (and toggled between). In repair / Cold storage can't take the field.
- *  ODM-18 P1 — single-sourced from force/deployed.ts (ruling 5: the intent adapter shares the SAME gate). */
 const ELIGIBLE = DEPLOY_ELIGIBLE;
 
 @Component({
@@ -97,8 +85,6 @@ export class DeployRosterComponent {
         const as = this.isAs();
         return force.map((i) => {
             const pilot = pilots.get(i.instanceId) ?? null;
-            // TESTER-ODM-1 #2 — condition AND crew, from the one shared gate: an empty cockpit was fielded
-            // silently (and ODM-18's deploy intent made that reachable by players too).
             const blocker = deployBlocker(i.condition, !!pilot);
             const eligible = !blocker;
             return {

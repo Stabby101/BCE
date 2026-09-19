@@ -1,25 +1,6 @@
-/*
- * BCE — DIRECTIVE-IMPORT-6 Part C — ONE shared track editor. The hotspot builder's embedded per-track editor
- * (IMPORT-1 form: name · template · role · OpFor · situation · deployment · objectives with VP + kind + side ·
- * special rules · track end · salvage policy — the SUPERSET model, `DraftTrack`) extracted so the D-116 preset
- * builder mounts the SAME control instead of its own three plain-text objectives.
- *
- * DUMB input/output component: it edits ONE `DraftTrack` and emits the whole patched track on every change —
- * the PARENT owns the state (the hotspot builder's tab-provided HotspotIoState draft; the preset builder's local
- * draft signal). No injected services, no auth logic (each mount keeps its own gate: the hotspot builder's IMPORT-1
- * guest gate wraps its mount; the preset builder is ungated as before). Forks/nextTrack stay GENERATED (the linear
- * chain is auto-wired by draftToHotSpot; branching stays a JSON-import concern) — no fork UI here by design.
- *
- * STYLES are self-contained on purpose: `.cc-btn` is a scoped-global that only reaches children of
- * <bce-chaos-contracts> (styles.scss), and the preset builder mounts on the DASHBOARD — so the buttons/inputs/
- * objective rows replicate the hotspot-io + `.cc-btn.small` declarations here (encapsulated) to look identical in
- * the hotspot builder and correctly styled on the dashboard, WITHOUT adding another scoped-global.
- */
 import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 import { type DraftTrack, type DraftObjective, emptyObjective } from './hotspot-text-parser';
 
-/** The track TEMPLATE labels offered by the editor (12 labels — display/steer only; a hot spot's play still runs the
- *  §18 track-setup archetype mapping). Moved here from hotspot-io (IMPORT-6 Part C) so both mounts share one list. */
 export const TRACK_EDITOR_TEMPLATES = ['Objective', 'Assault', 'Defend', 'Strike', 'Recon', 'Duel', 'Extraction', 'Escort', 'Chase', 'Hold', 'Breakthrough', 'Retreat'] as const;
 
 @Component({
@@ -149,5 +130,4 @@ export class TrackEditorComponent {
     }
 }
 
-/** IMPORT-6 Part C — the shape of a track edit: a pure updater over the parent's CURRENT track. */
 export type TrackUpdater = (current: DraftTrack) => DraftTrack;

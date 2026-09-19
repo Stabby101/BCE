@@ -1,24 +1,3 @@
-/*
- * BCE campaign-pack — SPECIAL PILOT ABILITIES (SPA catalog for the barracks / pilot layer).
- *
- * SOURCE: Campaign Operations (Catalyst Game Labs), pp. 70–84, via the ODM canonical
- * extract of the canonical special-pilot-abilities reference (extracted 2026-04-24).
- *
- * PROVENANCE / COPYRIGHT (T-022 posture): rules/tables/math are systems/facts — replicated
- * 1-1 from the cited pages exactly as the extract carries them (James owns the book; source
- * PDFs stay gitignored, the DERIVED cited tables live in code). Where the extract flags a
- * canon ambiguity (e.g. Iron Will's 2-pt table vs 1-pt description cost), the ambiguity is
- * CARRIED in a `note` field, not resolved here.
- *
- * SPAs ride the WARRIOR, not the machine (CamOps p. 72): an ability moves with the pilot
- * between 'Mechs/vehicles/etc., but only functions while the pilot's current unit type is
- * valid for it (see each entry's `restrictions`). Slot/point-cap eligibility and the
- * force-wide caps are data in SPA_GOVERNANCE (p. 72).
- *
- * Pure data — no logic. `rulesText` condenses the extract's mechanical effect with every
- * number/modifier preserved exactly; `sourcePage` cites per the extract's provenance table
- * (per-ability pages are ranges because the extract cites description blocks, not lines).
- */
 
 export interface PilotAbility {
     /** Kebab-case stable id, e.g. 'blood-stalker', 'terrain-master-frogman'. */

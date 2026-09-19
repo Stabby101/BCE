@@ -1,9 +1,3 @@
-/*
- * DIRECTIVE-HARDEN-1 Part B — pinned-value specs for the D-128 book-exact negotiation math (Draconis Reach
- * pp.27–28, re-verified at D-128). The STEPS table is pinned IN FULL (it is the book's negotiation matrix —
- * any diff is a rules change, not a refactor), plus the row-cost / sacrifice / budget / cap arithmetic.
- * If one of these fails after a refactor, compare against the book and the D-128 directive, not the spec.
- */
 import {
     CONTRACT_COLUMNS,
     CONTRACT_STEP_COUNT,
@@ -60,8 +54,8 @@ describe('nextValidStep — `—` rows can never be landed on', () => {
     });
 });
 
-describe('repCostUp — a raise costs the step-ROWS crossed; `—` rows are PAID-but-WASTED (D-128)', () => {
-    it('an all-valid column costs 1 per raise (Base Pay row 4→5 = 1 Rep, the D-128 acceptance)', () => {
+describe('repCostUp — a raise costs the step-ROWS crossed; `—` rows are PAID-but-WASTED ', () => {
+    it('an all-valid column costs 1 per raise (Base Pay row 4→5 = 1 Rep, the acceptance)', () => {
         expect(repCostUp('basePay', 3)).toBe(1);
     });
     it('a hop across em-dashes costs every row: Command Liaison(8)→Independent(11) = 3 Rep (rows 9–10 wasted)', () => {
@@ -80,7 +74,7 @@ describe('repCostUp — a raise costs the step-ROWS crossed; `—` rows are PAID
     });
 });
 
-describe('sacrificeDropTarget — drop 2 rows, FLOOR to the next valid step at/below (D-128)', () => {
+describe('sacrificeDropTarget — drop 2 rows, FLOOR to the next valid step at/below ', () => {
     it('Command Independent(11) lands on Liaison(8), NOT House(7): 11−2=9 is `—`, floor to 8', () => {
         expect(sacrificeDropTarget('command', 10)).toBe(7); // 0-based: 10−2=8 is null → floors to 7 (Liaison)
     });
@@ -100,7 +94,7 @@ describe('sacrificeDropTarget — drop 2 rows, FLOOR to the next valid step at/b
     });
 });
 
-describe('repBudgetFor — Rep budget = min(Reputation, 2 × Scale) rows per negotiation (D-128)', () => {
+describe('repBudgetFor — Rep budget = min(Reputation, 2 × Scale) rows per negotiation ', () => {
     it('caps at 2×scale when reputation is plentiful', () => {
         expect(repBudgetFor(5, 1)).toBe(2);
         expect(repBudgetFor(10, 2)).toBe(4);
@@ -111,12 +105,12 @@ describe('repBudgetFor — Rep budget = min(Reputation, 2 × Scale) rows per neg
     });
 });
 
-describe('canRaiseTerm — the raise gate: budget AND the per-term row cap (= Scale) (D-128)', () => {
+describe('canRaiseTerm — the raise gate: budget AND the per-term row cap (= Scale) ', () => {
     // canRaiseTerm(cost, repUsed, repBudget, colRaises, scale)
     it('a maxed term (null cost) can never be raised', () => {
         expect(canRaiseTerm(null, 0, 4, 0, 2)).toBeFalse();
     });
-    it('Command Liaison→Independent (cost 3) is disabled at Scale 1 (budget 2 < 3) — the D-128 acceptance', () => {
+    it('Command Liaison→Independent (cost 3) is disabled at Scale 1 (budget 2 < 3) — the acceptance', () => {
         expect(canRaiseTerm(3, 0, repBudgetFor(5, 1), 0, 1)).toBeFalse();
     });
     it('the per-term cap counts ROWS: cost 3 exceeds a Scale-2 cap even with budget left', () => {

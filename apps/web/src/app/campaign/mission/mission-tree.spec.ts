@@ -1,10 +1,4 @@
-/*
- * DIRECTIVE-HARDEN-1 Part B — pinned-value specs for the mission-tree pure logic. These lock the book-exact
- * rules hand-fixed in D-134 (two-sided VP resolve) and D-137 (per-track role derivation), plus the legacy
- * computeTier path and the D-039 graded unlock matcher. If one of these fails after a refactor, the refactor
- * changed a BOOK RULE — stop and compare against DRACONIS-REACH-MECHANICS §17/§20, not the spec.
- */
-import { twoSidedTier, twoSidedResolve, computeTier, selectUnlocks, singleSidedResolve, resolveModelFor, authoredObjectives, type ResolveAnswers, type OutcomeGate } from './mission-tree'; // IMPORT-6 — single-sided + dispatch
+import { twoSidedTier, twoSidedResolve, computeTier, selectUnlocks, singleSidedResolve, resolveModelFor, authoredObjectives, type ResolveAnswers, type OutcomeGate } from './mission-tree';
 import { combatPayFor } from '../chaos/chaos-sp-costs';
 import type { MissionSpec } from './mission-spec';
 import type { ChaosContract } from '../chaos/chaos-contract';
@@ -18,7 +12,7 @@ function contractWith(side: 'a' | 'b', sideRole: 'attacker' | 'defender'): Chaos
 }
 const texts = (l: { text: string }[]): string[] => l.map((o) => o.text);
 
-describe('twoSidedTier — the DR two-sided outcome (D-134, Draconis Reach pp.12–13)', () => {
+describe('twoSidedTier — the DR two-sided outcome (Draconis Reach pp.12–13)', () => {
     // (ourMetCount, ourTotal, ourVp, oppVp, broke)
     it('broke/withdrew → FAILURE, even with every objective met and the VP lead', () => {
         expect(twoSidedTier(3, 3, 500, 0, true)).toBe('FAILURE');
@@ -33,7 +27,7 @@ describe('twoSidedTier — the DR two-sided outcome (D-134, Draconis Reach pp.12
     });
     it('the out-VP gate: ourVp must EXCEED oppVp — a tie or deficit is UNSUCCESSFUL (PARTIAL) even with a met objective', () => {
         expect(twoSidedTier(1, 3, 100, 100, false)).toBe('PARTIAL'); // tie
-        expect(twoSidedTier(1, 3, 50, 600, false)).toBe('PARTIAL'); // out-VP'd (the D-134 proven case)
+        expect(twoSidedTier(1, 3, 50, 600, false)).toBe('PARTIAL');
         expect(twoSidedTier(3, 3, 100, 100, false)).toBe('PARTIAL'); // all met but no VP lead ≠ FULL_SUCCESS
     });
     it('nothing met → UNSUCCESSFUL (PARTIAL), not FAILURE (FAILURE is reserved for a broken force)', () => {
@@ -52,7 +46,7 @@ describe('twoSidedTier — the DR two-sided outcome (D-134, Draconis Reach pp.12
     });
 });
 
-describe('twoSidedResolve — the per-track role derivation (D-137)', () => {
+describe('twoSidedResolve — the per-track role derivation ', () => {
     // Modeled on the live tester case (hs-drm-10 t2a): a Defend branch under an attacker-root contract.
     const FLIP_OBJS = [
         { text: 'Hold the zone', vp: 50, side: 'both' }, // leading 'both' — the heuristic must skip it
@@ -81,7 +75,7 @@ describe('twoSidedResolve — the per-track role derivation (D-137)', () => {
         const rB = twoSidedResolve(specWith(FLIP_OBJS, 'attacker'), contractWith('b', 'defender'), {} as ResolveAnswers);
         expect(texts(rB.ourObjs)).toEqual(['Hold the zone', 'Deny the retake']);
     });
-    it('a track with NO attacker/defender tags falls back to contract.sideRole (the D-134 behavior, byte-identical)', () => {
+    it('a track with NO attacker/defender tags falls back to contract.sideRole (the behavior, byte-identical)', () => {
         const objs = [
             { text: 'Untagged is yours', vp: 100 },
             { text: 'Shared', vp: 50, side: 'both' },
@@ -92,7 +86,7 @@ describe('twoSidedResolve — the per-track role derivation (D-137)', () => {
         expect(r.ourTotal).toBe(2); // the totals follow the FILTERED columns (asymmetric split)
         expect(r.oppObjs.length).toBe(1);
     });
-    it('when side tags exist, contract.sideRole does NOT drive the split (the D-134 bug this fix removed)', () => {
+    it('when side tags exist, contract.sideRole does NOT drive the split (the bug this fix removed)', () => {
         const atkFirst = [
             { text: 'Raid it', vp: 200, side: 'attacker' },
             { text: 'Defend it', vp: 200, side: 'defender' },
@@ -131,7 +125,7 @@ describe('twoSidedResolve — the per-track role derivation (D-137)', () => {
     });
 });
 
-describe('computeTier — the legacy single-sided resolve (D-039, unchanged by the two-sided work)', () => {
+describe('computeTier — the legacy single-sided resolve (unchanged by the two-sided work)', () => {
     const a = (primary: boolean, secondary: boolean, bonus: boolean, compromised = false): ResolveAnswers =>
         ({ primary, secondary, bonus, compromised } as ResolveAnswers);
     it('primary missed → FAILURE', () => expect(computeTier(a(false, true, true), [])).toBe('FAILURE'));
@@ -145,12 +139,12 @@ describe('computeTier — the legacy single-sided resolve (D-039, unchanged by t
     it('a COMPROMISED-gated child does NOT overlay without the GM answering compromised', () => {
         expect(computeTier(a(true, true, false, false), ['COMPROMISED'])).toBe('SUCCESS');
     });
-    it('bonus WITHOUT secondary does not advance past PARTIAL (the D-039 ladder needs the secondary)', () => {
+    it('bonus WITHOUT secondary does not advance past PARTIAL (the ladder needs the secondary)', () => {
         expect(computeTier(a(true, false, true), [])).toBe('PARTIAL');
     });
 });
 
-describe('selectUnlocks — the D-039 graded, never-dead-end gate matcher (unchanged, pinned for HARDEN-2+)', () => {
+describe('selectUnlocks — the graded, never-dead-end gate matcher (unchanged, pinned for +)', () => {
     const kid = (branchId: string, outcomeGate: OutcomeGate) => ({ branchId, outcomeGate });
     it('ANY always opens; exact tier matches open without reduced-spoils', () => {
         const r = selectUnlocks([kid('any', 'ANY'), kid('s', 'SUCCESS'), kid('p', 'PARTIAL')], 'SUCCESS');
@@ -186,21 +180,18 @@ describe('selectUnlocks — the D-039 graded, never-dead-end gate matcher (uncha
     });
 });
 
-// ── DIRECTIVE-IMPORT-6 Part B — SINGLE-SIDED authored-objective resolve + the shared dispatch rule (append-only; the
-//    D-134/137 describes above are UNMODIFIED — they pin that the two-sided path is byte-identical). ──
 
 /** A spec whose hotspot brief is SINGLE-SIDED (a custom hot spot built without an opposing side). */
 function singleSpec(objectives: { text: string; vp: number; side?: string }[]): MissionSpec {
     return { forge: { hotspot: { objectives, singleSided: true } } } as unknown as MissionSpec;
 }
-/** A spec for a D-116 PRESET track: no hotspot brief; the authored list rides forge.trackObjectives (stamped at bind). */
 function presetSpec(trackObjectives: { text: string; vp: number; kind: 'primary' | 'secondary' | 'bonus'; side?: string }[]): MissionSpec {
     return { forge: { trackObjectives } } as unknown as MissionSpec;
 }
 const OBJS = [{ text: 'Seize the depot', vp: 200 }, { text: 'Hold the ridge', vp: 100 }, { text: 'Capture the commander', vp: 50 }];
 const A: ChaosContract = { side: 'a', sideRole: 'attacker' } as ChaosContract;
 
-describe('singleSidedResolve — IMPORT-6 Part B (no authored opposition; the unscored VP is the opponent)', () => {
+describe('singleSidedResolve — Part B (no authored opposition; the unscored VP is the opponent)', () => {
     it('one column = the PLAYER\'s objectives: untagged ∪ own role ∪ both — an OpFor-tagged objective is NOT scored as the player\'s', () => {
         // no authored playerRole → the first attacker/defender-tagged objective's side is the player's (as twoSidedResolve infers)
         const spec = singleSpec([{ text: 'A', vp: 100, side: 'attacker' }, { text: 'D', vp: 100, side: 'defender' }, { text: 'B', vp: 50, side: 'both' }, { text: 'U', vp: 25 }]);
@@ -215,8 +206,7 @@ describe('singleSidedResolve — IMPORT-6 Part B (no authored opposition; the un
         const preset = { forge: { trackObjectives: [{ text: 'P', vp: 200, kind: 'primary', side: 'attacker' }, { text: 'Q', vp: 100, kind: 'secondary', side: 'defender' }], trackSheet: { playerRole: 'defender' } } } as unknown as MissionSpec;
         expect(texts(singleSidedResolve(preset, { primary: true, secondary: true, bonus: false, compromised: false }).ourObjs)).toEqual(['Q']);
     });
-    it('a tagged single-sided custom resolves the SAME as the pre-IMPORT-6 two-sided filter did for it (no tier regression)', () => {
-        // pre-IMPORT-6 such a save signed side "a" and went through twoSidedResolve: mine=[attacker obj], theirs=[defender obj]
+    it('a tagged single-sided custom resolves the SAME as the pre-two-sided filter did for it (no tier regression)', () => {
         const objs = [{ text: 'Seize the depot', vp: 200, side: 'attacker' }, { text: 'Hold the depot (garrison)', vp: 200, side: 'defender' }];
         const before = twoSidedResolve(specWith(objs), A, { primary: true, secondary: true, bonus: false, compromised: false, ourMet: [true] });
         const after = singleSidedResolve(singleSpec(objs), { primary: true, secondary: true, bonus: false, compromised: false, ourMet: [true] });
@@ -274,9 +264,9 @@ describe('singleSidedResolve — IMPORT-6 Part B (no authored opposition; the un
 
 describe('resolveModelFor — the ONE dispatch rule shared by the resolve modal and resolveBranch', () => {
     const legacyAns: ResolveAnswers = { primary: true, secondary: true, bonus: false, compromised: false };
-    it('two-sided: a signed side + a hotspot brief that is NOT single-sided → "two" (D-134 unchanged, even with all-both or empty lists)', () => {
+    it('two-sided: a signed side + a hotspot brief that is NOT single-sided → "two" (unchanged, even with all-both or empty lists)', () => {
         expect(resolveModelFor(specWith(OBJS.map((o) => ({ ...o, side: 'both' }))), A)).toBe('two');
-        expect(resolveModelFor(specWith([]), A)).toBe('two'); // pre-IMPORT-6 behavior kept: columns render "no authored objectives"
+        expect(resolveModelFor(specWith([]), A)).toBe('two');
         expect(resolveModelFor(specWith([{ text: 'a', vp: 1, side: 'attacker' }, { text: 'd', vp: 1, side: 'defender' }], 'attacker'), contractWith('b', 'defender'))).toBe('two');
     });
     it('single-sided custom (brief.singleSided) with ≥1 objective → "one"; with NO objectives → "legacy" (the generic toggles)', () => {
@@ -293,7 +283,7 @@ describe('resolveModelFor — the ONE dispatch rule shared by the resolve modal 
         expect(resolveModelFor(singleSpec(OBJS), undefined)).toBe('legacy');
         expect(resolveModelFor(presetSpec([{ text: 'P', vp: 200, kind: 'primary' }]), null)).toBe('legacy');
     });
-    it('a pre-D-133 save (contract without a side) with a two-sided brief → "legacy" (D-134 byte-identical)', () => {
+    it('a pre-save (contract without a side) with a two-sided brief → "legacy" (byte-identical)', () => {
         expect(resolveModelFor(specWith(OBJS), { } as ChaosContract)).toBe('legacy');
         expect(computeTier(legacyAns, [])).toBe('SUCCESS'); // and the legacy default answers still resolve as before
     });

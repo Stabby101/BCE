@@ -1,16 +1,3 @@
-/*
- * DIRECTIVE-ODM-22 — THE GM FACTS CARD (ODM-only; mounted beside the shared settings tab in the fork-local
- * odm-dashboard.html, the same ODM-only seam the P2 rollback panel uses — Classic/HS are untouched).
- *
- * THE PRINCIPLE THIS EXISTS FOR: **a correction that requires a console is a missing feature.** Production
- * strips Angular's debug globals and the campaign signals are in-memory, so every live-state question became
- * an improvised maneuver performed by the one person who cannot afford to get it wrong. A missing campaign-id
- * LABEL cost four hours on 2026-08-30 — not a bug, an absence. This card is the cheapest possible answer: the
- * facts a GM needs to identify and talk about their own campaign, in plain sight, copyable.
- *
- * READ-ONLY BY CONSTRUCTION. Nothing here writes. It reads the store + state signals the dashboard already
- * holds; the only side effect in the file is a clipboard copy of a value the GM already owns.
- */
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CampaignSaveStore } from '../campaign-save-store';
@@ -37,10 +24,6 @@ import { formatDate } from '../clock/campaign-clock';
             <div class="gf-row"><span class="gf-k">Campaign date</span><span class="gf-v" data-testid="odm-gm-facts-date">{{ dateText() }}</span></div>
             <div class="gf-row"><span class="gf-k">Started</span><span class="gf-v">{{ startText() }}</span></div>
             <div class="gf-row"><span class="gf-k">Pack</span><span class="gf-v">{{ pack() ?? '—' }}</span></div>
-            <!-- ODM-22b — the BUILD pair. It PRINTS BOTH VALUES AND WHETHER THEY MATCH; it does NOT conclude.
-                 No "you're up to date" claim: the reader compares, the card reports. The Pages/Railway split
-                 is a documented recurring gotcha (a green build can leave the web host serving a month-old
-                 bundle while the api advances), and answering it by hand is what this row retires. -->
             <div class="gf-row"><span class="gf-k">App build</span><span class="gf-v" data-testid="odm-gm-facts-app-build">{{ appBuild }}</span></div>
             <div class="gf-row"><span class="gf-k">Server build</span><span class="gf-v" data-testid="odm-gm-facts-srv-build">{{ serverBuild() ?? '…' }}</span></div>
             <div class="gf-row"><span class="gf-k">Builds</span><span class="gf-v" data-testid="odm-gm-facts-build-match">{{ buildMatch() }}</span></div>

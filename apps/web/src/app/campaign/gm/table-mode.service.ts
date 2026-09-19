@@ -1,11 +1,3 @@
-/*
- * GM-1 P1 — TABLE MODE: presentation discipline for the projected/shared GM screen. In hosted reality the
- * campaign is ALREADY owner-locked server-side (HARDEN-5); what table mode ADDS is that the GM can project
- * the dashboard without leaking GM-only surfaces (offer board, OpFor builder, resolve) to the room.
- * DEVICE-LOCAL by design (localStorage, never the snapshot): it describes THIS screen, not the campaign —
- * the GM's laptop can be in table mode while their tablet is not. The `on` computed hard-gates on
- * gmSession so a plain HS/Traditional campaign can never blank anything (byte-identical behavior).
- */
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 

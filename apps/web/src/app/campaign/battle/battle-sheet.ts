@@ -1,17 +1,3 @@
-/*
- * BCE — EDITABLE Classic record sheet (DIRECTIVE-030; D-049/052). It mounts the LIVE fu.svg() (not a
- * clone) so MekBay's unit-svg effects repaint edits in place, and wires MekBay's own
- * SvgInteractionService so armor/internal/crit/ammo clicks commit to the ForceUnit. The owning
- * BattleForceService mirrors those commits to the campaign instance + persists.
- *
- * D-049 — one OPTIONAL, player-scoped extra (default OFF, so the GM battle-view D-030 is unchanged):
- *   · phaseOverlay -> mount MekBay's own `page-interaction-overlay` over the sheet: the "COMMIT AND
- *     END PHASE" control + the turn/PSR tracker. It calls fu.endPhase() — MekBay's automation
- *     (move-for-critical + pilot skill rolls via TurnState). REUSED, not reimplemented.
- * (D-052 removed the D-049 on-sheet unit-name injection — James's live call: nothing above BATTLETECH;
- *  the unit is identified by the sheet's own 'MECH DATA "Type:" line + the player's Units drawer.)
- * MekBay-proper is untouched — we only instantiate its services + reuse its overlay component.
- */
 import { Component, ChangeDetectionStrategy, Injector, computed, effect, inject, input, untracked, viewChild, type ElementRef } from '@angular/core';
 import type { CBTForceUnit } from '../../models/cbt-force-unit.model';
 import { SvgInteractionService } from '../../components/page-viewer/svg-interaction.service';
@@ -22,7 +8,6 @@ import { GameSystem } from '../../models/common.model';
 import { NewCampaignState } from '../new-campaign-state';
 import { AlphaStrikeCardComponent } from '../../components/alpha-strike-card/alpha-strike-card.component';
 
-// DIRECTIVE-083 — game-system fork (ADDITIVE, gated on gameSystem === 'as'): an Alpha Strike battle view shows
 // the <alpha-strike-card> (read-only in v1 — AS in-sheet damage editing is a v2 task) instead of the editable
 // CBT sheet. The CBT branch (@else + the guarded effect) is byte-identical to before. `as`-absent → degrade.
 @Component({
@@ -65,7 +50,6 @@ import { AlphaStrikeCardComponent } from '../../components/alpha-strike-card/alp
 export class BattleSheetComponent {
     private readonly state = inject(NewCampaignState);
     readonly fu = input<CBTForceUnit | null>(null);
-    /** D-049: mount MekBay's COMMIT/END-PHASE + turn/PSR overlay (player surface only — GM leaves it off). */
     readonly phaseOverlay = input(false);
 
     private readonly container = viewChild<ElementRef<HTMLDivElement>>('container');
@@ -77,7 +61,6 @@ export class BattleSheetComponent {
     private readonly zoomStub: ZoomPanServiceInterface = { pointerMoved: false, isPanning: false, cancelGesture: () => {} };
     private wired: SVGSVGElement | null = null;
 
-    // D-083 — the game-system fork (CBT default → the unchanged path below).
     protected readonly isAs = computed(() => this.state.gameSystem() === GameSystem.ALPHA_STRIKE);
     protected readonly asUnit = computed(() => this.fu()?.getUnit() ?? null); // `as` is slice-stripped in v1 → degrades
     protected readonly asReady = computed(() => !!this.asUnit()?.as);
@@ -97,7 +80,7 @@ export class BattleSheetComponent {
 
     constructor() {
         effect(() => {
-            if (this.isAs()) return; // D-083 — AS renders the card (no live CBT sheet to wire)
+            if (this.isAs()) return;
             const fu = this.fu();
             const host = this.container()?.nativeElement;
             if (!host) return;

@@ -1,14 +1,3 @@
-/*
- * BCE multi-tenant (DEPLOY-002 P1) — the auth guards.
- *
- * ApprovedGmGuard (registered as the global APP_GUARD): when BCE_AUTH_REQUIRED=1, every NON-@Public
- * HTTP route requires a valid session for an APPROVED gm/admin; pending/rejected/anon are blocked
- * (403/401). When auth is NOT required (local dev / LAN), it is a NO-OP so the existing single-tenant
- * flow + the D-048 player loop are untouched. It only gates HTTP — the WebSocket gateway is P3.
- *
- * AdminGuard: always enforces an authenticated ADMIN (independent of BCE_AUTH_REQUIRED) so /api/admin/*
- * is never reachable without an admin session, even locally.
- */
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Response } from 'express';
@@ -16,7 +5,6 @@ import { AuthService } from './auth.service';
 import { IS_PUBLIC_KEY, type AuthedRequest } from './auth.types';
 import { SESSION_COOKIE, setSessionCookie } from './session-cookie';
 
-// HARDEN-7 B5 — slide a still-valid session forward when it enters the last N days of its 7-day life, so an
 // active user never hits the cliff (and a guest keeps a live handle to regenerate its recovery code).
 const REFRESH_WHEN_WITHIN_MS = 2 * 24 * 60 * 60 * 1000;
 
@@ -52,7 +40,6 @@ export class ApprovedGmGuard implements CanActivate {
         }
         req.user = user;
         this.auth.touchSeen(user.id); // refresh lastSeen (throttled in the store)
-        // HARDEN-7 B5 — sliding refresh: if the still-valid token is inside its final 2 days, re-issue a fresh
         // 7-day cookie (same secret, same {sub}). Only near expiry → not on every request; idempotent (after a
         // refresh the token is >2d out, so it won't re-fire until it nears the new expiry). Cookie-session only.
         const exp = this.auth.tokenExpiryMs(token);

@@ -1,10 +1,3 @@
-/*
- * BCE retool — Save dialog (DIRECTIVE-013). Opened from the dashboard SAVE control.
- * Save As: a name field with a smart default (e.g. "4th Wolf Guards · Clan Invasion ·
- * 3050"), confirm-on-overwrite for an existing name. Quick Save: a fresh
- * autosave-<datestamp> record. Esc / click-out cancel. Theme tokens (inherited from the
- * dashboard .theme-dossier host). MekBay components unedited.
- */
 import { Component, ChangeDetectionStrategy, HostListener, inject, output, signal } from '@angular/core';
 import { CampaignSaveStore } from '../campaign-save-store';
 
@@ -36,7 +29,7 @@ import { CampaignSaveStore } from '../campaign-save-store';
         </div>
     `,
     styles: `
-        .backdrop { position: fixed; inset: 0; z-index: 1100; background: rgba(15, 14, 9, .82); display: flex; align-items: center; justify-content: center; padding: 22px 22px calc(22px + var(--bce-footer-h, 0px)); } /* IMPORT-7 A — clear the legal footer */
+        .backdrop { position: fixed; inset: 0; z-index: 1100; background: rgba(15, 14, 9, .82); display: flex; align-items: center; justify-content: center; padding: 22px 22px calc(22px + var(--bce-footer-h, 0px)); }
         .modal { background: var(--paper); border: 2px solid var(--ink); width: 100%; max-width: 480px; }
         .mhead { font-family: var(--label); font-weight: 600; letter-spacing: 2px; text-transform: uppercase; font-size: 12px; color: var(--ink2); background: var(--panel); border-bottom: 2px solid var(--ink); padding: 8px 14px; }
         .mbody { padding: 16px 14px; }

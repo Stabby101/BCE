@@ -1,33 +1,6 @@
-/*
- * DIRECTIVE-QM-1 — THE GLOBAL DEPOT, tier 2: every era-legal item the company does NOT hold, at zero.
- *
- * WHY THIS EXISTS. ODM's premise is that nothing is replaceable on this world, and a depot that lists only
- * holdings hides the SHAPE of the shortage — which is the campaign. A zero line is a fact; an absent line
- * is ignorance. "Ferro-Fibrous: 0" is exactly the kind of thing this screen is for.
- *
- * PURE MODULE, no Angular: the partition is the whole of the logic, so it is testable without a browser
- * and the component stays a renderer.
- *
- * TIER MEMBERSHIP IS DERIVED FROM LINE EXISTENCE — no flag, no transaction log (PM-approved, superseding
- * the ordered "any line with a recorded transaction" derivation, which had nothing to read: InventoryLine
- * carries no history and the only trace of a depot transaction is prose in the campaign log).
- *
- *     TIER 1 = the item HAS a line in inventory.lines[].   TIER 2 = era-legal, and has none.
- *
- * That makes ruling 3 fall out for free. No debit path deletes a line at zero — every one is
- * `Math.max(0, onHand - n)` written back (inventory-shop.service:170 · odm-materiel:218 ·
- * odm-repair-bays.service:548) — so a DEPLETED line survives at 0 and stays in tier 1 by construction.
- * "We ran out" therefore renders on the same screen as, and distinguishably from, "we never had any".
- * A second field describing what line existence already says is a field that can disagree with it.
- */
 import type { CatalogItem } from '../inventory/starting-inventory';
 import type { InventoryLine } from '../inventory/starting-inventory';
 
-/** COMBAT FIRST, FIXED (PM ruling 3). Deliberately NOT by count: a list ordered by size REORDERS ITSELF as
- *  stock changes, which destroys the muscle memory a GM builds at a table. Order is a constant, not a
- *  computation — and this sequence is how a record sheet reads. `ammo` is absent on purpose: ODM-13 models
- *  ammunition as magazine BINS, and two representations of ammo on one screen is the
- *  one-vocabulary-two-questions bug the repair bays already paid for. */
 export const DEPOT_GROUP_ORDER: readonly string[] = ['weapon', 'misc', 'armor', 'structure', 'engine', 'gyro', 'cockpit', 'actuator'];
 
 export const DEPOT_GROUP_TITLE: Record<string, string> = {
@@ -63,11 +36,6 @@ export interface DepotDrawerGroup {
 const heldIds = (lines: readonly InventoryLine[]): Set<string> =>
     new Set(lines.map((l) => l.catalogId).filter((x): x is string => !!x));
 
-/** ODM-15b-style relevance: the authored structural rows (`struct:*`) are ALWAYS relevant — they are the
- *  depot's own namespace and are resolved client-side, never present in the build-time id set
- *  (generate-slices.mjs' own note; inventory-shop.ts:199 does the same). Everything else must be in the
- *  'Mech/vehicle-relevant set. Without the set (fetch failed) nothing is excluded: over-filtering a
- *  completeness feature into silence is worse than a little noise, and HOTFIX-014 set that precedent. */
 export function isDepotRelevant(id: string, relevant: ReadonlySet<string> | null): boolean {
     if (id.startsWith('struct:')) return true;
     return !relevant || relevant.has(id);

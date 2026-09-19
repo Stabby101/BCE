@@ -1,25 +1,9 @@
-/*
- * BCE Personnel (DIRECTIVE-058, T-040 slice 1) — the PURE starting-SUPPORT-personnel model.
- *
- * No Angular/DOM/service deps: given a force summary (units) + tier + seed it DETERMINISTICALLY produces the
- * support PersonnelState (named roster + staffing readout + monthly payroll). The owning PersonnelService does
- * the impure work (resolve the force size, store on the snapshot) and calls this — mirrors starting-inventory.ts.
- *
- * WITNESSES (REF-001 — canon/CamOps is the spec; read-and-cross-check, never bundled): MekHQ supplies the
- * MECHANICS (the support role set, the 6:1 support ratio, salary = base[role] × xpMultiplier[band], 2d6 →
- * experience-band generation, getShorthandedMod), ODM (a prior private prototype) supplies the STRUCTURE (layer 1 named
- * roster + layer 2 aggregate staffing/capacity — the NPC registry is slice 3 / D-060). This slice = layers 1+2.
- * HEURISTIC allotment math is BCE-authored (PERSONNEL_TUNABLES, PM-dialable like INVENTORY_TUNABLES). Salaries
- * + bands are cited (CamOps via MekHQ). DATA-002/003: this output is structured campaign state, STORED on the
- * snapshot and never re-rolled (the forward-only PersonnelService.ensureStartingPersonnel guard).
- */
 
 export type SupportRole = 'mek_tech' | 'astech' | 'doctor' | 'medic' | 'admin';
 export type ExperienceBand = 'green' | 'regular' | 'veteran' | 'elite';
 export type PersonStatus = 'active' | 'injured' | 'kia';
 export type PersonnelTier = 'lean' | 'normal' | 'established';
 
-/** Layer 1 — a named member of the support roster. (Bio/voice is a D-060 concern; a role line is enough here.) */
 export interface SupportPerson {
     id: string;
     name: string;
@@ -44,11 +28,9 @@ export interface PersonnelState {
     generatedAt: string;
     tier: string;
 }
-/** D-059 — a hireable candidate: a would-be SupportPerson + the one-time signing bonus a seasoned hand asks. */
 export interface HireCandidate extends SupportPerson {
     signingBonus: number; // 0 for ≤-average hires; the "golden hello" for the rare veteran/elite
 }
-/** D-059 — the refreshing personnel market: a pool stable within a campaign MONTH (periodKey), rebuilt on cross. */
 export interface HiringMarket {
     periodKey: string;        // `${year}-${month}` of currentDate — the pool's stability window
     pool: HireCandidate[];
@@ -86,7 +68,6 @@ export const PERSONNEL_TUNABLES = {
     /** governing-skill level for a band (display: target = baseTN − level; higher level = better). */
     SKILL_BY_BAND: { green: 3, regular: 5, veteran: 7, elite: 9 } as Record<ExperienceBand, number>,
 
-    // ── D-059 HIRING HALL (the MekHQ personnel market, collapsed to BCE-tunable simplicity) ──
     /** candidate-pool size before tier scaling (a refreshing monthly hall). */
     poolSizeBase: 6,
     poolSizeByTier: { lean: 0.7, normal: 1.0, established: 1.4 } as Record<PersonnelTier, number>,
@@ -175,7 +156,6 @@ export function generateStartingPersonnel(input: { unitCount: number; tier: Pers
     mint('medic', medics);
     mint('admin', admins);
 
-    // staffing + payroll are PURE derivations of the roster (so a D-059 hire/fire recomputes them identically).
     return { roster, staffing: computeStaffing(roster), monthlyPayroll: computePayroll(roster), generatedAt: input.generatedAt, tier };
 }
 
@@ -214,11 +194,6 @@ export function commandAvgSkill(roster: SupportPerson[]): number {
     return adv.reduce((s, p) => s + p.skillLevel, 0) / adv.length;
 }
 
-/**
- * The D-059 HIRING-HALL candidate pool — DETERMINISTIC per (seed, periodKey). Pool size scales by tier; the role
- * MIX is weighted to common roles; bands skew low via 2d6 AND the anti-munchkin gate (hands far above the command
- * average usually decline → re-roll down); the rare veteran/elite carry a signing bonus. MekHQ market, collapsed.
- */
 export function generateCandidatePool(input: { unitCount: number; tier: PersonnelTier; periodKey: string; seed: string; commandAvgLevel: number }): HireCandidate[] {
     const T = PERSONNEL_TUNABLES;
     const tier = tierOf(input.tier);

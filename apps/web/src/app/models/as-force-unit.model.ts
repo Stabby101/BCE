@@ -113,7 +113,6 @@ export class ASForceUnit extends ForceUnit {
     }
     
     public getBaseBv = computed<number>(() => {
-        // DIRECTIVE-127 (REBASE-1 P1 c ruling) — AS-PV fallback: upstream-native `as.PV` first (full catalog),
         // then the MUL-authoritative folded top-level `pv` (per-era SLIM slices strip `as` but carry `pv`), never
         // a silent 0. `pv?: number` re-added to UnitSummary (upstream removed it); mirror-catalog folds it and
         // gen-slices carries it (prerun shape check confirms). WITNESS at (e): the AS card renders a non-zero PV.

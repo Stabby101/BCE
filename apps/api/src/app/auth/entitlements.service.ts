@@ -1,10 +1,3 @@
-/*
- * DIRECTIVE-ODM-1 Phase 1 — per-account FEATURE GRANTS (the entitlement truth). A tiny row-per-grant table
- * (userId, feature) — a TABLE, not a users column: pack ONE implies more features; grant metadata (who/when)
- * for governance parity with audit_log; idempotent row ops; no contention on the hot users row. Same idiom as
- * every other store here: openDb + CREATE IF NOT EXISTS in onModuleInit. Guests are refused at the GRANT
- * endpoint (admin.controller) — this service is mechanism, not policy.
- */
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { DatabaseSync } from 'node:sqlite';
 import { openDb } from '../open-db';

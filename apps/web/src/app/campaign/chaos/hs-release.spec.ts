@@ -1,7 +1,3 @@
-/*
- * DIRECTIVE-PD3 P4 (PD3-1) — the RELEASE transform, pinned fast: any condition leaves; the pilot is freed, never removed; the
- * commander is re-designated when it was the released unit; an emptied non-command lance is pruned; an unknown id is a typed refusal.
- */
 import { releaseFromForce } from './hs-release';
 import type { ProtoInstance } from '../force/force-generator';
 import type { Pilot } from '../barracks/pilot-generator';
@@ -11,7 +7,7 @@ const unit = (id: string, over: Partial<ProtoInstance> = {}): ProtoInstance => (
 const pilot = (id: string, assigned?: string): Pilot => ({ pilotId: id, name: `P ${id}`, gunnery: 4, piloting: 5, status: 'Active', assignedInstanceId: assigned } as Pilot);
 const structure = (): ForceStructure => ({ lances: [{ id: 'L0', name: 'Command', ordinal: 0 }, { id: 'L1', name: 'Second', ordinal: 1 }] } as unknown as ForceStructure);
 
-describe('releaseFromForce — PD3 P4 (PD3-1)', () => {
+describe('releaseFromForce — PD3 P4 ', () => {
     it('releases a DEPLOYED unit too (any condition), frees its pilot (kept on the roster), leaves the rest untouched', () => {
         const force = [unit('a', { condition: 'Deployed', lanceId: 'L0', isCommander: true }), unit('b', { condition: 'Reserve', lanceId: 'L1', tons: 50 })];
         const r = releaseFromForce({ force, pilots: [pilot('p1', 'b'), pilot('p2', 'a')], structure: structure(), instanceId: 'b' });

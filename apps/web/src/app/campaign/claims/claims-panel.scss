@@ -1,4 +1,3 @@
-/* Claim board (D-042) — rides the dashboard's .theme-dossier tokens (matches settings/intel). */
 :host { display: block; }
 
 .ph { font-family: var(--label); font-weight: 600; letter-spacing: 2.5px; font-size: 13px; text-transform: uppercase; border-bottom: 1.5px solid var(--ink); padding-bottom: 6px; margin: 0 0 12px; }
@@ -21,14 +20,12 @@
 
 .cl-empty { font-family: var(--type); font-size: 13px; color: var(--ink2); border: 1px dashed var(--line); padding: 14px; }
 
-/* D-050: per-side groups (GM sees both BLUFOR + OPFOR) + a tiny unit sprite per row. */
 .cl-group { margin-bottom: 16px; }
 .cl-side { font-family: var(--label); font-weight: 600; letter-spacing: 2px; font-size: 12px; text-transform: uppercase; color: var(--ink); margin: 0 0 8px; padding-bottom: 4px; border-bottom: 1.4px solid var(--line); }
 .cl-blufor .cl-side { border-bottom-color: var(--ok); }
 .cl-opfor .cl-side { border-bottom-color: var(--stamp); }
 .cl-side-sub { font-family: var(--type); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 11px; color: var(--ink2); margin-left: 6px; }
 .cl-side-n { float: right; font-family: var(--mono); font-size: 11px; color: var(--ink2); }
-/* DIRECTIVE-130 — the GM manual OpFor builder entry button (OPFOR section header) */
 .cl-buildopfor { float: right; margin: -3px 12px 0 0; font-family: var(--label); font-weight: 600; letter-spacing: 1px; font-size: 10px; text-transform: uppercase; padding: 5px 11px; min-height: 30px; cursor: pointer; border: 1.3px solid var(--stamp); background: transparent; color: var(--stamp); }
 .cl-buildopfor:hover:not(:disabled), .cl-buildopfor:focus-visible:not(:disabled) { background: var(--stamp); color: var(--paper); outline: none; }
 .cl-buildopfor:disabled { opacity: .4; cursor: not-allowed; }
@@ -46,7 +43,6 @@
 .cl-pending { flex: 0 0 auto; font-family: var(--label); font-weight: 700; font-size: 10.5px; letter-spacing: .04em; color: #7a5b12; background: #f2d488; border: 1px solid #b8901e; border-radius: 999px; padding: 2px 7px; white-space: nowrap; }
 .cl-pending-sum { color: #b8901e; font-weight: 700; }
 
-/* HOTFIX-030 — the board header counts + per-row presence dot + Kick/reassign; the spectator list. */
 .cl-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .cl-head .ph { flex: 1 1 auto; }
 .cl-counts { font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em; color: var(--ink2); white-space: nowrap; }

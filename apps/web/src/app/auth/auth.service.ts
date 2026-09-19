@@ -1,15 +1,3 @@
-/*
- * BCE multi-tenant (DEPLOY-002 P4) — the GM-bundle auth client. Reads /api/auth/me to drive the gated
- * shell (wall → pending → rejected → in), starts the OAuth login flow, runs the flag-gated dev-login test
- * seam, and exposes the admin approval console calls. Lives in the GM web bundle; the port-isolated player
- * bundle stayed account-less (ROLE-002) until GM-1 P3 gave player REST the device's credential — and GM-1c now
- * injects THIS service there too (fragment adoption + enabledProviders + the start URL) so the join page can
- * run the SAME sign-in flow, not a fork of it. The player SOCKET still withholds the token (HOTFIX-033).
- *
- * The session JWT is mirrored to localStorage ('bce.auth.token') so ClaimRealtimeService can put it on the
- * socket handshake (auth.token → the P2 ownership path); the httpOnly cookie still carries HTTP auth. When
- * auth is NOT required (dev/LAN) the gate is 'open' and nothing here changes the existing experience.
- */
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, timeout } from 'rxjs';
@@ -58,7 +46,7 @@ interface MeResponse {
     allowGuest: boolean; // DEPLOY-009
     enabledProviders?: string[]; // LOGIN-1: OAuth providers configured on the server (drives the sign-in buttons)
     token: string | null;
-    entitlements?: string[]; // ODM-1 — additive per-account feature grants (drives entitled-only surfaces; server enforces)
+    entitlements?: string[];
 }
 
 const ENGINE_URL_KEY = 'bce.engine.url';
@@ -70,7 +58,6 @@ export const GUEST_RECOVERY_KEY = 'bce.guest.recovery';
 export const GUEST_BANNER_ACK_KEY = 'bce.guest.ack';
 const ME_TIMEOUT_MS = 6000;
 
-/** The sign-in button's human label for a provider id (shared by the login screen and the GM-1c join page). */
 export function providerLabel(p: string): string {
     return p === 'google' ? 'Google' : p === 'github' ? 'GitHub' : (p.charAt(0).toUpperCase() + p.slice(1));
 }
@@ -115,7 +102,6 @@ export class AuthService {
     /** The signed-in GM (only meaningful when gated) — drives the account chip + admin console. */
     readonly gmUser = computed<GmUser | null>(() => (this.authRequiredSig() ? this.userSig() : null));
     readonly isAdmin = computed(() => this.gate() === 'open' && this.gmUser()?.role === 'admin');
-    /** DIRECTIVE-ODM-1 — the account's feature grants (empty when unauthenticated). */
     private readonly entitlementsSig = signal<string[]>([]);
     readonly entitlements = this.entitlementsSig.asReadonly();
     /** Entitled-only surfaces render off this. dev/LAN (auth off, single-tenant) is permissive — consistent with
@@ -141,7 +127,7 @@ export class AuthService {
             this.devLoginSig.set(!!r?.devLoginAllowed);
             this.allowGuestSig.set(!!r?.allowGuest);
             this.enabledProvidersSig.set(Array.isArray(r?.enabledProviders) ? r!.enabledProviders : []); // LOGIN-1
-            this.entitlementsSig.set(Array.isArray(r?.entitlements) ? r!.entitlements : []); // ODM-1
+            this.entitlementsSig.set(Array.isArray(r?.entitlements) ? r!.entitlements : []);
             this.syncSocketToken(r?.token ?? null);
             this.degradedSig.set(false); // AUTH-1 — a conclusive resolve heals a degraded session
         } catch (e) {
@@ -151,7 +137,6 @@ export class AuthService {
             // not earned — HOLD the prior state and mark the resolution degraded. On a COLD boot the held
             // state IS the initial permissive posture (user null, authRequired false), so dev/LAN behaviour
             // is byte-identical to the old catch-all. THE GUEST-LOCKOUT FIX lives here: a cookie-blocked
-            // guest is Bearer-only (HOTFIX-017) — the old unconditional syncSocketToken(null) deleted their
             // ONLY credential on any api blip (deploy restart included), signing them out PERMANENTLY.
             const status = e instanceof HttpErrorResponse ? e.status : 0;
             if (status === 401 || status === 403) {
@@ -160,7 +145,7 @@ export class AuthService {
                 this.devLoginSig.set(false);
                 this.allowGuestSig.set(false);
                 this.enabledProvidersSig.set([]); // LOGIN-1
-                this.entitlementsSig.set([]); // ODM-1
+                this.entitlementsSig.set([]);
                 this.syncSocketToken(null); // authoritative — the mirror may be wiped
                 this.degradedSig.set(false); // conclusive, even though rejected
             } else {
@@ -171,10 +156,6 @@ export class AuthService {
         }
     }
 
-    /** HOTFIX-028 — if the boot /auth/me is still in flight past the first-paint deadline (a slow/unreachable
-     *  host — the old GM "black screen"), fail OPEN so the shell PAINTS (the cover) instead of staying black.
-     *  authRequired stays false → gate 'open' (dev-equivalent). The in-flight refresh still completes and sets
-     *  the real gate a moment later; a reachable host (Railway) responds well before this ever fires. */
     resolveOpenOnTimeout(): void {
         if (!this.resolvedSig()) this.resolvedSig.set(true);
     }
@@ -188,12 +169,6 @@ export class AuthService {
         } catch { /* localStorage unavailable — the socket falls back to account-less */ }
     }
 
-    /** HOTFIX-040 Fix A — Bearer-first for OAuth. The callback redirect carries the session JWT on the URL
-     *  FRAGMENT (#bce_auth=…). Adopt it as the Bearer/socket token BEFORE the first /auth/me (so Google works
-     *  when the browser blocks the cross-site cookie), then STRIP it from the URL so it's never left in the
-     *  address bar / history / a shared link. Called from the APP_INITIALIZER before refresh(); no-op otherwise.
-     *  GM-1c: returns whether a token was adopted — the player join page uses the verdict to re-open Bring-my-company
-     *  after its sign-in round-trip (the path + query survive the strip, so the join link is intact). */
     adoptAuthFragment(): boolean {
         try {
             const hash = typeof location !== 'undefined' ? (location.hash || '') : '';
@@ -208,9 +183,6 @@ export class AuthService {
         } catch { return false; /* location/history unavailable — degrade to cookie-only auth */ }
     }
 
-    /** The OAuth start URL. GM-1c: an optional `returnTo` (a same-site path such as the join page's
-     *  `/player/?campaign=…&engine=…`) rides through the provider as the OAuth `state`, and the callback lands the
-     *  browser back on it — the server validates it (open-redirect gate) and falls back to the root otherwise. */
     loginUrl(provider: string, returnTo?: string): string {
         return `${this.base()}/auth/${provider}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`;
     }
@@ -242,7 +214,6 @@ export class AuthService {
                 localStorage.removeItem(GUEST_BANNER_ACK_KEY); // a fresh code → show the banner once
             }
         } catch { /* localStorage blocked — the code is still in Settings via /me-less re-mint? no: surfaced in the response only */ }
-        // HOTFIX-017: Bearer-FIRST — mirror the returned session token to localStorage BEFORE the first
         // /auth/me, so the interceptor attaches `Authorization: Bearer …`. Without this, hosted guest sign-in
         // rides ONLY the cross-site session cookie, which a strict/fresh browser (3rd-party cookies blocked)
         // drops → /auth/me returns user:null → the gate stays 'wall' → "Continue as guest" does nothing. The
@@ -262,7 +233,7 @@ export class AuthService {
             localStorage.setItem(GUEST_RECOVERY_KEY, code.trim());
             localStorage.setItem(GUEST_BANNER_ACK_KEY, '1');
         } catch { /* */ }
-        this.syncSocketToken(r?.token ?? null); // HOTFIX-017: Bearer-first parity with guest — store the token before /auth/me
+        this.syncSocketToken(r?.token ?? null);
         await this.refresh();
     }
 
@@ -275,18 +246,13 @@ export class AuthService {
                 { withCredentials: true },
             ),
         );
-        this.syncSocketToken(r?.token ?? null); // HOTFIX-017: Bearer-first — store the token before the first /auth/me
+        this.syncSocketToken(r?.token ?? null);
         await this.refresh();
     }
 
-    /** HOTFIX-040 — drop the local guest recovery keys (their plaintext copy lives ONLY on the client). */
     private clearGuestKeys(): void {
         try { localStorage.removeItem(GUEST_RECOVERY_KEY); localStorage.removeItem(GUEST_BANNER_ACK_KEY); } catch { /* */ }
     }
-    /** HOTFIX-040 Fix B/C — drop the LOCAL session (Bearer token + guest keys) FIRST (a cookie-blocked session
-     *  is Bearer-only, so this is what actually signs them out), THEN best-effort clear the server cookie (with
-     *  matching attributes, server-side). No /auth/me refresh — callers either refresh() (logout) or hard-reload
-     *  (reset / signOut navigate). Shared by logout() and the cover's Reset-app-data. */
     async clearSession(): Promise<void> {
         this.syncSocketToken(null);
         this.clearGuestKeys();
@@ -294,13 +260,10 @@ export class AuthService {
     }
 
     async logout(): Promise<void> {
-        await this.clearSession(); // HOTFIX-040 — local token/keys first, then the server cookie (matching attrs) drops it
+        await this.clearSession();
         await this.refresh();
     }
 
-    /** HOTFIX-025 — sign out + hard-return to the cover, with the HF-016 guest confirm. Shared by the gated
-     *  shell's pending/rejected screens AND the cover account line (the floating account chip was removed). The
-     *  hard navigate makes the sign-out VISIBLE (the wall returns) and drops all in-memory campaign state. */
     async signOut(): Promise<void> {
         if (this.isGuest() && typeof confirm === 'function'
             && !confirm("Sign out? You'll need your recovery code to get back into this guest campaign.")) return;
@@ -331,7 +294,6 @@ export class AuthService {
     async unban(id: string): Promise<void> { await firstValueFrom(this.http.post(`${this.base()}/admin/users/${encodeURIComponent(id)}/unban`, {}, { withCredentials: true })); }
     async setRole(id: string, role: 'admin' | 'gm'): Promise<void> { await firstValueFrom(this.http.post(`${this.base()}/admin/users/${encodeURIComponent(id)}/role`, { role }, { withCredentials: true })); }
     async removeUser(id: string): Promise<void> { await firstValueFrom(this.http.post(`${this.base()}/admin/users/${encodeURIComponent(id)}/remove`, {}, { withCredentials: true })); }
-    // ── DIRECTIVE-ODM-1 Phase 1 — per-account feature grants (the hidden-pack entitlement toggle) ──
     async listGrants(): Promise<{ userId: string; feature: string }[]> {
         try { return (await firstValueFrom(this.http.get<{ grants: { userId: string; feature: string }[] }>(`${this.base()}/admin/grants`, { withCredentials: true })))?.grants ?? []; }
         catch { return []; }
@@ -348,12 +310,6 @@ export class AuthService {
         try { return (await firstValueFrom(this.http.get<AdminStats>(`${this.base()}/admin/stats`, { withCredentials: true }))) ?? null; }
         catch { return null; }
     }
-    /** ODM-26 — the whole-DB export (HARDEN-7 A1 `/admin/export`, VACUUM INTO → a consistent single file).
-     *  Fetched rather than linked ON PURPOSE: `extractToken` accepts the session cookie OR a Bearer header,
-     *  and a plain `<a href>` only carries the cookie — so a bearer-only admin session would meet a 401 on a
-     *  link and download nothing. HttpClient carries both (the interceptor attaches Bearer, withCredentials
-     *  sends the cookie), which is the difference between a control that works and one that works for some
-     *  people. Returns the blob; the caller names the file and hands it to the browser. */
     async adminExport(): Promise<Blob | null> {
         try { return (await firstValueFrom(this.http.get(`${this.base()}/admin/export`, { responseType: 'blob', withCredentials: true }))) ?? null; }
         catch { return null; }

@@ -1,15 +1,3 @@
-/*
- * BCE campaign-pack — CANON REPAIR TIMES (DIRECTIVE-033). Pure TS, no Angular/DOM. Repair/replace
- * labor-hours per component, CITED 1-1 from the canonical repair-time reference (James's
- * StratOps p.183 §9 extract + the ODM D39 §10 overlay). estimateRepairJob() walks the REAL D-030
- * damage envelope (armor/internal hits, crit list) → an itemized bill. NO invented numbers — every
- * line carries its source cite; envelope-to-table gaps are carried as notes (the pilot-abilities precedent).
- *
- * GAPS carried as notes (not invented): (a) Endo-steel internal doubles (§10.4) but the envelope has no
- * structure-type → Std 0.1h/pt used, flagged; (b) a crit the table doesn't name → "Weapons and Other
- * Equipment" §9.2 catch-all; (c) destroyed crit → replace where §9.2 carries it, else the §9.6 repair tier;
- * (d) StratOps skill-modifier checks + partial repairs (§9.7) are out of this slice (no dice).
- */
 import type { CBTSerializedState, CriticalSlot } from '../../models/force-serialization';
 
 const H = (min: number) => Math.round((min / 60) * 100) / 100; // minutes -> labor-hours (2dp)
@@ -57,7 +45,6 @@ const REPAIR_CITE: Record<string, string> = {
     jumpJet: 'StratOps p.185 §9.6 Jump Jet (90 min)',
 };
 
-// D-034 ride-along (T-022 fidelity): armor/internal bill from RAW MINUTES, rounded ONCE at the line
 // total — pre-rounding the per-point rate (5 min → 0.08 h) under-billed ~4% at scale. Cites unchanged.
 const ARMOR_PER_POINT = { minutes: 5, cite: 'StratOps p.183 §9.2 Armor (5 min per circle/point)' };
 const INTERNAL_PER_POINT = { minutes: 6, cite: 'ODM D39 §10.4 Internal Structure (0.1 h/pt Std; Endo ×2 — flagged)' };

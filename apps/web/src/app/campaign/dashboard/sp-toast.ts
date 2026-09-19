@@ -1,17 +1,3 @@
-/*
- * BCE — DIRECTIVE-139: the SP transaction TOAST (Hot Spots fork only). A brief, non-blocking confirmation for
- * every PLAYER-INITIATED Warchest transaction — "{event} · −N SP (balance M SP)" (income "+N SP", the coalesced
- * month roll-up "Monthly settlement · net ±N SP") — so a player sees the spend AND that it's recorded, with a
- * one-tap "View ledger ▸" jump to the Contract Record Sheet.
- *
- * DECISION (new lightweight component, not the shared MekBay ToastService/ToastsComponent): the shared toast
- * renders message-only with click-to-dismiss and lives in the MekBay-core layer — it has no action-button
- * affordance, and wiring campaign-ledger navigation into a vendored core component would violate the fork
- * boundary (core never imports the campaign layer). This is a self-contained campaign-layer toast: it reads the
- * WarchestService announcement signal, owns the ~4s auto-dismiss + the action + accessibility, and is mounted
- * ONLY in the (HS-or-Traditional) dashboard — but only HS ever calls warchest.post(), so Traditional never
- * announces and this stays silent + byte-identical there.
- */
 import { Component, ChangeDetectionStrategy, inject, signal, effect, untracked, output } from '@angular/core';
 import { WarchestService, type SpTx } from '../chaos/warchest.service';
 
@@ -40,7 +26,7 @@ const MAX = 3;
     styles: [`
         /* bottom-center, above the phone safe-area; fixed + pointer-events only on the pills, so it never
            gates or covers the action UI (the tab panels scroll underneath). z below modal overlays (50). */
-        .spt-wrap { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(14px + var(--bce-footer-h, 0px)); /* IMPORT-7 A — the footer var already includes the safe-area inset */ z-index:44; display:flex; flex-direction:column; gap:8px; align-items:center; width:max-content; max-width:min(92vw, 460px); pointer-events:none; }
+        .spt-wrap { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(14px + var(--bce-footer-h, 0px));z-index:44; display:flex; flex-direction:column; gap:8px; align-items:center; width:max-content; max-width:min(92vw, 460px); pointer-events:none; }
         .spt { pointer-events:auto; display:flex; align-items:center; gap:12px; background:var(--paper2, var(--paper, #f4ecd8)); color:var(--ink, #1a1407); border:1.6px solid var(--ink, #1a1407); border-left:4px solid var(--stamp, #7a2d1e); box-shadow:0 6px 20px rgba(0,0,0,.35); padding:9px 12px; font-family:var(--type); font-size:13px; animation:spt-in .18s ease-out; }
         .spt.income { border-left-color:var(--ok, #3a7d44); }
         .spt.settle { border-left-color:var(--ink2, #6b5d43); }
@@ -55,9 +41,7 @@ const MAX = 3;
 })
 export class SpToastComponent {
     private readonly warchest = inject(WarchestService);
-    /** DIRECTIVE-139 — the dashboard binds this to select('warchest') (the Contract Record Sheet tab). */
     readonly viewLedger = output<void>();
-    /** DIRECTIVE-PD3 P1 — a 'repair' note's action: the dashboard binds this to select('chaos-repair') (Repair & Refit). */
     readonly viewRepair = output<void>();
 
     protected readonly toasts = signal<SpToast[]>([]);

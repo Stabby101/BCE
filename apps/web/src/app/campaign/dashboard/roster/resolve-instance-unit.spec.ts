@@ -36,7 +36,7 @@ describe('resolveInstanceUnit (PLATFORM-1 Part C — the id:-1 guard)', () => {
         expect(r).toBe(MARAUDER);
     });
 
-    it('a POSITIVE mulId still resolves by id (the HOTFIX-013 off-era-buy path, unchanged)', () => {
+    it('a POSITIVE mulId still resolves by id (the off-era-buy path, unchanged)', () => {
         const r = resolveInstanceUnit({ unitRef: 'not-in-slice', chassis: 'renamed', model: 'zz', mulId: 731 }, undefined, CATALOG);
         expect(r).toBe(MARAUDER);
     });

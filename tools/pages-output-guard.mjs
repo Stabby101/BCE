@@ -22,7 +22,6 @@ const LIMIT = Number(process.env.BCE_PAGES_MAX_FILE_BYTES || 25 * 1024 * 1024); 
 const WARN_AT = LIMIT - 2 * 1024 * 1024;
 const PAGES_BOUND = process.env.CF_PAGES === '1' || process.env.BCE_PAGES_DEPLOY === '1';
 // Output files the /mekbay Pages Function serves from R2 instead of static (see functions/mekbay/[[path]].js).
-// player/mekbay/units.json = the player build's own copy of public/ folded under /player/ (HOTFIX-010); the player app
 // resolves REMOTE_HOST to `${origin}/mekbay` (common.model.ts resolveRemoteHost) and the slices to root-absolute
 // /mekbay/slim, so nothing ever fetches /player/mekbay/* — the copy is dead weight and equally over the limit.
 const R2_SERVED = new Set(['mekbay/units.json', 'player/mekbay/units.json']);

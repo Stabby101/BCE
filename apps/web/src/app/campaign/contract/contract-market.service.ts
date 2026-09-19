@@ -1,10 +1,3 @@
-/*
- * BCE retool — contract-market service (DIRECTIVE-017). The Angular seam around the pure
- * contracts module: builds the era-gated employer + target pools (reusing the D-014 faction
- * machinery), feeds the interim CamOps inputs, generates the market ONCE, and stores it on
- * NewCampaignState. MekBay's DataService supplies the factions (kicked here, since the MERC
- * wizard path doesn't mount it). All canon math lives in contract-market.ts / contract-terms.ts.
- */
 import { Injectable, Injector, effect, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { DataService } from '../../services/data.service';
@@ -46,10 +39,9 @@ export class ContractMarketService {
     private readonly state = inject(NewCampaignState);
     private readonly data = inject(DataService);
     private readonly injector = inject(Injector);
-    private readonly star = inject(StarSystemsService); // D-102 A1 — territory adjacency for plausible matchups
+    private readonly star = inject(StarSystemsService);
 
     constructor() {
-        // D-102 test seam (OPT-IN: localStorage['bce.test.d102']) — the employer→plausible-targets matrix for the
         // current era, so a headless render can prove no era-implausible matchup (Capellan→Clan-Wolf) is offered.
         if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage.getItem('bce.test.d102')) {
             (window as unknown as Record<string, unknown>)['__d102market'] = (): unknown => {
@@ -80,7 +72,7 @@ export class ContractMarketService {
         let dataOk = true;
         try {
             await this.ensureData();
-            await this.star.ensureLoaded(); // D-102 A1 — territory adjacency ready before the first market build
+            await this.star.ensureLoaded();
         } catch {
             dataOk = false; // offline -> generics-only fallback (never dead-end)
         }
@@ -90,28 +82,19 @@ export class ContractMarketService {
         return market;
     }
 
-    /** Monthly refresh (D-022): reroll the market per the D-017 procedure (CamOps offers on the 1st).
-     *  Synchronous — the catalog is already loaded post-Begin; only fires when no contract is ACTIVE.
-     *  Caller persists. */
     refreshMarket(): boolean {
         if (!this.data.isDataReady()) return false;
         this.state.setContractMarket(this.buildMarketCore(true));
         return true;
     }
 
-    /** D-102 A1 — territory adjacency at the SYSTEMS era id. CRITICAL: systems.json ownerByEra is keyed by the
-     *  BCE wizard era id (state.era().id, 1-12, what the D-080/D-085 localizer uses) — NOT the MekBay era id
-     *  (resolveMekbayEraId) used to gate the unit/faction pools, which is a different number. Using the wrong
-     *  one resolves the wrong era's ownership (e.g. era-12 Wolf Empire) and wrongly borders everyone to a Clan. */
     private factionAdjacencyForTerritory(): Record<string, string[]> {
         const sysEraId = this.state.era()?.id;
         return sysEraId != null ? this.star.factionAdjacency(sysEraId) : {};
     }
 
-    /** The D-017 generation procedure, synchronous (assumes data readiness was already resolved). */
     private buildMarketCore(dataOk: boolean): ContractMarket {
         const eraId = dataOk ? resolveMekbayEraId(this.state.era(), this.data.getEras()) : null;
-        // Current campaign year (D-022 clock-aware); pre-clock (Begin) falls back to the start year.
         const year = this.state.currentDate()?.y ?? this.state.startDate()?.y ?? this.state.era()?.from ?? 3025;
         const ratingModifier = RATING_MODIFIER[this.state.rating() ?? 'Regular'] ?? 5;
         const forceCount = this.state.unitSize()?.count ?? 1;
@@ -121,7 +104,7 @@ export class ContractMarketService {
         const targets = this.buildTargets(factions, eraId, employers);
 
         if (misses.length) {
-            console.warn(`[D-017 employers] ${employers.filter((e) => !e.generic).length - misses.length}/${employers.filter((e) => !e.generic).length} faction employers classified; ${misses.length} via group fallback: ${misses.join(', ')}`);
+            console.warn(`[employers] ${employers.filter((e) => !e.generic).length - misses.length}/${employers.filter((e) => !e.generic).length} faction employers classified; ${misses.length} via group fallback: ${misses.join(', ')}`);
         }
 
         return generateMarket({
@@ -135,21 +118,16 @@ export class ContractMarketService {
             employers,
             targets,
             employerMisses: misses,
-            factionAdjacency: this.factionAdjacencyForTerritory(), // D-102 A1
+            factionAdjacency: this.factionAdjacencyForTerritory(),
         });
     }
 
-    /** Accept an offer → the live ACTIVE contract (D-022 lifecycle: status + acceptance date + pay tracking). */
     accept(offer: ContractOffer): void {
         const date = this.state.currentDate() ?? this.state.startDate() ?? undefined;
         this.state.setAcceptedContract({ ...offer, status: 'ACTIVE', acceptedDate: date ?? undefined, paidMonths: 0, paidOut: 0 });
-        this.state.setMissionSpec(null); // a fresh contract has no mission until GENERATEd (D-023)
+        this.state.setMissionSpec(null);
     }
 
-    /** DIRECTIVE-067 — synthesize + accept a one-shot ACTIVE contract for Quick Mission. Reuses the market
-     *  generator for an era/faction-appropriate offer (missionType + clauses + pay), then retargets it at a
-     *  SENSIBLE enemy faction (era-active, not the player's own, preferring a different group). Set ACTIVE
-     *  directly — no market browse. mission-generator.generate() then BV-matches the OpFor off this contract. */
     acceptQuickMissionContract(): void {
         let offer = this.buildMarketCore(this.data.isDataReady()).offers[0];
         if (!offer) return;
@@ -167,7 +145,6 @@ export class ContractMarketService {
         const player = norm(playerName);
         const pool = eraActivePool(this.data.getFactions(), eraId).filter((f) => norm(f.name) !== player && !PIRATE_NORM.has(norm(f.name)));
         if (!pool.length) return null;
-        // D-102 A1 — prefer a faction PLAUSIBLY OPPOSED to the player at this era (the same territory oracle the
         // market uses); relax to the prior different-group preference, then any (never dead-ends).
         const plausible = plausibleTargets(playerName, pool.map((f) => ({ name: f.name, group: f.group })), { adjacency: this.factionAdjacencyForTerritory(), year });
         if (plausible.length) return plausible[Math.floor(Math.random() * plausible.length)].name;

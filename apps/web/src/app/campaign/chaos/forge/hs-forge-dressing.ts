@@ -129,12 +129,6 @@ export function buildSynopsis(corpus: SynopsisCorpus, settlement: string, region
     return out;
 }
 
-/** A plain-English title from the title bank. Patterns may be allow-objects restricting a word slot
- *  (the corpus law); word slots fill locally, {WORLD} stays for the global bake.
- *  ANTI-REPEAT (James's wave ruling, 2026-07-18): a draft is rejected when its exact title — or any
- *  of its distinctive words — already appears in `recentTitles` (the theater's generation window:
- *  the persisted forged records, so a top-up run never deals "Bargain" three times). Bounded retries
- *  (8) then accept the last draft — never a dead-end; deterministic given state, like continuity. */
 // 'operation' is a frame word, not content — without it every "Operation X Y" draft collides with any
 // prior Operation title, degrading the pattern to once-per-window and burning retries (W1c proofread).
 const TITLE_STOPWORDS = new Set(['the', 'on', 'at', 'of', 'and', 'a', 'an', 'operation']);
@@ -224,11 +218,6 @@ export function buildSides(
     };
 }
 
-/** The d6-band complication table (§5.3 — the D-110e roll continues to fire unchanged at track time;
- *  THIS is the hotspot-level authored-shape table). WAVE: the draw pool MIXES the donor seed's own
- *  complications with the forge's corpus pool (both rendered "{name}. {effect}", both length-SELECTED
- *  ≤360 per HOTSPOT-BRIEF §7.3 — never truncated — and name-deduped, donor first: the donor's
- *  mission-specific texture outranks the generic pool on a collision). */
 export function buildComplicationTable(donorComps: readonly SeedComplication[], corpusComps: readonly { name: string; effect: string }[], rng: () => number): HotSpotComplication[] {
     const rowsOf = [
         ...donorComps.map((c) => ({ name: c.name, row: `${c.name}. ${c.mechanicalEffect}` })),

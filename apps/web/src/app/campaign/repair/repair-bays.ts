@@ -1,9 +1,3 @@
-/*
- * BCE campaign-pack — REPAIR & SALVAGE BAYS domain (DIRECTIVE-033). Pure TS, no Angular/DOM.
- * The 4 bays, their tunables, and the priority-weighted day-burn math — kept pure so the burn is
- * deterministic + testable and lifts cleanly to apps/api. The Angular seam (queue/assign/completion/
- * persist) lives in repair-bays.service.ts; the cited time table lives in repair-times.ts.
- */
 import type { RepairLine } from './repair-times';
 import type { CampaignStartDate } from '../new-campaign-state';
 import type { CBTSerializedState } from '../../models/force-serialization';
@@ -24,18 +18,13 @@ export interface Bay {
     notes?: string[];             // estimate gap-notes carried (no invented numbers)
     assignedDate?: CampaignStartDate;
     isPrize?: boolean;            // captured cold-storage refit (display badge; RESERVE is driven by !lanceId)
-    // ── ODM-13 Phase 2 — ADDITIVE fields the ODM fork writes; Classic never sets them (D-0b). ──
     heldFor?: string[];           // R3 HOLD: the missing replace-components the job awaits (fork-only)
     lastNote?: string;            // the freed bay's last-completion note (e.g. a REARMED SHORT line; fork-only)
-    // ── ODM-17 P4 — ADDITIVE fork-only (D-0b): the per-JOB priority (the doctrine's P1-P4 ladder; GM-set,
     //    defaulted from triage at assignment). Classic's per-BAY `priority` weighting is untouched — the
     //    fork's ladder burn ignores it entirely ("bay weights die; the ladder allocates"). ──
     jobPriority?: 1 | 2 | 3 | 4;
 }
 
-/** A dated bay-history record (completion or write-off). D-037: the itemized bill + gap-notes now
- *  SURVIVE completion onto the record (forward-only — pre-D-037 entries lack them and render their
- *  honest absence) so the AAR can join component-level detail and history reads like a shop record. */
 export interface BayHistoryEntry {
     date: CampaignStartDate;
     bayId: string;
@@ -47,12 +36,10 @@ export interface BayHistoryEntry {
     outcome: 'completed' | 'written-off';
     bill?: RepairLine[];
     notes?: string[];
-    // ── ODM-13 Phase 2 — ADDITIVE fork-only record fields (Classic never writes them; D-0b). ──
     partsUsed?: string[];         // the inventory component lines DEBITED at completion
     rearmShort?: string[];        // per-bin rearm shortfalls ("LRM 0.4 t short, rack dry")
 }
 
-// ── D-037 — the TECH POOL identity: who actually turns the wrenches. Tier-keyed character,
 //    register-flavored name, generated ONCE per campaign and STORED (stored-not-rerolled). ──
 export interface TechPool {
     name: string;       // e.g. "MAC-7 Workshop" / "Vasek's Tent Crew"
@@ -96,10 +83,8 @@ export function generateTechPool(tier: string, rng: () => number = Math.random):
     return { name, headcount, character: pick(POOL_CHARACTER[t]) };
 }
 
-/** One-line shop prose for a job, composed from the ITEMIZED bill (template; D-038 refines).
- *  Pure render-derivation — the bill is the record, this is the voice over it. */
 export function jobSummary(label: string, bill: RepairLine[] | undefined, laborHours: number, cost: number): string {
-    if (!bill?.length) return `${label} — ${laborHours} hours of bench time, ${cost.toLocaleString('en-US')} C-bills against the books (itemized bill not on record — completed pre-D-037).`;
+    if (!bill?.length) return `${label} — ${laborHours} hours of bench time, ${cost.toLocaleString('en-US')} C-bills against the books (itemized bill not on record — completed pre-).`;
     const top = [...bill].sort((a, b) => b.hours - a.hours).slice(0, 3)
         .map((l) => `${l.action === 'replace' ? 'new ' : ''}${l.component.toLowerCase()} (${l.hours} h)`);
     const more = bill.length > 3 ? ` and ${bill.length - 3} smaller line${bill.length - 3 === 1 ? '' : 's'}` : '';
@@ -125,10 +110,6 @@ export const BAY_TUNABLES = {
 const EPS = 1e-6;
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 
-/** True if a unit carries any MECH damage (armor/internal/crit). Crew-only injury is the infirmary's, not
- *  the bays'. This is the CANONICAL repair-eligibility predicate — the repair queue filters on it
- *  (repair-bays.service.ts) and HOTFIX-024 gates the roster's 'In repair' control on it, so a unit that can
- *  be set 'In repair' is EXACTLY one that will appear in the bays (no settable-but-invisible state). */
 export function hasMechDamage(d?: CBTSerializedState | null): boolean {
     if (!d) return false;
     if ((d.crits?.length ?? 0) > 0) return true;

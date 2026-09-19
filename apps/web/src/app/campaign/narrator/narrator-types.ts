@@ -1,8 +1,3 @@
-/*
- * BCE LOCAL NARRATOR — shared types (DIRECTIVE-038). DATA-003 lives here: the narrator only ever
- * polishes PROSE over a locked spec; the machine diff (machine-diff.ts) is the gate the model never
- * sees, and a refined section is stored only after it survives that gate. OFF = template, byte-identical.
- */
 
 export type NarratorMode = 'off' | 'local';
 
@@ -41,7 +36,6 @@ export interface RefineResult {
  *  refined-and-verified over template, section by section. */
 export type RefinedStore = Record<string, { text: string; verified: boolean }>;
 
-// ── D-043 narrator v2 — the WHOLE-MISSION pass (voice rewrite + coherence verdict) ──
 
 /** A staff-voice sidebar box to rewrite MISSION-AWARE (Job 1). The model gets the whole package as
  *  context + this box's voice/header/stub; it returns prose in that officer's voice that references
@@ -76,14 +70,13 @@ export interface WholeMissionResult {
  *  coherence = the Job-2 verdict (display-only data). */
 export type RefinedVoiceStore = Record<string, { text: string; verified: boolean }>;
 
-/** A registry model row as the sidecar reports it (D-040) — for the Settings picker + fetched gating. */
 export interface NarratorModelRow { id: string; label: string; sizeMB: number; approxVramGB: number; fetched: boolean }
 
 /** Live sidecar stats (footer console + Settings). All localhost; degrades per-panel when offline. */
 export interface NarratorStats {
     sidecar: 'up' | 'offline';
     llama: { status: 'off' | 'loading' | 'ready' | 'offline'; pid: number | null; uptimeSec: number; model: string; activeId?: string; refineRuns: number; validateRuns: number; promptTokens: number; completionTokens: number; lastTokS: number; lastMs: number; lastKind: string | null };
-    models?: NarratorModelRow[]; // D-040: the registry view (id/label/size/vram/fetched)
+    models?: NarratorModelRow[];
     gpu: { name: string; utilPct: number; memUsedMB: number; memTotalMB: number; tempC: number } | null;
     sys: { cpuPct: number; memUsedMB: number; memTotalMB: number } | null;
 }

@@ -5,7 +5,7 @@
   <title>BattleTech Campaign Engine</title>
   <base href="/">
   <script>
-    // DEPLOY-002 + HOTFIX-028: on a PUBLIC (non-localhost/non-LAN) origin the engine URL must be the hosted
+    // DEPLOY-002 + on a PUBLIC (non-localhost/non-LAN) origin the engine URL must be the hosted
     // Railway API. Set it when unset (a fresh cloud visitor) AND replace a stored localhost/private-LAN value
     // — that is unreachable from a public origin and is exactly the wedge that stranded returning players
     // ("offline / Connecting…"). A stored PUBLIC value stands (never clobbered). Dev/LAN is UNCHANGED: the
@@ -34,7 +34,7 @@
     })();
   </script>
   <script>
-    // HOTFIX-028 — boot resilience: NEVER leave a black screen. Works even with a dead bundle (plain HTML).
+    // boot resilience: NEVER leave a black screen. Works even with a dead bundle (plain HTML).
     //   (1) chunk / dynamic-import load failure → ONE cache-evicting reload (60s guard), then a fallback panel.
     //   (2) watchdog: if <app-root> is still empty after 15s (a hung/dead bundle) show the same panel.
     // The Angular shells call clearBootFallback() once they paint (removes #bce-boot-fallback), so a
@@ -83,7 +83,7 @@
     })();
   </script>
   <script>
-    // HOTFIX-009: KILL the vendored MekBay PWA service worker on EVERY load. Testers who already registered it
+    // KILL the vendored MekBay PWA service worker on EVERY load. Testers who already registered it
     // (the "install MekBay" prompt) kept being served a STALE cached bundle (faction page "unavailable" until a
     // hard-refresh). This unregisters all SWs + clears all CacheStorage so they finally get the latest deploy.
     // Harmless when no SW is present; kept for the whole tester phase (a branded BCE PWA is a later, deliberate task).
@@ -98,7 +98,6 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, interactive-widget=resizes-content" />
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
-  <!-- HOTFIX-009: <link rel="manifest"> removed (kills the MekBay PWA install prompt; no BCE PWA yet). -->
   <meta name="theme-color" content="#292929" />
   <meta name="description" content="BattleTech Campaign Engine — run a mercenary or House BattleTech campaign: force generation, interactive record sheets, missions, repair bays, and barracks." />
   <meta property="og:title" content="BattleTech Campaign Engine" />
@@ -112,12 +111,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="BattleTech Campaign Engine" />
-  <!-- HOTFIX-009: apple-touch-icon removed — icons/icon-192x192.png was missing (a console-warning + dead PWA icon). -->
   <link rel="preload" href="fonts/Roboto-VariableFont_wdth,wght.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="fonts/Roboto-Italic-VariableFont_wdth,wght.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="fonts/RobotoCondensed-VariableFont_wght.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="fonts/RobotoCondensed-Italic-VariableFont_wght.ttf" as="font" type="font/ttf" crossorigin>
-  <!-- BCE retool (DIRECTIVE-003): field-dossier fonts for the cover + era screens -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Saira+Stencil+One&family=Oswald:wght@400;500;600&family=Special+Elite&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">

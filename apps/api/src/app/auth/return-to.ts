@@ -1,11 +1,3 @@
-/*
- * DIRECTIVE-GM-1c — where an OAuth sign-in LANDS. The join page hands the start route a `returnTo` (carried through the
- * provider as the OAuth `state`), so a player who signed in from `/player/?campaign=…&engine=…` comes back to that exact
- * URL with the session on the fragment (HOTFIX-040 Bearer-first, unchanged). `state` is attacker-writable, so this is an
- * OPEN-REDIRECT gate first and a convenience second: only a same-site PATH (prefixed with the canonical frontend origin)
- * or an absolute URL whose origin is in the BCE_WEB_ORIGIN allow-list survives; anything else lands where it always did
- * (the root). Pure — jest-pinned in return-to.spec.ts.
- */
 const MAX_LEN = 2048;
 
 /** The canonical frontend origins (BCE_WEB_ORIGIN, comma-list, trailing slashes dropped). The first is where a relative
@@ -43,8 +35,6 @@ export function safeReturnTo(raw: unknown, origins: string[]): string | null {
     return null;
 }
 
-/** The post-callback redirect: the validated target — or the root, exactly as before GM-1c — with the session JWT on the
- *  FRAGMENT (never a query param: a fragment is not sent to the server, logs, or Referer). */
 export function oauthLanding(origins: string[], returnTo: unknown, token: string): string {
     const base = safeReturnTo(returnTo, origins) ?? `${origins[0] ?? ''}/`;
     return `${base}#bce_auth=${encodeURIComponent(token)}`;

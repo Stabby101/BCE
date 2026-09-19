@@ -1,15 +1,3 @@
-/**
- * BCE ENGINE slice 1 (DIRECTIVE-041) — the host record bootstrap.
- * NestJS + node:sqlite, REST under /api. LOCALHOST-FIRST, LAN/HOSTED by config:
- *   - bind 127.0.0.1 by default; set BCE_HOST=0.0.0.0 to expose on the LAN / a host (Railway).
- *   - listen on $PORT when injected (Railway), else 3000.
- *   - CORS allows localhost/127.0.0.1 any port; LAN mode (BCE_HOST=0.0.0.0 or BCE_LAN=1)
- *     reflects the request origin so a tablet at 192.168.x.x:4200 can reach the host;
- *     HOSTED: BCE_WEB_ORIGIN=<frontend url[,url2]> adds the deployed frontend origin(s) to the
- *     allow-list (and is preferred over reflect-all so a public backend isn't wide-open).
- *   - body limit raised to 25mb: a deep CampaignSnapshot blob exceeds Express's 100kb default.
- *   - DB path: BCE_DB_PATH (default apps/api/.data/campaigns.db) → point at a mounted volume when hosted.
- */
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -25,7 +13,6 @@ function checkAuthConfig(): void {
     Logger.error('BCE_AUTH_REQUIRED=1 but BCE_SESSION_SECRET is not set — refusing to start a gated server.');
     process.exit(1);
   }
-  // HARDEN-7 B1 — the secret-stability alarm, now HOSTED-scoped (not only auth-required): rotating or losing
   // BCE_SESSION_SECRET permanently invalidates every guest recovery code (HMAC'd under it) + logs everyone
   // out. A hosted deploy running without a real secret (or on the insecure dev fallback) is CRITICAL even if
   // the gate happens to be off. The fingerprint-change alarm (fires when the value differs from the last boot)
@@ -43,7 +30,6 @@ async function bootstrap() {
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
 
-  // HARDEN-7 B6 — trust the first proxy hop (Railway's edge / a LAN reverse proxy) so req.ip is the real
   // client IP from X-Forwarded-For, not the edge address. The /api/auth/recover + regenerate throttles key
   // on req.ip, so without this they'd rate-limit per-EDGE (all clients share one bucket) instead of per-client.
   app.set('trust proxy', 1);

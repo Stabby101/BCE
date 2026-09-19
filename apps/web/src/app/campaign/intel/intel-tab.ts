@@ -1,13 +1,3 @@
-/*
- * BCE — INTEL tab (DIRECTIVE-034, T-031 slice 1). What the campaign KNOWS, earned through play.
- * CONTACTS: every NPC met through missions (DERIVED from the persistent npcAssignments — no new
- * bookkeeping) + GM-introduced ones from the unmet registry pool (era/faction-filtered, never
- * dead-ends); dossier cards with missions-appeared (derived from the D-034 resolution snapshots +
- * the live spec) and a GM-mutable STATUS persisting via persistCurrent. NOTES: the campaign
- * notebook — auto-entries surfaced from the campaignLog + resolutions + closed contracts (typed,
- * dated), interleaved chronologically with GM free-text notes (the new intel snapshot field).
- * STATUS IS DATA ONLY this slice — the status-aware generation seam is marked at setStatus().
- */
 import { Component, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { NewCampaignState, type CampaignStartDate, type IntelNote, type IntelState } from '../new-campaign-state';
 import { ForgePackService } from '../mission/forge-pack.service';
@@ -17,7 +7,6 @@ import { formatDate } from '../clock/campaign-clock';
 import type { ForgeNpc } from '../mission/forge-types';
 import type { MissionBranch } from '../mission/mission-tree';
 
-// ODM-12b C2 — hoisted to the pure `contact-status` module (the ODM fork imports it from there, not
 // from this component). Imported for local use + re-exported so every existing importer is unchanged.
 import { CONTACT_STATUSES } from './contact-status';
 export { CONTACT_STATUSES };
@@ -82,8 +71,6 @@ export class IntelTabComponent {
         return [...out.values()].map((branch) => ({ branch }));
     });
 
-    /** Missions each NPC appeared in — derived from the D-034 resolution snapshots (flag → the
-     *  campaign-stable npcAssignments) + the live spec's flags. No separate bookkeeping. */
     private readonly missionsByNpc = computed<Record<string, string[]>>(() => {
         const assigns = this.state.npcAssignments();
         const out: Record<string, string[]> = {};

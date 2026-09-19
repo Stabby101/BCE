@@ -1,9 +1,3 @@
-/*
- * BCE Inventory II (DIRECTIVE-056) — read-only client for the D-055 catalog API (/api/catalog).
- * Mirrors CampaignSaveStore's engine base()+HttpClient+timeout pattern. Era-legality is server-side
- * (availableInEra): pass era= and the server returns only era-legal rows — no client-side re-gating.
- * Engine-offline → returns []/null (the Begin roll degrades to ammo+armor; the tab shows what it has).
- */
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, timeout } from 'rxjs';

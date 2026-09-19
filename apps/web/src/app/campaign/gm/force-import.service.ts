@@ -1,12 +1,3 @@
-/*
- * GM-1 P3 — the GM-side IMPORT MERGE. The server minted + pre-claimed the units (id + cap authority) and
- * fanned the payload to GM sockets only; THIS service is the snapshot author's half: merge the re-minted
- * units into startingForce (+ their pilots) and persist — the D-130 saveOpFor shape, keeping the ONE
- * snapshot writer (a server-side roster write would race the GM's debounced PUT and be clobbered).
- * Dashboard-lifetime (instantiated from the dashboard ctor — the GM tab need not be open); gmSession-gated
- * and persistCurrent no-ops unless this device has the campaign LOADED, so a player/plain-HS device that
- * somehow received the fan (dev/LAN full-fan posture) merges nothing upward it doesn't own.
- */
 import { Injectable, effect, inject } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
 import { CampaignSaveStore } from '../campaign-save-store';

@@ -1,22 +1,14 @@
-/*
- * BCE ENGINE — the GM CLAIM BOARD (D-042 claims). HOTFIX-030: the board IS the roster. Claiming happens on
- * PLAYER devices only — the GM board has NO claim/release affordance; it just shows, per deployed/OpFor unit,
- * who holds it, whether that device is currently connected (green/red presence dot), and a Kick. Unclaimed
- * units read a muted UNCLAIMED. The header carries the counts (N connected · X BLUFOR · Y OPFOR) that used to
- * live in a separate Joined panel; joined-but-unclaimed players (spectators) render as a slim list under the
- * board. The GM sees BOTH sides (ROLE-002 — players stay side-gated). BCE layer only.
- */
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { NewCampaignState } from '../new-campaign-state';
-import { TableModeService } from '../gm/table-mode.service'; // GM-1 P1
-import { sideLabelsOf } from '../gm/side-labels'; // GM-1 P4 — SIDE A/B display names
+import { TableModeService } from '../gm/table-mode.service';
+import { sideLabelsOf } from '../gm/side-labels';
 import { CampaignSaveStore } from '../campaign-save-store';
 import { deployedSet } from '../force/deployed';
 import type { ProtoInstance } from '../force/force-generator';
 import { ClaimRealtimeService } from './claim-realtime.service';
 import { engagementKeyOf, engagementFrozen } from './engagement-key';
 import { BceUnitSpriteComponent } from '../sprite/unit-sprite';
-import { OpforBuilderComponent } from './opfor-builder'; // D-130 — GM manual OpFor builder (HS-only)
+import { OpforBuilderComponent } from './opfor-builder';
 
 @Component({
     selector: 'bce-claims-panel',
@@ -27,14 +19,13 @@ import { OpforBuilderComponent } from './opfor-builder'; // D-130 — GM manual 
 })
 export class ClaimsPanelComponent {
     private readonly state = inject(NewCampaignState);
-    protected readonly table = inject(TableModeService); // GM-1 P1 — constant false outside a GM session
+    protected readonly table = inject(TableModeService);
     private readonly store = inject(CampaignSaveStore);
     protected readonly rt = inject(ClaimRealtimeService);
 
     protected readonly deployed = computed(() => deployedSet(this.state.startingForce()));
     protected readonly opfor = computed<ProtoInstance[]>(() => this.state.missionSpec()?.opforForce ?? []);
 
-    // ── DIRECTIVE-130 — the GM manual OpFor builder (Hot Spots only) ──
     protected readonly isHotspots = computed(() => this.state.campaignSystem() === 'hotspots');
     protected readonly missionSpec = this.state.missionSpec; // the entry button greys out until a track is generated
     /** The OpFor faction the mission was generated for, for the builder's default gate. NB: MissionForge does not
@@ -47,9 +38,6 @@ export class ClaimsPanelComponent {
     protected readonly builderOpen = signal(false);
     protected openBuilder(): void { if (this.isHotspots() && this.state.missionSpec()) this.builderOpen.set(true); }
     protected closeBuilder(): void { this.builderOpen.set(false); }
-    /** D-130 write-back: replace the current mission's OpFor with the hand-built roster (immutable spec replace) +
-     *  recompute opforBv; persist. The Lobby + joined players read missionSpec().opforForce reactively and the
-     *  persist→snapshot fan already propagates the spec (D-127/HOTFIX-029) — no extra sync wiring. */
     protected saveOpFor(rebuilt: ProtoInstance[]): void {
         const spec = this.state.missionSpec();
         if (!spec) return;
@@ -59,7 +47,6 @@ export class ClaimsPanelComponent {
         void this.store.persistCurrent();
         this.builderOpen.set(false);
     }
-    // GM-1 P4 — SIDE A/SIDE B labels from the D-133 names (gmSession + signed/presented only; the wire and
     // every side gate stay BLUFOR/OPFOR — null falls back to today's labels byte-identically).
     private readonly sideNames = computed(() => sideLabelsOf(this.state));
     protected readonly sides = computed(() => [
@@ -72,7 +59,6 @@ export class ClaimsPanelComponent {
     protected readonly connected = this.rt.connected;
     protected readonly lobby = this.rt.lobby;
 
-    // HOTFIX-030 — header counts (the removed Joined panel's info now lives on the board header).
     protected readonly connectedCount = computed(() => this.lobby().filter((p) => p.connected).length);
     protected readonly bluforCount = computed(() => this.lobby().filter((p) => p.side === 'BLUFOR').length);
     protected readonly opforCount = computed(() => this.lobby().filter((p) => p.side === 'OPFOR').length);

@@ -1,12 +1,7 @@
-/*
- * DIRECTIVE-IMPORT-1 Part B — the paste-parser field map (§16 label map). Pins that the recognised Hot Spots
- * section labels + field order map into the draft, that "value (step)" terms capture the STEP, that objective
- * lines' trailing numbers become VP, and that the strict validator + draft→HotSpot builder behave.
- */
 import { parseHotspotText, draftToHotSpot, validateDraft, emptyDraft, emptySide, emptyHireable } from './hotspot-text-parser';
 import { resolveSides, backfillSingleSided, type CatalogHotSpot } from './hotspots-catalog';
 import { stepValue, CONTRACT_COLUMNS } from './chaos-contract-steps';
-import { mercHireCharge } from './hire-personnel'; // IMPORT-6 Part D — the builder → deploy-hire engine handshake
+import { mercHireCharge } from './hire-personnel';
 
 /** A minimal legacy/authored-shaped hot spot (no `sides`) that resolveSides can synthesize a provisional B from. */
 const legacyHotSpot = (over: Partial<CatalogHotSpot> = {}): CatalogHotSpot => ({
@@ -114,7 +109,7 @@ describe('validateDraft (strict save) + draftToHotSpot (builder)', () => {
         expect(hs.title).toBe('X');
     });
 
-    it('IMPORT-5 Part D — snaps every contract step to a VALID (non-—) in-range step (no dead terms)', () => {
+    it('Part D — snaps every contract step to a VALID (non-—) in-range step (no dead terms)', () => {
         const d = emptyDraft();
         d.title = 'Z'; d.basePay = 99; d.command = 0; d.transport = 2; d.salvage = 13;
         d.tracks[0].name = 'root'; d.tracks[0].objectives = [{ text: 'obj', vp: 50, kind: 'primary', side: 'both' }];
@@ -128,7 +123,7 @@ describe('validateDraft (strict save) + draftToHotSpot (builder)', () => {
     });
 });
 
-describe('IMPORT-3 — tracks are OPTIONAL (universal-library play)', () => {
+describe('tracks are OPTIONAL (universal-library play)', () => {
     it('a titled hot spot with NO meaningful tracks is VALID and builds with empty tracks[]', () => {
         const d = emptyDraft(); d.title = 'Library Op'; // the default track row is left pristine → ignored
         expect(validateDraft(d)).toEqual([]);
@@ -155,7 +150,7 @@ describe('IMPORT-3 — tracks are OPTIONAL (universal-library play)', () => {
     });
 });
 
-describe('IMPORT-4 — one-sided / two-sided emission', () => {
+describe('one-sided / two-sided emission', () => {
     const twoSided = () => {
         const d = emptyDraft();
         d.title = 'Opposed Op'; d.twoSided = true;
@@ -210,7 +205,7 @@ describe('IMPORT-4 — one-sided / two-sided emission', () => {
     });
 });
 
-describe('IMPORT-5 — single-sided flag (C), transport carries (D), per-side identity (E)', () => {
+describe('single-sided flag (C), transport carries (D), per-side identity (E)', () => {
     const withTrack = (d: ReturnType<typeof emptyDraft>) => { d.tracks[0].name = 'root'; d.tracks[0].objectives = [{ text: 'obj', vp: 50, kind: 'primary', side: 'both' }]; return d; };
 
     it('Part C — a single-sided build emits `singleSided:true` and resolveSides returns EXACTLY one side (no synthesized B)', () => {
@@ -271,7 +266,7 @@ describe('IMPORT-5 — single-sided flag (C), transport carries (D), per-side id
     });
 });
 
-describe('IMPORT-5 — singleSided backfill (custom hot spots built before the two-sided toggle)', () => {
+describe('singleSided backfill (custom hot spots built before the two-sided toggle)', () => {
     it('a CUSTOM hot spot with no sides + no flag is backfilled to singleSided → resolveSides returns ONE side', () => {
         const h = backfillSingleSided(legacyHotSpot({ custom: true }));
         expect(h.singleSided).toBe(true);
@@ -297,7 +292,7 @@ describe('IMPORT-5 — singleSided backfill (custom hot spots built before the t
     });
 });
 
-describe('IMPORT-6 Part D — hireable special personnel (authoring + round-trip)', () => {
+describe('Part D — hireable special personnel (authoring + round-trip)', () => {
     /** A saveable single-sided draft (title + no meaningful tracks = library play) to hang hireable rows on. */
     const titled = () => { const d = emptyDraft(); d.title = 'Hire Op'; return d; };
 

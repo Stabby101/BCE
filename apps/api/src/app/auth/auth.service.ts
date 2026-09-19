@@ -49,8 +49,6 @@ export class AuthService {
     static sessionSecret(): string {
         return process.env.BCE_SESSION_SECRET || DEV_FALLBACK_SECRET;
     }
-    /** HARDEN-7 — a public/hosted deployment (Railway/prod), distinct from local dev/LAN. Mirrors the cookie
-     *  `secure`/`sameSite` decision in auth.controller; used by the durability guard's secret-stability alarm. */
     static isHosted(): boolean {
         return process.env.BCE_HOST === '0.0.0.0' || process.env.NODE_ENV === 'production';
     }
@@ -136,8 +134,6 @@ export class AuthService {
             return null;
         }
     }
-    /** HARDEN-7 B5 — the token's expiry (epoch ms), or null if it can't be verified. Used by the sliding-refresh
-     *  guard to decide whether a still-valid session is near its 7-day cliff. Same verify as userFromToken. */
     tokenExpiryMs(token: string | undefined | null): number | null {
         if (!token) return null;
         try {
@@ -148,9 +144,6 @@ export class AuthService {
         }
     }
 
-    /** HARDEN-7 B2 — regenerate a GUEST's recovery code while logged in: mint a fresh code, replace the stored
-     *  recoveryHash (row-scoped UPDATE — additive, preserves the account + its ownerId), return the plaintext
-     *  ONCE. Guest-only + rate-limit + audit are enforced by the controller. Null if the user isn't a guest. */
     regenerateRecovery(user: User, ip?: string | null): { recoveryCode: string } | null {
         if (user.role !== 'guest') return null;
         let recoveryCode = generateRecoveryCode();
