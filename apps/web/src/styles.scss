@@ -3066,16 +3066,6 @@ bce-chaos-contracts .cc-actions, :where(.cc-scope) .cc-actions { display:flex; g
     body.odm-printing bce-odm-briefing .ob-print-run { visibility: visible; }
     body.odm-printing bce-odm-briefing [data-testid='ob-doc'] { position: static; left: auto; top: auto; width: 100%; }
 
-    /* HOTFIX-PRINT-TRUNCATION (2026-08-30) — WHY every packet printed as page 1 only, on BOTH the in-app
-       Print button AND the browser's own Ctrl+P. Measured under print emulation, not guessed:
-         bce-odm-dashboard  height:1000px  overflow:hidden auto  scrollHeight:13905  clientHeight:1000
-       The dashboard host is a viewport-height SCROLL CONTAINER. The packet is whole in the DOM (the
-       package view measures 13,881px / 61,741 chars — there is no pager and nothing is hidden), but it
-       lives inside a 1000px clipping scroller, so the print box is one page and the rest is clipped away.
-       Releasing the host is the whole fix; the doc also returns to STATIC flow above, because an
-       absolutely-positioned document is out of flow and cannot paginate however tall it is.
-       Selector is the ODM host element, so Classic/HS and MekBay record-sheet printing are untouched —
-       and it is deliberately NOT scoped to body.odm-printing, because Ctrl+P never sets that class. */
     bce-odm-dashboard { height: auto !important; max-height: none !important; overflow: visible !important; }
     bce-odm-dashboard main.sheet, bce-odm-dashboard section.panel.active { height: auto !important; overflow: visible !important; }
 }
